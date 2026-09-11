@@ -6,7 +6,6 @@ import SModel.ReversibleMarkov
 import SModel.Property
 import SModel.Nucleotides
 import Numeric.LinearAlgebra
-import qualified Markov
 import Markov (CTMC(..))
 import Reversible
 import Numeric.LinearAlgebra.Data
@@ -68,8 +67,7 @@ mg94  a   pi w  = f81     pi nuc_a & mg94_ext a w where nuc_a = getNucleotides a
 -- for reducible matrices. For NonEq, retain the normalized products as root frequencies.
 x3x3 a m1 m2 m3 =
     case rv of
-        EqNonRev -> wrapMarkov a smap $ setReversibility EqNonRev $
-                    Markov.markov q (Markov.equilibriumLimit pi q)
+        EqNonRev -> eqMarkovFrom a smap q pi
         _        -> setReversibility rv $ markov a smap q pi
   where
     rv = minimum $ fmap getReversibility [m1,m2,m3]
@@ -99,8 +97,7 @@ dNdS omega m@(Markov a s _ _ _) =
     setConstantStateProperty posSelectionPropertyName posSelection $
     setConstantStateProperty dNdSPropertyName omega $
     case rv of
-        EqNonRev -> wrapMarkov a s $ setReversibility EqNonRev $
-                    Markov.markov q (Markov.equilibriumLimit pi q)
+        EqNonRev -> eqMarkovFrom a s q pi
         _        -> setReversibility rv $ markov a s q pi
   where
     rv = getReversibility m

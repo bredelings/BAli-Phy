@@ -96,7 +96,16 @@ uniformEquilibriumLimit q = equilibriumLimit pi0 q where
     pi0 = fromList $ replicate n (1/fromIntegral n)
     n = rows q
 
-eqMarkov q = setReversibility EqNonRev $ markov q (uniformEquilibriumLimit q)
+-- Use the equilibrium limit from pi0 as the root distribution, including reducible matrices.
+-- Reuse the diagonal-corrected matrix; the initial NonEq model has no eigendecomposition to invalidate.
+eqMarkovFrom q pi0 =
+    case markov q pi0 of
+        m@(Markov qFixed _ scale decomposition _) ->
+            Markov qFixed (getEqFreqs m) scale decomposition EqNonRev
+
+eqMarkov q = eqMarkovFrom q pi0 where
+    pi0 = fromList $ replicate n (1/fromIntegral n)
+    n = rows q
 
 non_rev_from_list n rates = non_rev_from_vec n (fromList rates)
 

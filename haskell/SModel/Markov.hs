@@ -76,6 +76,9 @@ markov a smap q pi = wrapMarkov a smap (Markov.markov q pi)
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 eqMarkov a smap q = wrapMarkov a smap (Markov.eqMarkov q)
 
+-- Mark the core model stationary before wrapping, so its rate uses the stored equilibrium frequencies.
+eqMarkovFrom a smap q pi0 = wrapMarkov a smap (Markov.eqMarkovFrom q pi0)
+
 eqFlow (Markov _ _ m _ _) = Markov.eqFlow m
 
 eqFlux (Markov _ _ m _ _) = Markov.eqFlux m
