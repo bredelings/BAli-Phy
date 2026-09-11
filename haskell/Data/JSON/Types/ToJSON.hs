@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 module Data.JSON.Types.ToJSON where
 
@@ -7,6 +8,7 @@ import Data.JSON.Encoding (Encoding, Encoding',Series {- , dict, emptyArray_ -} 
 
 import qualified Data.Text as T
 import Data.Text (Text)
+import qualified Data.Vector.Unboxed as U
 import qualified Data.Map as M
 import Data.ByteString
 import Data.Semigroup
@@ -112,3 +114,7 @@ instance KeyValue Encoding Series where
 instance (key ~ Key, value ~ Value) => KeyValue Value (key, value) where
     (.=) = explicitToField toJSON
     explicitToField f name value = (name, f value)
+
+instance ToJSON (U.Vector Int) where
+    toJSON values = Array (map toJSON (U.toList values))
+    toEncoding = E.intVector

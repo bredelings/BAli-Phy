@@ -260,3 +260,19 @@ extern "C" closure builtin_function_encodeComponentStateSequence(OperationArgs& 
 
     return o.str();
 }
+
+// Encode the complete logical integer view without allocating boxed elements or filtering values.
+extern "C" closure builtin_function_encodeIntVector(OperationArgs& Args)
+{
+    auto input = read_native_vector_input<int, ForeignDemand::use>(Args, 0, "Foreign.encodeIntVector");
+    auto values = input.view();
+    std::ostringstream out;
+    out << "[";
+    for (std::size_t i = 0; i < values.size(); ++i)
+    {
+        if (i) out << ", ";
+        out << values[i];
+    }
+    out << "]";
+    return out.str();
+}

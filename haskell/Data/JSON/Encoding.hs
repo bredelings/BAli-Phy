@@ -2,6 +2,7 @@ module Data.JSON.Encoding where
 
 import qualified Data.Text as T
 import Data.Text (Text)
+import qualified Data.Vector.Unboxed as U
 import Data.Semigroup
 import Data.Monoid    
 
@@ -147,3 +148,9 @@ value (FNumber d) = double d
 value (Bool b) = bool b
 value (String t) = text t
 value Null = null_
+
+-- Encode integers in one native call; sentinel filtering belongs to the caller.
+foreign import trcall "Foreign:" encodeIntVector :: U.Vector Int -> Text
+
+intVector :: U.Vector Int -> Encoding
+intVector values = unsafeToEncoding (encodeIntVector values)

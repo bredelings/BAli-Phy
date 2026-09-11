@@ -4,6 +4,7 @@
 module Data.Vector.Unboxed.Internal
     ( Vector(..)
     , Unbox(..)
+    , removeMinusOnes
     , intVectorFromNative
     , intVectorFromNativeWithLength
     , intVectorNativeView
@@ -181,3 +182,6 @@ instance (Unbox a, Unbox b, COutput (Vector a), COutput (Vector b)) =>
 instance COutput (Vector Double) where
     type COutputType (Vector Double) = NativeVector Double
     fromCOutput = doubleVectorFromNative
+
+-- Filter the missing-character sentinel in native code, retaining all other integer values.
+foreign import trcall "NativeVector:" removeMinusOnes :: Vector Int -> Vector Int

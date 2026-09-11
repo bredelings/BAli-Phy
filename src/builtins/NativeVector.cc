@@ -287,3 +287,15 @@ extern "C" R::Exp simple_function_unsafeDoubleIndex(vector<R::Exp>& args)
     int index = get_arg(args).as_int();
     return value.as_<Box<DenseVector<double>>>()(index);
 }
+
+// Remove only the missing-character sentinel, preserving order within the logical slice.
+// Count first so the result owns exactly the retained elements, with no boxed intermediate.
+extern "C" closure builtin_function_removeMinusOnes(OperationArgs& Args)
+{
+    auto input = read_native_vector_input<int, ForeignDemand::use>(Args, 0, "NativeVector.removeMinusOnes");
+    auto values = input.view();
+    auto count = std::count_if(values.begin(), values.end(), [](int value) { return value != -1; });
+    object_ptr<Box<DenseVector<int>>> result(new Box<DenseVector<int>>(count));
+    std::copy_if(values.begin(), values.end(), result->data(), [](int value) { return value != -1; });
+    return result;
+}
