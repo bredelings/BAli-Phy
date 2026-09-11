@@ -1,0 +1,11 @@
+{
+  "name": "bali-phy-user-guide",
+  "private": true,
+  "description": "Build-time math rendering for the User Guide PDF",
+  "dependencies": {
+    "mathjax-full": "3.2.2"
+  },
+  "scripts": {
+    "test": "node test-render-math-svg.cjs"
+  }
+}
