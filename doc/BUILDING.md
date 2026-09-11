@@ -4,7 +4,7 @@ The User Guide source is `README.xml`. From this directory, run:
 
 ```sh
 npm ci
-make README.html README.pdf
+make user-guide
 ```
 
 `npm ci` installs the locked build-time dependencies. It is a separate setup step;
@@ -14,7 +14,7 @@ Pygments (`pygmentize`), WeasyPrint, and the complete DocBook xslTNG 2.8.4 relea
 The build defaults to `~/Applications/docbook-xslTNG-2.8.4`; override it with:
 
 ```sh
-make DOCBOOK_XSLTNG=/path/to/docbook-xslTNG-2.8.4 README.html README.pdf
+make DOCBOOK_XSLTNG=/path/to/docbook-xslTNG-2.8.4 user-guide
 ```
 
 ## HTML and PDF mathematics
@@ -64,8 +64,9 @@ changing the renderer, also inspect equations in the complete PDF, including
 `O(L²)`, `Γ₄ + Inv`, variables inside filenames, and model-table entries. Confirm
 that the contents list still has page numbers.
 
-`make clean` removes generated HTML (including `README.print.html`), XML, PDFs,
-and copied stylesheet assets. It leaves the npm dependencies installed.
+`make clean-user-guide` removes generated guide files and copied assets. It preserves
+the source XML and installed dependencies. Outputs default to `../../build/user-guide`;
+set `BUILD_DIR` to override this location.
 
 ## Authoring mathematics
 
