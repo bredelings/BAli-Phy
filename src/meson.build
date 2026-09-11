@@ -243,7 +243,7 @@ if host_machine.system() == 'windows' and meson.is_cross_build()
 endif
 
 declarative_tool_tests = ['alignment-convert', 'alignment-draw', 'character-properties', 'cut-range', 'mcon-tool', 'statreport']
-declarative_tool_tests += ['joint-indels', 'tree-mean-lengths', 'trees-distances']
+declarative_tool_tests += ['joint-indels', 'tree-mean-lengths', 'trees-distances', 'summarize-ancestors']
 tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
 
 foreach tool: tools + prefixed_tools

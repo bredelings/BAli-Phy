@@ -21,6 +21,7 @@
 
 #include <fstream>
 #include <cmath>
+#include <cstdint>
 
 #include "alignment/alignment.hh"
 #include "alignment/load.hh"
@@ -106,8 +107,12 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
     auto a_filenames = args["alignments"].as<vector<string>>();
     auto t_filenames = args["trees"].as<vector<string>>();
 
-    // This is just for the trees, I think.
+    // Tree stride establishes correspondence with the saved alignment records.
     unsigned alignment_thin_factor = args["subsample"].as<unsigned>();
+    std::uint64_t first = args.count("skip") ? args["skip"].as<std::int64_t>() : 0;
+    optional<std::uint64_t> last;
+    if (args.count("until")) last = args["until"].as<std::int64_t>();
+    unsigned thin = args.count("thin") ? args["thin"].as<int>() : 1;
 
     optional<int> max;
     if (args.count("max"))
@@ -127,10 +132,18 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
     }
 
     vector<shared_ptr<reader<pair<string,string>>>> readers;
+    vector<std::uint64_t> tree_positions(N, 0);
     for(int i=0;i<N;i++)
     {
         auto r = new zip(alignment_reader(*a_files[i]),subsample(alignment_thin_factor,line_reader(*t_files[i])));
         readers.push_back(shared_ptr<reader<pair<string,string>>>(r));
+        // Pair j contains tree j*d. Advance whole pairs to the inclusive lower bound;
+        // this rounds burn-in up to the next saved alignment without shifting its tree.
+        while(not r->done() and tree_positions[i] < first)
+        {
+            r->next();
+            tree_positions[i] += alignment_thin_factor;
+        }
     }
 
     int factor = 1;
@@ -143,11 +156,19 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
         // Do one round of reading.
         for(int i=0;i<readers.size();i++)
         {
-            if (not readers[i]->done())
+            if (not readers[i]->done() and (not last or tree_positions[i] <= *last))
             {
                 done = false;
                 A_T_strings.push_back(readers[i]->read());
-                skip(*readers[i], factor);
+                // Thin from each chain's first eligible pair. The adaptive sample cap adds
+                // its own stride; track every advance so the upper bound remains inclusive.
+                std::uint64_t stride = std::uint64_t(thin)*factor;
+                for(std::uint64_t j=0; j<stride and not readers[i]->done(); j++)
+                {
+                    readers[i]->next();
+                    tree_positions[i] += alignment_thin_factor;
+                    if (last and tree_positions[i] > *last) break;
+                }
             }
         }
 

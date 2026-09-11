@@ -1,0 +1,4 @@
+# Pair selection must retain codons at tree positions 4 and 8 in each chain.
+# Reversible model tests do not cover log pairing; retain with native sample selection.
+template.fasta -A samples.fastas -T samples.trees -A samples.fastas -T samples.trees -n query.tree --alphabet Codons(DNA,standard) --subsample=2 --skip=3 --until=8 --thin=2
+

@@ -1,0 +1,60 @@
+iterations = 0
+
+>a
+AAC
+>b
+AAC
+>c
+AAC
+>root
+AAA
+
+
+iterations = 2
+
+>a
+AAC
+>b
+AAC
+>c
+AAC
+>root
+CCC
+
+
+iterations = 4
+
+>a
+AAC
+>b
+AAC
+>c
+AAC
+>root
+GGG
+
+
+iterations = 6
+
+>a
+AAC
+>b
+AAC
+>c
+AAC
+>root
+TTT
+
+
+iterations = 8
+
+>a
+AAC
+>b
+AAC
+>c
+AAC
+>root
+GGG
+
+

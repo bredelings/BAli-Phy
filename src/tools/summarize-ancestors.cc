@@ -42,6 +42,7 @@
 #include "partition.hh"
 #include "dp/A2_states.hh"
 #include <optional>
+#include <cstdint>
 #include <map>
 
 #include <boost/dynamic_bitset.hpp>
@@ -618,7 +619,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
         ("alignments,A", value<vector<string>>()->composing(),"File of alignment samples")
         ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
         ("trees,T", value<vector<string>>()->composing(), "File of corresponding tree samples")
-        ("subsample,x",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
+        ("subsample,x",value<unsigned>()->default_value(10),"Tree stride used to match alignment records (1 for already-paired files)")
+        ("skip",value<std::int64_t>()->default_value(0),"First original tree-record position to retain (zero-based, inclusive)")
+        ("until",value<std::int64_t>(),"Last original tree-record position to retain (zero-based, inclusive)")
+        ("thin",value<int>()->default_value(1),"Keep every kth eligible alignment/tree pair, independently per input chain")
         ("max,m",value<unsigned>()->default_value(500),"Thin (alignment,tree) pairs down to this number of samples.")
         ;
 
@@ -666,6 +670,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
     if (not args.count("trees"))
         throw myexception()<<"No tree sampls given! (Use -T trees_file)";
 
+    if (args["subsample"].as<unsigned>() == 0 or args["thin"].as<int>() <= 0)
+        throw myexception()<<"--subsample and --thin must be positive.";
+    if (args["skip"].as<std::int64_t>() < 0 or
+        (args.count("until") and args["until"].as<std::int64_t>() < 0))
+        throw myexception()<<"--skip and --until must be non-negative.";
+    if (args.count("until") and args["until"].as<std::int64_t>() < args["skip"].as<std::int64_t>())
+        throw myexception()<<"--until must be at least --skip.";
+
     return args;
 }
 
@@ -684,7 +696,7 @@ int main(int argc,char* argv[])
         joint_A_T samples = get_multiple_joint_A_T(args,true);
 
         if (samples.size() == 0)
-            throw myexception()<<"No (A,T) read in!";
+            throw myexception()<<"No usable alignment/tree pairs remain after sample selection.";
         else
             if (log_verbose) cerr<<"read "<<samples.size()<<" (A,T) pairs.\n\n";
 

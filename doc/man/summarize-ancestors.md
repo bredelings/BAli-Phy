@@ -30,10 +30,22 @@ Construct alignments with internal sequences for labeled nodes in query tree.
 : File of corresponding tree samples
 
 **-x** _arg_ (=10), **--subsample** _arg_ (=10)
-: factor by which to sub-sample trees
+: Tree stride used to match alignment records. Use 1 for already-paired files.
+
+**--skip** _n_ (=0), **--until** _n_
+: First and last original tree-record positions to retain, inclusive and zero-based.
+  With original BAli-Phy logs these are iteration numbers. The default has no upper bound.
+
+**--thin** _k_ (=1)
+: Keep every kth eligible alignment/tree pair, starting with the first eligible pair in each chain.
 
 **-m** _arg_ (=500), **--max** _arg_ (=500)
 : Thin (alignment,tree) pairs down to this number of samples.
+
+Alignment record j is paired with tree record j times the tree stride before selection.
+Both input files must therefore start at corresponding samples. For already-filtered files,
+the bounds refer to positions in those files, not to discarded original iteration labels.
+The maximum sample count is applied after selection and thinning.
 
 
 # ANCESTOR QUERY OPTIONS:
@@ -62,4 +74,3 @@ Add ancestral sequences to summary alignment:
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 
 Please send bug reports to <bali-phy-users@googlegroups.com>.
-
