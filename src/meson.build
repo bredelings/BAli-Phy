@@ -181,10 +181,14 @@ test('generated alignment program standalone',
      timeout: 600)
 
 # When running on very slow autobuilders these tests could take a long time.
-test('bali-phy 5d test', baliphy, args:[packagepath, small_fasta, '--test'], timeout: 300)
-test('bali-phy 5d +A 50', baliphy, args:['-V', packagepath, small_fasta, '--iterations=50'], timeout: 300)
-test('bali-phy 48 +A 3', baliphy, args:['-V', packagepath, big_fasta, '--iterations=3'], timeout: 600)
-test('bali-phy 5d -A 200', baliphy, args:['-V', packagepath, small_fasta, '--iterations=200', '-Inone'], timeout:300)
+test('bali-phy 5d test', baliphy,
+     args:['--seed', randomseed, packagepath, small_fasta, '--test'], timeout: 300)
+test('bali-phy 5d +A 50', baliphy,
+     args:['--seed', randomseed, '-V', packagepath, small_fasta, '--iterations=50'], timeout: 300)
+test('bali-phy 48 +A 3', baliphy,
+     args:['--seed', randomseed, '-V', packagepath, big_fasta, '--iterations=3'], timeout: 600)
+test('bali-phy 5d -A 200', baliphy,
+     args:['--seed', randomseed, '-V', packagepath, small_fasta, '--iterations=200', '-Inone'], timeout:300)
 
 all_progs = ['bali-phy']
 

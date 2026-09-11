@@ -182,6 +182,13 @@ package_path_separator = host_machine.system() == 'windows' ? ';' : ':'
 packagepath = '--package-path=@0@@1@@2@'.format(
   builtins, package_path_separator, meson.project_source_root())
 
+randomseed = get_option('test_seed')
+if randomseed == ''
+  seed_result = run_command(python, '-c', 'import random; print(random.randint(0, 2**32-1))', check: true)
+  randomseed = seed_result.stdout().strip()
+endif
+message('Test seed: ' + randomseed)
+
 subdir('src')
 
 subdir('tests/cpp')
@@ -191,13 +198,6 @@ subdir('doc')
 # Run internal tests
 run_tests = meson.project_source_root()/'tests/run-tests.py'
 test_dir = meson.project_source_root()/'tests'
-
-randomseed = get_option('test_seed')
-if randomseed == ''
-  seed_result = run_command(python, '-c', 'import random; print(random.randint(0, 2**32-1))', check: true)
-  randomseed = seed_result.stdout().strip()
-endif
-message('Test seed: ' + randomseed)
 
 test_list = run_command(python, run_tests, 'listdir', test_dir, baliphy.full_path(), check: false).stdout().split()
 foreach test: test_list
