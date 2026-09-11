@@ -19,7 +19,7 @@
 	    "description": "The Triplets alphabet"
         }
     ],
-    "description":"Rate matrix on triplets or codons constructed from a rate matrix on nucleotides.\n\nThus function can be used to build up triplet and codon models incrementally.",
+    "description":"Construct a triplet or codon rate matrix from a nucleotide rate matrix.\n\nStationary inputs produce stationary models. For stationary non-reversible inputs, equilibrium frequencies are recalculated from the constructed rates.\n\nFor non-equilibrium inputs, root frequencies are calculated by multiplying the nucleotide frequencies at the three positions, then normalizing over the allowed triplets or codons.",
     "examples": ["F81 +> x3 +> dNdS      // equivalent to MG94","GTR +> x3"],
     "see": ["MG94","MG94_ext"]
 }

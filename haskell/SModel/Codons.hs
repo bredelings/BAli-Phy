@@ -62,7 +62,16 @@ mg94_ext a w q = q & x3 a & dNdS w
 mg94k a k pi w  = hky85 nuc_a k pi & mg94_ext a w where nuc_a = getNucleotides a
 mg94  a   pi w  = f81     pi nuc_a & mg94_ext a w where nuc_a = getNucleotides a
 
-x3x3 a m1 m2 m3 = setReversibility rv $ markov a smap q pi where
+-- Multiply nucleotide root frequencies across positions and normalize over the allowed codons
+-- or triplets. Under detailed balance, these remain stationary after excluding stop codons.
+-- For EqNonRev, instead use the equilibrium limit starting from these frequencies, including
+-- for reducible matrices. For NonEq, retain the normalized products as root frequencies.
+x3x3 a m1 m2 m3 =
+    case rv of
+        EqNonRev -> wrapMarkov a smap $ setReversibility EqNonRev $
+                    Markov.markov q (Markov.equilibriumLimit pi q)
+        _        -> setReversibility rv $ markov a smap q pi
+  where
     rv = minimum $ fmap getReversibility [m1,m2,m3]
     smap = simpleSMap a
     q = singlet_to_triplet_rates a (getQ m1) (getQ m2) (getQ m3)

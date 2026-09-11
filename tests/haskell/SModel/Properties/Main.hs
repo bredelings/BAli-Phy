@@ -12,7 +12,7 @@ import Data.Function (($))
 import qualified Data.IntMap as IntMap
 import qualified Data.Map as Map
 import Data.Maybe
-import Data.OldList ((!!), drop, length, replicate, take, zipWith)
+import Data.OldList ((!!), and, drop, length, replicate, take, zipWith)
 import Data.Ord
 import Data.Text (pack)
 import qualified EigenExp
@@ -236,3 +236,22 @@ main = do
     [ lookupCondition "positiveSelectionInModel" $ getConditions (SModelOnTree () bustedAlternative)
     , lookupCondition "positiveSelectionInModel" $ getConditions (SModelOnTree () bustedNull)
     ]
+
+  -- Check equilibrium and root-frequency behavior after excluding stop codons.
+  -- Successful MCMC and property logging can miss a model incorrectly marked stationary.
+  -- Retain while x3 supports stationary non-reversible and non-equilibrium inputs.
+  let cyclicRates = fromLists [[-7,5,1,1],[1,-7,5,1],[1,1,-7,5],[5,1,1,-7]]
+      cyclicNuc = eqMarkov dna (simpleSMap dna) cyclicRates
+      rootNuc = markov dna (simpleSMap dna) cyclicRates (fromList [0.1,0.2,0.3,0.4])
+      cyclicCodon = x3 codons cyclicNuc
+      rootCodon = x3 codons rootNuc
+      productRoot = f3x4_frequencies_builtin codons
+                      (CoreMarkov.getStartFreqs rootNuc) (CoreMarkov.getStartFreqs rootNuc)
+                      (CoreMarkov.getStartFreqs rootNuc)
+  putStrLn $ show ("x3 frequencies",
+    [ getReversibility cyclicCodon == EqNonRev
+    , CoreMarkov.checkStationary (CoreMarkov.getQ cyclicCodon) (CoreMarkov.getStartFreqs cyclicCodon)
+    , not $ CoreMarkov.checkReversible (CoreMarkov.getQ cyclicCodon) (CoreMarkov.getStartFreqs cyclicCodon)
+    , getReversibility rootCodon == NonEq
+    , and $ zipWith near (toList productRoot) (toList $ CoreMarkov.getStartFreqs rootCodon)
+    ])
