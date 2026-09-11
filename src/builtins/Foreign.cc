@@ -225,42 +225,6 @@ extern "C" closure builtin_function_getTsvLine(OperationArgs& Args)
     return MCON::tsv_line(MCON::get_row(mapping, sample2));
 }
 
-// Encode actual component-state characters directly from their translated native views,
-// omitting the fixed-alignment (-1,-1) gap sentinel.
-extern "C" closure builtin_function_encodeComponentStateSequence(OperationArgs& Args)
-{
-    auto component_input = read_native_vector_input<int, ForeignDemand::use>(
-        Args, 0,
-        "Foreign.encodeComponentStateSequence components");
-    auto state_input = read_native_vector_input<int, ForeignDemand::use>(
-        Args, 3,
-        "Foreign.encodeComponentStateSequence states");
-    auto components = component_input.view();
-    auto states = state_input.view();
-    auto count = std::min(components.size(), states.size());
-
-    std::ostringstream o;
-    o<<"[";
-
-    bool first = true;
-    for(std::size_t i=0;i<count;i++)
-    {
-        int y1 = components[i];
-        int y2 = states[i];
-
-        if (y1 == -1 and y2 == -1)
-            continue;
-
-        if (not first)
-            o<<", ";
-        o<<"["<<y1<<", "<<y2<<"]";
-        first = false;
-    }
-    o<<"]";
-
-    return o.str();
-}
-
 // Encode the complete logical integer view without allocating boxed elements or filtering values.
 extern "C" closure builtin_function_encodeIntVector(OperationArgs& Args)
 {

@@ -1,0 +1,3 @@
+# Named arrays must reject malformed coordinates before property lookup.
+# Legacy pair tests do not exercise this shape; obsolete if the named format is removed.
+summarize chain.jsonl

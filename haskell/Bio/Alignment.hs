@@ -41,6 +41,7 @@ import qualified Data.Map as Map
 import Data.JSON
 
 import qualified Data.JSON.Encoding as E
+import Data.Vector.Unboxed.Internal (removeMinusOnes)
 
 -- Store the sampled substitution component and state for each site in two
 -- unboxed primitive arrays while retaining their domain-specific JSON rules.
@@ -292,11 +293,13 @@ instance IsTree t => AncestralAlignment (AlignmentOnTree t) where
 leafAlignment tree sequenceData = labelToNodeMap tree $ fmap (fmap bitmaskFromSequence) $ getSequences sequenceData
 
 
--- Encode one pair per actual character, omitting fixed-alignment gap sentinels
--- without constructing an intermediate pair list.
-foreign import trcall "Foreign:" encodeComponentStateSequence :: ComponentStateSequence -> Text
-
 instance ToJSON ComponentStateSequence where
     toJSON = error "ComponentStateSequence.toJSON: not implemented"
 
-    toEncoding sequence = E.unsafeToEncoding (encodeComponentStateSequence sequence)
+    -- Samplers initialize and overwrite both arrays together, so -1 marks the same absent
+    -- characters in each. Independent native filtering retains corresponding ungapped positions.
+    toEncoding (ComponentStateSequence values) =
+        E.pairs (E.pairStr "categories" (toEncoding (removeMinusOnes categories)) <>
+                 E.pairStr "states" (toEncoding (removeMinusOnes states)))
+      where
+        (categories, states) = U.unzip values

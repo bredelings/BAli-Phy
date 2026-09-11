@@ -176,6 +176,40 @@ std::vector<std::string> object_keys(const json::object& object)
     return names;
 }
 
+// Validate the two parallel arrays before indexing them. Legacy pair arrays remain readable
+// for existing sample logs; remove that compatibility branch when those logs are no longer supported.
+std::size_t character_sequence_length(const json::value& sequence, const std::string& context)
+{
+    if (sequence.is_array())
+        return sequence.as_array().size();
+    if (not sequence.is_object())
+        throw myexception()<<context<<": category states must be an object or a legacy array.";
+    const auto& categories = required_field(sequence.as_object(), "categories", context);
+    const auto& states = required_field(sequence.as_object(), "states", context);
+    if (not categories.is_array() or not states.is_array())
+        throw myexception()<<context<<": categories and states must be arrays.";
+    if (categories.as_array().size() != states.as_array().size())
+        throw myexception()<<context<<": categories and states lengths differ.";
+    return states.as_array().size();
+}
+
+// Read corresponding indices without constructing a converted sequence. The caller validates
+// named-array lengths first; legacy elements are checked here before either index is accessed.
+std::pair<std::uint64_t, std::uint64_t> character_indices(
+    const json::value& sequence, std::size_t character, const std::string& context)
+{
+    if (sequence.is_object())
+        return {nonnegative_integer(sequence.as_object().at("categories").as_array()[character],
+                                    context+": category index"),
+                nonnegative_integer(sequence.as_object().at("states").as_array()[character],
+                                    context+": state index")};
+    const auto& pair = sequence.as_array()[character];
+    if (not pair.is_array() or pair.as_array().size() != 2)
+        throw myexception()<<context<<": category-state value must be a two-element array.";
+    return {nonnegative_integer(pair.as_array()[0], context+": category index"),
+            nonnegative_integer(pair.as_array()[1], context+": state index")};
+}
+
 struct moment
 {
     double mean = 0;
@@ -191,16 +225,13 @@ class moment_accumulator
     std::uint64_t retained_samples_ = 0;
 
     /// Allocate one moment accumulator for every stable property and sequence character.
-    void initialize(const json::object& cat_states, const json::object& properties)
+    void initialize(const json::object& cat_states, const json::object& properties, const std::string& context)
     {
         property_names_ = object_keys(properties);
         sequence_names_ = object_keys(cat_states);
         for (const auto& name: sequence_names_)
         {
-            const auto& states = cat_states.at(name);
-            if (not states.is_array())
-                throw myexception()<<"Sequence '"<<name<<"' category states must be an array.";
-            sequence_lengths_[name] = states.as_array().size();
+            sequence_lengths_[name] = character_sequence_length(cat_states.at(name), context+": sequence '"+name+"'");
         }
         for (const auto& property_name: property_names_)
             for (const auto& sequence_name: sequence_names_)
@@ -216,13 +247,11 @@ class moment_accumulator
             throw myexception()<<context<<": sequence names changed.";
         for (const auto& name: sequence_names_)
         {
-            const auto& states = cat_states.at(name);
-            if (not states.is_array())
-                throw myexception()<<context<<": sequence '"<<name<<"' category states must be an array.";
-            if (states.as_array().size() != sequence_lengths_.at(name))
+            auto length = character_sequence_length(cat_states.at(name), context+": sequence '"+name+"'");
+            if (length != sequence_lengths_.at(name))
                 throw myexception()<<context<<": sequence '"<<name<<"' length changed; expected "
                                    <<sequence_lengths_.at(name)<<" characters, got "
-                                   <<states.as_array().size()<<".";
+                                   <<length<<".";
         }
     }
 
@@ -281,24 +310,20 @@ public:
 
         validate_property_tables(properties, context);
         if (sequence_names_.empty())
-            initialize(cat_states, properties);
+            initialize(cat_states, properties, context);
         else
             validate_shape(cat_states, properties, context);
 
         const std::uint64_t count = retained_samples_ + 1;
         for (const auto& sequence_name: sequence_names_)
         {
-            const auto& states = cat_states.at(sequence_name).as_array();
-            for (std::size_t character = 0; character < states.size(); character++)
+            const auto& states = cat_states.at(sequence_name);
+            const auto length = sequence_lengths_.at(sequence_name);
+            for (std::size_t character = 0; character < length; character++)
             {
                 std::string character_context = context+": sequence '"+sequence_name
                                                 +"' character "+std::to_string(character);
-                if (not states[character].is_array() or states[character].as_array().size() != 2)
-                    throw myexception()<<character_context
-                                       <<": category-state value must be a two-element array.";
-                const auto& pair = states[character].as_array();
-                auto component = nonnegative_integer(pair[0], character_context+": category index");
-                auto state = nonnegative_integer(pair[1], character_context+": state index");
+                auto [component, state] = character_indices(states, character, character_context);
 
                 for (const auto& property_name: property_names_)
                 {
@@ -564,10 +589,8 @@ struct median_entry
 /// Resolve one sampled property value for a character already validated in the moments pass.
 double replay_value(const json::object& sample, const median_entry& entry)
 {
-    const auto& state = sample.at("catStates").as_object().at(entry.location.sequence)
-                            .as_array()[entry.location.character].as_array();
-    auto component = nonnegative_integer(state[0], "replayed category index");
-    auto state_index = nonnegative_integer(state[1], "replayed state index");
+    const auto& sequence = sample.at("catStates").as_object().at(entry.location.sequence);
+    auto [component, state_index] = character_indices(sequence, entry.location.character, "replayed character");
     return finite_number(sample.at("properties").as_object().at(entry.property)
                              .as_array()[component].as_array()[state_index],
                          "replayed property value");

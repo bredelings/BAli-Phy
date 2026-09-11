@@ -1,1 +1,3 @@
+# Named-array samples protect unconditional and conditioned moments and medians.
+# Other cases retain legacy input; this shape coverage is obsolete if sample logging changes.
 summarize chain.jsonl

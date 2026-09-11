@@ -1,7 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 import Bio.Alignment (ComponentStateSequence(ComponentStateSequence),
-                      componentStates, encodeComponentStateSequence)
+                      componentStates)
 import Compiler.Num
 import qualified Data.JSON as JSON
 import qualified Data.Text.IO as Text
@@ -20,5 +20,5 @@ main = do
         sequence = ComponentStateSequence values
     print sequence
     print (U.toList (componentStates sequence))
-    Text.putStrLn (encodeComponentStateSequence sequence)
     Text.putStrLn (JSON.encode sequence)
+    Text.putStrLn (JSON.encode (ComponentStateSequence (U.empty :: U.Vector (Int,Int))))
