@@ -21,6 +21,9 @@ const PROPERTY_PALETTES = {
     },
 };
 
+// Central color sensitivity: 1 restores the original palette; smaller positive values soften it.
+const BLUE_GRAY_RED_CENTER_SLOPE = 0.5;
+
 const AUTO_SCALE_MIN_VALUES = 20;
 const AUTO_SCALE_MIN_DISTINCT_POSITIVE = 8;
 const AUTO_SCALE_BINS = 16;
@@ -448,7 +451,15 @@ function propertyPalette(name)
 function paletteColor(position, paletteName = 'viridis')
 {
     const stops = propertyPalette(paletteName).stops;
-    const scaled = clamp(position, 0, 1) * (stops.length - 1);
+    let coordinate = clamp(position, 0, 1);
+    if (paletteName === 'blue-gray-red') {
+        // Map signed distance from gray with a*x + (1-a)*x³ before RGB interpolation.
+        // For 0 < a <= 1 this is monotone, fixes gray/endpoints, and retains central slope a.
+        const x = 2 * coordinate - 1;
+        const a = BLUE_GRAY_RED_CENTER_SLOPE;
+        coordinate = (1 + a * x + (1 - a) * x * x * x) / 2;
+    }
+    const scaled = coordinate * (stops.length - 1);
     const lower = Math.floor(scaled);
     const upper = Math.ceil(scaled);
     const fraction = scaled - lower;
@@ -491,11 +502,15 @@ function rgb(color)
 // Produces the CSS gradient shared by one- and two-dimensional named-palette legends.
 function paletteGradient(paletteName = 'viridis')
 {
-    const colors = propertyPalette(paletteName).stops;
+    // Sample the curved palette every 1% so the legend approximates the cell colors,
+    // including exact center/endpoints. Explicit sRGB matches our channel interpolation.
+    const colors = paletteName === 'blue-gray-red' ?
+        Array.from({length: 101}, (_, index) => paletteColor(index / 100, paletteName)) :
+        propertyPalette(paletteName).stops;
     const last = colors.length - 1;
     const stops = colors.map((color, index) =>
         `${rgb(color)} ${(100 * index) / last}%`);
-    return `linear-gradient(to right, ${stops.join(', ')})`;
+    return `linear-gradient(to right${paletteName === 'blue-gray-red' ? ' in srgb' : ''}, ${stops.join(', ')})`;
 }
 
 const api = {

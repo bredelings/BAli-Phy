@@ -39,6 +39,29 @@ function assertClose(actual, expected, message)
                   'stale palette state is rejected rather than silently miscolored');
 }
 
+// Structural HTML checks cannot catch palette/legend disagreement or a flattened center.
+// Preserve these visual-scale contracts while the diverging palette uses central suppression.
+{
+    const name = 'blue-gray-red';
+    assert.deepEqual(paletteColor(0, name), [33, 102, 172]);
+    assert.deepEqual(paletteColor(1, name), [178, 24, 43]);
+    const gray = paletteColor(0.5, name);
+    for (const [position, original] of [[0.25, [103, 169, 207]], [0.75, [239, 138, 98]]]) {
+        const color = paletteColor(position, name);
+        assert.ok(color.every((channel, i) => Math.abs(channel - gray[i]) < Math.abs(original[i] - gray[i])),
+                  'intermediate colors move toward gray');
+    }
+    assert.notDeepEqual(paletteColor(0.49, name), gray);
+    assert.notDeepEqual(paletteColor(0.51, name), gray);
+    const gradient = paletteGradient(name);
+    assert.ok(gradient.startsWith('linear-gradient(to right in srgb,'));
+    for (const percent of [0, 25, 49, 50, 51, 75, 100]) {
+        const color = paletteColor(percent / 100, name);
+        assert.ok(gradient.includes(`rgb(${color.join(', ')}) ${percent}%`),
+                  'legend samples use the same colors as cells');
+    }
+}
+
 {
     const base = createScale([0, 2, 10], {
         transform: 'linear',
