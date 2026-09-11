@@ -1,0 +1,54 @@
+name: User Guide
+
+on:
+  push:
+    paths:
+      - 'doc/**'
+      - '.github/workflows/documentation.yml'
+  pull_request:
+    paths:
+      - 'doc/**'
+      - '.github/workflows/documentation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  user-guide:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install distribution packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make python3 python3-pygments weasyprint default-jre-headless nodejs npm fonts-dejavu-core
+      - name: Set up documentation tools
+        run: |
+          make -C doc TOOLS_DIR="$RUNNER_TEMP/user-guide-tools" setup-user-guide 2>&1 | tee "$RUNNER_TEMP/guide-setup.log"
+      - name: Build and check
+        run: |
+          make -C doc TOOLS_DIR="$RUNNER_TEMP/user-guide-tools" BUILD_DIR="$RUNNER_TEMP/user-guide" \
+            check-user-guide 2>&1 | tee "$RUNNER_TEMP/guide-build.log"
+          # WeasyPrint can finish successfully despite missing fonts or glyphs.
+          ! grep -E 'ERROR:|[.]notdef glyph|Font-face.*cannot be loaded' "$RUNNER_TEMP/guide-build.log"
+      - name: Retain HTML package and PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: user-guide
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/user-guide/README.html
+            ${{ runner.temp }}/user-guide/README.pdf
+            ${{ runner.temp }}/user-guide/user-guide.css
+            ${{ runner.temp }}/user-guide/user-guide-assets/
+      - name: Retain build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: user-guide-logs
+          path: ${{ runner.temp }}/guide-*.log
