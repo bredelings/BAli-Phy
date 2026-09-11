@@ -23,16 +23,16 @@
 	    "description": "The base mixture model"
         },
         {
-            "name": "s01",
+            "name": "r",
             "type": "Double",
-	    "default_value":"~Exponential(0.5)",
-	    "description":"Rate from OFF to ON"
+	    "default_value":"~Gamma(2,1/4)",
+	    "description":"s01 + s10"
         },
         {
-            "name": "s10",
+            "name": "pi1",
             "type": "Double",
-	    "default_value":"~Exponential(0.5)",
-	    "description":"Rate from ON to OFF"
+	    "default_value":"~Beta(2,2)",
+	    "description":"Fraction of time spent in the ON state"
         },
         {
             "name": "nu",
@@ -46,6 +46,20 @@
 	    "default_value":"~Uniform(0,1)",
 	    "description":"Fraction of sites undergoing class-switching"
         }
+    ],
+    "computed": [
+	{
+	    "name": "rate",
+	    "value": "2 * @r * @pi1 * (1 - @pi1)"
+	},
+	{
+	    "name": "s01",
+	    "value": "@r * @pi1"
+	},
+	{
+	    "name": "s10",
+	    "value": "@r * (1 - @pi1)"
+	}
     ],
     "description": "The WSSR covarion model implements both switching between ON/OFF states, and switching between classes.",
     "examples": ["GTR +> ASRV.Gamma +> Covarion.Wang07","GTR +> ASRV.Free +> Covarion.Wang07"],
