@@ -1,77 +1,95 @@
-# Building the documentation
+# Building the User Guide
 
-The User Guide source is `README.xml`. From this directory, run:
-
-```sh
-npm ci
-make user-guide
-```
-
-`npm ci` installs the locked build-time dependencies. It is a separate setup step;
-`make` does not install packages or download MathJax. Node.js 18 or newer is required
-for the converter tests. The remaining tools are Java, Python 3,
-Pygments (`pygmentize`), WeasyPrint, and the complete DocBook xslTNG 2.8.4 release.
-The build defaults to `~/Applications/docbook-xslTNG-2.8.4`; override it with:
+Install ordinary system tools first. On Ubuntu 24.04:
 
 ```sh
-make DOCBOOK_XSLTNG=/path/to/docbook-xslTNG-2.8.4 user-guide
+sudo apt-get install make python3 python3-pygments weasyprint default-jre-headless nodejs npm fonts-dejavu-core
 ```
 
-## HTML and PDF mathematics
+Then, from the checkout root:
 
-The build has these stages:
+```sh
+make -C doc setup-user-guide
+make -C doc check-user-guide
+```
+
+Setup obtains xslTNG if necessary and installs MathJax. It does not manage Python
+packages or fonts. Subsequent builds need only `make -C doc user-guide`.
+`README.html` and `README.pdf` remain convenience targets.
+
+Outputs are in `../../build/user-guide` relative to `doc/`. Publish `README.html` with
+`user-guide.css` and `user-guide-assets/`, including licenses. `README.pdf` is standalone.
+`README.print.html` is an intermediate input to WeasyPrint, not a file to publish.
+`make -C doc clean-user-guide` removes generated guide files, preserving the source
+and installed tools. Tutorial and Instructions retain their older build rules.
+
+## Installation choices
+
+Use `BUILD_DIR` and `TOOLS_DIR` to override the output and tool directories. Tools
+default to `../../build/user-guide-tools`, relative to `doc/`. To use an existing
+complete xslTNG installation, pass `DOCBOOK_XSLTNG=/path/to/docbook-xslTNG` to both
+setup and builds. Setup downloads release 2.8.4 by default; this is a known working
+choice, not a restriction on other installed releases.
+
+WeasyPrint and Pygments are taken from the normal command path. If distribution
+packages are unsuitable or unavailable, an optional virtual environment can supply them:
+
+```sh
+python3 -m venv ../build/guide-python
+. ../build/guide-python/bin/activate
+python3 -m pip install -r doc/requirements.txt
+```
+
+Install Python venv support and WeasyPrint's native Pango libraries if your system does
+not already provide them. Make respects the activated environment and never deletes it.
+Java, Node.js, npm, and fonts are installed separately with the system's usual tools.
+Node.js 18.17 or newer is needed by the asset checker.
+
+MathJax is installed from `package.json` without a project lockfile. Its version range
+allows updates within version 3 because the converter currently uses that package API.
+Rerun setup to install dependencies on another machine; use `npm update --prefix ../build/user-guide-tools/npm --package-lock=false` from the checkout root to update
+an existing default installation. Rebuild with `make -C doc -B user-guide` after tool
+updates if generated files are already present.
+
+## Authoring and rendering
+
+The source is ordinary XML in `README.xml`. Use `\(…\)` for inline mathematics and
+`\[…\]` for display mathematics. Keep each expression in one text segment, without
+XML markup inside it. XML still requires escaping `<` and `&` inside TeX.
+Dollar signs are ordinary text, including in shell examples.
+
+Browser and PDF rendering share `mathjax-config.js`: delimiters, the base/AMS TeX
+packages, and exclusions for code blocks, inline code, and command input. Prose,
+terms (including filename patterns), and table entries remain eligible.
 
 ```text
-README.xml → xslTNG → README.html
-                                                    ↓ render-math-svg.cjs
-                                                README.print.html
-                                                    ↓ WeasyPrint
-                                                README.pdf
+README.xml → xslTNG → README.html → local MathJax in the browser
+                         ↓ Node.js MathJax
+                     README.print.html → WeasyPrint → README.pdf
 ```
 
-The published HTML retains delimited TeX and loads the locally copied MathJax bundle.
-Its web fonts are still fetched by the browser. Publish `README.html`
-together with `user-guide.css` and `user-guide-assets/`.
+The browser MathJax bundle is copied from the same installation used by the PDF
+converter. PDF equations are self-contained SVG paths, retaining their dimensions
+and baseline offsets. Malformed TeX fails the conversion. WeasyPrint handles pagination,
+contents-page numbers, and links. Glyph paths do not guarantee selectable mathematical
+text or full PDF accessibility.
 
-For the PDF, MathJax runs locally under Node.js and replaces each delimited TeX expression
-with a self-contained SVG. Its glyphs are paths, with no external math-font files
-or shared glyph cache. The converter retains equation dimensions and vertical
-alignment so inline mathematics sits on the surrounding text's baseline.
-Malformed equations fail the conversion instead of silently becoming error glyphs.
-MathJax 3.2.2 is pinned to match the browser renderer; updating
-that dependency should include visual checks of the PDF equations.
+Text uses installed fonts, preferring DejaVu serif, sans-serif, and monospace families
+where available. The copied xslTNG stylesheet has Google Fonts imports removed, so
+viewing and rendering do not require a font download. System font fallbacks are allowed.
 
-`README.print.html` is generated for WeasyPrint, not for publication. It stays beside
-`README.html` so stylesheet and asset paths resolve the same way. WeasyPrint continues
-to handle pagination, contents-page numbers, and links. The Tutorial and Instructions
-PDF targets retain their existing build rules.
+## Checks and maintenance
 
-SVG paths preserve the appearance of mathematics, but they do not guarantee
-selectable mathematical text or accessible equation descriptions in the PDF.
-Existing mathematical labels are retained where MathJax includes them; this is
-not a claim of full PDF accessibility.
+`check-user-guide` builds HTML/PDF, runs the converter tests, and checks internal links
+and local assets using MathJax's existing HTML parser. The separate documentation CI
+job uses distribution packages and retains the HTML package, PDF, and build logs.
 
-## Checks and cleanup
+The requirement is faithful, readable output. Inspect equations, missing characters,
+tables, code wrapping, contents-page references, and any substantial increase in length.
+Small changes in line breaks, pagination, and typography are acceptable. There are no
+PDF snapshots or fixed page-count/font-inventory tests.
 
-```sh
-npm test
-make README.pdf
-```
-
-The focused converter checks cover surrounding links and text, inline placement,
-display equations, self-contained SVG output, and malformed mathematics. When
-changing the renderer, also inspect equations in the complete PDF, including
-`O(L²)`, `Γ₄ + Inv`, variables inside filenames, and model-table entries. Confirm
-that the contents list still has page numbers.
-
-`make clean-user-guide` removes generated guide files and copied assets. It preserves
-the source XML and installed dependencies. Outputs default to `../../build/user-guide`;
-set `BUILD_DIR` to override this location.
-
-## Authoring mathematics
-
-Use `\(…\)` for inline mathematics and `\[…\]` for display mathematics, with TeX
-inside the delimiters. Keep each expression in one text segment, without XML markup
-inside it. Dollar signs are ordinary text, including in shell examples. MathJax skips
-code blocks, inline code, and command input; prose, terms, and table entries remain
-eligible. Browser and PDF rendering share `mathjax-config.js`.
+Tool versions used in successful builds are useful diagnostic information, not exact
+requirements. Add compatibility restrictions only for demonstrated problems. A clean Ubuntu 24.04 build passed with its packaged WeasyPrint 61.1, Pygments 2.17.2,
+and Node.js 18.19.1. Local checks also passed with WeasyPrint 69.0, Pygments 2.20.0,
+Java 25, and Node.js 24. These are tested examples, not a required version list.

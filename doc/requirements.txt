@@ -1,0 +1,2 @@
+weasyprint
+Pygments

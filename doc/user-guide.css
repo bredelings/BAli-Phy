@@ -1,3 +1,10 @@
+/* Prefer common installed fonts; other systems may use their normal family fallbacks. */
+:root {
+    --body-family: "DejaVu Serif", serif;
+    --title-family: "DejaVu Sans", sans-serif;
+    --mono-family: "DejaVu Sans Mono", monospace;
+}
+
 /* User Guide additions to DocBook xslTNG's screen and print styles. */
 .command, .prompt {
     font-weight: bold;
@@ -81,11 +88,6 @@ td, th {
 
 @media print {
     :root {
-        /* Work around fontconfig preferring the upstream Symbol fallback to generic families.
-           Remove if the upstream print font lists no longer cause Latin text to use Symbol. */
-        --body-family: serif;
-        --title-family: sans-serif;
-        --mono-family: monospace;
         --margin-inner: 0.5in;
         --margin-outer: 0.5in;
         --margin-above: 0.5in;
