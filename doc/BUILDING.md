@@ -1,6 +1,6 @@
 # Building the documentation
 
-The User Guide source is `README.itex.xml`. From this directory, run:
+The User Guide source is `README.xml`. From this directory, run:
 
 ```sh
 npm ci
@@ -9,7 +9,7 @@ make README.html README.pdf
 
 `npm ci` installs the locked build-time dependencies. It is a separate setup step;
 `make` does not install packages or download MathJax. Node.js 18 or newer is required
-for the converter tests. The remaining tools are Java, Python 3, itex2MML,
+for the converter tests. The remaining tools are Java, Python 3,
 Pygments (`pygmentize`), WeasyPrint, and the complete DocBook xslTNG 2.8.4 release.
 The build defaults to `~/Applications/docbook-xslTNG-2.8.4`; override it with:
 
@@ -22,23 +22,23 @@ make DOCBOOK_XSLTNG=/path/to/docbook-xslTNG-2.8.4 README.html README.pdf
 The build has these stages:
 
 ```text
-README.itex.xml → itex2MML → README.xml → xslTNG → README.html
+README.xml → xslTNG → README.html
                                                     ↓ render-math-svg.cjs
                                                 README.print.html
                                                     ↓ WeasyPrint
                                                 README.pdf
 ```
 
-The published HTML retains MathML and the existing browser-side MathJax setup.
-Its web fonts and MathJax are still fetched by the browser. Publish `README.html`
+The published HTML retains delimited TeX and loads the locally copied MathJax bundle.
+Its web fonts are still fetched by the browser. Publish `README.html`
 together with `user-guide.css` and `user-guide-assets/`.
 
-For the PDF, MathJax runs locally under Node.js and replaces each MathML expression
+For the PDF, MathJax runs locally under Node.js and replaces each delimited TeX expression
 with a self-contained SVG. Its glyphs are paths, with no external math-font files
 or shared glyph cache. The converter retains equation dimensions and vertical
 alignment so inline mathematics sits on the surrounding text's baseline.
 Malformed equations fail the conversion instead of silently becoming error glyphs.
-MathJax 3.2.2 is pinned to match the existing browser-side major version; updating
+MathJax 3.2.2 is pinned to match the browser renderer; updating
 that dependency should include visual checks of the PDF equations.
 
 `README.print.html` is generated for WeasyPrint, not for publication. It stays beside
@@ -66,3 +66,11 @@ that the contents list still has page numbers.
 
 `make clean` removes generated HTML (including `README.print.html`), XML, PDFs,
 and copied stylesheet assets. It leaves the npm dependencies installed.
+
+## Authoring mathematics
+
+Use `\(…\)` for inline mathematics and `\[…\]` for display mathematics, with TeX
+inside the delimiters. Keep each expression in one text segment, without XML markup
+inside it. Dollar signs are ordinary text, including in shell examples. MathJax skips
+code blocks, inline code, and command input; prose, terms, and table entries remain
+eligible. Browser and PDF rendering share `mathjax-config.js`.

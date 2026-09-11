@@ -23,17 +23,6 @@
 
 <!ENTITY  baliphy    "BAli-Phy" >
 
-<!-- itex2MML emits named entities; remove these imports with that preprocessing step. -->
-<!ENTITY % sgml.features "IGNORE">
-<!ENTITY % xml.features "INCLUDE">
-<!ENTITY % dbcent
-      PUBLIC "-//OASIS//ENTITIES DocBook Character Entities V4.5//EN"
-             "/usr/share/xml/docbook/schema/dtd/4.5/dbcentx.mod">
-%dbcent;
-<!ENTITY % ent-mmlalias
-      PUBLIC "-//W3C//ENTITIES Aiases for MathML 2.0//EN"
-             "/usr/share/xml/schema/w3c/mathml/dtd/mmlalias.ent" >
-%ent-mmlalias;
 ]>
 <article xmlns="http://docbook.org/ns/docbook" version="5.0" 
          xmlns:mml="http://www.w3.org/1998/Math/MathML"
@@ -98,9 +87,9 @@
               xlink:href="&win64.url;"><filename>&win64.file;</filename></link>
         from the BAli-Phy release page.  Then open PowerShell and extract it into a versioned
         directory under your user account:</para>
-<screen><prompt>PS&gt;</prompt> <userinput>New-Item -ItemType Directory -Force "&#36;HOME\Applications"</userinput>
-<prompt>PS&gt;</prompt> <userinput>tar -xf "&#36;HOME\Downloads\&win64.file;" -C "&#36;HOME\Applications"</userinput>
-<prompt>PS&gt;</prompt> <userinput>&amp; "&#36;HOME\Applications\bali-phy-&version;\bin\bali-phy.exe" --version</userinput></screen>
+<screen><prompt>PS&gt;</prompt> <userinput>New-Item -ItemType Directory -Force "$HOME\Applications"</userinput>
+<prompt>PS&gt;</prompt> <userinput>tar -xf "$HOME\Downloads\&win64.file;" -C "$HOME\Applications"</userinput>
+<prompt>PS&gt;</prompt> <userinput>&amp; "$HOME\Applications\bali-phy-&version;\bin\bali-phy.exe" --version</userinput></screen>
       <para>If your browser downloaded the archive somewhere other than
         <filename>Downloads</filename>, replace that path with the location of the downloaded
         file.  The archive contains all required non-system runtime DLLs for the
@@ -108,7 +97,7 @@
         install MSYS2 to run the programs in the binary package.</para>
 
       <para>Add the BAli-Phy <filename>bin</filename> directory to the current PowerShell session:</para>
-<screen><prompt>PS&gt;</prompt> <userinput>&#36;env:Path = "&#36;HOME\Applications\bali-phy-&version;\bin;&#36;env:Path"</userinput></screen>
+<screen><prompt>PS&gt;</prompt> <userinput>$env:Path = "$HOME\Applications\bali-phy-&version;\bin;$env:Path"</userinput></screen>
       <para>For Command Prompt, use:</para>
 <screen><prompt>C:\&gt;</prompt> <userinput>set "PATH=%USERPROFILE%\Applications\bali-phy-&version;\bin;%PATH%"</userinput></screen>
       <para>These commands affect only the current terminal.  To make the setting permanent,
@@ -283,9 +272,9 @@ Only remove this attribute from an archive that you trust.  The <command>curl</c
         <para>If you extracted BAli-Phy under <filename>&install.prefix;</filename>, add its
           <filename>bin</filename> directory to the current <command>sh</command>,
           <command>bash</command>, or <command>zsh</command> shell:</para>
-<screen><prompt>%</prompt> <userinput>export PATH=&#36;HOME/Applications/bali-phy-&version;/bin:&#36;PATH</userinput></screen>
+<screen><prompt>%</prompt> <userinput>export PATH=$HOME/Applications/bali-phy-&version;/bin:$PATH</userinput></screen>
         <para>For <command>csh</command> or <command>tcsh</command>, use:</para>
-<screen><prompt>%</prompt> <userinput>setenv PATH &#36;HOME/Applications/bali-phy-&version;/bin:&#36;PATH</userinput></screen>
+<screen><prompt>%</prompt> <userinput>setenv PATH $HOME/Applications/bali-phy-&version;/bin:$PATH</userinput></screen>
         <para>To make the setting apply to future terminals, add the appropriate command to
           the startup file used by your shell.  For <command>zsh</command>, which is the
           default shell on macOS, add the <command>export</command> command to
@@ -305,7 +294,7 @@ Only remove this attribute from an archive that you trust.  The <command>curl</c
 
     <section xml:id="tests"><info><title>Test the installed software</title></info>
       <para>First copy an example alignment into a new working directory.  In PowerShell, use:</para>
-<screen><prompt>PS&gt;</prompt> <userinput>Copy-Item "&#36;HOME\Applications\bali-phy-&version;\share\doc\bali-phy\examples\5S-rRNA\25.fasta" .</userinput></screen>
+<screen><prompt>PS&gt;</prompt> <userinput>Copy-Item "$HOME\Applications\bali-phy-&version;\share\doc\bali-phy\examples\5S-rRNA\25.fasta" .</userinput></screen>
       <para>In Command Prompt, use:</para>
 <screen><prompt>C:\&gt;</prompt> <userinput>copy "%USERPROFILE%\Applications\bali-phy-&version;\share\doc\bali-phy\examples\5S-rRNA\25.fasta" .</userinput></screen>
       <para>On Linux, macOS, or WSL2, use:</para>
@@ -765,8 +754,8 @@ option.  For example:
 	
 
       <para>
-        Aligning just a pair of sequences takes $O(L^2)$ time
-	and memory, where $L$ represents the sequence length.  Therefore
+        Aligning just a pair of sequences takes \(O(L^2)\) time
+	and memory, where \(L\) represents the sequence length.  Therefore
 	sequences longer than (say) 1000 letters become increasingly
 	slow.
       </para>
@@ -824,16 +813,16 @@ option.  For example:
       
       <variablelist>
 	<varlistentry>
-	  <term>C1.P$n$.fastas</term>
+	  <term>C1.P\(n\).fastas</term>
 	  <listitem>
-	    <para>Sampled alignments for partition $n$ including ancestral sequences.</para>
+	    <para>Sampled alignments for partition \(n\) including ancestral sequences.</para>
 	  </listitem>
 	</varlistentry>
 	
 	<varlistentry>
-	  <term>C1.P$n$.initial.fasta</term>
+	  <term>C1.P\(n\).initial.fasta</term>
 	  <listitem>
-	    <para>The initial alignment for partition $n$.</para>
+	    <para>The initial alignment for partition \(n\).</para>
 	  </listitem>
 	</varlistentry>
 	
@@ -854,9 +843,9 @@ option.  For example:
 	</varlistentry>
 
 	<varlistentry>
-	  <term>C1.P$n$.site-property-samples.jsonl</term>
+	  <term>C1.P\(n\).site-property-samples.jsonl</term>
 	  <listitem>
-	    <para>Sampled character properties for partition $n$, when property logging is enabled.</para>
+	    <para>Sampled character properties for partition \(n\), when property logging is enabled.</para>
 	  </listitem>
 	</varlistentry>
 	
@@ -944,44 +933,44 @@ option.  For example:
 	</varlistentry>
 
 	<varlistentry>
-	  <term>P$n$/likelihood</term>
+	  <term>P\(n\)/likelihood</term>
 	  <listitem>
-	    <para>The substitution log-likelihood for partition $n$. </para>
+	    <para>The substitution log-likelihood for partition \(n\). </para>
 	  </listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term>P$n$/prior_A</term>
+	  <term>P\(n\)/prior_A</term>
 	  <listitem>
-	    <para>The log-probability of the alignment for partition $n$.</para>
+	    <para>The log-probability of the alignment for partition \(n\).</para>
 	  </listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term>P$n$/|A|</term>
+	  <term>P\(n\)/|A|</term>
 	  <listitem>
-	    <para>The length of the alignment in the $n$th partition.</para>
+	    <para>The length of the alignment in the \(n\)th partition.</para>
 	  </listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term>P$n$/#indels</term>
+	  <term>P\(n\)/#indels</term>
 	  <listitem>
-	    <para>The number of indel events in partition $n$, if we group adjacent indels that occur on the same branch.</para>
+	    <para>The number of indel events in partition \(n\), if we group adjacent indels that occur on the same branch.</para>
 	  </listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term>P$n$/|indels|</term>
+	  <term>P\(n\)/|indels|</term>
 	  <listitem>
-	    <para>The length of indel events in partition $n$, if we group adjacent indels that occur on the same branch.</para>
+	    <para>The length of indel events in partition \(n\), if we group adjacent indels that occur on the same branch.</para>
 	  </listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term>P$n$/#substs</term>
+	  <term>P\(n\)/#substs</term>
 	  <listitem>
-	    <para>The unweighted parsimony score for substitutions in partition $n$.</para>
+	    <para>The unweighted parsimony score for substitutions in partition \(n\).</para>
 	  </listitem>
 	</varlistentry>
 
@@ -993,17 +982,17 @@ option.  For example:
 	</varlistentry>
 
 	<varlistentry>
-	  <term>scale$n$</term>
+	  <term>scale\(n\)</term>
 	  <listitem>
 	    <para>The factor that multiplies every branch length in the shared tree for
-	    partitions in the $n$th scale group.</para>
+	    partitions in the \(n\)th scale group.</para>
 	  </listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term>scale$n$&#160;*&#160;|T|</term>
+	  <term>scale\(n\)&#160;*&#160;|T|</term>
 	  <listitem>
-	    <para>The scaled tree length for partitions in the $n$th scale group: the
+	    <para>The scaled tree length for partitions in the \(n\)th scale group: the
 	    expected number of substitutions per site summed over the entire tree.</para>
 	  </listitem>
 	</varlistentry>
@@ -2158,8 +2147,8 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
           This allows you to change the underlying nucleotide model or add other modifications.
           </para>
 
-          <para>Unconstrained $\omega$ parameters default to <code language="bali-phy-model">LogNormal(0,1)</code>,
-          giving equal prior probability below and above one. To restrict $\omega$ below one,
+          <para>Unconstrained \(\omega\) parameters default to <code language="bali-phy-model">LogNormal(0,1)</code>,
+          giving equal prior probability below and above one. To restrict \(\omega\) below one,
           specify <code language="bali-phy-model">omega~Uniform(0,1)</code>, for example
           <code language="bali-phy-model">GY94(omega~Uniform(0,1))</code>. Conserved categories in mixture models
           retain their constrained priors.</para>
@@ -2409,8 +2398,8 @@ If the genetic code is not specified, then the standard code is used:
 
 	      <row>
 		<entry><code language="bali-phy-model">M3</code></entry>
-		<entry>df(<replaceable>submodel</replaceable>)+2*$n$-1</entry>
-		<entry><para>An free mixture of $n$ categories of conserved dN/dS values.</para>
+		<entry>df(<replaceable>submodel</replaceable>)+2*\(n\)-1</entry>
+		<entry><para>An free mixture of \(n\) categories of conserved dN/dS values.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/155.1.431">
 		  (Yang et al., 2000)
 		</link>
@@ -2421,7 +2410,7 @@ If the genetic code is not specified, then the standard code is used:
 		<entry>
 		  <para><code language="bali-phy-model">M3_test</code></para>
 		</entry>
-		<entry>df(<replaceable>submodel</replaceable>)+2*$n$+1</entry>
+		<entry>df(<replaceable>submodel</replaceable>)+2*\(n\)+1</entry>
 		<entry>
 		  <para>A Bayesian test for positive selection based on the M3 model extended with an extra category of either neutral of positively-selected sites.</para>
 		</entry>
@@ -2511,7 +2500,7 @@ beta = concentration*(1-mu)</programlisting>
     
     <para>
       Complex substitution models in <application>BAli-Phy</application>
-      are constructed as mixtures of reversible CTMC models that run at different rates (e.g. $\Gamma_4 + Inv$)
+      are constructed as mixtures of reversible CTMC models that run at different rates (e.g. \(\Gamma_4 + Inv\))
       or have different parameters (e.g. an M2a codon model).
     </para>
 
@@ -2546,8 +2535,8 @@ beta = concentration*(1-mu)</programlisting>
 
 	    <row>
 	      <entry><para><code language="bali-phy-model"><replaceable>submodel</replaceable>&#160;+>&#160;ASRV.Free</code></para></entry>
-	      <entry>df(<replaceable>submodel</replaceable>)+2($n$-1)</entry>
-	      <entry><para>Sites fall in one of $n$ categories. Each category has its own rate.</para>
+	      <entry>df(<replaceable>submodel</replaceable>)+2(\(n\)-1)</entry>
+	      <entry><para>Sites fall in one of \(n\) categories. Each category has its own rate.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/139.2.993">
 		    (Yang, 1995)
 		  </link>
@@ -2672,7 +2661,7 @@ beta = concentration*(1-mu)</programlisting>
 
     <section xml:id="indel_models"><info><title>Insertion/deletion models</title></info>
       
-    <para>Each of these models is a probability distribution on pairwise alignments.  The probability distribution on multiple sequence alignments $\Pr(A|T,\tau,\Lambda)$ is constructed by factoring the multiple sequence alignment into pairwise alignments along each branch of the tree, as described in Redelings and Suchard (2005).</para>
+    <para>Each of these models is a probability distribution on pairwise alignments.  The probability distribution on multiple sequence alignments \(\Pr(A|T,\tau,\Lambda)\) is constructed by factoring the multiple sequence alignment into pairwise alignments along each branch of the tree, as described in Redelings and Suchard (2005).</para>
 
 	<para>The default insertion/deletion model is <code language="bali-phy-model">RS07</code>.</para>
 	
@@ -2897,7 +2886,7 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
   <section xml:id="character-properties"><info><title>Character properties</title></info>
 
     <para>Character properties describe quantities such as the substitution rate of each observed letter.
-    For codon models, a letter is a whole codon; properties can include its $\omega$ value and
+    For codon models, a letter is a whole codon; properties can include its \(\omega\) value and
     probability of positive selection. Which properties are available depends on the model.</para>
 
     <para>Properties belong to letters, not alignment columns. A letter keeps its identity as
@@ -2934,7 +2923,7 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
   <section xml:id="positive-selection"><info><title>Positive selection</title></info>
 
     <para>Codon models distinguish synonymous changes, which preserve the amino acid, from
-    nonsynonymous changes, which alter it. The parameter $\omega$ (often called dN/dS)
+    nonsynonymous changes, which alter it. The parameter \(\omega\) (often called dN/dS)
     multiplies the nonsynonymous rates in a codon model. Values below one reduce these rates;
     values above one increase them and represent diversifying positive selection.
     Here positive selection means an excess of amino-acid changes relative to the model's
@@ -3567,7 +3556,7 @@ is customarily considered to be small enough if it is less than 1.01.
 We compare the PSRF based on the length of 80% credible intervals
 (Brooks and Gelman 1998) and report the result as PSRF-80%CI.  For
 integer-valued parameters, we add 1 to both the pooled and within-run interval widths
-before taking their ratio, since an integer interval from $a$ to $b$ contains $b-a+1$ values.
+before taking their ratio, since an integer interval from \(a\) to \(b\) contains \(b-a+1\) values.
 </para>
 
 <para>
@@ -3899,7 +3888,7 @@ Otherwise you can install meson through pip3:
 </para>
 <para>
 Then run meson to configure the build process:
-<screen><prompt>%</prompt><userinput> meson setup build --prefix=&#36;HOME/Applications/bali-phy-&version;/ --buildtype=release</userinput></screen>
+<screen><prompt>%</prompt><userinput> meson setup build --prefix=$HOME/Applications/bali-phy-&version;/ --buildtype=release</userinput></screen>
 </para>
 <para>
 Finally, build and install the software:
@@ -3913,12 +3902,12 @@ The command <command>bali-phy</command> and its associated tools should then be 
       <section><info><title>Options: compiler and linker flags</title></info>
 	
       <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-14</command> on systems where <command>g++</command> invokes a compiler that is too old:
- <screen><prompt>%</prompt> <userinput>CXX=g++-14 meson setup build --prefix=&#36;HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
+ <screen><prompt>%</prompt> <userinput>CXX=g++-14 meson setup build --prefix=$HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
  You may also set compiler and linker options using the CPPFLAGS, CXXFLAGS, and LDFLAGS variables.  For example, you can instruct the compiler to use all the features of your chip, instead of producing generic code that will run anywhere:
- <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mtune=native -march=native" meson setup build --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
+ <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mtune=native -march=native" meson setup build --prefix=$HOME/Applications/bali-phy-&version;</userinput></screen>
 
  For example, you can set the CPPFLAGS and LDFLAGS variables to instruct the compiler where to look for libraries, such as cairo:
-	  <screen><prompt>%</prompt> <userinput>CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" meson setup build --prefix=&#36;HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" meson setup build --prefix=$HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
       </para>
       </section>
 

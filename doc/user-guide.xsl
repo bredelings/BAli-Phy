@@ -88,12 +88,14 @@
   </xsl:template>
 
   <!-- Both browser viewing and PDF generation use the same HTML. Keep the upstream
-       CSS intact, including its web fonts, and leave MathJax at its default. -->
+       CSS intact. Load MathJax explicitly because TeX text does not trigger xslTNG math detection. -->
   <xsl:param name="use-docbook-css" select="'false'"/>
   <xsl:template match="*" mode="m:html-head-links">
     <link rel="stylesheet" href="user-guide-assets/docbook.css" media="screen"/>
     <link rel="stylesheet" href="user-guide-assets/docbook-paged.css" media="print"/>
     <link rel="stylesheet" href="user-guide.css"/>
+    <script src="user-guide-assets/mathjax-config.js"></script>
+    <script defer="defer" src="user-guide-assets/tex-svg.js"></script>
   </xsl:template>
 
 </xsl:stylesheet>

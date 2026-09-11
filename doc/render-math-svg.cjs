@@ -2,7 +2,9 @@
 
 const fs = require('node:fs');
 const {mathjax} = require('mathjax-full/js/mathjax.js');
-const {MathML} = require('mathjax-full/js/input/mathml.js');
+const {TeX} = require('mathjax-full/js/input/tex.js');
+require('mathjax-full/js/input/tex/ams/AmsConfiguration.js');
+const config = require('./mathjax-config.js');
 const {SVG} = require('mathjax-full/js/output/svg.js');
 const {liteAdaptor} = require('mathjax-full/js/adaptors/liteAdaptor.js');
 const {RegisterHTMLHandler} = require('mathjax-full/js/handlers/html.js');
@@ -10,22 +12,23 @@ const {RegisterHTMLHandler} = require('mathjax-full/js/handlers/html.js');
 const adaptor = liteAdaptor();
 RegisterHTMLHandler(adaptor);
 
-// Replace MathML with self-contained SVG while preserving the surrounding HTML and links.
+// Replace delimited TeX with self-contained SVG while preserving the surrounding HTML and links.
 // Ordinary SVG elements let WeasyPrint position inline math without MathJax's browser CSS.
 function renderMath(html)
 {
     const document = mathjax.document(html, {
-        InputJax: new MathML(),
+        ...config.options,
+        InputJax: new TeX(config.tex),
         OutputJax: new SVG({fontCache: 'none'}),
         compileError: (_document, _math, error) => { throw error; },
         typesetError: (_document, _math, error) => { throw error; },
     });
     document.render();
     for (const math of document.math) {
-        // Some malformed MathML compiles to an error node instead of throwing an exception.
+        // Some malformed TeX compiles to an error node instead of throwing an exception.
         math.root.walkTree(node => {
             if (node.kind === 'merror')
-                throw new Error(`Cannot render MathML: ${math.math}`);
+                throw new Error(`Cannot render TeX: ${math.math}`);
         });
         const container = math.typesetRoot;
         const svg = adaptor.firstChild(container);
