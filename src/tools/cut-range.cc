@@ -50,8 +50,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     visible.add_options()
 	("help,h", "produce help message")
 	("key", value<string>()->default_value("iterations"),"cut based on values of <key>=value")
-	("skip",value<int>(),"the number of samples to skip")
-	("until",value<int>(),"last sample to use")
+	("skip",value<int>(),"minimum key value to retain (inclusive)")
+	("until",value<int>(),"maximum key value to retain (inclusive)")
 	("subsample",value<int>()->default_value(1),"keep only every NUM eligible samples")
 	("size",value<int>(),"maximum number of samples to use")
 	("verbose","Output more log messages on stderr.")
@@ -115,7 +115,7 @@ void cut_range(std::istream& in, std::ostream& out,
 	    if (max and value > *max)
 		return;
 
-	    bool eligible = not min or value > *min;
+	    bool eligible = not min or value >= *min;
 	    in_interval = eligible and eligible_record % subsample == 0;
 	    if (eligible)
 		eligible_record++;

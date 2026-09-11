@@ -22,10 +22,10 @@ Select lines from multiple input files based on lines containing `key = value`.
 : cut based on values of _key_=value
 
 **--skip** _arg_
-: the number of samples to skip
+: Minimum key value to retain, inclusive (an iteration number by default).
 
 **--until** _arg_
-: last sample to use
+: Maximum key value to retain, inclusive.
 
 **--size** _arg_
 : maximum number of samples to use
@@ -46,4 +46,3 @@ Select alignments after the first 100 iterations from two different runs:
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 
 Please send bug reports to <bali-phy-users@googlegroups.com>.
-

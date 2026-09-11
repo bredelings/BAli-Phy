@@ -87,7 +87,7 @@ json::object decode_sample(const std::string& line, const std::string& context)
     return std::move(sample.as_object());
 }
 
-/// Stream selected samples from one opened chain using strict skip, inclusive until, and post-filter stride.
+/// Stream samples from one chain using inclusive iteration bounds and post-filter stride.
 std::uint64_t visit_chain(sample_file_reader& input,
                           const std::filesystem::path& filename,
                           const sample_selection& selection,
@@ -112,7 +112,7 @@ std::uint64_t visit_chain(sample_file_reader& input,
 
         if (selection.until and iteration > static_cast<std::uint64_t>(*selection.until))
             break;
-        if (selection.skip and iteration <= static_cast<std::uint64_t>(*selection.skip))
+        if (selection.skip and iteration < static_cast<std::uint64_t>(*selection.skip))
             continue;
         bool retain = eligible_samples % selection.subsample == 0;
         eligible_samples++;
@@ -705,8 +705,8 @@ summary summarize(const summarize_options& options)
     if (options.median_memory_mib == 0)
         throw myexception()<<"--median-memory must be positive.";
     if (options.selection.skip and options.selection.until
-        and *options.selection.until <= *options.selection.skip)
-        throw myexception()<<"--until must be greater than --skip.";
+        and *options.selection.until < *options.selection.skip)
+        throw myexception()<<"--until must be at least --skip.";
 
     summary_accumulator moments(options.filenames.size());
     auto samples = capture_samples(

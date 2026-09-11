@@ -1,1 +1,1 @@
-chain1.txt chain2.txt --subsample=2
+chain1.txt chain2.txt --skip=10 --until=10 --subsample=2

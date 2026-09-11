@@ -8,6 +8,8 @@
 - Rename the Rates.* models to ASRV.*. The old names remain as deprecated synonyms.
 - Rename bp-analyze -> bpy-summarize.
 - Rename bali-subsample -> bpy-subsample.
+- `cut-range` and `character-properties summarize` now retain iteration `n` with `--skip=n`,
+  discarding only earlier iterations.
 
 ## Features
 

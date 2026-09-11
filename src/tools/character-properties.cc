@@ -50,7 +50,7 @@ static summarize_options parse_summarize_options(int argc, char* argv[])
     po::options_description visible("Allowed options");
     visible.add_options()
         ("help,h", "Produce help message.")
-        ("skip", po::value<std::int64_t>(), "Discard samples at or before this iteration.")
+        ("skip", po::value<std::int64_t>(), "Discard samples before this iteration.")
         ("until", po::value<std::int64_t>(), "Discard samples after this iteration.")
         ("subsample", po::value<std::int64_t>()->default_value(1),
          "Retain every Nth eligible sample per chain.")

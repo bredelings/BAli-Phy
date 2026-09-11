@@ -68,7 +68,7 @@ corresponding `-dNdS` property when it exists.
 # SUMMARIZE OPTIONS
 
 **--skip=ITER**
-: Discard records at or before iteration _ITER_.
+: Discard records before iteration _ITER_.
 
 **--until=ITER**
 : Discard records after iteration _ITER_.

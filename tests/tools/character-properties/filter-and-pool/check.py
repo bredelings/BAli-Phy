@@ -4,8 +4,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _check_summary import read_summary, require_equal
 
+# Exact iteration boundaries and per-chain stride must agree with alignment selection.
+# This pooled check catches boundary shifts that unfiltered tests miss; retain with filtering.
 summary = read_summary(sys.argv[1])
-require_equal(summary["selection"], {"skip": 0, "until": 30, "subsample": 2})
+require_equal(summary["selection"], {"skip": 10, "until": 30, "subsample": 2})
 require_equal(summary["retained_samples"], 4)
 require_equal(summary["retained_samples_by_chain"], [2, 2])
 require_equal(summary["properties"]["rate"]["mean"], {"A": [70.0]})

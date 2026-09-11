@@ -1,11 +1,18 @@
-iterations = 10
+iterations = 0
 
 >A
 AC
 >B
 A-
 
-iterations = 30
+iterations = 20
+
+>A
+AC
+>B
+A-
+
+iterations = 40
 
 >A
 AC
