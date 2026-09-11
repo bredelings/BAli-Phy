@@ -31,7 +31,7 @@
 	    "description": "The alphabet"
 	}
     ],
-    "description": "The FMutSel model is identical to GTR +> x3 +> MutSel +> dNdS",
+    "description": "With its default nucleotide model, FMutSel is equivalent to GTR +> x3 +> MutSel +> dNdS.\n\nStationary nucleotide inputs produce stationary codon models, whether reversible or not.\n\nFor non-equilibrium inputs, codon root frequencies are calculated from the nucleotide root frequencies; fitnesses and omega do not change them.",
     "extract": "all",
     "see": ["MutSel","FMutSel0"],
     "citation":{"type": "article",

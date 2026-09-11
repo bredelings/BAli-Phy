@@ -8,7 +8,7 @@ import SModel.Codons
 import SModel.Frequency -- for get_ordered_elements
 import Bio.Alphabet
 import qualified Markov
-import Markov (getQ, getEqFreqs)
+import Markov (getQ, getStartFreqs)
 import Reversible    
 import Numeric.LinearAlgebra.Data
 
@@ -36,15 +36,23 @@ mut_sel_pi frequencies fitness =
 -- MutSel changes Q and pi without changing components or state identities, so
 -- carry construction annotations onto the reconstructed numerical model.
 mut_sel ws' m0@(Markov a smap _ _ annotations) =
-    case setReversibility rv $ markov a smap q pi of
+    case model of
       Markov a' smap' process modelRate _ -> Markov a' smap' process modelRate annotations
   where
     rv = getReversibility m0
     q0 = getQ m0
-    pi0 = getEqFreqs m0
+    pi0 = getStartFreqs m0
     ws = fromList ws'
     q = mut_sel_q q0 ws
     pi = mut_sel_pi pi0 ws
+    -- For reversible inputs, equilibrium frequencies are proportional to pi0[i] * exp(F[i]).
+    -- For EqNonRev, use the equilibrium limit starting from these weighted frequencies.
+    -- This agrees with the reversible formula even when the matrix is reducible.
+    -- For NonEq, leave root frequencies unchanged.
+    model = case rv of
+        EqRev    -> setReversibility EqRev $ markov a smap q pi
+        EqNonRev -> eqMarkovFrom a smap q pi
+        NonEq    -> markov a smap q pi0
 
 mut_sel' w' q0 = mut_sel w q0 where
     w = get_ordered_elements (getLetters a) w' "fitnesses"

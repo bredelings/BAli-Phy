@@ -35,3 +35,4 @@ True
 [True,False]
 ("x3 frequencies",[True,True,True,True,True])
 ("dNdS frequencies",[True,True,True,True,True])
+("MutSel frequencies",[True,True,True,True])

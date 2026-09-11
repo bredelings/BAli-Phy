@@ -5,6 +5,7 @@
     "call": "mut_sel'(@ss,@submodel)",
     "import": ["SModel","Bio.Alphabet"],
     "title": "Mutation-selection model with fitness values for codons",
+    "description": "Stationary inputs produce stationary models, whether reversible or not.\n\nNon-equilibrium inputs retain their root frequencies.",
     "args": [
         {
             "name": "submodel",

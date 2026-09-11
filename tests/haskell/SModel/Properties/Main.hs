@@ -268,3 +268,17 @@ main = do
     , getReversibility selectedRoot == NonEq
     , and $ zipWith near (toList productRoot) (toList $ CoreMarkov.getStartFreqs selectedRoot)
     ])
+
+  -- Check equilibrium and root-frequency behavior with unequal fitnesses.
+  -- Existing zero-fitness and annotation tests miss incorrect frequency handling.
+  -- Retain while MutSel supports stationary non-reversible and non-equilibrium inputs.
+  let fitnesses = [0,1,-1,2]
+      fitCyclic = mut_sel fitnesses cyclicNuc
+      fitRoot = mut_sel fitnesses rootNuc
+  putStrLn $ show ("MutSel frequencies",
+    [ getReversibility fitCyclic == EqNonRev
+    , CoreMarkov.checkStationary (CoreMarkov.getQ fitCyclic) (CoreMarkov.getStartFreqs fitCyclic)
+    , getReversibility fitRoot == NonEq
+    , and $ zipWith near (toList $ CoreMarkov.getStartFreqs rootNuc)
+                        (toList $ CoreMarkov.getStartFreqs fitRoot)
+    ])

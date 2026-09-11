@@ -5,6 +5,7 @@
     "result_type": "CTMC<Codons<a>>",
     "constraints": ["Nucleotides<a>"],
     "title": "Mutation-selection model with fitness values for amino-acids",
+    "description": "Stationary inputs produce stationary models, whether reversible or not.\n\nNon-equilibrium inputs retain their root frequencies.",
     "call": "mut_sel_aa'(@ss,@submodel)",
     "import": ["SModel"],
     "args": [
