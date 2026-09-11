@@ -368,7 +368,7 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
     def test_parses_informative_site_percentage(self):
         analysis = Analysis.__new__(Analysis)
         analysis.exec_show = lambda command: "sites: inform.: 7 (35%)\n"
-        features = analysis.get_alignment_info(Path("alignment.fasta"))
+        features = analysis.get_alignment_info(Path("alignment.fasta"), "DNA")
         self.assertEqual(features["n_inform"], "7")
         self.assertEqual(features["p_inform"], "35")
 

@@ -121,6 +121,65 @@ class BPYSummarizePropertyTests(unittest.TestCase):
         analysis.verbose = False
         return analysis
 
+    # Native tests cover selection and codon parsing, not the report's command arguments.
+    # Keep full alphabets and paired-sample selection connected; remove with these report stages.
+    def test_alignment_commands_preserve_alphabet_and_sample_selection(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            analysis = self.make_analysis(directory, [[None]])
+            alphabet = "Codons(DNA,mt-vert)"
+            analysis.get_alphabets = lambda: [alphabet]
+            analysis.get_imodel_for_partition = lambda p: "RS07"
+            alignments = directory / "C1.P1.fastas"
+            trees = directory / "C1.trees"
+            template = directory / "P1.consensus.pd-wsum.fasta"
+            query = directory / "greedy.tree"
+            for filename in (alignments, trees, template, query):
+                filename.write_text("input\n", encoding="utf-8")
+            analysis.get_alignments_for_partition = lambda p: [alignments]
+            analysis.get_trees_files = lambda: [trees]
+            analysis.alignments = []
+            analysis.make_ordered_alignment = lambda name: None
+            analysis.character_property_summaries = [None]
+            commands = []
+
+            # Capture commands and provide the output needed for the timestamp checks.
+            def execute(command, **kwargs):
+                commands.append(command)
+                if "outfile" in kwargs:
+                    Path(kwargs["outfile"]).write_text("output\n", encoding="utf-8")
+                return ""
+
+            analysis.exec_show = execute
+            analysis.exec_pipeline = lambda pipeline, outfile: commands.extend(pipeline)
+            analysis.compute_wpd_alignments()
+            analysis.compute_ancestral_states()
+            analysis.get_alignment_info(template, alphabet)
+            for command in commands:
+                if command[0] in {"alignment-max", "summarize-ancestors", "alignment-info"}:
+                    self.assertEqual(command[command.index("--alphabet") + 1], alphabet)
+            ancestors = next(c for c in commands if c[0] == "summarize-ancestors")
+            for option in ("--skip=10", "--until=80", "--thin=3"):
+                self.assertIn(option, ancestors)
+            self.assertFalse(any(str(c).startswith("--subsample") for c in ancestors))
+            self.assertEqual(ancestors[ancestors.index("-A") + 1], alignments)
+            self.assertEqual(ancestors[ancestors.index("-T") + 1], trees)
+
+            # The query and template must invalidate ancestral output independently of raw logs.
+            output = directory / "P1.ancestors.fasta"
+            for source in (query, template):
+                before = len(commands)
+                os.utime(source, (output.stat().st_mtime + 10,) * 2)
+                analysis.compute_ancestral_states()
+                self.assertEqual(len(commands), before + 1)
+
+            commands.clear()
+            analysis.draw_alignments()
+            diff = next(c for c in commands if c[0] == "alignments-diff")
+            draw_diff = next(c for c in commands if "--scale=identity" in c)
+            self.assertNotIn("--alphabet", diff)
+            self.assertNotIn("--alphabet", draw_diff)
+
     # Discover exact one-based logger filenames without inventing absent streams.
     def test_discovers_partition_property_logs(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -209,6 +268,7 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             analysis = self.make_analysis(directory, [])
             analysis.character_property_summaries = [summary]
             analysis.get_imodel_for_partition = lambda p: None
+            analysis.get_alphabets = lambda: ["Codons(DNA,mt-vert)"]
             commands = []
 
             # Materialize a small valid table for each requested property report.
@@ -232,6 +292,8 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             self.assertEqual(len(commands), 2)
             background_command, conditioned_command = commands
             self.assertEqual(background_command[4], "background-posSelection")
+            self.assertEqual(background_command[background_command.index("--alphabet") + 1],
+                             "Codons(DNA,mt-vert)")
             self.assertIn("--unconditional", background_command)
             self.assertEqual(conditioned_command[4], "posSelection")
             self.assertNotIn("--unconditional", conditioned_command)

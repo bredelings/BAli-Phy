@@ -1627,8 +1627,8 @@ class Analysis(object):
         print(" done.")
 
 
-    def get_alignment_info(self,filename):
-        output = self.exec_show(['alignment-info',filename])
+    def get_alignment_info(self,filename,alphabet):
+        output = self.exec_show(['alignment-info',filename,'--alphabet',alphabet])
         features = dict()
         for line in output.split('\n'):
             m = re.match(r'Alphabet: (.*)$', line)
@@ -1967,6 +1967,7 @@ class Analysis(object):
                 command = [
                     "character-properties", "positive-selection", summary, alignment, property_name,
                     "--highest=100%", "--sort=decreasing", "--format=tsv",
+                    "--alphabet", self.get_alphabets()[partition],
                 ]
                 if not use_condition:
                     command.append("--unconditional")
@@ -2027,7 +2028,7 @@ class Analysis(object):
                         cut_cmd.append(f"--subsample={self.subsample}")
 
                     chop_cmd=['alignment-chop-internal','--tree',self.outdir / 'MAP.tree']
-                    max_cmd=['alignment-max',f'--score={score}']
+                    max_cmd=['alignment-max',f'--score={score}', '--alphabet', self.get_alphabets()[i]]
                     self.exec_pipeline([cut_cmd, chop_cmd, max_cmd], unordered)
                 self.make_ordered_alignment(name)
         print(" done.")
@@ -2129,7 +2130,7 @@ class Analysis(object):
             )
             print('*',end='',flush=True)
 
-        # Here we draw the alignment diffs
+        # The difference view deliberately uses text/nucleotide coordinates in both commands.
         for i in range(self.n_partitions()):
             if self.get_imodel_for_partition(i) is None:
                 continue
@@ -2166,15 +2167,21 @@ class Analysis(object):
             if self.get_imodel_for_partition(i) is None:
                 template = self.outdir / f"P{i+1}.initial.fasta"
             tree = self.outdir / "greedy.tree"
-            cmd = ['summarize-ancestors',template,'-n',tree,'--nodes-min=0.1']
+            cmd = ['summarize-ancestors',template,'-n',tree,'--nodes-min=0.1',
+                   '--alphabet',self.get_alphabets()[i]]
+            if self.burnin is not None:
+                cmd.append(f'--skip={self.burnin}')
+            if self.until is not None:
+                cmd.append(f'--until={self.until}')
+            if self.subsample is not None and self.subsample != 1:
+                cmd.append(f'--thin={self.subsample}')
 #           QUESTION: Should we make a flag to log ancestors at the end of branches too?
             if False:
                 cmd += ['-g',tree,'--groups-min=0.1']
-            for dir in [run.dir for run in self.mcmc_runs]:
-                cmd += ['-A',dir / f'C1.P{i+1}.fastas',
-                        '-T',dir / 'C1.trees']
+            for afile, tfile in zip(afiles, self.get_trees_files()):
+                cmd += ['-A',afile,'-T',tfile]
             output = self.outdir / f"P{i+1}.ancestors.fasta"
-            if not more_recent_than_all_of(output,self.get_trees_files()+list(filter(lambda x:x is not None,flatten(self.get_alignments_files())))):
+            if not more_recent_than_all_of(output,[template,tree,*afiles,*self.get_trees_files()]):
                 self.exec_show(cmd,outfile=output)
         print(" done.")
 
@@ -2525,7 +2532,7 @@ class Analysis(object):
             section += f'  <th scope="row">{i+1}</th>\n'
             section += f'  <td>{html.escape(str(self.get_input_files()[i]))}</td>\n'
 
-            features = self.get_alignment_info(self.outdir / f"P{i+1}.initial.fasta")
+            features = self.get_alignment_info(self.outdir / f"P{i+1}.initial.fasta", self.get_alphabets()[i])
             minlength = features['min_length']
             maxlength = features['max_length']
             section += f'<td>{minlength} - {maxlength}</td>\n'
@@ -3145,7 +3152,7 @@ assumes it is included in the model.</p>
                 else:
                     section +=  '      <td></td>\n'
 
-                features = self.get_alignment_info(self.outdir / f"{alignment}.fasta")
+                features = self.get_alignment_info(self.outdir / f"{alignment}.fasta", alphabet)
                 section += f'<td class="alignment-stat">{features["min_p_identity"]}%</td>\n'
                 section += f'<td class="alignment-stat">{features["length"]}</td>\n'
                 section += (
