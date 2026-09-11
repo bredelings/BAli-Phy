@@ -538,37 +538,10 @@ class AlignmentPropertyViewer {
         this.legend.hidden = false;
     }
 
-    // Sorts table rows by their raw values and updates direction indicators.
-    // Equal values retain the browser's stable input order without another comparison.
+    // Share numeric ordering and accessible direction indicators with the summary report.
     sortReportRows()
     {
-        const buttons = Array.from(this.reportHead.querySelectorAll('button[data-sort-column]'));
-        const active = buttons[this.reportSort.column];
-        if (!active)
-            return;
-        const type = active.dataset.sortType;
-        const rows = Array.from(this.reportBody.querySelectorAll('tr[data-report-row]'));
-        // Compare unformatted values so display rounding cannot change their ordering.
-        // Treat unavailable numeric values as equal instead of inventing a secondary key.
-        rows.sort((first, second) => {
-            const firstValue = first.cells[this.reportSort.column].dataset.sortValue;
-            const secondValue = second.cells[this.reportSort.column].dataset.sortValue;
-            let difference = type === 'number' ? Number(firstValue) - Number(secondValue) :
-                firstValue.localeCompare(secondValue);
-            if (!Number.isFinite(difference))
-                difference = 0;
-            return this.reportSort.direction * difference;
-        });
-        this.reportBody.append(...rows);
-        // Mark only the active header with its direction and restore every button's base label.
-        // Rewriting all headers also clears the indicator left by the previously sorted column.
-        buttons.forEach((button, index) => {
-            const selected = index === this.reportSort.column;
-            button.parentElement.setAttribute('aria-sort', selected ?
-                (this.reportSort.direction > 0 ? 'ascending' : 'descending') : 'none');
-            button.textContent = button.dataset.label + (selected ?
-                (this.reportSort.direction > 0 ? ' ▲' : ' ▼') : '');
-        });
+        sortTableRows(this.reportHead, this.reportBody, this.reportSort);
     }
 
     // Rebuilds the canonical generic or positive-selection column table.

@@ -215,13 +215,15 @@ alignment_draw_assets = custom_target(
     'tools/alignment-draw-properties.js',
     'tools/alignment-draw-viewer.js',
     'tools/alignment-draw.css',
+    '../scripts/bpy-summarize-assets/table-sort.js',
   ],
   output: 'alignment-draw-assets.hh',
   command: [python, files('../scripts/embed-text.py'), '@OUTPUT@',
             'alignment_draw_scales_javascript', '@INPUT0@',
             'alignment_draw_properties_javascript', '@INPUT1@',
             'alignment_draw_viewer_javascript', '@INPUT2@',
-            'alignment_draw_stylesheet', '@INPUT3@'])
+            'alignment_draw_stylesheet', '@INPUT3@',
+            'table_sort_javascript', '@INPUT4@'])
 
 extra_sources = {
   'alignment-draw': ['tools/colors.cc', alignment_draw_assets],

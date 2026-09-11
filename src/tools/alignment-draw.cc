@@ -1334,6 +1334,7 @@ BODY {\n\
 	    if (character_property_summary)
 		cout<<"<script>\n"<<alignment_draw_scales_javascript<<"\n</script>\n"
 		    <<"<script>\n"<<alignment_draw_properties_javascript<<"\n</script>\n"
+		    <<"<script>\n"<<table_sort_javascript<<"\n</script>\n"
 		    <<"<script>\n"<<alignment_draw_viewer_javascript<<"\n</script>\n";
 	    cout<<"</body>\n</html>\n";
 	}

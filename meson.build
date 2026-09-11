@@ -218,6 +218,7 @@ else
 endif
 install_data([
     'scripts/bpy-summarize-assets/highlight.min.js',
+    'scripts/bpy-summarize-assets/table-sort.js',
     'scripts/bpy-summarize-assets/haskell.min.js',
     'scripts/bpy-summarize-assets/atom-one-light.min.css',
     'scripts/bpy-summarize-assets/LICENSE',
