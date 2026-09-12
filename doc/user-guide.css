@@ -1,5 +1,8 @@
 /* Prefer common installed fonts; other systems may use their normal family fallbacks. */
 :root {
+    --guide-accent: #245a86;
+    --guide-code-background: #f3f4f5;
+    --guide-border: #c8cdd2;
     --body-family: "DejaVu Serif", serif;
     --title-family: "DejaVu Sans", sans-serif;
     --mono-family: "DejaVu Sans Mono", monospace;
@@ -12,7 +15,6 @@
 
 .prompt {
     color: green;
-    text-decoration: underline;
     /* Allow copying commands without selecting the prompt. */
     -webkit-user-select: none;
     user-select: none;
@@ -85,6 +87,44 @@ nav.toc:empty, nav.tocopen:empty {
 }
 
 @media screen {
+    /* Content links share the shell selectors' accent, without changing navigation controls. */
+    main article a[href], main article a[href]:visited {
+        color: var(--guide-accent);
+        text-decoration: underline;
+    }
+
+    main article a.xref {
+        font-style: normal;
+    }
+
+    main article a[href]:focus-visible {
+        outline: 2px solid var(--guide-accent);
+        outline-offset: 2px;
+    }
+
+    pre.screen :is(.userinput, .command) {
+        font-weight: normal;
+    }
+
+    pre.screen, pre.programlisting {
+        background-color: var(--guide-code-background);
+        border: 1px solid var(--guide-border);
+        border-radius: 0.2rem;
+        padding: 0.75em 1em;
+    }
+
+    :is(.table, .informaltable) tbody > tr:nth-child(odd) {
+        background-color: var(--guide-code-background);
+    }
+
+    :is(.table, .informaltable) :is(td, th) {
+        padding: 0.35em 0.6em;
+    }
+
+    :is(.table, .informaltable) thead {
+        border-bottom: 1px solid var(--guide-border);
+    }
+
     /* xslTNG hides these native controls inline. Keep them focusable until upstream
        supplies keyboard access; the associated labels remain the visible selectors. */
     .variablelist.panelset input[type=radio] {
@@ -99,7 +139,7 @@ nav.toc:empty, nav.tocopen:empty {
     }
 
     .variablelist.panelset input[type=radio]:focus-visible + label {
-        outline: 2px solid #245a86;
+        outline: 2px solid var(--guide-accent);
         outline-offset: 2px;
     }
 
@@ -120,8 +160,8 @@ nav.toc:empty, nav.tocopen:empty {
 
     .variablelist.panelset input[type=radio]:checked + label {
         border: 0;
-        border-bottom: 3px solid #245a86;
-        color: #245a86;
+        border-bottom: 3px solid var(--guide-accent);
+        color: var(--guide-accent);
         background: transparent;
         font-weight: bold;
     }
