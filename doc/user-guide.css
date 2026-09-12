@@ -150,12 +150,23 @@ td, th {
     border-color: inherit;
 }
 
+/* Expressions may be alternatives or comparisons, rather than a complete file or script. */
+pre.expression {
+    border: 1px solid var(--guide-border);
+    border-radius: 0.2rem;
+    padding: 0.75em 1em;
+}
+
 /* There is no interactive panel until the upstream script populates it. */
 nav.toc:empty, nav.tocopen:empty {
     display: none;
 }
 
 @media screen {
+    pre.programlisting.expression, pre.synopsis.expression {
+        background-color: #edf2f6;
+    }
+
     /* Content links share the shell selectors' accent, without changing navigation controls. */
     main article a[href], main article a[href]:visited {
         color: var(--guide-accent);
@@ -292,6 +303,10 @@ nav.toc:empty, nav.tocopen:empty {
 }
 
 @media print {
+    pre.programlisting.expression, pre.synopsis.expression {
+        background-color: white;
+    }
+
     .admonition {
         --guide-notice-accent: #24292f;
         background: white;

@@ -1422,11 +1422,11 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <code language="bali-phy-model">pi</code> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a map associating each letter with its frequency:</para>
-      <programlisting language="bali-phy-model">GTR(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})</programlisting>
+      <programlisting role="expression" language="bali-phy-model">GTR(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})</programlisting>
       <para>Frequencies can also be specified using functions:</para>
 
       <para>
-	<programlisting language="bali-phy-model">GTR(pi=Frequencies.uniform)</programlisting>
+	<programlisting role="expression" language="bali-phy-model">GTR(pi=Frequencies.uniform)</programlisting>
       </para>
 
       <informaltable>
@@ -1707,10 +1707,10 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <code language="bali-phy-model">pi</code> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a map associating each letter with its frequency:</para>
-      <programlisting language="bali-phy-model">WAG +> F({"A":0.047, "R":0.19,...})</programlisting>
+      <programlisting role="expression" language="bali-phy-model">WAG +> F({"A":0.047, "R":0.19,...})</programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
-	<programlisting language="bali-phy-model">WAG +> F(pi=Frequencies.uniform)</programlisting>
+	<programlisting role="expression" language="bali-phy-model">WAG +> F(pi=Frequencies.uniform)</programlisting>
       </para>
 
       <informaltable>
@@ -1748,7 +1748,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	  
       <para>The <code language="bali-phy-model">+> FE</code> model is shorthand for <code language="bali-phy-model">+> F(pi=Frequencies.uniform)</code>:</para>
       <para>
-	<programlisting language="bali-phy-model">WAG +> FE</programlisting>
+	<programlisting role="expression" language="bali-phy-model">WAG +> FE</programlisting>
       </para>
     </section>
 
@@ -1859,13 +1859,13 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <code language="bali-phy-model">pi</code> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a map associating each letter with its frequency.</para>
-      <programlisting language="bali-phy-model">HKY85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) +> x2
+      <programlisting role="expression" language="bali-phy-model">HKY85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) +> x2
 
 HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "CC":0.01, "CG":0.22, "CU":0.01, "GA":0.01, "GC":0.22, "GG":0.01, "GU":0.01, "UA":0.22, "UC":0.01, "UG":0.01, "UU":0.01})</programlisting>
 
       <para>Frequencies can also be specified using functions:</para>
       <!-- para>
-	<programlisting language="bali-phy-model">HKY85_sym +> x2_sym +> F(pi=F1x4)            // nucleotide frequencies are estimated</programlisting>
+	<programlisting role="expression" language="bali-phy-model">HKY85_sym +> x2_sym +> F(pi=F1x4)            // nucleotide frequencies are estimated</programlisting>
       </para -->
 
 
@@ -1968,10 +1968,10 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <code language="bali-phy-model">pi</code> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a map associating each letter with its frequency.</para>
-      <programlisting language="bali-phy-model">HKY85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) +> x3</programlisting>
+      <programlisting role="expression" language="bali-phy-model">HKY85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) +> x3</programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
-	<programlisting language="bali-phy-model">HKY85_sym +> x3_sym +> F(pi=F1x4)            // nucleotide frequencies are estimated</programlisting>
+	<programlisting role="expression" language="bali-phy-model">HKY85_sym +> x3_sym +> F(pi=F1x4)            // nucleotide frequencies are estimated</programlisting>
       </para>
 
 
@@ -2010,7 +2010,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
       </informaltable>
 	<para>The <code language="bali-phy-model">+> FE</code> model is shorthand for <code language="bali-phy-model">+> F(pi=Frequencies.uniform)</code>:</para>
 	<para>
-	  <programlisting language="bali-phy-model">HKY85_sym +> x3_sym +> FE</programlisting>
+	  <programlisting role="expression" language="bali-phy-model">HKY85_sym +> x3_sym +> FE</programlisting>
 	</para>
     </section>
 
@@ -2275,12 +2275,12 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <code language="bali-phy-model">pi</code> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a map associating each letter with its frequency.</para>
-      <programlisting language="bali-phy-model">GY94(pi={"AAA":0.01, "AAC":0.02,...})
+      <programlisting role="expression" language="bali-phy-model">GY94(pi={"AAA":0.01, "AAC":0.02,...})
 MG94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
 </programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
-	<programlisting language="bali-phy-model">GY94(pi=F1x4)              // nucleotide frequencies are estimated</programlisting>
+	<programlisting role="expression" language="bali-phy-model">GY94(pi=F1x4)              // nucleotide frequencies are estimated</programlisting>
       </para>
 
 
@@ -2756,7 +2756,7 @@ beta = concentration*(1-mu)</programlisting>
 	</informaltable>
 	    
 	<para>The user can specify priors and parameters for indel models (See section <xref linkend="functions"/>):
-<programlisting language="bali-phy-model">RS07(rate~LogLaplace(-4,0.707),meanLength=2)</programlisting>
+<programlisting role="expression" language="bali-phy-model">RS07(rate~LogLaplace(-4,0.707),meanLength=2)</programlisting>
 	</para>
 
     </section>
@@ -2765,15 +2765,15 @@ beta = concentration*(1-mu)</programlisting>
 
   <section><info><title>Models and distributions are functions</title></info>
   <para>Models, probability distributions, and functions are treated the same in BAli-Phy because all of them have parameters or arguments. Parameters have names in BAli-Phy.  Parameter values are specified using parentheses as follows:
-  <programlisting language="bali-phy-model">HKY85(kappa=2)            // model
+  <programlisting role="expression" language="bali-phy-model">HKY85(kappa=2)            // model
 log(x=2)                  // function
 Normal(mean=0,sigma=1)    // probability distribution</programlisting>
 It is possible to specify parameter values by position instead of by name:
-  <programlisting language="bali-phy-model">HKY85(2)
+  <programlisting role="expression" language="bali-phy-model">HKY85(2)
 log(2)
 Normal(0,1)</programlisting>
 It is even possible to mix positional and named arguments, as long as all the positional arguments come before all the named arguments:
-<programlisting language="bali-phy-model">Normal(0,sigma=1)   // OK
+<programlisting role="expression" language="bali-phy-model">Normal(0,sigma=1)   // OK
 Normal(mean=0,1)    // not OK</programlisting>
 
   The order and type of parameters for a function can be found with the <userinput>help</userinput> command.  For example,
@@ -2801,7 +2801,7 @@ A value must be given for each parameter, unless the parameter has a default val
   <section><info><title>Model stacking and <code language="bali-phy-model">+></code> notation</title></info>
   <para>Models in phylogenetics literature are often combined using <userinput>+</userinput>. For example, the model <userinput>WAG + F + G4 + I</userinput> starts with the WAG amino-acid model, and places several modifiers, like " + G4" on the right.</para>
   <para>BAli-Phy follows this convention by treating <code language="bali-phy-model">A +> B</code> as an abbreviation for <code language="bali-phy-model">B(A)</code>.  When there are multiple '<code language="bali-phy-model">+></code>' symbols they associate to the left, so that <code language="bali-phy-model">A +> B +> C</code> is understood to mean <code language="bali-phy-model">(A +> B) +> C</code>, which is equivalent to <code language="bali-phy-model">C(B(A))</code>.  For example:
-<programlisting language="bali-phy-model">HKY85 +> ASRV.Gamma              // rewritten to ASRV.Gamma(HKY85)
+<programlisting role="expression" language="bali-phy-model">HKY85 +> ASRV.Gamma              // rewritten to ASRV.Gamma(HKY85)
 HKY85 +> Inv                      // rewritten to Inv(HKY85)
 WAG +> F                          // rewritten to F(WAG)
 WAG +> F +> ASRV.Gamma +> Inv    // rewritten to Inv(ASRV.Gamma(F(WAG)))
@@ -2813,31 +2813,31 @@ This allows a simple method for combining models, when one model is an argument 
   <section xml:id="priors"><info><title>Priors</title></info>
   <section><info><title>Specifying priors</title></info>
 <para>Priors on model parameters are specified by giving a random value. Random values can be obtained from distributions using the function <code language="bali-phy-model">sample</code>.  For example, this places a log-normal prior on the parameter <code language="bali-phy-model">kappa</code> of the <code language="bali-phy-model">HKY85</code> model:
-<programlisting language="bali-phy-model">HKY85(kappa=sample(LogNormal(1,1)))</programlisting>
+<programlisting role="expression" language="bali-phy-model">HKY85(kappa=sample(LogNormal(1,1)))</programlisting>
 You can write <code language="bali-phy-model">~Dist</code> as a shorthand for <code language="bali-phy-model">sample(Dist)</code>:
-<programlisting language="bali-phy-model">HKY85(kappa = ~LogNormal(1,1))</programlisting>
+<programlisting role="expression" language="bali-phy-model">HKY85(kappa = ~LogNormal(1,1))</programlisting>
 The <code language="bali-phy-model">=~</code> can be further shortened to just <code language="bali-phy-model">~</code>:
-<programlisting language="bali-phy-model">HKY85(kappa ~ LogNormal(1,1))</programlisting>
+<programlisting role="expression" language="bali-phy-model">HKY85(kappa ~ LogNormal(1,1))</programlisting>
 </para>
 </section>
 
   <section><info><title>Random function arguments</title></info>
 <para>It also is possible to use random values as inputs to other functions.  For example:
-<programlisting language="bali-phy-model">1.0 + ~Exponential(10)</programlisting>
+<programlisting role="expression" language="bali-phy-model">1.0 + ~Exponential(10)</programlisting>
 In such cases the parameter value should be specified with <code language="bali-phy-model">=</code>, as in the following example:
-<programlisting language="bali-phy-model">RS07(meanLength=1.0 + ~Exponential(10))</programlisting>
+<programlisting role="expression" language="bali-phy-model">RS07(meanLength=1.0 + ~Exponential(10))</programlisting>
 </para>
   </section>
 <section><info><title>Distributions are not random values</title></info>
 <para>Random values and distributions have different types.  For example, the
 following is of type <code language="bali-phy-model">Distribution&lt;Double&gt;</code>:
-<programlisting language="bali-phy-model">Uniform(0,1)</programlisting>
+<programlisting role="expression" language="bali-phy-model">Uniform(0,1)</programlisting>
 In contrast, the following are both of type <code language="bali-phy-model">Double</code>:
-<programlisting language="bali-phy-model">sample(Uniform(0,1))
+<programlisting role="expression" language="bali-phy-model">sample(Uniform(0,1))
 ~Uniform(0,1)</programlisting>
 This is important when passing distributions as arguments to other
 distributions and functions.  For example, the distribution <code language="bali-phy-model">IID</code> is used to generate a specific number of samples from another distribution.  Thus, it needs to receive a distribution as an argument:
-<programlisting language="bali-phy-model">~IID(4, Normal(0,1))      // OK    : 4 samples from the Normal(0,1) distribution
+<programlisting role="expression" language="bali-phy-model">~IID(4, Normal(0,1))      // OK    : 4 samples from the Normal(0,1) distribution
 ~IID(4, ~Normal(0,1))     // not OK: 4 samples from ... a random number?</programlisting>
 (See <xref linkend="types"/>.)
 </para>
@@ -2847,11 +2847,11 @@ distributions and functions.  For example, the distribution <code language="bali
   <section xml:id="default_values"><info><title>Default values and default priors</title></info>
   <para>
 Some function arguments have default values.  For example, the <code language="bali-phy-model">ASRV.Gamma</code> parameter <code language="bali-phy-model">n</code> has a default value of 4.  Thus the following are equivalent:
-<programlisting language="bali-phy-model">HKY85 +> ASRV.Gamma(n=4) +> Inv
+<programlisting role="expression" language="bali-phy-model">HKY85 +> ASRV.Gamma(n=4) +> Inv
 HKY85 +> ASRV.Gamma +> Inv</programlisting></para>
 
   <para>When the default value is random, then the argument has a default prior. For example, the <code language="bali-phy-model">kappa</code> parameter of <code language="bali-phy-model">HKY85</code> has a default value of <code language="bali-phy-model">~LogNormal(log(2),0.25)</code>, so the following are equivalent:
-<programlisting language="bali-phy-model">HKY85(kappa~LogNormal(log(2),0.25))
+<programlisting role="expression" language="bali-phy-model">HKY85(kappa~LogNormal(log(2),0.25))
 HKY85</programlisting>
 The <userinput>help</userinput> command can be used to determine the default value for a parameter, if there is one.</para>
   </section>
@@ -2860,7 +2860,7 @@ The <userinput>help</userinput> command can be used to determine the default val
   <para>  Every function has a <emphasis>result type</emphasis>, as well as an <emphasis>argument type</emphasis> for each argument.  The argument type specifies what kind of arguments are acceptable, and the result type specifies what kind of result the function produces.  Types include <code language="bali-phy-model">Int</code> for integers, <code language="bali-phy-model">Double</code> for double-precision floating point numbers, and <code language="bali-phy-model">String</code> for text strings.  Integer arguments are implicitly converted to <code language="bali-phy-model">Double</code> when the argument type is <code language="bali-phy-model">Double</code>.</para>
 
   <para>Some types contain parameters.  For example <code language="bali-phy-model">List&lt;Int&gt;</code> indicates a list of integers and <code language="bali-phy-model">List&lt;Double&gt;</code> indicates a list of real numbers.  In order to indicate a list of unknown type, we use a <emphasis>type variable</emphasis> <code language="bali-phy-model">a</code> and write <code language="bali-phy-model">List&lt;a&gt;</code>.  Type variables always begin with a lower-case letter.  They are able to match any specific type, and their value is found by pattern-matching.  For example, the function <code language="bali-phy-model">x+y</code> takes two arguments of type <code language="bali-phy-model">a</code> and has a result of type <code language="bali-phy-model">a</code>.  Thus:
-<programlisting language="bali-phy-model">1 + 2        // arguments are a=Int, so result is of type Int
+<programlisting role="expression" language="bali-phy-model">1 + 2        // arguments are a=Int, so result is of type Int
 1.0 + 2.0    // arguments are a=Double, so result is of type Double</programlisting>
 <code language="bali-phy-model">(a,b)</code> is a parameterized type that can be specialized to (for example) <code language="bali-phy-model">(String,Double)</code> and <code language="bali-phy-model">(Int,Int)</code>.
   </para>
