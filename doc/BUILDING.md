@@ -127,8 +127,15 @@ differ, use xslTNG's built-in panelsets:
 
 Use consistent shell labels and combine alternatives when the complete instructions are identical.
 “Unix shell” includes Linux, macOS, and WSL. Native HTML controls select one panel in HTML
-without JavaScript; the PDF prints every label and its content in source order. Keep version-specific explanations
-beside the affected commands rather than repeating them in the common workflow.
+without JavaScript; the PDF prints every label and its content in source order. Keep
+version-specific explanations beside the affected commands rather than repeating them in the
+common workflow.
+
+HTML uses compact selectors with a blue underline and bold text for the selected shell. Each
+label retains its underline when selectors wrap; panel content has no enclosing box. Print uses
+smaller bold sans-serif labels and modest spacing between alternatives, with more space after the
+group. Keep labels with the start of their content and short commands together, but let long
+alternatives and groups cross pages to avoid large blank areas.
 
 `user-guide.css` makes xslTNG's hidden radio buttons keyboard-focusable and provides a visible
 focus outline. Check Tab and arrow-key navigation, narrow screens, local-file viewing, and print

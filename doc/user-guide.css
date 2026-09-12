@@ -87,7 +87,7 @@ nav.toc:empty, nav.tocopen:empty {
 @media screen {
     /* xslTNG hides these native controls inline. Keep them focusable until upstream
        supplies keyboard access; the associated labels remain the visible selectors. */
-    .panelset input[type=radio] {
+    .variablelist.panelset input[type=radio] {
         display: block !important;
         position: absolute;
         width: 1px;
@@ -98,19 +98,62 @@ nav.toc:empty, nav.tocopen:empty {
         clip-path: inset(50%);
     }
 
-    .panelset input[type=radio]:focus-visible + label {
-        outline: 2px solid currentColor;
+    .variablelist.panelset input[type=radio]:focus-visible + label {
+        outline: 2px solid #245a86;
         outline-offset: 2px;
     }
 
-    .panelset label {
-        padding: 0.5em 0.75em;
+    /* Reserve the underline in every state so borders do not change the label dimensions.
+       Each label keeps its own underline when the selectors wrap onto another row. */
+    .variablelist.panelset label {
+        padding: 0.3em 0.55em;
+        margin: 0;
+        border: 0;
+        border-bottom: 3px solid transparent;
+        border-radius: 0;
+        color: #3d4650;
+        background: transparent;
+        font-family: var(--title-family);
+        font-size: 0.9em;
+        transition: none;
     }
 
-    .panelset, .panelset .paneltab {
+    .variablelist.panelset input[type=radio]:checked + label {
+        border: 0;
+        border-bottom: 3px solid #245a86;
+        color: #245a86;
+        background: transparent;
+        font-weight: bold;
+    }
+
+    .variablelist.panelset label:hover {
+        background: #edf2f6;
+    }
+
+    .variablelist.panelset, .variablelist.panelset .panelset,
+    .variablelist.panelset .paneltab {
         min-width: 0;
         max-width: 100%;
         box-sizing: border-box;
+    }
+
+    .variablelist.panelset > .panelset {
+        width: 100%;
+        gap: 0.25em;
+    }
+
+    .variablelist.panelset .paneltab {
+        padding: 0.5em 0 0;
+        border: 0;
+        background: transparent;
+    }
+
+    .variablelist.panelset .paneltab > :first-child {
+        margin-top: 0;
+    }
+
+    .variablelist.panelset .paneltab > :last-child {
+        margin-bottom: 0;
     }
 
     /* Keep two levels in the opening list, while retaining the full panel and print contents. */
@@ -142,23 +185,46 @@ nav.toc:empty, nav.tocopen:empty {
 @media print {
     /* The PDF uses the same HTML as the browser. Print every alternative in source
        order, even if a different upstream stylesheet hides unselected panels. */
-    .panelset, .panelset .paneltab {
+    .variablelist.panelset, .variablelist.panelset .panelset,
+    .variablelist.panelset .paneltab {
         display: block;
+        border: 0;
+        padding: 0;
+        background: transparent;
     }
 
-    .panelset input[type=radio] {
+    .variablelist.panelset {
+        margin: 0.5em 0 1em;
+    }
+
+    .variablelist.panelset input[type=radio] {
         display: none !important;
     }
 
-    .panelset label {
+    .variablelist.panelset label {
         display: block;
+        font-family: var(--title-family);
+        font-size: 0.85em;
         font-weight: bold;
-        margin-top: 0.75em;
+        margin: 0 0 0.2em;
         break-after: avoid;
     }
 
-    .panelset .paneltab > :first-child {
+    .variablelist.panelset .paneltab + input + label {
+        margin-top: 0.65em;
+    }
+
+    .variablelist.panelset .paneltab > :first-child {
         margin-top: 0;
+    }
+
+    .variablelist.panelset .paneltab > :last-child {
+        margin-bottom: 0;
+    }
+
+    /* Keep short commands intact, but allow long alternatives and groups to span pages. */
+    .variablelist.panelset pre {
+        break-inside: avoid;
     }
 
     /* Keep rows together when they fit, but let long tables continue across pages. */
