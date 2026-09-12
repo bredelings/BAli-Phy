@@ -476,108 +476,44 @@ Only remove this attribute from an archive that you trust.  The <command>curl</c
     </section>
 
     <section><info><title>Quick Start</title></info>
-    <para>Let's run an example analysis using the 5S-rRNA 25-taxon data set.
-    <screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/5S-rRNA/25.fasta .</userinput></screen>
-    On native Windows, use the PowerShell or Command Prompt copy command from <xref linkend="tests"/> instead.</para>
-    <para>We will now start 4 simultaneous runs.  On Linux, macOS, or WSL2, use:
-    <screen><prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; ASRV.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; ASRV.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; ASRV.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; ASRV.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput></screen>
-    These runs will all execute at the same time because of the
-    "<userinput>&amp;</userinput>".  Each run will create a unique directory of the form
-    <filename>25-<replaceable>number</replaceable></filename> to store its results.</para>
+      <para>This example uses the 25-taxon 5S-rRNA data set. Create a new working directory
+        and change into it. Using a new directory ensures that the four runs below save their
+        results in directories named <filename>25-1</filename> through <filename>25-4</filename>.
+        On Linux, macOS, or WSL2, copy the example data into this directory:</para>
+<screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/5S-rRNA/25.fasta .</userinput></screen>
+      <para>On native Windows, use the copy command in <xref linkend="tests"/>.
+        If a package manager installed BAli-Phy elsewhere, copy
+        <filename>examples/5S-rRNA/25.fasta</filename> from its documentation directory instead.</para>
 
-    <para>On native Windows, make sure that BAli-Phy is on <envar>Path</envar>, then open four
-      PowerShell or Command Prompt windows or tabs in the directory containing
-      <filename>25.fasta</filename>.  Run the following command once in each terminal.
-      Separate terminals keep each chain's progress and errors visible and allow each chain
-      to be interrupted independently.</para>
+      <para>On Linux, macOS, or WSL2, run this command <emphasis>four times</emphasis>
+        in the same terminal to start four independent chains. The trailing
+        <userinput>&amp;</userinput> lets them run simultaneously:</para>
+<screen><prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; ASRV.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp;</userinput></screen>
+
+      <para>On native Windows, make sure BAli-Phy is on <envar>Path</envar>. Open four
+        PowerShell or Command Prompt windows or tabs, each in the directory containing
+        <filename>25.fasta</filename>. Run this command once in each:</para>
 <screen><prompt>PS&gt;</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; ASRV.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000</userinput></screen>
 
-    <para>On Linux, macOS, or WSL2, you can use the program <userinput>top</userinput> to
-      verify that four copies of <userinput>bali-phy</userinput> are running:
-    <screen><prompt>%</prompt> <userinput>top</userinput></screen>
-    Press <userinput>q</userinput> to exit <command>top</command>.  On Windows, use Task
-    Manager instead.
-    </para>
+      <para>Once the runs have produced some samples, you can summarize their results while
+        they are still running. On Linux, macOS, or WSL2, use the same terminal. On Windows,
+        open another terminal in the directory containing <filename>25.fasta</filename>:</para>
+<screen><prompt>%</prompt> <userinput>bpy-summarize 25-1 25-2 25-3 25-4</userinput></screen>
+      <para>You can rerun this command as more samples accumulate. Open or reload
+        <filename>Results/index.html</filename> in a web browser to inspect the updated report.
+        The report
+        contains tree and alignment summaries, convergence warnings, mixing diagnostics,
+        and links to the underlying result files.</para>
 
-    <para>Optionally, we can use <application>Tracer</application> to assess the progress of
-    the runs by loading the files
-    <filename>25-1/C1.log</filename>, 
-    <filename>25-2/C1.log</filename>, 
-    <filename>25-3/C1.log</filename>,  and
-    <filename>25-4/C1.log</filename>.
-    All four log files should be loaded simultaneously in order to compare them.
-    See <xref linkend="software_req"/> for this and other result-viewing programs.
-    </para>
-
-<para>When enough iterations have finished, we then run the script <userinput>bpy-summarize</userinput> to summarize the results:
-<screen><prompt>%</prompt> bpy-summarize 25-1/ 25-2/ 25-3/ 25-4/
-Creating new directory 'Results' for summary files.
-Summarizing distribution of numerical parameters: done.
-Analyzing scalar variables: done.
-
-Summarizing topology distribution:  done.
-Computing mean branch lengths:  done.
-Drawing trees: c50 c66 c80 c90 c95 c99 c100 greedy MAP . done.
-
-Generate mixing diagnostics for topologies ... done.
-Generate SRQ plot for partitions: done.
-Generate SRQ plot for c50 tree: done.
-
-Generate MDS plots of topology burnin:  done.
-Computing initial alignments:  done.
-
-Computing consensus alignments via posterior decoding:  done.
-Computing ancestral state alignment:  done.
-Drawing alignments: ****** done.
-Generating AU values for 'P1.initial'... done.
-Generating AU values for 'P1.consensus.pd-multiply'... done.
-Generating AU values for 'P1.consensus.pd-wsum'... done.
-Generating AU values for 'P1.consensus.pd-sum'... done.
-
-NOTE: burnin (scalar) &lt;= Not Converged!
-NOTE: min_ESS (scalar)    = 96.73
-NOTE: min_ESS (partition)    = 96.278
-NOTE: ASDSF = 0.035
-NOTE: MSDSF = 0.117
-NOTE: PSRF-80%CI = 1.077
-NOTE: PSRF-RCF = 1.256
-
-RUN 1: directory = 25-1     iterations = 1000     burnin = 100
-RUN 2: directory = 25-2     iterations = 1000     burnin = 100
-RUN 3: directory = 25-3     iterations = 1000     burnin = 100
-RUN 4: directory = 25-4     iterations = 1000     burnin = 100
-
-Report written to 'Results/index.html'
-</screen>
-Load the file <filename>Results/index.html</filename> in a web browser to view the results.  On Linux you can type:
-<screen><prompt>%</prompt> firefox Results/index.html</screen>
-The tree estimate, alignment estimate, mixing diagnostics and other information will be displayed in the HTML report.  The HTML report contains links to FASTA and Newick files in the <filename>Results/</filename> directory.
-</para>
-
-<para>We can also view the tree and alignment estimates directly:
-      <itemizedlist>
-	<listitem>
-	  <para>The majority consensus tree is in the file
-	    <filename>Results/c50.PP.tree</filename>.  It can be viewed locally with
-	    <application>TreeViewer</application>; see <xref linkend="software_req"/> for online,
-	    legacy, and scripted alternatives.</para>
-        </listitem>
-        <listitem>
-          <para>The medium-length consensus alignment is in the file
-            <filename>Results/P1.consensus.pd-wsum.fasta</filename>.  It can be viewed quickly
-            with <application>SeaView</application>, or explored in more detail with
-            <application>Jalview</application>.</para>
-        </listitem>
-      </itemizedlist>
-
-See section <xref linkend="analysis"/> for further description of the files in the <filename>Results/</filename> directory.
-
-</para>
-
-  </section>
+      <para>These short runs demonstrate how to run an analysis and summarize its results.
+        They stop after 1,000 iterations, but reaching that limit does not establish convergence.
+        Check the report's warnings and diagnostics before interpreting the estimates. See <xref linkend="mixing_and_convergence"/>
+        for help deciding whether longer runs are needed. That section also explains how to
+        compare chains using tools such as <application>Tracer</application>.</para>
+      <para>See <xref linkend="analysis"/> for details of the output files and
+        <xref linkend="software_req"/> for optional programs to inspect trees, alignments,
+        and parameter traces.</para>
+    </section>
 
     <section>
       <info><title>Input</title></info>
