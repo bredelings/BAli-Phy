@@ -41,7 +41,7 @@ void DPengine::check_sampling_probability(const vector<int>& g_path) const
   log_double_t P = path_P(g_path);
   log_double_t ratio = path_Q(g_path)/Pr_sum_all_paths();
   double diff = std::abs(log(ratio) - log(P));
-  if (std::abs(diff) > 1.0e-9) {
+  if (not close_in_log_space(ratio, P, 1.0e-9)) {
     throw myexception()
       <<" Incorrect sampling probabilities!\n"
       <<" P(sample) = "<<log(P)<<"     P(path)/P(ALL paths) = "<<log(ratio)<<"   diff = "<<diff;

@@ -191,8 +191,8 @@ optional<ProbDensity> alignment_branch_length_or_duration_slice_function::operat
     C = C0;
     set_value(x);
 
-    // Pass 'false' because the initial alignment may have zero probability under the new branch value x.
-    // Without this, check_sampling_probabilities may throw an exception.
+    // The branch value has already changed, so the retained alignment may have
+    // zero probability. Skip before/after checks that require positive probability.
     auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C), b, false);
     if (not alignment_sum_ratio_1)
     {

@@ -1022,7 +1022,7 @@ void exchange_adjacent_pairs(int /*iterations*/, Parameters& P, MCMC::MoveStats&
     P.set_beta(P.all_betas[P.beta_index]);
     log_double_t Pr2 = P.heated_probability();
 
-    assert(std::abs(log(Pr1)-log(Pr2)) < 1.0e-9);
+    assert(close_in_log_space(Pr1, Pr2, 1.0e-9));
 
 
     //  double oldbeta = beta;

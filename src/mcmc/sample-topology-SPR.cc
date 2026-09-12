@@ -1223,7 +1223,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 		if (Pr[i])
 		{
 		    auto ratio = *Pr[i] / *Pr2[i];
-		    assert(std::isfinite(ratio.log()) and std::abs(ratio.log()) < 1.0e-9);
+		    assert(close_in_log_space(ratio, log_double_t(1), 1.0e-9));
 		}
 	    }
     
@@ -1487,7 +1487,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 	if (not P[i].alignment_is_random())
 	    has_imodel = false;
     if (not has_imodel)
-	assert(std::abs(diff) < 1.0e-9);
+	assert(close_in_log_space(L_1, LLL[C], 1.0e-9));
 #endif
 
     // 10. Accept or reject the proposed tree by integrating out the alignment.

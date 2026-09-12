@@ -163,7 +163,7 @@ sample_alignment_base(mutable_data_partition P, int b, optional<int> bandwidth)
     return sample_alignment_base(P, P.get_branch_HMM(b), b, bandwidth);
 }
 
-Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool initial_state_valid)
+Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool check_initial)
 {
     if (log_verbose >= 3)
         std::cerr<<"[sample_alignment]: start: Pr = "<<P.probability()<<"\n";
@@ -225,6 +225,7 @@ Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool initial_st
     nodes.push_back(node1);
     nodes.push_back(node2);
 
+    // Diagnostics compare the sampled state in p[0] with the state on entry in p[1].
     p.push_back(P0);
     Matrices.push_back(Matrices[0]);
     sampled.push_back(sampled[0]);
@@ -252,10 +253,8 @@ Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool initial_st
 		OP[i].push_back( 1 );
 	    }
 
-    // OS and OP never used!!
-
     //--------- Compute path probabilities and sampling probabilities ---------//
-    if (initial_state_valid)
+    if (check_initial)
     {
         vector< vector<log_double_t> > PR(p.size());
 

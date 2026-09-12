@@ -17,6 +17,8 @@ std::pair<std::shared_ptr<DPmatrixSimple>,Availability<log_double_t>>
 sample_alignment_base(mutable_data_partition P, int b, std::optional<int> bandwidth);
 // Successful partitions remain resampled even if another partition is unavailable;
 // absence means that no complete joint proposal correction can be returned.
-Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool initial_state_valid=true);
+// check_initial enables before/after sampling checks that require the initial
+// alignment to have positive probability under the parameter values on entry.
+Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool check_initial=true);
 
 #endif

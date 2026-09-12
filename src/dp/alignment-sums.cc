@@ -170,7 +170,9 @@ void check_match_P(const data_partition& P, ProbDensity OS, log_double_t OP, con
 
     if (log_verbose >= 4)
 	cerr<<"GQ(path) = "<<qpGQ<<"   Q(path) = "<<qpQ<<endl<<endl;
-    assert(std::abs(log(qpGQ)-log(qpQ)) < 1.0e-9);
+    // A retained alignment can have zero probability under proposed parameters.
+    // Compare zeros directly instead of subtracting two negative infinities.
+    assert(close_in_log_space(qpGQ, qpQ, 1.0e-9));
   
     //--- Compare the path transition probabilities (Q) and the alignment prior
     log_double_t qp = Matrices.path_Q_path(path) * OP;
@@ -180,12 +182,9 @@ void check_match_P(const data_partition& P, ProbDensity OS, log_double_t OP, con
     log_double_t qt = qs * qp;
     log_double_t lt = P.heated_likelihood() * P.prior_alignment();
 
-    bool ok = true;
-
-    if ( (std::abs(log(qs) - log(ls)) > 1.0e-9) or
-	 (std::abs(log(qp) - log(lp)) > 1.0e-9) or
-	 (std::abs(log(qt) - log(lt)) > 1.0e-9))
-	ok = false;
+    bool ok = close_in_log_space(qs, ls, 1.0e-9) &&
+              close_in_log_space(qp, lp, 1.0e-9) &&
+              close_in_log_space(qt, lt, 1.0e-9);
 
     if (log_verbose >= 4 or not ok)
     {
@@ -253,9 +252,12 @@ void check_sampling_probabilities(const vector< vector<log_double_t> >& PR)
 	if (P2[0] == 0.0) continue;
 
 	log_double_t ratio2 = (P2[0]*P2[2]/P2[1]) / P2[3];
-	double diff = log(ratio2/ratio1);
+	// The relative ratio must be near one; two zero ratios do not satisfy this check.
+        auto relative_ratio = ratio2 / ratio1;
+        bool ok = close_in_log_space(relative_ratio, log_double_t(1), 1.0e-9);
+        double diff = log(relative_ratio);
 
-	if (log_verbose >= 4 or std::abs(diff) > 1.0e-9)
+	if (log_verbose >= 4 or not ok)
 	{
 	    cerr<<"\noption = "<<i<<"     rho"<<i<<" = "<<P2[2]<<endl;
 
@@ -267,7 +269,7 @@ void check_sampling_probabilities(const vector< vector<log_double_t> >& PR)
 	    cerr<<"diff = "<<diff<<endl;
 	}
     
-	if (std::abs(diff) > 1.0e-9) {
+	if (not ok) {
 	    //      cerr<<a.back()<<endl;
 	    //      cerr<<a[i]<<endl;
 	    cerr<<"i = "<<i<<endl;
