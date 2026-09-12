@@ -422,58 +422,19 @@ Only remove this attribute from an archive that you trust.  The <command>curl</c
 
 
   <section xml:id="running"><info><title>Running the program</title></info>
-    
-    <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bpy-summarize</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
-    </para>
+    <para>A BAli-Phy analysis uses two programs. <command>bali-phy</command> samples trees,
+      alignments, and model parameters. <command>bpy-summarize</command> summarizes those
+      samples and produces a report with estimates and convergence diagnostics. You can
+      update the report while the analysis is running.</para>
 
-    <para>The <command>bali-phy</command> program analyzes sequence data by default.  The simplest
-      analysis is therefore:</para>
-      <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
-    <para>
-      You can run a traditional fixed-alignment Bayesian tree inference by adding <userinput>-I none</userinput>:
-      <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -I none</userinput></screen>
-      You can also specify a character set for analysis:
-      <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:1-30,90-100</userinput></screen>
-    </para>
-
-    <para>Other commands perform different operations.  For example,
-      <userinput>bali-phy run Model.hs <replaceable>arguments</replaceable></userinput> runs a
-      standalone Haskell program.  The first non-option after <command>run</command> is the
-      program; every later argument belongs to that program, including <userinput>-h</userinput>
-      and other arguments beginning with a hyphen.  BAli-Phy compiler options for the program
-      must therefore precede <filename>Model.hs</filename>.  No <userinput>--</userinput>
-      separator is needed.</para>
-
-    <para>Run <userinput>bali-phy --help</userinput> or <userinput>bali-phy help</userinput> for
-      basic cumulative help, and <userinput>bali-phy help advanced</userinput>,
-      <userinput>bali-phy help expert</userinput>, or
-      <userinput>bali-phy help developer</userinput> for successively more specialized commands
-      and options.  Named commands have their own help; for example, use
-      <userinput>bali-phy run --help</userinput> for the <command>run</command> command.</para>
-
-    <section><info><title>Command examples on Windows</title></info>
-      <para>Most BAli-Phy commands shown below work unchanged in PowerShell and Command
-        Prompt.  Native Windows paths use a drive letter and backslashes, such as
-        <filename>C:\Users\user\data.fasta</filename>.  PowerShell also accepts forward
-        slashes in many paths.</para>
-      <para>Use double quotes around model expressions on Windows.  For example:</para>
-<screen><prompt>PS&gt;</prompt> <userinput>bali-phy sequences.fasta -S "GTR +&gt; ASRV.Gamma"</userinput></screen>
-      <para>Native Windows also accepts slash forms such as <userinput>/V</userinput>,
-        <userinput>/iterations:1000</userinput>, and <userinput>/test</userinput>.  The Unix forms
-        remain valid on Windows and are used throughout this manual because they also work on
-        Linux, macOS, and WSL2.</para>
-      <para>PowerShell uses
-        <command>Copy-Item <replaceable>source</replaceable>
-          <replaceable>destination</replaceable></command> to copy a file, while Command
-        Prompt uses <command>copy <replaceable>source</replaceable>
-          <replaceable>destination</replaceable></command>.  To open the generated report,
-        use <command>Start-Process Results\index.html</command> in PowerShell or
-        <command>start "" Results\index.html</command> in Command Prompt.</para>
-      <para>Pipelines using <userinput>|</userinput> and output redirection using
-        <userinput>&gt;</userinput> also work in both Windows shells.  Examples that use Unix
-        utilities such as <command>cp</command>, <command>top</command>, or
-        <command>wc</command> need the corresponding Windows command.</para>
-    </section>
+    <para>By default, BAli-Phy estimates both the alignment and the tree:</para>
+<screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
+    <para>BAli-Phy can also estimate trees and model parameters while keeping the input
+      alignment fixed:</para>
+<screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -I none</userinput></screen>
+    <para>Run <userinput>bali-phy --help</userinput> for commonly used options.
+      The Quick Start below shows how to run several independent analyses and inspect
+      their results.</para>
 
     <section><info><title>Quick Start</title></info>
       <para>This example uses the 25-taxon 5S-rRNA data set. Create a new working directory
@@ -517,6 +478,13 @@ Only remove this attribute from an archive that you trust.  The <command>curl</c
 
     <section>
       <info><title>Input</title></info>
+      <para>When estimating the alignment, BAli-Phy accepts unaligned sequences: you do not
+        need to align them first. If the input already contains an alignment, BAli-Phy removes
+        the gaps and estimates a new alignment as part of the analysis.</para>
+      <para>When keeping the alignment fixed with <userinput>-I none</userinput>, provide
+        aligned sequences of equal length, including gaps. Their columns define the alignment
+        used throughout the analysis.</para>
+
       <para><application>BAli-Phy</application> can read in sequences
 	and alignments in both FastA and PHYLIP formats.  Filenames for
 	FastA files should end in <userinput>.fasta</userinput>,
@@ -544,8 +512,11 @@ CTGTCCGGTGAGGAGAAGTCTGCGGTCACTGCCCTGTGGGGCAAGGTGAATGTGGAAGAA
 GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 </programlisting>
 <para>If the sequence-name line contains a space, BAli-Phy treats everything after the space as a comment.</para>
-<para>The sequences in the file do not need to be aligned unless you fix the alignment with <userinput>-I none</userinput>.</para>
-<para></para>
+<para>To analyze only part of the input, append a range to the filename:</para>
+<screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:1-30,90-100</userinput></screen>
+      <para>This selects positions 1–30 and 90–100 in the input sequences, counting from 1
+        and including both endpoints. For aligned input, these positions are alignment columns.
+        Selection takes place before any gaps are removed for alignment estimation.</para>
 
       
     </section>
@@ -556,17 +527,44 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
     <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
     is equivalent to
     <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -A DNA -S TN93 -I RS07</userinput></screen>
-    Default values that are used will always be displayed on the screen and in the output files so that you do not have to guess.  You can specify a more complex substitution model using the <userinput>-S</userinput> option.  You will generally need to write the substitution model inside single quotes unless it is just a single word.
+    Default values that are used will always be displayed on the screen and in the output files so that you do not have to guess.  You can specify a more complex substitution model using the <userinput>-S</userinput> option.  You will generally need to write the substitution model inside quotes unless it is just a single word. Double quotes work on both Unix and Windows.
 
-    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S 'LG&#160;+>&#160;ASRV.Gamma&#160;+>&#160;Inv'</userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S "LG +&gt; ASRV.Gamma +&gt; Inv"</userinput></screen>
     Every short option like <userinput>-S</userinput> has an equivalent long option like <userinput>--smodel</userinput>.
     Long option names must be written in full.  For example, use
     <userinput>--iterations</userinput> (or <userinput>-i</userinput>), not the old abbreviation
     <userinput>--iter</userinput>.
-    To see the most frequently-used command-line options, you can run
-    <screen><prompt>%</prompt> <userinput>bali-phy help</userinput></screen>
     </para>
+    <para>Use <userinput>bali-phy --help</userinput> or <userinput>bali-phy help</userinput>
+      for commonly used options. For more specialized options, use
+      <userinput>bali-phy help advanced</userinput>, <userinput>bali-phy help expert</userinput>,
+      or <userinput>bali-phy help developer</userinput>. Each level includes the options
+      from the preceding levels.</para>
 
+    </section>
+
+    <section><info><title>Command examples on Windows</title></info>
+      <para>Most BAli-Phy commands in this guide work unchanged in PowerShell and Command
+        Prompt.  Native Windows paths use a drive letter and backslashes, such as
+        <filename>C:\Users\user\data.fasta</filename>.  PowerShell also accepts forward
+        slashes in many paths.</para>
+      <para>Use double quotes around model expressions on Windows.  For example:</para>
+<screen><prompt>PS&gt;</prompt> <userinput>bali-phy sequences.fasta -S "GTR +&gt; ASRV.Gamma"</userinput></screen>
+      <para>Native Windows also accepts slash forms such as <userinput>/V</userinput>,
+        <userinput>/iterations:1000</userinput>, and <userinput>/test</userinput>.  The Unix forms
+        remain valid on Windows and are used throughout this manual because they also work on
+        Linux, macOS, and WSL2.</para>
+      <para>PowerShell uses
+        <command>Copy-Item <replaceable>source</replaceable>
+          <replaceable>destination</replaceable></command> to copy a file, while Command
+        Prompt uses <command>copy <replaceable>source</replaceable>
+          <replaceable>destination</replaceable></command>.  To open the generated report,
+        use <command>Start-Process Results\index.html</command> in PowerShell or
+        <command>start "" Results\index.html</command> in Command Prompt.</para>
+      <para>Pipelines using <userinput>|</userinput> and output redirection using
+        <userinput>&gt;</userinput> also work in both Windows shells.  Examples that use Unix
+        utilities such as <command>cp</command>, <command>top</command>, or
+        <command>wc</command> need the corresponding Windows command.</para>
     </section>
 
    <section><info><title>Configuration files</title></info>
