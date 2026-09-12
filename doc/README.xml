@@ -195,15 +195,23 @@
     </section>
 
     <section><info><title>Install BAli-Phy using executables from website (alternative)</title></info>
-    <para>Open a window in the Terminal app to access the UNIX command line.  Then download and extract the executables.</para>
-    <important>
+    <para>Open a window in the Terminal app to access the UNIX command line. Follow the
+      instructions below to download and extract the executables.</para>
+    <important xml:id="macos-quarantine">
       <title>Important: Removing the quarantine attribute</title>
       <para>If you download the archive from the official BAli-Phy release page using a web
         browser, macOS marks it as quarantined. Remove the quarantine attribute before
         extracting the archive so macOS will allow the installed programs to run. Otherwise,
         the extracted files inherit the quarantine attribute. Only do this for an archive
-        that you trust. In the directory containing the archive, run:</para>
-<screen><prompt>%</prompt> <userinput>xattr -d com.apple.quarantine <replaceable>archive-file</replaceable></userinput></screen>
+        that you trust. For an archive saved in Downloads, run the command for your processor:</para>
+      <para>Apple Silicon:</para>
+<screen><prompt>%</prompt> <userinput>xattr -d com.apple.quarantine "$HOME/Downloads/&macarm64.file;"</userinput></screen>
+      <para>Intel:</para>
+<screen><prompt>%</prompt> <userinput>xattr -d com.apple.quarantine "$HOME/Downloads/&macintel64.file;"</userinput></screen>
+      <para>If you saved the archive elsewhere, adjust the path. After removing quarantine,
+        extract the archive and move the resulting <filename>bali-phy-&version;</filename>
+        directory into <filename>~/Applications</filename>. Then add its <filename>bin</filename>
+        directory to your PATH as described in <xref linkend="path"/>.</para>
       <para>The <command>curl</command> commands below do not normally add the quarantine
         attribute.</para>
     </important>
