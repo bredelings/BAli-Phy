@@ -2,22 +2,23 @@
 (function (globalScope) {
 'use strict';
 
+// Dark control colors mix in 8% white for black letters; lighter stops retain their colors.
 const PROPERTY_PALETTES = {
     viridis: {
         label: 'Viridis',
         kind: 'sequential',
-        // Five representative stops from the perceptually uniform, CC0 palette.
-        stops: [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]],
+        // Based on the CC0 Viridis palette, with the two darkest stops slightly lightened.
+        stops: [[83, 21, 98], [75, 96, 148], [33, 145, 140], [94, 201, 98], [253, 231, 37]],
     },
     'blue-red': {
         label: 'Blue–red',
         kind: 'sequential',
-        stops: [[8, 48, 107], [33, 113, 181], [123, 50, 148], [194, 42, 91], [239, 59, 44]],
+        stops: [[28, 65, 119], [51, 124, 187], [134, 66, 157], [199, 59, 104], [239, 59, 44]],
     },
     'blue-gray-red': {
         label: 'Blue–gray–red',
         kind: 'diverging',
-        stops: [[33, 102, 172], [103, 169, 207], [232, 232, 232], [239, 138, 98], [178, 24, 43]],
+        stops: [[51, 114, 179], [103, 169, 207], [232, 232, 232], [239, 138, 98], [184, 42, 60]],
     },
 };
 
@@ -467,32 +468,6 @@ function paletteColor(position, paletteName = 'viridis')
         Math.round(channel * (1 - fraction) + stops[upper][index] * fraction));
 }
 
-// Converts an sRGB channel to the linear-light value used for contrast ratios.
-function linearLight(channel)
-{
-    const value = clamp(channel, 0, 255) / 255;
-    if (value <= 0.04045)
-        return value / 12.92;
-    return ((value + 0.055) / 1.055) ** 2.4;
-}
-
-// Computes WCAG relative luminance for an RGB color.
-function relativeLuminance(color)
-{
-    return 0.2126 * linearLight(color[0]) +
-           0.7152 * linearLight(color[1]) +
-           0.0722 * linearLight(color[2]);
-}
-
-// Chooses black or white text according to which has the higher contrast ratio.
-function contrastingTextColor(background)
-{
-    const luminance = relativeLuminance(background);
-    const blackContrast = (luminance + 0.05) / 0.05;
-    const whiteContrast = 1.05 / (luminance + 0.05);
-    return blackContrast >= whiteContrast ? [0, 0, 0] : [255, 255, 255];
-}
-
 // Formats an RGB triplet for a cell's inline background or foreground.
 function rgb(color)
 {
@@ -525,7 +500,6 @@ const api = {
     paletteColor,
     paletteGradient,
     blendWithWhite,
-    contrastingTextColor,
     rgb,
 };
 

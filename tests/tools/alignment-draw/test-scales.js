@@ -27,7 +27,7 @@ function assertClose(actual, expected, message)
 }
 
 {
-    assert.deepEqual(paletteColor(0, 'blue-red'), [8, 48, 107],
+    assert.deepEqual(paletteColor(0, 'blue-red'), [28, 65, 119],
                      'the sequential blue-red palette starts at blue');
     assert.deepEqual(paletteColor(1, 'blue-red'), [239, 59, 44],
                      'the sequential blue-red palette ends at red');
@@ -43,8 +43,8 @@ function assertClose(actual, expected, message)
 // Preserve these visual-scale contracts while the diverging palette uses central suppression.
 {
     const name = 'blue-gray-red';
-    assert.deepEqual(paletteColor(0, name), [33, 102, 172]);
-    assert.deepEqual(paletteColor(1, name), [178, 24, 43]);
+    assert.deepEqual(paletteColor(0, name), [51, 114, 179]);
+    assert.deepEqual(paletteColor(1, name), [184, 42, 60]);
     const gray = paletteColor(0.5, name);
     for (const [position, original] of [[0.25, [103, 169, 207]], [0.75, [239, 138, 98]]]) {
         const color = paletteColor(position, name);

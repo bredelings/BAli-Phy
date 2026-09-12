@@ -14,7 +14,6 @@ const {
     paletteColor,
     paletteGradient,
     blendWithWhite,
-    contrastingTextColor,
     rgb,
 } = globalScope.BaliPhyAlignmentScales;
 
@@ -459,9 +458,8 @@ class AlignmentPropertyViewer {
                 }
                 color = blendWithWhite(color, cell.uncertainty);
             }
-            const foreground = contrastingTextColor(color);
             cell.element.style.background = rgb(color);
-            cell.element.style.color = rgb(foreground);
+            cell.element.style.color = 'black';
             cell.element.classList.add('alignment-property-colored');
         }
     }
