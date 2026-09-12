@@ -4302,9 +4302,9 @@ Here the PID is 549319.  Therefore you can type:
       <qandaset>
 	<qandaentry>
 	  <question><para>How do I concatenate alignments?</para></question>
-	  <answer><para>
+	  <answer>
  	    <screen><prompt>%</prompt> <userinput>alignment-cat <replaceable>filename1.fasta</replaceable> <replaceable>filename2.fasta</replaceable> &gt; result.fasta</userinput></screen>
-            For older PowerShell versions, see <xref linkend="shell-redirection"/>.
+            <para>For older PowerShell versions, see <xref linkend="shell-redirection"/>.
 	      The alignments must have the same sequence names, but
 	      the names need not be in the same order.
 	    </para>
