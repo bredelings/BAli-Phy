@@ -85,6 +85,34 @@ nav.toc:empty, nav.tocopen:empty {
 }
 
 @media screen {
+    /* xslTNG hides these native controls inline. Keep them focusable until upstream
+       supplies keyboard access; the associated labels remain the visible selectors. */
+    .panelset input[type=radio] {
+        display: block !important;
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+
+    .panelset input[type=radio]:focus-visible + label {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+    }
+
+    .panelset label {
+        padding: 0.5em 0.75em;
+    }
+
+    .panelset, .panelset .paneltab {
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
     /* Keep two levels in the opening list, while retaining the full panel and print contents. */
     main > article > .list-of-titles ul.toc ul.toc ul.toc {
         display: none;
@@ -112,6 +140,27 @@ nav.toc:empty, nav.tocopen:empty {
 }
 
 @media print {
+    /* The PDF uses the same HTML as the browser. Print every alternative in source
+       order, even if a different upstream stylesheet hides unselected panels. */
+    .panelset, .panelset .paneltab {
+        display: block;
+    }
+
+    .panelset input[type=radio] {
+        display: none !important;
+    }
+
+    .panelset label {
+        display: block;
+        font-weight: bold;
+        margin-top: 0.75em;
+        break-after: avoid;
+    }
+
+    .panelset .paneltab > :first-child {
+        margin-top: 0;
+    }
+
     /* Keep rows together when they fit, but let long tables continue across pages. */
     :is(.table, .informaltable) tr {
         break-inside: avoid;

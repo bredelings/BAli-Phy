@@ -109,6 +109,32 @@ hidden-panel focus handling to the upstream script, without implementing search 
 When updating xslTNG, check these interactions in a browser, including a narrow viewport and
 local-file viewing. Remove the adapter if upstream supplies equivalent accessibility support.
 
+## Shell alternatives
+
+Keep shared commands and explanations outside panels. Where commands or execution instructions
+differ, use xslTNG's built-in panelsets:
+
+```xml
+<variablelist role="panelset">
+  <varlistentry><term>Unix shell / Command Prompt</term><listitem>
+    <screen><userinput>bpy-subsample 10 &lt; C1.trees &gt; C1.10.trees</userinput></screen>
+  </listitem></varlistentry>
+  <varlistentry><term>PowerShell</term><listitem>
+    <screen><userinput>cmd /c "bpy-subsample 10 &lt; C1.trees &gt; C1.10.trees"</userinput></screen>
+  </listitem></varlistentry>
+</variablelist>
+```
+
+Use consistent shell labels and combine alternatives when the complete instructions are identical.
+“Unix shell” includes Linux, macOS, and WSL. Native HTML controls select one panel in HTML
+without JavaScript; the PDF prints every label and its content in source order. Keep version-specific explanations
+beside the affected commands rather than repeating them in the common workflow.
+
+`user-guide.css` makes xslTNG's hidden radio buttons keyboard-focusable and provides a visible
+focus outline. Check Tab and arrow-key navigation, narrow screens, local-file viewing, and print
+output when changing panels or upgrading xslTNG. Remove the keyboard workaround when upstream
+provides equivalent support. Do not add ARIA tab roles without implementing their keyboard model.
+
 ## Checks and maintenance
 
 `check-user-guide` builds HTML/PDF, runs the converter tests, and checks internal links
