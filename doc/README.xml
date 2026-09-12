@@ -290,20 +290,26 @@ Only remove this attribute from an archive that you trust.  The <command>curl</c
 <screen><prompt>%</prompt> <userinput>export PATH=$HOME/Applications/bali-phy-&version;/bin:$PATH</userinput></screen>
         <para>For <command>csh</command> or <command>tcsh</command>, use:</para>
 <screen><prompt>%</prompt> <userinput>setenv PATH $HOME/Applications/bali-phy-&version;/bin:$PATH</userinput></screen>
-        <para>To make the setting apply to future interactive terminals, add the
-          <command>export</command> command to <filename>~/.zshrc</filename> for
-          <command>zsh</command>, or <filename>~/.bashrc</filename> for non-login
-          <command>bash</command> terminals (common on Linux).</para>
-        <para>For a Bash login shell, use its existing login startup file:
-          <filename>~/.bash_profile</filename>, <filename>~/.bash_login</filename>, or
-          <filename>~/.profile</filename>. Bash reads only the first existing file in that
-          order; if it already loads <filename>~/.bashrc</filename>, the command there also
-          applies to login terminals. Avoid creating a new login file that would prevent an
-          existing one from being read. For <command>sh</command>, use
-          <filename>~/.profile</filename>; for <command>csh</command> or
-          <command>tcsh</command> login shells, add the <command>setenv</command> command to
-          <filename>~/.login</filename>. Then open a new terminal and check the result:</para>
+        <para>To apply the setting in future interactive terminals, add the corresponding
+          command above to the file for your shell:</para>
+        <informaltable>
+          <tgroup cols="2">
+            <colspec colname="shell" colwidth="1*"/>
+            <colspec colname="file" colwidth="2*"/>
+            <thead><row><entry>Shell</entry><entry>Startup file</entry></row></thead>
+            <tbody>
+              <row><entry>Bash</entry><entry><filename>~/.bashrc</filename></entry></row>
+              <row><entry>Zsh</entry><entry><filename>~/.zshrc</filename></entry></row>
+              <row><entry>Csh</entry><entry><filename>~/.cshrc</filename></entry></row>
+              <row><entry>Tcsh</entry><entry><filename>~/.tcshrc</filename></entry></row>
+            </tbody>
+          </tgroup>
+        </informaltable>
+        <para>Open a new terminal and check the result:</para>
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
+        <para>If a new Bash terminal does not pick up the setting, see
+          <link xmlns:xlink="http://www.w3.org/1999/xlink"
+                xlink:href="https://www.gnu.org/software/bash/manual/html_node/Bash-Startup-Files.html">Bash's startup-file documentation</link>.</para>
         <para>If you installed BAli-Phy somewhere else, substitute the corresponding
           <filename>bin</filename> directory.  Package managers such as Homebrew and apt
           normally configure <envar>PATH</envar> automatically.</para>
