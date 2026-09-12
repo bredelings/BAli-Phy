@@ -82,13 +82,13 @@
     between installed versions and are not removed when you delete a program directory.</para>
   </section>
 
-  <section><info><title>Install on Windows</title></info>
+  <section xml:id="install-windows"><info><title>Install on Windows</title></info>
     <para>The preferred way to run BAli-Phy on Windows is through Windows Subsystem for
       Linux (WSL2). This lets you follow the Linux commands in this guide, including commands
       for running several analyses and processing their output. Alternatively, install the
       native Windows package and run it from PowerShell or Command Prompt.</para>
 
-    <section><info><title>Install inside WSL2 (preferred)</title></info>
+    <section xml:id="install-wsl"><info><title>Install inside WSL2 (preferred)</title></info>
       <para><link xmlns:xlink="http://www.w3.org/1999/xlink"
                   xlink:href="https://learn.microsoft.com/en-us/windows/wsl/install">Install WSL2</link>
         and open its Linux terminal. Download the Linux BAli-Phy package and follow the
@@ -154,7 +154,7 @@
     </section>
   </section>
 
-    <section><info><title>Install on macOS</title></info>
+    <section xml:id="install-macos"><info><title>Install on macOS</title></info>
     <para>Bioconda and Homebrew both provide convenient ways to install BAli-Phy.
       Bioconda is a natural choice if you already use Conda for bioinformatics software or want
       to keep BAli-Phy and its dependencies in a separate environment. Homebrew is a natural
@@ -239,7 +239,7 @@
     </section>
     </section>
 
-    <section><info><title>Install on Linux</title></info>
+    <section xml:id="install-linux"><info><title>Install on Linux</title></info>
 
     <section><info><title>Download BAli-Phy executables from website</title></info>
 
