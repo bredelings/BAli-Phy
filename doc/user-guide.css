@@ -523,6 +523,52 @@ nav.toc:empty, nav.tocopen:empty {
         break-inside: avoid;
     }
 
+    /* Technical text must not acquire automatic hyphens when typeset for print. */
+    pre, code, .filename, .command, .computeroutput, .userinput, .literal {
+        hyphens: none;
+    }
+
+    .command, .userinput {
+        font-weight: normal;
+    }
+
+    :is(.table, .informaltable) tbody > tr:nth-child(odd) {
+        background-color: #f3f3f3;
+    }
+
+    :is(.table, .informaltable) :is(th, td) {
+        padding: 0.3em 0.5em;
+    }
+
+    :is(.table, .informaltable) th {
+        border-bottom: 1px solid #aaa;
+    }
+
+    :is(.table, .informaltable) :is(th, td) > p {
+        margin: 0.35em 0;
+    }
+
+    :is(.table, .informaltable) :is(th, td) > :first-child {
+        margin-top: 0;
+    }
+
+    :is(.table, .informaltable) :is(th, td) > :last-child {
+        margin-bottom: 0;
+    }
+
+    /* Shell alternatives have their own spacing; tighten ordinary term/description lists. */
+    .variablelist:not(.panelset) dt {
+        margin-bottom: 0.2em;
+    }
+
+    .variablelist:not(.panelset) dd > p {
+        margin: 0.35em 0;
+    }
+
+    .variablelist:not(.panelset) dd {
+        margin-bottom: 0.65em;
+    }
+
     /* Keep rows together when they fit, but let long tables continue across pages. */
     :is(.table, .informaltable) tr {
         break-inside: avoid;

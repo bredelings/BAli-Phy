@@ -188,6 +188,16 @@ focus outline. Check Tab and arrow-key navigation, narrow screens, local-file vi
 output when changing panels or upgrading xslTNG. Remove the keyboard workaround when upstream
 provides equivalent support. Do not add ARIA tab roles without implementing their keyboard model.
 
+## Print presentation
+
+In print, the FAQ uses the section's topic list instead of separate question indexes.
+Questions appear in bold above their answers, without question numbers or an empty label column.
+Long answers can continue onto the next page.
+
+Print styles also use light table stripes, padded cells, compact table paragraphs and
+definition lists, and regular-weight commands. Technical text is not automatically hyphenated.
+These rules are confined to print media; browser navigation and styling are unchanged.
+
 ## Checks and maintenance
 
 `check-user-guide` builds HTML/PDF, runs the converter tests, and checks internal links
@@ -203,8 +213,3 @@ Tool versions used in successful builds are useful diagnostic information, not e
 requirements. Add compatibility restrictions only for demonstrated problems. A clean Ubuntu 24.04 build passed with its packaged WeasyPrint 61.1, Pygments 2.17.2,
 and Node.js 18.19.1. Local checks also passed with WeasyPrint 69.0, Pygments 2.20.0,
 Java 25, and Node.js 24. These are tested examples, not a required version list.
-
-
-In print, the FAQ uses the section's topic list instead of separate question indexes.
-Questions appear in bold above their answers, without question numbers or an empty label column.
-Long answers can continue onto the next page.
