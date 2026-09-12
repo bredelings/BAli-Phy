@@ -157,7 +157,7 @@
     <section><info><title>Install on macOS</title></info>
     <para>Homebrew and Bioconda both provide convenient ways to install BAli-Phy.  Homebrew is a natural choice if you already use it to manage macOS software.  Bioconda is a natural choice if you already use Conda for bioinformatics software or want to keep BAli-Phy and its dependencies in a separate environment.</para>
     <section><info><title>Install BAli-Phy using Homebrew</title></info>
-    <para>First install the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">Xcode</link> (version 15 or higher) command line tools:
+    <para>First install the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">Xcode</link> (version 16 or higher) command line tools:
     <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>
 
     Then install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://brew.sh/">Homebrew</link> and use Homebrew to compile and install <command>bali-phy</command>:
@@ -3893,7 +3893,16 @@ The stabilization criterion is the same one described above for numerical values
       <listitem>a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://en.wikipedia.org/wiki/C%2B%2B23">C++23</link> compiler</listitem>
       <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://mesonbuild.com/">Meson</link> (version >= 1.6)</listitem>
     </itemizedlist>
-    We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gcc.gnu.org/">GCC</link>) version 12.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://clang.llvm.org/">Clang</link> compiler version 17 or higher. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>draw-tree</command> tool that is used to draw consensus trees won&apos;t be built. See also <xref linkend="software_req"/>. </para>
+    Use the GNU C++ Compiler
+    (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gcc.gnu.org/">GCC</link>)
+    version 13 or higher, or the
+    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://clang.llvm.org/">Clang</link>
+    compiler version 18 or higher. GCC 13 and Clang 18 are the oldest versions of these compilers
+    tested in CI. The
+    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cairographics.org/">Cairo</link>
+    graphics library is optional, but if it is missing, the <command>draw-tree</command> tool that
+    is used to draw consensus trees won&apos;t be built. See also <xref linkend="software_req"/>.
+    </para>
 
     <section><info><title>Linux</title></info>
     <para>On Debian and Ubuntu, you can type:
@@ -3926,7 +3935,7 @@ Otherwise you can install meson through pip3:
     </section>
 
     <section><info><title>Mac</title></info>
-    <para>On macOS, the simplest way to get a compiler is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">Xcode</link> version 15 (or newer) command line tools, which come with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://clang.llvm.org/">Clang</link>.
+    <para>On macOS, the simplest way to get a compiler is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">Xcode</link> version 16 (or newer) command line tools, which come with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://clang.llvm.org/">Clang</link>.
  <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>    To get the other tools, first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://brew.sh/">Homebrew</link>, and then type:
 <screen><prompt>%</prompt> <userinput>brew install git meson cairo pandoc</userinput></screen>
     </para>

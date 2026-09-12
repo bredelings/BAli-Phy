@@ -9,9 +9,12 @@ Compiling
 ---------
 
 You will need a C++ compiler that understands C++23.
- * gcc 13 (or higher) works
- * clang 18 (or higher) works
- * XCode 15 (or higher) works
+
+The oldest compiler versions tested in CI are:
+
+ * GCC 13
+ * Clang 18
+ * Xcode 16
 
 Install Prerequisites
 ---------------------
@@ -35,11 +38,11 @@ export BOOST_ROOT=$CONDA_PREFIX
 
 ### Meson version
 
-After installing prerequisites above, check that the meson version is at least 1.1.
+After installing prerequisites above, check that the Meson version is at least 1.6.
 
     meson --version
 
-If your version of meson is less than 1.1, you need to install the most recent version of meson into a python virtual environment:
+If your version of Meson is less than 1.6, install a newer version into a Python virtual environment:
 
     python3 -m venv meson_venv
     source meson_venv/bin/activate

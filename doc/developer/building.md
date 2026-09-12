@@ -2,11 +2,13 @@
 
 ## Prequisites
 
-You will need a C++ compiler that understands C++20:
+You will need a C++ compiler that understands C++23.
 
-* gcc 10 (or higher) works
-* clang 3 (or higher) works
-* XCode 14.0 (or higher) works
+The oldest compiler versions tested in CI are:
+
+* GCC 13
+* Clang 18
+* Xcode 16
 
 You will also need to install
 
@@ -14,7 +16,7 @@ You will also need to install
 
 To build the executables, you will need
 
-* meson
+* Meson 1.6 or higher
 * ninja
 
 To build the documentation, you will need
