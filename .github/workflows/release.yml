@@ -135,8 +135,8 @@ jobs:
 
         sudo apt-get update
         sudo apt-get install -y pandoc
-        sudo apt-get install -y librange-v3-dev libeigen3-dev libcairo2-dev libcli11-dev
-        sudo apt-get install -y r-base gnuplot
+        sudo apt-get install -y librange-v3-dev libeigen3-dev libcairo2-dev libcli11-dev libzstd-dev
+        sudo apt-get install -y r-base
 
         if [ "${{ matrix.compiler }}" = "gcc" ] ; then
           echo "Installing g++-${{ matrix.version }}"
@@ -168,7 +168,7 @@ jobs:
         sudo apt-get install -y dos2unix fakeroot g++-mingw-w64 pacman-package-manager wine64
 
     - name: Select XCode version (macOS)
-      if: runner.os == 'macOS'
+      if: runner.os == 'macOS' && matrix.compiler == 'xcode'
       uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: ${{ matrix.version }}
@@ -191,10 +191,19 @@ jobs:
 
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 # Don't try and install python3.12
           brew install pandoc ccache coreutils
-          brew install eigen range-v3 cairo cli11 fmt
-          brew install gnuplot r
-          echo "CC=ccache clang" >> $GITHUB_ENV
-          echo "CXX=ccache clang++" >> $GITHUB_ENV
+          brew install eigen range-v3 cairo cli11 fmt zstd
+          brew install r
+          if [ "${{ matrix.compiler }}" = "llvm" ] ; then
+            brew install llvm
+            LLVM_PREFIX="$(brew --prefix llvm)"
+            echo "LLVM_PREFIX=${LLVM_PREFIX}" >> $GITHUB_ENV
+            echo "CC=ccache ${LLVM_PREFIX}/bin/clang" >> $GITHUB_ENV
+            echo "CXX=ccache ${LLVM_PREFIX}/bin/clang++" >> $GITHUB_ENV
+            "${LLVM_PREFIX}/bin/clang++" --version
+          else
+            echo "CC=ccache clang" >> $GITHUB_ENV
+            echo "CXX=ccache clang++" >> $GITHUB_ENV
+          fi
 
           ( cd
             curl -O -L https://archives.boost.io/release/1.89.0/source/boost_1_89_0.tar.gz
@@ -211,9 +220,13 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1.2.23
       with:
          install: ${{ runner.os == 'Linux' && 'binary' || 'detect' }}
-         key: ${{ matrix.name }}-${{ github.ref }}
+         max-size: ${{ matrix.name == 'ubuntu-gcc-14-sanitize' && '1G' || '500M' }}
+         # GitHub caches are immutable.  Timestamped SHA keys make each save unique, while
+         # these prefixes restore the newest same-commit or preceding accessible cache.
+         key: ${{ matrix.name }}-${{ github.sha }}
          restore-keys: |
-           ${{ matrix.name }}-
+           ${{ matrix.name }}-${{ github.sha }}
+           ${{ matrix.name }}
          verbose: 2
 
     - name: Require ccache 4.10 or newer
@@ -236,7 +249,12 @@ jobs:
           exit 1
         fi
 
+    - name: Identify cached compilers by content
+      if: matrix.name != 'windows-native-mingw'
+      run: ccache --set-config=compiler_check=content
+
     - name: Install meson
+      if: matrix.name != 'windows-native-mingw'
       run: |
         python3 -mpip install meson ninja
 
@@ -268,12 +286,21 @@ jobs:
         echo "seed=$seed" >> "$GITHUB_ENV"
 
     - name: Configure
+      if: matrix.name != 'windows-native-mingw'
       run: |
         CPPARGS=""
+        if [ "${{ matrix.sanitize }}" != "" ] ; then
+           # Keep symbols in instrumented builds so sanitizer reports name their source locations.
+           CPPARGS="-g"
+        fi
         if [ "${{ matrix.cxxflags }}" != "" ] ; then
            CPPARGS="$CPPARGS ${{ matrix.cxxflags }}"
         fi
-        if [ "${{ matrix.arch }}" = "win64" ]; then
+        if [ "${{ matrix.assertions }}" = "true" ] ; then
+           # Exercise optimized code with assertions, without retaining full debug information.
+           ARGS="${ARGS} -Db_ndebug=false"
+        fi
+        if [ "${{ matrix.name }}" = "windows" ] && [ "${{ matrix.arch }}" = "win64" ]; then
            ARGS="${ARGS} --cross-file=win64-cross.txt"
         fi
         if [ "${{ runner.os }}" = "Linux" ] && [ "${{ matrix.name }}" != "windows" ] && [ "${{ matrix.sanitize }}" != "" ] ; then
@@ -292,6 +319,7 @@ jobs:
         path: ${{ github.workspace }}/build/meson-logs/meson-log.txt
 
     - name: Build
+      if: matrix.name != 'windows-native-mingw'
       run: |
         ccache -p
         ccache -s
@@ -345,6 +373,7 @@ jobs:
         codesign -d --verbose=4 ${OUTPUT}/bin/bali-phy
 
     - name: Test
+      if: matrix.name != 'windows-native-mingw'
       run: |
         export UBSAN_OPTIONS=halt_on_error=1
         # Installed macOS binaries locate packaged libraries through their rpath. A prefix-wide
@@ -353,10 +382,7 @@ jobs:
           export LD_LIBRARY_PATH="${BOOST_ROOT}/lib"
         fi
         if [ "${{ matrix.name }}" = "windows" ] ; then
-          # Initialize Wine before winepath starts another client, then keep that server alive across tests.
-          wine_loader=$(dpkg-query -L wine64 | awk '/\/wine\/wine(64)?$/ { print; exit }')
-          test -x "$wine_loader"
-          WINEDEBUG=-all "$wine_loader" cmd /c exit
+          # Start the server explicitly so the first Wine client inherits the persistence timeout.
           wine_server=$(dpkg-query -L wine64 | awk '/\/wineserver(64)?$/ { print; exit }')
           test -x "$wine_server"
           "$wine_server" -p60
