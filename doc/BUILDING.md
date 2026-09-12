@@ -88,6 +88,34 @@ such as removing quarantine before extracting the macOS archive. Give each box a
 its type, such as “Caution: Preserve branch annotations”. Move relevant prose into the box
 rather than repeating it. Informational boxes use `<note>`; `<info>` contains metadata.
 
+## Commands, files, and expressions
+
+Use `<screen>` for terminal commands and transcripts, with `<prompt>`, `<userinput>`, and
+`<computeroutput>` identifying their parts. Keep short command/output exchanges together.
+
+Use `<programlisting role="expression" language="bali-phy-model">` for model expressions.
+A multiline expression listing may compare alternatives or show equivalent expressions;
+it does not necessarily represent a file or script. Explain the relationship in the preceding
+prose. `language` identifies syntax, while `role` identifies the purpose of the example.
+Use `<synopsis role="expression">` for schematic syntax without model-language highlighting.
+
+Give file contents and excerpts a caption identifying their filename or format. Mark excerpts
+as such, and do not invent filenames for generic examples:
+
+```xml
+<example role="file-content">
+  <title><filename>model.config</filename></title>
+  <programlisting>:smodel HKY85</programlisting>
+</example>
+```
+
+Place this block between paragraphs, not inside one. A file listing may also have a `language`
+attribute when highlighting is supported; it retains the file presentation. The guide's XSL
+renders these examples with unnumbered captions and delegates their contents to DocBook.
+HTML uses gray terminal blocks, white captioned files, and pale blue-gray expressions. Print
+retains captions and borders. Inline filenames use plain monospace without a background.
+Keep captions with the beginning of files, but allow long listings to cross page boundaries.
+
 ## Table layout
 
 Set table column proportions with DocBook `colspec` entries in `README.xml`; the same

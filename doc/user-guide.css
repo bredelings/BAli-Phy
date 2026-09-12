@@ -199,6 +199,13 @@ pre.literallayout.monospaced {
     background: transparent;
 }
 
+/* Monospace identifies filenames; reserve inline backgrounds for expressions and input. */
+code.filename, .admonition code.filename {
+    background: transparent;
+    border: 0;
+    padding: 0;
+}
+
 /* There is no interactive panel until the upstream script populates it. */
 nav.toc:empty, nav.tocopen:empty {
     display: none;
