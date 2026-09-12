@@ -81,6 +81,75 @@ td, th {
     font-weight: bold;
 }
 
+/* Titles identify each notice without a decorative icon column, including in print. */
+.admonition {
+    --guide-notice-background: #edf4fa;
+    --guide-notice-accent: var(--guide-accent);
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 0;
+    margin: 1em 0;
+    padding: 0.75em 1em;
+    border: 1px solid var(--guide-notice-accent);
+    border-left-width: 3px;
+    border-radius: 0.2rem;
+    background: var(--guide-notice-background);
+    color: #24292f;
+}
+
+.admonition:is(.caution, .important) {
+    --guide-notice-background: #fff5df;
+    --guide-notice-accent: #805500;
+}
+
+.admonition.warning {
+    --guide-notice-background: #fff0f0;
+    --guide-notice-accent: #a12622;
+}
+
+.admonition > div, .admonition .body {
+    display: block;
+    padding: 0;
+}
+
+.admonition .icon {
+    display: none;
+}
+
+.admonition header {
+    padding: 0;
+    margin: 0 0 0.4em;
+    break-after: avoid;
+}
+
+.admonition .title {
+    font-family: var(--title-family);
+    font-size: 1em;
+    font-weight: bold;
+    color: var(--guide-notice-accent);
+    background: transparent;
+}
+
+.admonition .body > div > :first-child {
+    margin-top: 0;
+}
+
+.admonition .body > div > :last-child {
+    margin-bottom: 0;
+}
+
+/* Override upstream notice colors on inline code; block code retains its panel background. */
+.admonition code {
+    background-color: var(--guide-code-background);
+    border-color: var(--guide-border);
+}
+
+.admonition pre code {
+    background-color: inherit;
+    border-color: inherit;
+}
+
 /* There is no interactive panel until the upstream script populates it. */
 nav.toc:empty, nav.tocopen:empty {
     display: none;
@@ -223,6 +292,27 @@ nav.toc:empty, nav.tocopen:empty {
 }
 
 @media print {
+    .admonition {
+        --guide-notice-accent: #24292f;
+        background: white;
+        color: #24292f;
+        border-color: #24292f;
+        break-inside: auto;
+    }
+
+    .admonition .title {
+        color: #24292f;
+    }
+
+    /* The short stop-all warning must stay with its command; longer notices may split. */
+    .admonition.warning {
+        break-inside: avoid;
+    }
+
+    .admonition :is(code, .filename, .command, .computeroutput, .userinput) {
+        hyphens: none;
+    }
+
     /* The PDF uses the same HTML as the browser. Print every alternative in source
        order, even if a different upstream stylesheet hides unselected panels. */
     .variablelist.panelset, .variablelist.panelset .panelset,
