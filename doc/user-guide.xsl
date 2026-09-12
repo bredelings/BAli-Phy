@@ -36,6 +36,18 @@
   <xsl:param name="verbatim-trim-leading-blank-lines" select="'false'"/>
   <xsl:param name="verbatim-trim-trailing-blank-lines" select="'false'"/>
 
+  <!-- File examples need an unnumbered caption, while the existing listing renderer
+       continues to handle whitespace, replacement text, and syntax highlighting. -->
+  <xsl:template match="db:example[@role='file-content']" mode="m:docbook">
+    <figure>
+      <xsl:apply-templates select="." mode="m:attributes"/>
+      <figcaption>
+        <xsl:apply-templates select="(db:title|db:info/db:title)/node()" mode="m:docbook"/>
+      </figcaption>
+      <xsl:apply-templates select="* except (db:title, db:info)" mode="m:docbook"/>
+    </figure>
+  </xsl:template>
+
   <!-- Use the standard inline renderer to retain links, IDs, and replaceable markup,
        adding a language class so inline expressions share the listing's token colors. -->
   <xsl:template match="db:code[@language='bali-phy-model']" mode="m:docbook">

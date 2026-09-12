@@ -157,6 +157,48 @@ pre.expression {
     padding: 0.75em 1em;
 }
 
+/* A caption identifies file contents in HTML and print; the listing shares its enclosure. */
+figure.example.file-content {
+    margin: 1em 0;
+    border: 1px solid var(--guide-border);
+    border-radius: 0.2rem;
+    background: white;
+}
+
+figure.file-content > figcaption {
+    padding: 0.4em 1em;
+    border-bottom: 1px solid var(--guide-border);
+    font-family: var(--title-family);
+    font-size: 0.9em;
+    break-after: avoid;
+}
+
+figure.file-content pre.programlisting {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+figure.file-content > .pre-wrap {
+    margin: 0;
+}
+
+figure.file-content pre code, pre.screen .computeroutput {
+    background: transparent;
+}
+
+pre.screen .computeroutput {
+    font-weight: normal;
+}
+
+pre.literallayout.monospaced {
+    margin-left: 1em;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
 /* There is no interactive panel until the upstream script populates it. */
 nav.toc:empty, nav.tocopen:empty {
     display: none;
@@ -303,6 +345,15 @@ nav.toc:empty, nav.tocopen:empty {
 }
 
 @media print {
+    figure.example.file-content {
+        break-inside: auto;
+    }
+
+    figure.file-content pre {
+        break-inside: auto;
+        hyphens: none;
+    }
+
     pre.programlisting.expression, pre.synopsis.expression {
         background-color: white;
     }

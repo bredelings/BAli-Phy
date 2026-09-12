@@ -284,7 +284,7 @@ If you install with Homebrew, you don't need to do anything extra to put bali-ph
           current PowerShell or Command Prompt session.  To make the change permanent, search
           for “environment variables” in Windows Settings, edit your user <envar>Path</envar>,
           and add:</para>
-<screen>%USERPROFILE%\Applications\bali-phy-&version;\bin</screen>
+<literallayout class="monospaced">%USERPROFILE%\Applications\bali-phy-&version;\bin</literallayout>
         <para>Open a new terminal and check the result:</para>
 <screen><prompt>PS&gt;</prompt> <userinput>bali-phy --version</userinput></screen>
         <para>If you installed BAli-Phy somewhere else, add the <filename>bin</filename>
@@ -555,7 +555,9 @@ If you install with Homebrew, you don't need to do anything extra to put bali-ph
 
       <para>FASTA format prefixes sequence names with "&gt;":
     </para>
-      <programlisting>>human       this is a comment and is not part of the sequence name
+      <example role="file-content">
+  <title>FASTA example</title>
+  <programlisting>>human       this is a comment and is not part of the sequence name
 CTGACTCCTGAGGAGAAGTCTGCCGTTACTGCCCTGTGGGGCAAGGTGAACGTGGATGAA
 GTTGGTGGTGAGGCCCTGGGCAGGCTGCTGGTGGTCTACCCTTGGACCCAGAGGTTCTTT
 >tarsier     this is also a comment
@@ -568,6 +570,7 @@ GTTGGTGGTGAGGCCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTT
 CTGTCCGGTGAGGAGAAGTCTGCGGTCACTGCCCTGTGGGGCAAGGTGAATGTGGAAGAA
 GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 </programlisting>
+</example>
 <para>If the sequence-name line contains a space, BAli-Phy treats everything after the space as a comment.</para>
 <para>To analyze only part of the input, append a range to the filename:</para>
 <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:1-30,90-100</userinput></screen>
@@ -619,7 +622,10 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 </variablelist>
       <para>Models containing double-quoted strings are easier to specify in a configuration
         file. For DNA data, save this line in <filename>model.config</filename>:</para>
-<programlisting>:smodel GTR(pi={"A":0.1, "C":0.2, "G":0.3, "T":0.4})</programlisting>
+<example role="file-content">
+  <title><filename>model.config</filename></title>
+  <programlisting>:smodel GTR(pi={"A":0.1, "C":0.2, "G":0.3, "T":0.4})</programlisting>
+</example>
       <para>Then use the same command in any shell:</para>
 <screen><userinput>bali-phy sequences.fasta -c model.config</userinput></screen>
       <para>The configuration file contains the model expression itself, without outer shell
@@ -676,7 +682,10 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 	<para>
 	  For example, consider the following
 	  configuration file:
-	  <programlisting># sequence data for 3 genes/partitions
+	  </para>
+<example role="file-content">
+  <title><filename>config.txt</filename></title>
+  <programlisting># sequence data for 3 genes/partitions
 :align ITS1.fasta
 :align 5.8S.fasta
 :align ITS2.fasta
@@ -696,6 +705,8 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 # choose a name for output directories
 :name ITS-analysis1
 </programlisting>
+</example>
+<para>
 Configuration files are specified with the
 <userinput>-c <replaceable>configuration_file</replaceable></userinput>
 option.  For example:
@@ -1314,7 +1325,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <para>
         The default tree distribution for &baliphy; is unrooted.
         This works fine for reversible substitution models, but if you specify a non-reversible substitution model then you will get an error:
-        <screen>bali-phy: Error! phyloCTMC: the tree is unrooted, but the model is not reversible!</screen>
+        <screen><computeroutput>bali-phy: Error! phyloCTMC: the tree is unrooted, but the model is not reversible!</computeroutput></screen>
         In this case you will need to specify a rooted tree distribution.
         The simplest approach is to add the following to the command line:
         <screen><userinput>--tree '~UniformRootedTree(taxa)'</userinput></screen>
@@ -2462,10 +2473,14 @@ If the genetic code is not specified, then the standard code is used:
 		<code language="bali-phy-model">v</code> have independent <code language="bali-phy-model">Uniform(0,1)</code>
 		default priors. The normalized variance is the fraction of the maximum
 		possible variance at that mean:</para>
-		<programlisting>v = Var(omega)/(mu*(1-mu))
-concentration = 1/v - 1
-alpha = concentration*mu
-beta = concentration*(1-mu)</programlisting>
+		<para>\[
+\begin{aligned}
+\mathtt{v} &amp;= \frac{\operatorname{Var}(\mathtt{omega})}{\mathtt{mu}(1-\mathtt{mu})} \\
+\mathtt{concentration} &amp;= 1/\mathtt{v} - 1 \\
+\mathtt{alpha} &amp;= \mathtt{concentration}\cdot\mathtt{mu} \\
+\mathtt{beta} &amp;= \mathtt{concentration}\cdot(1-\mathtt{mu})
+\end{aligned}
+\]</para>
 		<para>The shape parameters are logged as computed values <code language="bali-phy-model">a</code>
 		and <code language="bali-phy-model">b</code>.</para>
 		<para>For a proper beta distribution, both <code language="bali-phy-model">mu</code> and
@@ -2918,7 +2933,7 @@ By default each partition has a separate scale, but you can force groups of part
 <prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S TN93             --link=1,2 -t</userinput>   </screen>
     If the linked partitions are given different models, BAli-Phy will give an error and refuse to run:
     <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:TN93 --link=1,2 -t</userinput>
-bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing values 'TN93' and ''</screen></para>
+<computeroutput>bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing values 'TN93' and ''</computeroutput></screen></para>
     <para>You can also specify which of the 3 attributes "smodel", "imodel", and "scale" are being linked:
     <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --link=1,2:smodel,scale -t</userinput></screen>
     This links the substitution model and scale, leaving the indel models separate.
@@ -3080,7 +3095,10 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       Newick tree containing all your sequences. Save it as <filename>branches.tree</filename>.
       This four-sequence example is an unrooted tree and labels
       the branch separating A and B from C and D:</para>
-<programlisting>((A,B):[&amp;foreground=1],C,D);</programlisting>
+<example role="file-content">
+  <title><filename>branches.tree</filename></title>
+  <programlisting>((A,B):[&amp;foreground=1],C,D);</programlisting>
+</example>
       <para>The label follows a colon because it belongs to the branch, not the node. This
       assigns that branch to category 1; unlabelled branches use category 0.
       Branch lengths are still estimated:</para>
@@ -3350,7 +3368,10 @@ alignment.</para>
           are given names starting with the letter <userinput>A</userinput>.  For example, in the
           following alignment, the sequences <userinput>A5</userinput>, <userinput>A6</userinput>, and
           <userinput>A7</userinput> are reconstructed ancestors:
-          <programlisting>&gt;Halobacterium
+          </para>
+<example role="file-content">
+  <title>Sampled alignment excerpt — FASTA</title>
+  <programlisting>&gt;Halobacterium
 -T-TAAGGCGGCCATAGCGGTGGGGTTACTCCCGTAC
 &gt;Pyrococcus
 GG-TACGGCGGTCATAGCGGGGGGGCCACACCCGGTC
@@ -3366,6 +3387,8 @@ GG-CAAGGCGGCCATAGCGGGGGGGCCACACCCGGCC
 GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC
 &gt;A7   
 GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
+</example>
+<para>
           Sampled alignments for the <replaceable>n</replaceable>th partition are in the file.
           <filename>C1.P<replaceable>n</replaceable>.fastas</filename>. 
         </para>
@@ -3386,7 +3409,12 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
           ancestral sequence by labelling the internal nodes of the tree.  For example, the tree below
           shows where the internal nodes <userinput>A5</userinput>, <userinput>A6</userinput>, and <userinput>A7</userinput> are
           located on the tree:
-          <programlisting>(Halobacterium:0.213240,((Escherichia:0.435762,Pyrococcus:0.122678)<emphasis role="strong">A5</emphasis>:0.114725,Sulfolobus:0.427210)<emphasis role="strong">A6</emphasis>:0.042527,Homo:0.427026)<emphasis role="strong">A7</emphasis>;</programlisting>
+          </para>
+<example role="file-content">
+  <title>Sampled tree example — Newick</title>
+  <programlisting>(Halobacterium:0.213240,((Escherichia:0.435762,Pyrococcus:0.122678)<emphasis role="strong">A5</emphasis>:0.114725,Sulfolobus:0.427210)<emphasis role="strong">A6</emphasis>:0.042527,Homo:0.427026)<emphasis role="strong">A7</emphasis>;</programlisting>
+</example>
+<para>
           While the tree is written every iteration, the alignment is only written every 10 iterations
           (by default) in order to save disk space.  One method for extracting the trees that correspond
           to saved alignments is to extract every 10th tree with the program
@@ -3476,7 +3504,7 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
     </para>
     <para>
       Branch-based query files can also contain lines of the form
-      <programlisting>name = taxon1 taxon2 ... taxonN</programlisting>
+      <synopsis role="expression">name = taxon1 taxon2 ... taxonN</synopsis>
       This matches branches that separate the listed taxa from all other taxa, and points toward the listed taxa.
     </para>
     </section>
@@ -4119,8 +4147,11 @@ The command <command>bali-phy</command> and its associated tools should then be 
 	    can find this by examining the beginning of the file
 	    <filename>C1.run.json</filename>.  For 
 	    example:
-            <screen><prompt>%</prompt> less 5d-1/C1.run.json
-    ...            
+            </para>
+<screen><prompt>%</prompt> less 5d-1/C1.run.json</screen>
+<example role="file-content">
+  <title><filename>C1.run.json</filename> — excerpt</title>
+  <programlisting>    ...            
     "partitions": [
         {
             "alphabet": "DNA",
@@ -4141,7 +4172,9 @@ The command <command>bali-phy</command> and its associated tools should then be 
         "version": "4.0-beta9-preview"
     },
     ...
-</screen>
+</programlisting>
+</example>
+<para>
 Here the PID is 549319.  Therefore you can type:
 <screen><prompt>%</prompt> kill 549319</screen>
             </para>
