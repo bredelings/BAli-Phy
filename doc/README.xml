@@ -75,13 +75,32 @@
     between installed versions and are not removed when you delete a program directory.</para>
   </section>
 
-  <section><info><title>Install on MS Windows</title></info>
-    <para>For most Windows users, we recommend the native Windows package.  It runs directly
-      from PowerShell or Command Prompt and uses ordinary Windows filenames.  If you already
-      use Linux tools or want the same environment as a Linux workstation or computing
-      cluster, WSL2 is a good alternative.</para>
+  <section><info><title>Install on Windows</title></info>
+    <para>The preferred way to run BAli-Phy on Windows is through Windows Subsystem for
+      Linux (WSL2). This lets you follow the Linux commands in this guide, including commands
+      for running several analyses and processing their output. Alternatively, install the
+      native Windows package and run it from PowerShell or Command Prompt.</para>
 
-    <section><info><title>Install the native Windows package (recommended)</title></info>
+    <section><info><title>Install inside WSL2 (preferred)</title></info>
+      <para><link xmlns:xlink="http://www.w3.org/1999/xlink"
+                  xlink:href="https://learn.microsoft.com/en-us/windows/wsl/install">Install WSL2</link>
+        and open its Linux terminal. Download the Linux BAli-Phy package and follow the
+        Linux installation instructions below inside WSL2. Continue using that terminal for
+        the Linux commands throughout this guide.</para>
+      <para>Programs installed inside WSL2 use Linux paths such as
+        <filename>/home/user/data.fasta</filename>.  The native Windows package instead uses
+        Windows paths such as <filename>C:\Users\user\data.fasta</filename>.  Choose one
+        installation route for an analysis rather than mixing commands and paths from the two
+        environments.</para>
+    </section>
+
+    <section><info><title>Install the native Windows package</title></info>
+      <para>For native Windows analyses, installing the
+        <link xmlns:xlink="http://www.w3.org/1999/xlink"
+              xlink:href="https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell-on-windows">latest stable PowerShell</link>
+        improves handling of quoted arguments and redirected program output. Start it with
+        <command>pwsh</command>; <command>powershell</command> still starts Windows PowerShell
+        5.1. Upgrading is optional for the installation checks and Quick Start below.</para>
       <para>Download
         <link xmlns:xlink="http://www.w3.org/1999/xlink"
               xlink:href="&win64.url;"><filename>&win64.file;</filename></link>
@@ -122,20 +141,6 @@
         and reports which optional figures were omitted.</para>
 
       <para>Continue with <xref linkend="tests"/> after installing Python and adding BAli-Phy to <envar>Path</envar>.</para>
-    </section>
-
-    <section><info><title>Install inside WSL2</title></info>
-      <para><link xmlns:xlink="http://www.w3.org/1999/xlink"
-                  xlink:href="https://learn.microsoft.com/en-us/windows/wsl/install">Install WSL2</link>
-        if you prefer a Linux command line or want an environment similar to a Linux
-        computing cluster.  Open the Linux distribution installed by WSL2, download the
-        Linux BAli-Phy package, and follow the Linux installation instructions below entirely
-        inside WSL2.</para>
-      <para>Programs installed inside WSL2 use Linux paths such as
-        <filename>/home/user/data.fasta</filename>.  The native Windows package instead uses
-        Windows paths such as <filename>C:\Users\user\data.fasta</filename>.  Choose one
-        installation route for an analysis rather than mixing commands and paths from the two
-        environments.</para>
     </section>
   </section>
 
