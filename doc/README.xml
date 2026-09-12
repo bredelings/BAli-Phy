@@ -157,15 +157,20 @@
     <section><info><title>Install on macOS</title></info>
     <para>Homebrew and Bioconda both provide convenient ways to install BAli-Phy.  Homebrew is a natural choice if you already use it to manage macOS software.  Bioconda is a natural choice if you already use Conda for bioinformatics software or want to keep BAli-Phy and its dependencies in a separate environment.</para>
     <section><info><title>Install BAli-Phy using Homebrew</title></info>
-    <para>First install the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">Xcode</link> (version 16 or higher) command line tools:
-    <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>
-
-    Then install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://brew.sh/">Homebrew</link> and use Homebrew to compile and install <command>bali-phy</command>:
-<screen><prompt>%</prompt> <userinput>brew tap brewsci/bio</userinput>
-<prompt>%</prompt> <userinput>brew install bali-phy</userinput></screen>
-Check that the executable runs:
+    <para>First install Apple's Command Line Tools:
+<screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>
+      See the <link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="https://docs.brew.sh/Installation">Homebrew installation requirements</link>.
+      Install <link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="https://brew.sh/">Homebrew</link> and complete the shell setup instructions
+      printed by its installer. Then install BAli-Phy:
+<screen><prompt>%</prompt> <userinput>brew install brewsci/bio/bali-phy</userinput></screen>
+      Homebrew uses a prebuilt package when available; otherwise, it builds from source.
+      Check that the executable runs:
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
-If you install with Homebrew, you don't need to do anything extra to put bali-phy in your PATH.  The Homebrew formula may lag behind the current BAli-Phy release, so check the installed version and use the release executables below if you need a newer version.
+      Once Homebrew is configured in your shell, no additional BAli-Phy-specific PATH setting
+      is needed. The Homebrew formula may lag behind the current BAli-Phy release, so check
+      the installed version and use the release executables below if you need a newer version.
     </para>
     </section>
 
@@ -214,7 +219,7 @@ If you install with Homebrew, you don't need to do anything extra to put bali-ph
     <section><info><title>Install programs used by <command>bpy-summarize</command> using Homebrew</title></info>
     <para>
       You can install <application>R</application> via Homebrew:
-<screen><prompt>%</prompt> <userinput> brew install r</userinput></screen>
+<screen><prompt>%</prompt> <userinput>brew install r</userinput></screen>
 </para>
     </section>
     <section><info><title>Install programs used for viewing the results</title></info>
