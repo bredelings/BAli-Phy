@@ -44,6 +44,7 @@ jobs:
           path: |
             ${{ runner.temp }}/user-guide/README.html
             ${{ runner.temp }}/user-guide/README.pdf
+            ${{ runner.temp }}/user-guide/README-A4.pdf
             ${{ runner.temp }}/user-guide/user-guide.css
             ${{ runner.temp }}/user-guide/user-guide-assets/
       - name: Retain build logs

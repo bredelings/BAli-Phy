@@ -358,7 +358,7 @@ nav.toc:empty, nav.tocopen:empty {
 @media print {
     /* Use ordinary pages rather than the upstream book layout's named page families. */
     @page {
-        size: A4;
+        size: Letter;
         margin: 18mm 12.7mm;
         @top-center {
             content: string(GuideSection);

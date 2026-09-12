@@ -15,10 +15,11 @@ make -C doc check-user-guide
 
 Setup obtains xslTNG if necessary and installs MathJax. It does not manage Python
 packages or fonts. Subsequent builds need only `make -C doc user-guide`.
-`README.html` and `README.pdf` remain convenience targets.
+The build produces `README.pdf` with US Letter pages and `README-A4.pdf` with A4 pages.
+`README.html`, `README.pdf`, and `README-A4.pdf` are also individual convenience targets.
 
 Outputs are in `../../build/user-guide` relative to `doc/`. Publish `README.html` with
-`user-guide.css` and `user-guide-assets/`, including licenses. `README.pdf` is standalone.
+`user-guide.css` and `user-guide-assets/`, including licenses. Both PDFs are standalone.
 `README.print.html` is an intermediate input to WeasyPrint, not a file to publish.
 `make -C doc clean-user-guide` removes generated guide files, preserving the source
 and installed tools. Tutorial and Instructions retain their older build rules.
@@ -65,12 +66,13 @@ terms (including filename patterns), and table entries remain eligible.
 ```text
 README.xml → xslTNG → README.html → local MathJax in the browser
                          ↓ Node.js MathJax
-                     README.print.html → WeasyPrint → README.pdf
+                     README.print.html → WeasyPrint → README.pdf / README-A4.pdf
 ```
 
 The browser MathJax bundle is copied from the same installation used by the PDF
 converter. PDF equations are self-contained SVG paths, retaining their dimensions
-and baseline offsets. Malformed TeX fails the conversion. WeasyPrint handles pagination,
+and baseline offsets. Malformed TeX fails the conversion. The A4 build applies `user-guide-A4.css` to override only the paper size.
+WeasyPrint handles pagination,
 contents-page numbers, and links. Glyph paths do not guarantee selectable mathematical
 text or full PDF accessibility.
 

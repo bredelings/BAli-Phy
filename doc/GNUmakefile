@@ -13,7 +13,7 @@ GUIDE_ASSETS = $(addprefix $(ASSET_DIR)/,docbook.css docbook-paged.css docbook-t
 MATH_ASSETS = $(addprefix $(ASSET_DIR)/,mathjax-config.js tex-svg.js MathJax-LICENSE)
 
 .DELETE_ON_ERROR:
-.PHONY: all user-guide README.html README.pdf clean clean-user-guide setup-user-guide check-user-guide
+.PHONY: all user-guide README.html README.pdf README-A4.pdf clean clean-user-guide setup-user-guide check-user-guide
 
 setup-user-guide:
 	python3 setup-guide.py "$(TOOLS_DIR)" "$(DOCBOOK_XSLTNG)"
@@ -28,9 +28,10 @@ check-user-guide: user-guide
 	node test-render-math-svg.cjs
 	node check-guide.cjs "$(BUILD_DIR)"
 
-user-guide: $(BUILD_DIR)/README.html $(BUILD_DIR)/README.pdf
+user-guide: $(BUILD_DIR)/README.html $(BUILD_DIR)/README.pdf $(BUILD_DIR)/README-A4.pdf
 README.html: $(BUILD_DIR)/README.html
 README.pdf: $(BUILD_DIR)/README.pdf
+README-A4.pdf: $(BUILD_DIR)/README-A4.pdf
 
 $(BUILD_DIR)/README.html: $(DOCBOOK_XSLTNG)/bin/docbook $(NODE_MODULES)/mathjax-full/package.json \
                         README.xml user-guide.xsl $(GUIDE_ASSETS) $(MATH_ASSETS) $(BUILD_DIR)/user-guide.css \
@@ -83,11 +84,15 @@ $(BUILD_DIR)/README.pdf: $(BUILD_DIR)/README.print.html \
                        $(BUILD_DIR)/user-guide.css $(GUIDE_ASSETS)
 	weasyprint "$<" "$@"
 
+$(BUILD_DIR)/README-A4.pdf: $(BUILD_DIR)/README.print.html \
+                          $(BUILD_DIR)/user-guide.css $(GUIDE_ASSETS) user-guide-A4.css
+	weasyprint --stylesheet user-guide-A4.css "$<" "$@"
+
 Tutorial.pdf Instructions.pdf: guide.css
 
 # Name the generated files explicitly: README.xml is now a source file.
 clean-user-guide:
-	$(RM) "$(BUILD_DIR)/README.html" "$(BUILD_DIR)/README.print.html" "$(BUILD_DIR)/README.pdf"
+	$(RM) "$(BUILD_DIR)/README.html" "$(BUILD_DIR)/README.print.html" "$(BUILD_DIR)/README.pdf" "$(BUILD_DIR)/README-A4.pdf"
 	$(RM) "$(BUILD_DIR)/user-guide.css" $(GUIDE_ASSETS) $(MATH_ASSETS)
 
 clean: clean-user-guide

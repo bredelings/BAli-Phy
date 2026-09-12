@@ -1,0 +1,5 @@
+/* WeasyPrint's command-line stylesheet has user origin, so this override needs
+   !important to take precedence over the shared guide stylesheet. */
+@page {
+    size: A4 !important;
+}
