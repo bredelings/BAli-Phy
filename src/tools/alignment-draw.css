@@ -419,3 +419,20 @@ td.alignment-cell.alignment-au-missing {
         overflow: visible;
     }
 }
+
+
+/* The residue class excludes gaps and rulers. Override inline and compound-cell colors
+   without removing text, changing backgrounds, or disabling pointer/keyboard interaction. */
+body.alignment-hide-letters td.alignment-residue,
+body.alignment-hide-letters td.alignment-residue .alignment-symbol-part {
+    color: transparent !important;
+}
+
+.alignment-letter-controls {
+    margin: 0.45rem 0;
+    font: 0.8rem/1.35 system-ui, sans-serif;
+}
+
+.alignment-letter-controls label {
+    cursor: pointer;
+}

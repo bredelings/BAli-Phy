@@ -1227,7 +1227,7 @@ BODY {\n\
 //  text-align: center;\n\
 }\n";
 
-	    if (character_property_summary)
+	    if (character_property_summary or args.count("AU"))
 		cout<<alignment_draw_stylesheet;
 
 	    cout<<"\
@@ -1303,6 +1303,8 @@ BODY {\n\
 			if (character_property_summary)
 			{
 			    cout<<" class=\"alignment-cell";
+			    if (show_symbol and token.character_index >= 0)
+				cout<<" alignment-residue";
 			    if (color_parts)
 				cout<<" alignment-compound-cell";
 			    cout<<"\" data-sequence=\""<<s
@@ -1315,8 +1317,14 @@ BODY {\n\
 				cout<<" data-amino-acid=\""<<escape_html(amino_acid)<<"\"";
 			    }
 			}
-			else if (color_parts)
-			    cout<<" class=\"alignment-compound-cell\"";
+			else if (color_parts or args.count("AU")) {
+                            cout<<" class=\"";
+                            if (color_parts)
+                                cout<<"alignment-compound-cell ";
+                            if (show_symbol and token.character_index >= 0)
+                                cout<<"alignment-residue";
+                            cout<<"\"";
+                        }
 			if (not style.empty())
 			    cout<<" style=\""<<style<<"\"";
 			cout<<">";
@@ -1336,7 +1344,9 @@ BODY {\n\
 		    <<"<script>\n"<<alignment_draw_properties_javascript<<"\n</script>\n"
 		    <<"<script>\n"<<table_sort_javascript<<"\n</script>\n"
 		    <<"<script>\n"<<alignment_draw_viewer_javascript<<"\n</script>\n";
-	    cout<<"</body>\n</html>\n";
+	    if (character_property_summary or args.count("AU"))
+                cout<<"<script>\n"<<alignment_draw_letters_javascript<<"\n</script>\n";
+            cout<<"</body>\n</html>\n";
 	}
     }
     catch (std::exception& e) {

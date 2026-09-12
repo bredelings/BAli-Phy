@@ -2965,6 +2965,11 @@ By default each partition has a separate scale, but you can force groups of part
     the sampling error of its estimated mean. The alignment uncertainty overlay shows
     uncertainty about which letters align.</para>
 
+    <para>Clear <literal>Show letters</literal> to compare background colors without the
+    sequence letters. You can still point to cells to inspect their estimates. This setting
+    is independent of the color controls. AU and property coloring do not switch letters to
+    white on dark backgrounds; AU coloring still fades uncertain letters.</para>
+
     <para>Supported properties are logged automatically in
     <filename>C1.P1.site-property-samples.jsonl</filename> for partition 1, and similarly for
     other partitions. To export a table using an alignment of your choice, use
