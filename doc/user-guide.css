@@ -112,6 +112,23 @@ nav.toc:empty, nav.tocopen:empty {
 }
 
 @media print {
+    /* Keep rows together when they fit, but let long tables continue across pages. */
+    :is(.table, .informaltable) tr {
+        break-inside: avoid;
+    }
+
+    /* Column headings are short labels; wrap between words rather than hyphenating them. */
+    :is(.table, .informaltable) th {
+        hyphens: none;
+    }
+
+    /* Code may wrap at spaces and punctuation, but must not acquire hyphens or split words. */
+    :is(.table, .informaltable) :is(code, .filename, .command, .computeroutput, .userinput) {
+        hyphens: none;
+        overflow-wrap: normal;
+        word-break: normal;
+    }
+
     nav.toc, nav.tocopen {
         display: none;
     }

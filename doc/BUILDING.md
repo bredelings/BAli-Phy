@@ -78,6 +78,19 @@ Text uses installed fonts, preferring DejaVu serif, sans-serif, and monospace fa
 where available. The copied xslTNG stylesheet has Google Fonts imports removed, so
 viewing and rendering do not require a font download. System font fallbacks are allowed.
 
+## Table layout
+
+Set table column proportions with DocBook `colspec` entries in `README.xml`; the same
+proportions serve HTML and PDF. Give numeric columns less room than descriptions, but
+allow space for expressions in parameter-count columns. Use ordinary spaces between
+model-expression components so they can wrap without splitting identifiers.
+
+Print CSS suppresses automatic hyphenation and arbitrary word breaks in table code and
+tries to keep each row on one page. Tables may continue across pages with repeated headings;
+rows taller than a page must still be allowed to split. After changing tables, inspect the PDF
+for overflow, split identifiers, awkward gaps, and readable continuation headings. Check narrow
+HTML layouts too, where wide tables scroll. Exact pagination is not a requirement.
+
 ## Contents navigation
 
 The opening HTML contents list shows two section levels. The button at the upper right
