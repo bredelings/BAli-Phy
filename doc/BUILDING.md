@@ -138,11 +138,19 @@ copied locally, so it works from `file:` URLs as well as a web server.
 
 The panel controls work with Enter and Space; Escape closes it. Opening focuses search,
 and closing returns focus to the opener when focus was inside the panel. Without JavaScript,
-the opening contents list and ordinary links remain usable. The PDF retains the full contents
-list with page numbers and omits the interactive controls.
+the opening contents list and ordinary links remain usable.
+
+The PDF shows sections and immediate subsections in its opening contents. Each top-level
+section starts on a new page and lists its immediate subsections under “In this section”,
+with page references; sections without subsections have no local list. Deeper headings remain
+in PDF bookmarks. Printed pages have continuous page numbers and a running section heading.
+The PDF omits the interactive controls.
 
 `user-guide.xsl` enables the upstream panel; `user-guide.css` limits only the opening screen
-list and constrains the panel to the viewport. `guide-toc.js` adds keyboard controls and
+list and constrains the panel to the viewport. The XSL also generates local contents from
+subsection headings, reusing the upstream ID and heading renderers. These lists are hidden
+on screen. Do not duplicate contents entries or insert manual page breaks to tune individual
+pages. `guide-toc.js` adds keyboard controls and
 hidden-panel focus handling to the upstream script, without implementing search or navigation.
 When updating xslTNG, check these interactions in a browser, including a narrow viewport and
 local-file viewing. Remove the adapter if upstream supplies equivalent accessibility support.

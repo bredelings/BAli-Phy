@@ -212,6 +212,10 @@ nav.toc:empty, nav.tocopen:empty {
 }
 
 @media screen {
+    .section-toc {
+        display: none;
+    }
+
     pre.programlisting.expression, pre.synopsis.expression {
         background-color: #edf2f6;
     }
@@ -352,6 +356,71 @@ nav.toc:empty, nav.tocopen:empty {
 }
 
 @media print {
+    /* Use ordinary pages rather than the upstream book layout's named page families. */
+    @page {
+        size: A4;
+        margin: 18mm 12.7mm;
+        @top-center {
+            content: string(GuideSection);
+            font-family: var(--title-family);
+            font-size: 9pt;
+        }
+        @bottom-center {
+            content: counter(page);
+            font-family: var(--title-family);
+            font-size: 9pt;
+        }
+    }
+
+    @page :first {
+        @top-center { content: none; }
+    }
+
+    main > article > section {
+        break-before: page;
+    }
+
+    main > article > section > header {
+        margin-top: 0;
+        break-after: avoid;
+    }
+
+    main > article > section.section > header > h2 {
+        margin-top: 0;
+        string-set: GuideSection content();
+    }
+
+    /* Keep sections and immediate subsections in the opening print contents. */
+    main > article > .list-of-titles ul.toc ul.toc ul.toc {
+        display: none;
+    }
+
+    :is(.section-toc, main > article > .list-of-titles) .toc li {
+        hyphens: none;
+    }
+
+    :is(.section-toc, main > article > .list-of-titles) .toc a::after {
+        color: #555;
+    }
+
+    .section-toc {
+        margin: 0 0 1.25em;
+        font-size: 0.9em;
+        line-height: 1.3;
+    }
+
+    .section-toc > .title {
+        margin: 0 0 0.35em;
+        font-family: var(--title-family);
+        font-weight: bold;
+        break-after: avoid;
+    }
+
+    .section-toc > ul.toc {
+        margin: 0;
+        padding: 0;
+    }
+
     figure.example.file-content {
         break-inside: auto;
     }

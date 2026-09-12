@@ -36,6 +36,26 @@
   <xsl:param name="verbatim-trim-leading-blank-lines" select="'false'"/>
   <xsl:param name="verbatim-trim-trailing-blank-lines" select="'false'"/>
 
+  <!-- Print navigation lists immediate subsections, using the same IDs and heading
+       renderer as the main contents. Screen CSS hides these extra lists. -->
+  <xsl:template match="db:article/db:section" mode="m:generate-titlepage">
+    <xsl:next-match/>
+    <xsl:if test="db:section">
+      <nav class="section-toc" aria-label="In this section">
+        <p class="title">In this section</p>
+        <ul class="toc">
+          <xsl:for-each select="db:section">
+            <li><a href="#{f:id(.)}">
+              <xsl:apply-templates select="." mode="m:headline">
+                <xsl:with-param name="purpose" select="'lot'"/>
+              </xsl:apply-templates>
+            </a></li>
+          </xsl:for-each>
+        </ul>
+      </nav>
+    </xsl:if>
+  </xsl:template>
+
   <!-- File examples need an unnumbered caption, while the existing listing renderer
        continues to handle whitespace, replacement text, and syntax highlighting. -->
   <xsl:template match="db:example[@role='file-content']" mode="m:docbook">
