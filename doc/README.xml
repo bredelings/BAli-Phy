@@ -35,7 +35,8 @@
   <section xml:id="intro"><info><title>Introduction</title></info>
     <para><application>BAli-Phy</application> is a command-line program for Windows, macOS,
       and Linux.  It is not a GUI program, so you must run it in a terminal such as
-      PowerShell on Windows or a Unix shell on macOS and Linux.  If command-line programs
+      a Unix shell inside WSL on Windows, a Unix shell on macOS or Linux, or PowerShell for
+      a native Windows installation. If command-line programs
       are unfamiliar, see the introductions to
       <link xmlns:xlink="http://www.w3.org/1999/xlink"
             xlink:href="https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/01-getting-started">PowerShell</link>
@@ -43,6 +44,12 @@
       <link xmlns:xlink="http://www.w3.org/1999/xlink"
             xlink:href="https://documentation.ubuntu.com/desktop/en/latest/tutorial/the-linux-command-line-for-beginners/">Linux command line</link>.
     </para>
+    <para>Commands apply to all shells unless labelled otherwise. In this guide,
+      “Unix shell” includes Linux, macOS, and WSL. Where instructions differ, choose the
+      panel for your shell; printed copies show all alternatives. PowerShell examples for
+      installation and the Quick Start work in both Windows PowerShell 5.1 and PowerShell 7.
+      Later examples note any additional requirements. Prompt markers such as
+      <prompt>%</prompt> and <prompt>PS&gt;</prompt> are not part of the command.</para>
 
     <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bpy-summarize</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
   </para>
@@ -115,15 +122,18 @@
         included executables, including <command>draw-tree</command>.  You do not need to
         install MSYS2 to run the programs in the binary package.</para>
 
-      <para>Add the BAli-Phy <filename>bin</filename> directory to the current PowerShell session:</para>
+      <para>Add the BAli-Phy <filename>bin</filename> directory to the current terminal's
+        command search path:</para>
+<variablelist role="panelset">
+  <varlistentry><term>PowerShell</term><listitem>
 <screen><prompt>PS&gt;</prompt> <userinput>$env:Path = "$HOME\Applications\bali-phy-&version;\bin;$env:Path"</userinput></screen>
-      <para>For Command Prompt, use:</para>
+  </listitem></varlistentry>
+  <varlistentry><term>Command Prompt</term><listitem>
 <screen><prompt>C:\&gt;</prompt> <userinput>set "PATH=%USERPROFILE%\Applications\bali-phy-&version;\bin;%PATH%"</userinput></screen>
-      <para>These commands affect only the current terminal.  To make the setting permanent,
-        search for “environment variables” in Windows Settings, edit your user
-        <envar>Path</envar>, and add
-        <filename>%USERPROFILE%\Applications\bali-phy-&version;\bin</filename>.  Open a new
-        PowerShell or Command Prompt window after changing it.</para>
+  </listitem></varlistentry>
+</variablelist>
+      <para>These settings affect only the current terminal. See <xref linkend="windows-path"/>
+        to make the setting permanent.</para>
 
       <para>The compiled BAli-Phy programs do not require Python.  The
         <command>bpy-summarize</command> and <command>bali-phy-pkg</command> commands are Python
@@ -261,7 +271,7 @@ Only remove this attribute from an archive that you trust.  The <command>curl</c
         <command>bpy-summarize</command>, and the other command names without specifying their
         complete locations.</para>
 
-      <section><title>Windows</title>
+      <section xml:id="windows-path"><title>Windows</title>
         <para>The Windows installation instructions above show how to add BAli-Phy to the
           current PowerShell or Command Prompt session.  To make the change permanent, search
           for “environment variables” in Windows Settings, edit your user <envar>Path</envar>,
@@ -298,12 +308,18 @@ Only remove this attribute from an archive that you trust.  The <command>curl</c
     </section>
 
     <section xml:id="tests"><info><title>Test the installed software</title></info>
-      <para>First copy an example alignment into a new working directory.  In PowerShell, use:</para>
-<screen><prompt>PS&gt;</prompt> <userinput>Copy-Item "$HOME\Applications\bali-phy-&version;\share\doc\bali-phy\examples\5S-rRNA\25.fasta" .</userinput></screen>
-      <para>In Command Prompt, use:</para>
-<screen><prompt>C:\&gt;</prompt> <userinput>copy "%USERPROFILE%\Applications\bali-phy-&version;\share\doc\bali-phy\examples\5S-rRNA\25.fasta" .</userinput></screen>
-      <para>On Linux, macOS, or WSL2, use:</para>
+      <para>First copy an example alignment into a new working directory:</para>
+<variablelist role="panelset">
+  <varlistentry><term>Unix shell</term><listitem>
 <screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/5S-rRNA/25.fasta .</userinput></screen>
+  </listitem></varlistentry>
+  <varlistentry><term>PowerShell</term><listitem>
+<screen><prompt>PS&gt;</prompt> <userinput>cp "$HOME\Applications\bali-phy-&version;\share\doc\bali-phy\examples\5S-rRNA\25.fasta" .</userinput></screen>
+  </listitem></varlistentry>
+  <varlistentry><term>Command Prompt</term><listitem>
+<screen><prompt>C:\&gt;</prompt> <userinput>copy "%USERPROFILE%\Applications\bali-phy-&version;\share\doc\bali-phy\examples\5S-rRNA\25.fasta" .</userinput></screen>
+  </listitem></varlistentry>
+</variablelist>
       <para>If a package manager installed BAli-Phy elsewhere, copy
         <filename>examples/5S-rRNA/25.fasta</filename> from its documentation directory
         instead.  Then run these commands in the same terminal:</para>
@@ -445,25 +461,39 @@ Only remove this attribute from an archive that you trust.  The <command>curl</c
       <para>This example uses the 25-taxon 5S-rRNA data set. Create a new working directory
         and change into it. Using a new directory ensures that the four runs below save their
         results in directories named <filename>25-1</filename> through <filename>25-4</filename>.
-        On Linux, macOS, or WSL2, copy the example data into this directory:</para>
+        Copy the example data into this directory:</para>
+<variablelist role="panelset">
+  <varlistentry><term>Unix shell</term><listitem>
 <screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/5S-rRNA/25.fasta .</userinput></screen>
-      <para>On native Windows, use the copy command in <xref linkend="tests"/>.
-        If a package manager installed BAli-Phy elsewhere, copy
+  </listitem></varlistentry>
+  <varlistentry><term>PowerShell</term><listitem>
+<screen><prompt>PS&gt;</prompt> <userinput>cp "$HOME\Applications\bali-phy-&version;\share\doc\bali-phy\examples\5S-rRNA\25.fasta" .</userinput></screen>
+  </listitem></varlistentry>
+  <varlistentry><term>Command Prompt</term><listitem>
+<screen><prompt>C:\&gt;</prompt> <userinput>copy "%USERPROFILE%\Applications\bali-phy-&version;\share\doc\bali-phy\examples\5S-rRNA\25.fasta" .</userinput></screen>
+  </listitem></varlistentry>
+</variablelist>
+      <para>If a package manager installed BAli-Phy elsewhere, copy
         <filename>examples/5S-rRNA/25.fasta</filename> from its documentation directory instead.</para>
 
-      <para>On Linux, macOS, or WSL2, run this command <emphasis>four times</emphasis>
-        in the same terminal to start four independent chains. The trailing
-        <userinput>&amp;</userinput> lets them run simultaneously:</para>
+      <para>Start four independent chains:</para>
+<variablelist role="panelset">
+  <varlistentry><term>Unix shell</term><listitem>
+    <para>Run this command <emphasis>four times</emphasis> in the same terminal.
+      The trailing <userinput>&amp;</userinput> lets the chains run simultaneously:</para>
 <screen><prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; ASRV.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp;</userinput></screen>
-
-      <para>On native Windows, make sure BAli-Phy is on <envar>Path</envar>. Open four
-        PowerShell or Command Prompt windows or tabs, each in the directory containing
-        <filename>25.fasta</filename>. Run this command once in each:</para>
-<screen><prompt>PS&gt;</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; ASRV.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000</userinput></screen>
+  </listitem></varlistentry>
+  <varlistentry><term>PowerShell / Command Prompt</term><listitem>
+    <para>Open four terminals in the directory containing <filename>25.fasta</filename>.
+      Make sure BAli-Phy is on <envar>Path</envar> in each terminal, and run this command once
+      in each:</para>
+<screen><userinput>bali-phy 25.fasta -S "GTR +&gt; ASRV.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000</userinput></screen>
+  </listitem></varlistentry>
+</variablelist>
 
       <para>Once the runs have produced some samples, you can summarize their results while
-        they are still running. On Linux, macOS, or WSL2, use the same terminal. On Windows,
-        open another terminal in the directory containing <filename>25.fasta</filename>:</para>
+        they are still running. Use an available terminal in the directory containing
+        <filename>25.fasta</filename>, opening another terminal if necessary:</para>
 <screen><prompt>%</prompt> <userinput>bpy-summarize 25-1 25-2 25-3 25-4</userinput></screen>
       <para>You can rerun this command as more samples accumulate. Open or reload
         <filename>Results/index.html</filename> in a web browser to inspect the updated report.
@@ -532,7 +562,8 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
     <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
     is equivalent to
     <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -A DNA -S TN93 -I RS07</userinput></screen>
-    Default values that are used will always be displayed on the screen and in the output files so that you do not have to guess.  You can specify a more complex substitution model using the <userinput>-S</userinput> option.  You will generally need to write the substitution model inside quotes unless it is just a single word. Double quotes work on both Unix and Windows.
+    Default values that are used will always be displayed on the screen and in the output files so that you do not have to guess.  You can specify a more complex substitution model using the <userinput>-S</userinput> option.  You will generally need to write the substitution model inside quotes unless it is just a single word. The double quotes in this example work in all the shells covered here.
+    See <xref linkend="shell-differences"/> for expressions containing quoted strings.
 
     <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S "LG +&gt; ASRV.Gamma +&gt; Inv"</userinput></screen>
     Every short option like <userinput>-S</userinput> has an equivalent long option like <userinput>--smodel</userinput>.
@@ -548,31 +579,65 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 
     </section>
 
-    <section><info><title>Command examples on Windows</title></info>
-      <para>Most BAli-Phy commands in this guide work unchanged in PowerShell and Command
-        Prompt.  Native Windows paths use a drive letter and backslashes, such as
-        <filename>C:\Users\user\data.fasta</filename>.  PowerShell also accepts forward
-        slashes in many paths.</para>
-      <para>Use double quotes around model expressions on Windows.  For example:</para>
-<screen><prompt>PS&gt;</prompt> <userinput>bali-phy sequences.fasta -S "GTR +&gt; ASRV.Gamma"</userinput></screen>
-      <para>Native Windows also accepts slash forms such as <userinput>/V</userinput>,
-        <userinput>/iterations:1000</userinput>, and <userinput>/test</userinput>.  The Unix forms
-        remain valid on Windows and are used throughout this manual because they also work on
-        Linux, macOS, and WSL2.</para>
-      <para>PowerShell uses
-        <command>Copy-Item <replaceable>source</replaceable>
-          <replaceable>destination</replaceable></command> to copy a file, while Command
-        Prompt uses <command>copy <replaceable>source</replaceable>
-          <replaceable>destination</replaceable></command>.  To open the generated report,
-        use <command>Start-Process Results\index.html</command> in PowerShell or
-        <command>start "" Results\index.html</command> in Command Prompt.</para>
-      <para>Pipelines using <userinput>|</userinput> and output redirection using
-        <userinput>&gt;</userinput> also work in both Windows shells.  Examples that use Unix
-        utilities such as <command>cp</command>, <command>top</command>, or
-        <command>wc</command> need the corresponding Windows command.</para>
+    <section xml:id="shell-differences"><info><title>Shell differences</title></info>
+      <para>The same BAli-Phy options, such as <userinput>-S</userinput> and
+        <userinput>--iterations</userinput>, work in all the shells covered here.
+        Native Windows also accepts slash forms such as <userinput>/iterations:1000</userinput>,
+        but this guide uses the shared forms.</para>
+      <para>Put quotes around model expressions containing spaces, parentheses, or square
+        brackets. Single quotes work in Unix shells and PowerShell; in Command Prompt, use
+        double quotes instead. For example:</para>
+<variablelist role="panelset">
+  <varlistentry><term>Unix shell / PowerShell</term><listitem>
+<screen><userinput>bali-phy sequences.fasta -S 'HKY85(kappa=2)'</userinput></screen>
+  </listitem></varlistentry>
+  <varlistentry><term>Command Prompt</term><listitem>
+<screen><userinput>bali-phy sequences.fasta -S "HKY85(kappa=2)"</userinput></screen>
+  </listitem></varlistentry>
+</variablelist>
+      <para>Models containing double-quoted strings are easier to specify in a configuration
+        file. For DNA data, save this line in <filename>model.config</filename>:</para>
+<programlisting>:smodel GTR(pi={"A":0.1, "C":0.2, "G":0.3, "T":0.4})</programlisting>
+      <para>Then use the same command in any shell:</para>
+<screen><userinput>bali-phy sequences.fasta -c model.config</userinput></screen>
+      <para>The configuration file contains the model expression itself, without outer shell
+        quotes. See <xref linkend="configuration-files"/> for other configuration options.</para>
+      <para>For these expressions on the command line, Unix shells and PowerShell 7.3 or later
+        with its default native argument handling preserve double quotes inside single quotes.
+        Windows PowerShell 5.1 and earlier PowerShell 7 releases can lose those inner quotes
+        when passing arguments to a program; use the configuration-file form there or in
+        Command Prompt. To check your PowerShell version, run
+        <userinput>$PSVersionTable.PSVersion</userinput>.</para>
+      <para>For interactive PowerShell commands on Windows, <command>cp</command> is a short
+        form of <command>Copy-Item</command>, and <command>start</command> is a short form of
+        <command>Start-Process</command>. To open a report, use:</para>
+<variablelist role="panelset">
+  <varlistentry><term>PowerShell</term><listitem>
+<screen><prompt>PS&gt;</prompt> <userinput>start Results\index.html</userinput></screen>
+  </listitem></varlistentry>
+  <varlistentry><term>Command Prompt</term><listitem>
+<screen><prompt>C:\&gt;</prompt> <userinput>start "" Results\index.html</userinput></screen>
+  </listitem></varlistentry>
+</variablelist>
+      <para>Put paths containing spaces inside double quotes. Keep double quotes around
+        PowerShell paths using <envar>$HOME</envar> or other variables so their values are
+        expanded. Invoking an executable by a quoted path in PowerShell also requires
+        <userinput>&amp;</userinput> before the path, as in the installation instructions.</para>
+      <section xml:id="shell-redirection"><info><title>Pipelines and redirected output</title></info>
+        <para>The native-program pipelines (<userinput>|</userinput>) and output redirections
+          (<userinput>&gt;</userinput>) shown later work in Unix shells, Command Prompt, and
+          PowerShell 7.4 or later. Older PowerShell versions convert program output to text;
+          Windows PowerShell 5.1 also writes UTF-16 files through <userinput>&gt;</userinput>,
+          which these analysis tools do not expect. For those examples in an older PowerShell,
+          enter <command>cmd</command> to open Command Prompt in the same directory, run the
+          commands there, then enter <command>exit</command> to return to PowerShell.</para>
+        <para>PowerShell does not support <userinput>&lt;</userinput> for input redirection.
+          The subsampling example below includes a PowerShell alternative that asks
+          Command Prompt to handle that one command.</para>
+      </section>
     </section>
 
-   <section><info><title>Configuration files</title></info>
+   <section xml:id="configuration-files"><info><title>Configuration files</title></info>
       
       <para>
 	In addition to using the command line, you may specify options and model-language
@@ -2694,7 +2759,9 @@ A value must be given for each parameter, unless the parameter has a default val
   </para>
 	<important>
 	  <para>
-	    You need to put single quotes around terms with parentheses or square brackets on the command line:
+	    Put quotes around terms with parentheses or square brackets on the command line.
+            These examples use single quotes for Unix shells and PowerShell. In Command Prompt,
+            use double quotes instead (see <xref linkend="shell-differences"/>):
 <screen><prompt>%</prompt> <userinput>bali-phy file.fasta -S 'HKY85(kappa=2)'</userinput>
 <prompt>%</prompt> <userinput>bali-phy file.fasta -S 'mixture([TN93,HKY85(2)])'</userinput></screen>
 	  </para>
@@ -3221,12 +3288,13 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
     and the ancestral state itself.</para>
 
     <para>This example uses the original run files and discards iterations 0–999 from each run.
-    Replace 1000 with a burn-in appropriate for your runs. First, construct the tree topology
-    to annotate:</para>
+    Replace 1000 with a burn-in appropriate for your runs. For older PowerShell versions,
+    see <xref linkend="shell-redirection"/> before running these pipelines. First, construct
+    the tree topology to annotate:</para>
 <screen><prompt>%</prompt> <userinput>trees-consensus --skip=1000 <replaceable>dir</replaceable>-1/C1.trees <replaceable>dir</replaceable>-2/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput></screen>
 
     <para>Construct the leaf-sequence alignment to annotate using posterior decoding:</para>
-<screen><prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-1/C1.P1.fastas <replaceable>dir</replaceable>-2/C1.P1.fastas --skip=1000 | alignment-chop-internal --tree c50.tree | alignment-max &gt; P1-max.fasta</userinput></screen>
+<screen><prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-1/C1.P1.fastas <replaceable>dir</replaceable>-2/C1.P1.fastas --skip=1000 | alignment-chop-internal --tree c50.tree | alignment-max --out P1-max.fasta</userinput></screen>
 
     <para>Finally, reconstruct the ancestral sequences on the given tree and alignment:</para>
 <screen><prompt>%</prompt> <userinput>summarize-ancestors P1-max.fasta -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees --skip=1000 -n c50.tree &gt; P1.ancestors.fasta</userinput></screen>
@@ -3236,7 +3304,7 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
     sequence names or tree labels from the original sample files.</para>
     <para>For codon data, pass the same <userinput>--alphabet</userinput> option to
     <command>alignment-max</command> and <command>summarize-ancestors</command>, for example
-    <userinput>--alphabet='Codons(DNA,standard)'</userinput>. Use the genetic code from your analysis.</para>
+    <userinput>--alphabet="Codons(DNA,standard)"</userinput>. Use the genetic code from your analysis.</para>
 
 <para>BAli-Phy uses an alignment estimate (here, <filename>P1-max.fasta</filename>) as a
 template to construct a consensus alignment with ancestral sequences.  BAli-Phy doesn&apos;t
@@ -3298,7 +3366,15 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
           (by default) in order to save disk space.  One method for extracting the trees that correspond
           to saved alignments is to extract every 10th tree with the program
           <userinput>bpy-subsample</userinput>:
-            <screen><prompt>%</prompt> <userinput>bpy-subsample 10 &lt; C1.trees &gt; C1.10.trees</userinput></screen>
+            <variablelist role="panelset">
+  <varlistentry><term>Unix shell / Command Prompt</term><listitem>
+<screen><userinput>bpy-subsample 10 &lt; C1.trees &gt; C1.10.trees</userinput></screen>
+  </listitem></varlistentry>
+  <varlistentry><term>PowerShell</term><listitem>
+    <para>Let Command Prompt handle the input and output redirection:</para>
+<screen><prompt>PS&gt;</prompt> <userinput>cmd /c "bpy-subsample 10 &lt; C1.trees &gt; C1.10.trees"</userinput></screen>
+  </listitem></varlistentry>
+</variablelist>
         </para>
       </section>
 
@@ -3986,6 +4062,7 @@ The command <command>bali-phy</command> and its associated tools should then be 
 	  <answer>
 	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <code language="bali-phy-model">LG+>ASRV.Gamma(6)</code> as an array before running the command, and it is not succeeding.  Therefore, it doesn&apos;t even run <command>bali-phy</command>.</para>
 	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>-S 'LG +> ASRV.Gamma(6)'</userinput>.  This will keep the C-shell from interfering with your command.
+            See <xref linkend="shell-differences"/> for quoting in other shells.
 	    </para>
 	  </answer>
 	</qandaentry>
@@ -4166,6 +4243,7 @@ your <command>bali-phy</command> runs on that computer.
 	  <question><para>How do I concatenate alignments?</para></question>
 	  <answer><para>
  	    <screen><prompt>%</prompt> <userinput>alignment-cat <replaceable>filename1.fasta</replaceable> <replaceable>filename2.fasta</replaceable> &gt; result.fasta</userinput></screen>
+            For older PowerShell versions, see <xref linkend="shell-redirection"/>.
 	      The alignments must have the same sequence names, but
 	      the names need not be in the same order.
 	    </para>
@@ -4179,6 +4257,7 @@ your <command>bali-phy</command> runs on that computer.
 	    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:1-200,401-600 sequences.fasta:201-400</userinput></screen>
 	    You can create a new alignment from selected columns using <userinput>alignment-cat</userinput>:
 	    <screen><prompt>%</prompt> <userinput>alignment-cat -c1-10,50-100,600- <replaceable>filename.fasta</replaceable> &gt; result.fasta</userinput></screen>
+            For older PowerShell versions, see <xref linkend="shell-redirection"/>.
 	    The resulting alignment will contain the selected columns in the order you specified.
 	  </para>
 	  </answer>
