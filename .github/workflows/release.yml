@@ -45,7 +45,9 @@ jobs:
       matrix:
         name: [
                ubuntu-gcc-14-24.04,
-               ubuntu-gcc-14-arm,
+               ubuntu-gcc-14-24.04-arm,
+               ubuntu-gcc-15-26.04,
+               ubuntu-gcc-15-26.04-arm,
                macos15-xcode16-intel,
                macos16-xcode26-arm,
                windows
@@ -59,10 +61,23 @@ jobs:
             cxxflags: "-march=x86-64-v3"
             arch: "linux64"
 
-          - name: ubuntu-gcc-14-arm
+          - name: ubuntu-gcc-14-24.04-arm
             os: ubuntu-24.04-arm
             compiler: gcc
             version: "14"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-15-26.04
+            os: ubuntu-26.04
+            compiler: gcc
+            version: "15"
+            cxxflags: "-march=x86-64-v3"
+            arch: "linux64"
+
+          - name: ubuntu-gcc-15-26.04-arm
+            os: ubuntu-26.04-arm
+            compiler: gcc
+            version: "15"
             arch: "linux64"
 
           - name: macos15-xcode16-intel
@@ -125,11 +140,6 @@ jobs:
 
         if [ "${{ matrix.compiler }}" = "gcc" ] ; then
           echo "Installing g++-${{ matrix.version }}"
-          if [ ${{ matrix.os }} = ubuntu-20.04 ] ; then
-              # For newer GCCs:
-              sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-              sudo apt-get update
-          fi
           echo sudo apt-get install -y g++-${{ matrix.version }}
           sudo apt-get install -y g++-${{ matrix.version }}
           g++-${{ matrix.version }} --version
@@ -143,21 +153,7 @@ jobs:
         fi
 
         sudo rm -rf /usr/local/share/boost
-        if [ ${{ matrix.os }} = ubuntu-22.04 ] ; then
-            # 22.04 and earlier do not have boost.json
-            ( cd
-              curl -O -L https://archives.boost.io/release/1.89.0/source/boost_1_89_0.tar.gz
-              tar -xzf boost_1_89_0.tar.gz
-              cd boost_1_89_0
-              ./bootstrap.sh --with-libraries=atomic,chrono,filesystem,system,regex,thread,date_time,program_options,math,serialization,random,json --prefix=../installed-boost-1.89.0
-              ./b2 install
-              echo -e "\n    BOOST root is at $(cd ../installed-boost-1.89.0; pwd)\n"
-              echo BOOST_ROOT=$(cd ../installed-boost-1.89.0; pwd) >> $GITHUB_ENV
-            )
-        else
-            # 24.04 has boost.json
-            sudo apt-get install -y libboost-all-dev
-        fi
+        sudo apt-get install -y libboost-all-dev
 
     - name: Install (Linux -> Windows [cross])
       if: matrix.name == 'windows'

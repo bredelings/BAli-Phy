@@ -2,7 +2,7 @@
 <!ENTITY  version        "4.3"         >
 
 <!ENTITY  source.file       "&version;.tar.gz"         >
-<!ENTITY  ubuntu2204.file   "bali-phy-&version;-ubuntu-22.04.tar.gz"         >
+<!ENTITY  ubuntu2604.file   "bali-phy-&version;-ubuntu-26.04.tar.gz"         >
 <!ENTITY  ubuntu2404.file   "bali-phy-&version;-ubuntu-24.04.tar.gz"         >
 <!ENTITY  win32.file        "bali-phy-&version;-win32.tar.gz"         >
 <!ENTITY  win64.file        "bali-phy-&version;-win64.tar.gz"         >
@@ -11,7 +11,7 @@
 
 <!ENTITY  repo.url          "https://github.com/bredelings/BAli-Phy" >
 <!ENTITY  source.url        "&repo.url;/archive/refs/tags/&source.file;" >
-<!ENTITY  ubuntu2204.url    "&repo.url;/releases/download/&version;/&ubuntu2204.file;" >
+<!ENTITY  ubuntu2604.url    "&repo.url;/releases/download/&version;/&ubuntu2604.file;" >
 <!ENTITY  ubuntu2404.url    "&repo.url;/releases/download/&version;/&ubuntu2404.file;" >
 <!ENTITY  win64.url         "&repo.url;/releases/download/&version;/&win64.file;" >
 <!ENTITY  macarm64.url      "&repo.url;/releases/download/&version;/&macarm64.file;" >
@@ -233,16 +233,16 @@ If you install with Homebrew, you don't need to do anything extra to put bali-ph
     <screen><prompt>%</prompt> <userinput>sudo apt-get install wget</userinput></screen>
     </para>
     <para>
-      Then download and extract the executables.  If you have a recent Linux installation, type:
+      Then download and extract the executables.  For Ubuntu 24.04 on x86-64, type:
       <screen><prompt>%</prompt> <userinput>mkdir -p &install.prefix;</userinput>
 <prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
 <prompt>%</prompt> <userinput>wget &ubuntu2404.url;</userinput>
 <prompt>%</prompt> <userinput>tar -zxf &ubuntu2404.file;</userinput></screen>
-      If you have an older Linux installation, type:
+      For Ubuntu 26.04 on x86-64, type:
       <screen><prompt>%</prompt> <userinput>mkdir -p &install.prefix;</userinput>
 <prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
-<prompt>%</prompt> <userinput>wget &ubuntu2204.url;</userinput>
-<prompt>%</prompt> <userinput>tar -zxf &ubuntu2204.file;</userinput></screen>
+<prompt>%</prompt> <userinput>wget &ubuntu2604.url;</userinput>
+<prompt>%</prompt> <userinput>tar -zxf &ubuntu2604.file;</userinput></screen>
       Second, check that the executable runs:
       <screen><prompt>%</prompt> <userinput>~/Applications/bali-phy-&version;/bin/bali-phy --version</userinput></screen>
     </para>
