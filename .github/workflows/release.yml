@@ -307,9 +307,14 @@ jobs:
            # Address sanitizer can't find its dylibs on OS X?
            ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
         fi
+        build_rpath_args=()
+        if [ "${{ runner.os }}" = "macOS" ] && [ -n "${BOOST_ROOT}" ] ; then
+           # Uninstalled executables need the custom Boost prefix; Meson removes it on install.
+           build_rpath_args=("-Dbuild-rpath=${BOOST_ROOT}/lib")
+        fi
         echo "SDKROOT = $SDKROOT"
-        echo meson setup build --prefix=$HOME/local --buildtype=release -Dtest_seed="$seed" -Dcpp_args="$CPPARGS" ${ARGS}
-        meson setup build --prefix=$HOME/local --buildtype=release -Dtest_seed="$seed" -Dcpp_args="$CPPARGS" ${ARGS}
+        echo meson setup build --prefix=$HOME/local --buildtype=release -Dtest_seed="$seed" -Dcpp_args="$CPPARGS" "${build_rpath_args[@]}" ${ARGS}
+        meson setup build --prefix=$HOME/local --buildtype=release -Dtest_seed="$seed" -Dcpp_args="$CPPARGS" "${build_rpath_args[@]}" ${ARGS}
 
     - name: Upload meson log if configure failed
       uses: actions/upload-artifact@v4
