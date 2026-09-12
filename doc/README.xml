@@ -290,16 +290,19 @@ Only remove this attribute from an archive that you trust.  The <command>curl</c
 <screen><prompt>%</prompt> <userinput>export PATH=$HOME/Applications/bali-phy-&version;/bin:$PATH</userinput></screen>
         <para>For <command>csh</command> or <command>tcsh</command>, use:</para>
 <screen><prompt>%</prompt> <userinput>setenv PATH $HOME/Applications/bali-phy-&version;/bin:$PATH</userinput></screen>
-        <para>To make the setting apply to future terminals, add the appropriate command to
-          the startup file used by your shell.  For <command>zsh</command>, which is the
-          default shell on macOS, add the <command>export</command> command to
-          <filename>~/.zprofile</filename>.  If your terminal is configured to start
-          non-login <command>zsh</command> shells, use <filename>~/.zshrc</filename> instead.
-          For <command>bash</command>, use <filename>~/.bash_profile</filename> or
-          <filename>~/.profile</filename>; for <command>sh</command>, use
-          <filename>~/.profile</filename>.  For <command>csh</command> or
-          <command>tcsh</command>, add the <command>setenv</command> command to
-          <filename>~/.login</filename>.  Then open a new terminal and check the result:</para>
+        <para>To make the setting apply to future interactive terminals, add the
+          <command>export</command> command to <filename>~/.zshrc</filename> for
+          <command>zsh</command>, or <filename>~/.bashrc</filename> for non-login
+          <command>bash</command> terminals (common on Linux).</para>
+        <para>For a Bash login shell, use its existing login startup file:
+          <filename>~/.bash_profile</filename>, <filename>~/.bash_login</filename>, or
+          <filename>~/.profile</filename>. Bash reads only the first existing file in that
+          order; if it already loads <filename>~/.bashrc</filename>, the command there also
+          applies to login terminals. Avoid creating a new login file that would prevent an
+          existing one from being read. For <command>sh</command>, use
+          <filename>~/.profile</filename>; for <command>csh</command> or
+          <command>tcsh</command> login shells, add the <command>setenv</command> command to
+          <filename>~/.login</filename>. Then open a new terminal and check the result:</para>
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
         <para>If you installed BAli-Phy somewhere else, substitute the corresponding
           <filename>bin</filename> directory.  Package managers such as Homebrew and apt
@@ -2896,7 +2899,8 @@ By default each partition has a separate scale, but you can force groups of part
     <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:TN93 --link=1,2 -t</userinput>
 bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing values 'TN93' and ''</screen></para>
     <para>You can also specify which of the 3 attributes "smodel", "imodel", and "scale" are being linked:
-    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --link=1,2:smodel,scale -t</userinput>    // Don&apos;t link the indel model</screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --link=1,2:smodel,scale -t</userinput></screen>
+    This links the substitution model and scale, leaving the indel models separate.
     </para>
     </section>
     </section>
@@ -3915,7 +3919,7 @@ Otherwise you can install meson through pip3:
 </para>
 <para>
 Then run meson to configure the build process:
-<screen><prompt>%</prompt><userinput> meson setup build --prefix=$HOME/Applications/bali-phy-&version;/ --buildtype=release</userinput></screen>
+<screen><prompt>%</prompt><userinput> meson setup build --prefix="$HOME/Applications/bali-phy-&version;/" --buildtype=release</userinput></screen>
 </para>
 <para>
 Finally, build and install the software:
@@ -3929,12 +3933,12 @@ The command <command>bali-phy</command> and its associated tools should then be 
       <section><info><title>Options: compiler and linker flags</title></info>
 	
       <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-14</command> on systems where <command>g++</command> invokes a compiler that is too old:
- <screen><prompt>%</prompt> <userinput>CXX=g++-14 meson setup build --prefix=$HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
+ <screen><prompt>%</prompt> <userinput>CXX=g++-14 meson setup build --prefix="$HOME/Applications/bali-phy-&version;" --buildtype=release</userinput></screen>
  You may also set compiler and linker options using the CPPFLAGS, CXXFLAGS, and LDFLAGS variables.  For example, you can instruct the compiler to use all the features of your chip, instead of producing generic code that will run anywhere:
- <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mtune=native -march=native" meson setup build --prefix=$HOME/Applications/bali-phy-&version;</userinput></screen>
+ <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mtune=native -march=native" meson setup build --prefix="$HOME/Applications/bali-phy-&version;"</userinput></screen>
 
  For example, you can set the CPPFLAGS and LDFLAGS variables to instruct the compiler where to look for libraries, such as cairo:
-	  <screen><prompt>%</prompt> <userinput>CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" meson setup build --prefix=$HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" meson setup build --prefix="$HOME/Applications/bali-phy-&version;" --buildtype=release</userinput></screen>
       </para>
       </section>
 
