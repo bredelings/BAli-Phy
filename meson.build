@@ -160,17 +160,8 @@ cereal = dependency('cereal').as_system()
 
 subdir('external/immer/')
 
-# RE/flex now owns the Haskell raw scanner. Prefer an installed Autotools
-# package via reflex.pc, then fall back to the Meson overlay carried by the wrap.
-reflex_dep = dependency('reflex', method: 'pkg-config', required: false)
-if reflex_dep.found()
-  reflex_dep = reflex_dep.as_system()
-  used_reflex = 'system'
-else
-  reflex_project = subproject('reflex', required: true)
-  reflex_dep = reflex_project.get_variable('reflex_dep').as_system()
-  used_reflex = 'subproject'
-endif
+# The checked-in scanner uses the bundled RE-flex runtime.
+subdir('external/re-flex')
 
 math_dep = cpp.find_library('m', required:false)
 
@@ -312,5 +303,5 @@ summary({'optimization': get_option('optimization'),
 summary({
          'range v3': used_librange,
          'cairo': used_cairo,
-         'RE/flex': used_reflex
+         'RE/flex': 'bundled 6.3.0 (portable runtime)'
         },section: 'Libraries')
