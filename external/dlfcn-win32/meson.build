@@ -6,3 +6,5 @@ dlfcn_lib = static_library('libdl',
 
 libdl = declare_dependency(include_directories: libdl_inc, link_with: dlfcn_lib)
 
+install_data('COPYING',
+  install_dir: get_option('datadir') / 'doc' / 'bali-phy' / 'licenses' / 'dlfcn-win32')
