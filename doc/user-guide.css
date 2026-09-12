@@ -421,6 +421,30 @@ nav.toc:empty, nav.tocopen:empty {
         padding: 0;
     }
 
+    /* FAQ topics are indexed by the section contents; print questions directly above answers. */
+    #FAQ .qandaset > ul.toc,
+    #FAQ .qandaentry :is(.question, .answer) > .label {
+        display: none;
+    }
+
+    #FAQ .qandaentry :is(.qanda, .question, .answer, .body) {
+        display: block;
+    }
+
+    #FAQ .qandaentry {
+        margin: 1em 0;
+    }
+
+    #FAQ .question {
+        font-weight: bold;
+        break-after: avoid;
+    }
+
+    #FAQ .question .body > :last-child {
+        margin-bottom: 0.35em;
+        break-after: avoid;
+    }
+
     figure.example.file-content {
         break-inside: auto;
     }
