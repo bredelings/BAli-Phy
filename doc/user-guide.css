@@ -79,7 +79,32 @@ td, th {
     font-weight: bold;
 }
 
+/* There is no interactive panel until the upstream script populates it. */
+nav.toc:empty, nav.tocopen:empty {
+    display: none;
+}
+
 @media screen {
+    /* Keep two levels in the opening list, while retaining the full panel and print contents. */
+    main > article > .list-of-titles ul.toc ul.toc ul.toc {
+        display: none;
+    }
+
+    nav.toc {
+        box-sizing: border-box;
+        max-width: 100vw;
+    }
+
+    nav.tocopen {
+        background: var(--focused-color);
+        padding: 0.25em;
+    }
+
+    nav.tocopen:focus-visible, nav.toc .close:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+    }
+
     /* Wide model tables can scroll without widening the surrounding document. */
     .table, .informaltable {
         overflow-x: auto;
@@ -87,6 +112,10 @@ td, th {
 }
 
 @media print {
+    nav.toc, nav.tocopen {
+        display: none;
+    }
+
     :root {
         --margin-inner: 0.5in;
         --margin-outer: 0.5in;

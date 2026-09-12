@@ -14,7 +14,12 @@
 
   <xsl:param name="chunk" select="()"/>
   <xsl:param name="section-numbers" select="'true'"/>
-  <xsl:param name="persistent-toc" select="'false'"/>
+  <xsl:param name="persistent-toc" select="'true'"/>
+  <xsl:param name="persistent-toc-search" select="'true'"/>
+  <!-- Embed the panel contents so the guide also works directly from a local file. -->
+  <xsl:param name="persistent-toc-filename" select="''"/>
+  <xsl:param name="persistent-toc-css" select="'user-guide-assets/docbook-toc.css'"/>
+  <xsl:param name="persistent-toc-js" select="'user-guide-assets/persistent-toc.js'"/>
   <xsl:param name="theme-picker" select="'false'"/>
 
   <!-- Keep command whitespace and inline markup, without extra line numbers or controls. -->
@@ -96,6 +101,7 @@
     <link rel="stylesheet" href="user-guide.css"/>
     <script src="user-guide-assets/mathjax-config.js"></script>
     <script defer="defer" src="user-guide-assets/tex-svg.js"></script>
+    <script defer="defer" src="user-guide-assets/guide-toc.js"></script>
   </xsl:template>
 
 </xsl:stylesheet>

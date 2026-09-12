@@ -78,6 +78,24 @@ Text uses installed fonts, preferring DejaVu serif, sans-serif, and monospace fa
 where available. The copied xslTNG stylesheet has Google Fonts imports removed, so
 viewing and rendering do not require a font download. System font fallbacks are allowed.
 
+## Contents navigation
+
+The opening HTML contents list shows two section levels. The button at the upper right
+opens xslTNG's full contents panel, including a search of section titles. Its checkbox keeps
+it open when following links. The panel is embedded in the page and its scripts/styles are
+copied locally, so it works from `file:` URLs as well as a web server.
+
+The panel controls work with Enter and Space; Escape closes it. Opening focuses search,
+and closing returns focus to the opener when focus was inside the panel. Without JavaScript,
+the opening contents list and ordinary links remain usable. The PDF retains the full contents
+list with page numbers and omits the interactive controls.
+
+`user-guide.xsl` enables the upstream panel; `user-guide.css` limits only the opening screen
+list and constrains the panel to the viewport. `guide-toc.js` adds keyboard controls and
+hidden-panel focus handling to the upstream script, without implementing search or navigation.
+When updating xslTNG, check these interactions in a browser, including a narrow viewport and
+local-file viewing. Remove the adapter if upstream supplies equivalent accessibility support.
+
 ## Checks and maintenance
 
 `check-user-guide` builds HTML/PDF, runs the converter tests, and checks internal links

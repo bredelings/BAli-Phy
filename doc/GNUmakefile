@@ -8,7 +8,8 @@ DOCBOOK_XSLTNG ?= $(TOOLS_DIR)/docbook-xslTNG-2.8.4
 NODE_MODULES = $(abspath $(TOOLS_DIR)/npm/node_modules)
 export NODE_PATH = $(NODE_MODULES)
 ASSET_DIR = $(BUILD_DIR)/user-guide-assets
-GUIDE_ASSETS = $(addprefix $(ASSET_DIR)/,docbook.css docbook-paged.css draft-left.svg draft-right.svg LICENSE)
+GUIDE_ASSETS = $(addprefix $(ASSET_DIR)/,docbook.css docbook-paged.css docbook-toc.css \
+               persistent-toc.js guide-toc.js draft-left.svg draft-right.svg LICENSE)
 MATH_ASSETS = $(addprefix $(ASSET_DIR)/,mathjax-config.js tex-svg.js MathJax-LICENSE)
 
 .DELETE_ON_ERROR:
@@ -44,6 +45,14 @@ $(ASSET_DIR)/docbook.css: $(DOCBOOK_XSLTNG)/resources/css/docbook.css
 	sed '/^@import url("https:\/\/fonts.googleapis.com\//d' "$<" > "$@"
 
 $(ASSET_DIR)/%: $(DOCBOOK_XSLTNG)/resources/css/%
+	mkdir -p "$(ASSET_DIR)"
+	cp "$<" "$@"
+
+$(ASSET_DIR)/persistent-toc.js: $(DOCBOOK_XSLTNG)/resources/js/persistent-toc.js
+	mkdir -p "$(ASSET_DIR)"
+	cp "$<" "$@"
+
+$(ASSET_DIR)/guide-toc.js: guide-toc.js
 	mkdir -p "$(ASSET_DIR)"
 	cp "$<" "$@"
 
