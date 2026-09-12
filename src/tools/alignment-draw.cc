@@ -670,7 +670,7 @@ owned_ptr<ColorMap> get_color_map(const variables_map& args,bool gaps_different)
     if (args.count("color-scheme"))
 	string_stack = split(args["color-scheme"].as<string>(),'+');
     else if (args.count("AU"))
-	string_stack = split("Rainbow+contrast+fade",'+');
+	string_stack = split("Rainbow+fade",'+');
     else
 	string_stack = split("plain",'+');
 

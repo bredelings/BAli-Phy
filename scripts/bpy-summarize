@@ -2055,13 +2055,13 @@ class Analysis(object):
         assert(path.exists(filename))
         return filename
 
-    def color_scheme_for_alphabet(self,alphabet):
+    def color_scheme_for_alphabet(self,alphabet,contrast=True):
         if alphabet == "Amino-Acids":
-            return "AA+contrast"
+            return "AA" + ("+contrast" if contrast else "")
         elif re.match(r'Numeric\(\d+\)',alphabet):
-            return "plain+contrast"
+            return "plain" + ("+contrast" if contrast else "")
         else:
-            return "DNA+contrast"
+            return "DNA" + ("+contrast" if contrast else "")
 
     # Map tip-only partition alignments to their shared character-property summary.
     def character_properties_for_alignment(self, alignment):
@@ -2141,7 +2141,7 @@ class Analysis(object):
             self.exec_show(['alignments-diff',initial,wpd],outfile=outfile)
 
             outhtml = self.outdir / f"P{i+1}.initial-diff.html"
-            self.exec_show(['alignment-draw',initial,'--scale=identity','--AU',outfile,'--show-ruler','--color-scheme=diff[1]+contrast'],outfile=outhtml)
+            self.exec_show(['alignment-draw',initial,'--scale=identity','--AU',outfile,'--show-ruler','--color-scheme=diff[1]'],outfile=outhtml)
             print("*",end='',flush=True);
 
         print(" done.")
@@ -2228,7 +2228,7 @@ class Analysis(object):
                 if properties is not None:
                     html_inputs.append(properties)
                 if not more_recent_than_all_of(html_file, html_inputs):
-                    color_scheme=self.color_scheme_for_alphabet(alphabet)
+                    color_scheme=self.color_scheme_for_alphabet(alphabet, contrast=False)
                     color_scheme += "+fade+fade+fade+fade"
                     self.draw_alignment(
                         afile,
