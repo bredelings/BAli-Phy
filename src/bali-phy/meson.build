@@ -35,6 +35,7 @@ baliphy = executable('bali-phy',
 		     dependencies: [boost, cli11, eigen, libdl, math_dep, librange, fmt, cereal, immer],
 		     link_whole: [libutil, libmcon, libcommon, libcomputation, libbaliphy],
 		     link_args: baliphy_link_args,
-		     install_rpath: extra_rpath,
+		     build_rpath: build_rpath,
+                             install_rpath: extra_rpath,
 		     install: true,
 		     export_dynamic: true)

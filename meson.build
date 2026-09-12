@@ -14,6 +14,10 @@ cc = meson.get_compiler('c')
 python = import('python').find_installation()
 fs = import('fs')
 
+# Custom Boost installations may use @rpath library names without an automatic build-tree rpath.
+# Meson removes this extra search path on installation, preserving the packaged library paths.
+build_rpath = get_option('build-rpath')
+
 windows_test_wrapper = []
 if host_machine.system() == 'windows' and meson.is_cross_build()
   wine64 = find_program('/usr/lib/wine/wine64', 'wine64', 'wine', native: true)

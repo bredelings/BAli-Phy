@@ -9,6 +9,7 @@ computation_tests = executable(
     'serialization-tests.cc',
     'transform-tests.cc',
   ],
+  build_rpath: build_rpath,
   include_directories: [root_inc, libutil_inc, libmcon_inc, native_test_inc],
   dependencies: [boost, libxxhash, eigen, libdl, math_dep, librange, immer, fmt, cereal],
   link_with: [libcomputation, libcommon, libmcon, libutil],

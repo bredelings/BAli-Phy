@@ -277,7 +277,8 @@ foreach tool: tools + prefixed_tools
 			include_directories: [root_inc, libutil_inc, libmcon_inc],
 			dependencies: deps,
 			link_with: [libutil,libcommon,libmcon],
-			install_rpath: extra_rpath,
+			build_rpath: build_rpath,
+                             install_rpath: extra_rpath,
 			install: true)
 
   test(name + ' --help', tool_exe, args:['--help'])
