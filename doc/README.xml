@@ -155,7 +155,27 @@
   </section>
 
     <section><info><title>Install on macOS</title></info>
-    <para>Homebrew and Bioconda both provide convenient ways to install BAli-Phy.  Homebrew is a natural choice if you already use it to manage macOS software.  Bioconda is a natural choice if you already use Conda for bioinformatics software or want to keep BAli-Phy and its dependencies in a separate environment.</para>
+    <para>Bioconda and Homebrew both provide convenient ways to install BAli-Phy.
+      Bioconda is a natural choice if you already use Conda for bioinformatics software or want
+      to keep BAli-Phy and its dependencies in a separate environment. Homebrew is a natural
+      choice if you already use it to manage macOS software.</para>
+    <section><info><title>Install BAli-Phy using Bioconda</title></info>
+    <para>
+      First install Conda and complete its shell setup. Follow the
+      <link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="https://bioconda.github.io/#with-conda">Bioconda instructions for Conda</link>
+      to configure the channels, with conda-forge ahead of bioconda and strict channel priority.
+      Then create and activate an environment containing BAli-Phy:
+<screen><prompt>%</prompt> <userinput>conda create -n bali-phy bali-phy</userinput>
+<prompt>%</prompt> <userinput>conda activate bali-phy</userinput></screen>
+      Check that the executable runs:
+<screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
+      In each new terminal, run <command>conda activate bali-phy</command> before using BAli-Phy.
+      No additional BAli-Phy-specific PATH setting is needed while the environment is active.
+      Bioconda packages BAli-Phy together with programs used by <command>bpy-summarize</command>, including R.  On Apple Silicon, use BAli-Phy 4.2 or newer; earlier Bioconda builds have a platform-specific model-parsing bug.
+    </para>
+    </section>
+
     <section><info><title>Install BAli-Phy using Homebrew</title></info>
     <para>First install Apple's Command Line Tools:
 <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>
@@ -171,17 +191,6 @@
       Once Homebrew is configured in your shell, no additional BAli-Phy-specific PATH setting
       is needed. The Homebrew formula may lag behind the current BAli-Phy release, so check
       the installed version and use the release executables below if you need a newer version.
-    </para>
-    </section>
-
-    <section><info><title>Install BAli-Phy using Bioconda</title></info>
-    <para>
-      First install a Conda-compatible package manager and configure the Bioconda channels as described in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://bioconda.github.io/#usage">Bioconda installation instructions</link>.  Then create and activate an environment containing BAli-Phy:
-<screen><prompt>%</prompt> <userinput>conda create -n bali-phy bali-phy</userinput>
-<prompt>%</prompt> <userinput>conda activate bali-phy</userinput></screen>
-      Check that the executable runs:
-<screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
-      Bioconda packages BAli-Phy together with programs used by <command>bpy-summarize</command>, including R.  On Apple Silicon, use BAli-Phy 4.2 or newer; earlier Bioconda builds have a platform-specific model-parsing bug.
     </para>
     </section>
 
