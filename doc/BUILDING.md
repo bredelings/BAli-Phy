@@ -78,6 +78,16 @@ Text uses installed fonts, preferring DejaVu serif, sans-serif, and monospace fa
 where available. The copied xslTNG stylesheet has Google Fonts imports removed, so
 viewing and rendering do not require a font download. System font fallbacks are allowed.
 
+## Notes, cautions, and warnings
+
+Keep information needed for the current explanation or next step in the main text. Use
+`<note>` for self-contained supplementary material, and `<caution>` or `<warning>` for
+consequences readers should see before acting. Warnings identify actions that could discard
+information or stop work unexpectedly. Use `<important>` for an essential prerequisite,
+such as removing quarantine before extracting the macOS archive. Give each box a descriptive `<title>` that includes
+its type, such as “Caution: Preserve branch annotations”. Move relevant prose into the box
+rather than repeating it. Informational boxes use `<note>`; `<info>` contains metadata.
+
 ## Table layout
 
 Set table column proportions with DocBook `colspec` entries in `README.xml`; the same

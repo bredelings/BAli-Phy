@@ -182,9 +182,17 @@ If you install with Homebrew, you don't need to do anything extra to put bali-ph
 
     <section><info><title>Install BAli-Phy using executables from website (alternative)</title></info>
     <para>Open a window in the Terminal app to access the UNIX command line.  Then download and extract the executables.</para>
-    <important><para>If you download the archive from the official BAli-Phy release page using a web browser, macOS marks it as quarantined.  In the directory containing the archive, remove the quarantine attribute before extracting it:
+    <important>
+      <title>Important: Removing the quarantine attribute</title>
+      <para>If you download the archive from the official BAli-Phy release page using a web
+        browser, macOS marks it as quarantined. Remove the quarantine attribute before
+        extracting the archive so macOS will allow the installed programs to run. Otherwise,
+        the extracted files inherit the quarantine attribute. Only do this for an archive
+        that you trust. In the directory containing the archive, run:</para>
 <screen><prompt>%</prompt> <userinput>xattr -d com.apple.quarantine <replaceable>archive-file</replaceable></userinput></screen>
-Only remove this attribute from an archive that you trust.  The <command>curl</command> commands below do not normally add the quarantine attribute.</para></important>
+      <para>The <command>curl</command> commands below do not normally add the quarantine
+        attribute.</para>
+    </important>
     <para>
       If you have an Apple Silicon computer, type:
       <screen><prompt>%</prompt> <userinput>mkdir -p &install.prefix;</userinput>
@@ -440,12 +448,17 @@ Only remove this attribute from an archive that you trust.  The <command>curl</c
 
     <para>Consensus trees produced by <command>bpy-summarize</command>, such as
       <filename>Results/c50.PP.tree</filename>, can be opened directly in TreeViewer, FigTree,
-      or iTOL.  Be more careful with annotated input trees: some BAli-Phy analyses use comments
+      or iTOL.</para>
+
+    <caution>
+      <title>Caution: Preserve branch annotations</title>
+      <para>Be more careful with annotated input trees: some BAli-Phy analyses use comments
       such as <userinput>[&amp;foreground=1]</userinput> to identify particular branches.
       TreeViewer can read these annotations from a bare Newick tree, but its ordinary Newick
       export omits them.  FigTree reads metadata comments from NEXUS trees, but not from bare
       Newick trees.  Keep the original annotated tree, and check any copy saved by a viewer
       before using it as input to BAli-Phy.</para>
+    </caution>
 
     </section>
     </section>
@@ -1058,11 +1071,13 @@ option.  For example:
       In this case, output from multiple runs will be used to assess convergence and mixing, as well as to increase the precision of the estimates.
     </para>
 
-<para> All the commands that are executed by <command>bpy-summarize</command> will be logged to
-      <filename>Results/commands.log</filename>. You can also see these
-      commands as they are executed by supplying the <command>--verbose</command> option:
+    <note>
+      <title>Note: Inspecting the summary commands</title>
+      <para>All the commands that are executed by <command>bpy-summarize</command> will be
+        logged to <filename>Results/commands.log</filename>. You can also see these commands
+        as they are executed by supplying the <command>--verbose</command> option:</para>
 <screen><prompt>%</prompt> bpy-summarize --skip=<replaceable>iterations</replaceable> --verbose</screen>
-    </para>
+    </note>
 
     <section><info><title>Meaning of generated files</title></info>
       
@@ -2671,15 +2686,14 @@ beta = concentration*(1-mu)</programlisting>
           </tbody>
 	</tgroup>
       </informaltable>
-      <para>
-        <important>
-          Note that the obvious way to combine the Tuffley-Steel model with rate heterogeneity is wrong:
+      <caution>
+        <title>Caution: Combining covarion models with rate variation</title>
+        <para>The obvious way to combine the Tuffley-Steel model with rate heterogeneity is wrong:</para>
           <itemizedlist>
             <listitem><para><code language="bali-phy-model">Q +> Covarion.TuffleySteel98 +> ASRV.Gamma</code>: This is incorrect.  Under this model, sites with faster substitution rates will switch between the ON/OFF states faster.</para></listitem>
             <listitem><para><code language="bali-phy-model">Q +> ASRV.Gamma +> Covarion.Huelsenbeck02</code>: This is correct.  Sites switch between ON/OFF states independent of the speed of substitution.</para></listitem>
           </itemizedlist>
-        </important>
-      </para>
+      </caution>
     </section>
   </section>
 
@@ -2766,7 +2780,8 @@ Normal(mean=0,1)    // not OK</programlisting>
 <screen><prompt>%</prompt> <userinput>bali-phy help HKY85</userinput></screen>
 A value must be given for each parameter, unless the parameter has a default value (See <xref linkend="default_values"/>).
   </para>
-	<important>
+        <note>
+          <title>Note: Quote model expressions on the command line</title>
 	  <para>
 	    Put quotes around terms with parentheses or square brackets on the command line.
             These examples use single quotes for Unix shells and PowerShell. In Command Prompt,
@@ -2779,7 +2794,7 @@ A value must be given for each parameter, unless the parameter has a default val
                 without running bali-phy.  For example, "<computeroutput>-bash: syntax error near unexpected token `('</computeroutput>" (for <command>bash</command>) or
           "<computeroutput>Badly placed ()'s</computeroutput>" (for <command>csh</command>) or "<computeroutput>zsh: no matches found: mixture([TN93,HKY85(2)])</computeroutput>" (for <command>zsh</command>).
 	  </para>
-	</important>
+        </note>
 
   </section>
 
@@ -4129,11 +4144,14 @@ The command <command>bali-phy</command> and its associated tools should then be 
 </screen>
 Here the PID is 549319.  Therefore you can type:
 <screen><prompt>%</prompt> kill 549319</screen>
-On some operating systems you can also type:
+            </para>
+            <warning>
+              <title>Warning: Stop all your BAli-Phy runs</title>
+              <para>On some operating systems you can also use the command below. It will
+                terminate <emphasis>all</emphasis> of your <command>bali-phy</command> runs
+                on that computer:</para>
 <screen><prompt>%</prompt> killall bali-phy</screen>
-However, be aware that this will terminate <emphasis>all</emphasis> of
-your <command>bali-phy</command> runs on that computer.
-	    </para>
+            </warning>
 	  </answer>
 	</qandaentry>
 
