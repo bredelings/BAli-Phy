@@ -13,6 +13,32 @@
 // This suite becomes redundant if ProbDensity itself acquires these choice semantics.
 namespace
 {
+    // Protect zero and nonfinite comparisons that ordinary MCMC tests rarely exercise.
+    // These cases remain necessary while diagnostics compare LogNum values in log space.
+    void check_close_in_log_space()
+    {
+        const log_double_t zero = 0;
+        const log_double_t one = 1;
+        const auto nan = exp_to_log_space(std::numeric_limits<double>::quiet_NaN());
+        const auto inf = exp_to_log_space(std::numeric_limits<double>::infinity());
+        constexpr double tolerance = 0.125;
+
+        BALI_PHY_TEST_CHECK(close_in_log_space(zero, zero, tolerance));
+        BALI_PHY_TEST_CHECK(close_in_log_space(one, one, tolerance));
+        BALI_PHY_TEST_CHECK(close_in_log_space(one, exp_to_log_space(0.0625), tolerance));
+        BALI_PHY_TEST_CHECK(not close_in_log_space(one, exp_to_log_space(0.125), tolerance));
+        BALI_PHY_TEST_CHECK(not close_in_log_space(one, exp_to_log_space(0.25), tolerance));
+        BALI_PHY_TEST_CHECK(not close_in_log_space(zero, one, tolerance));
+        BALI_PHY_TEST_CHECK(not close_in_log_space(one, zero, tolerance));
+        for (auto value : {zero, one, nan, inf})
+        {
+            BALI_PHY_TEST_CHECK(not close_in_log_space(nan, value, tolerance));
+            BALI_PHY_TEST_CHECK(not close_in_log_space(value, nan, tolerance));
+            BALI_PHY_TEST_CHECK(not close_in_log_space(inf, value, tolerance));
+            BALI_PHY_TEST_CHECK(not close_in_log_space(value, inf, tolerance));
+        }
+    }
+
     // Build symbolic weights directly so deterministic tests can cover every rank.
     ChoiceWeight weight(double coefficient, double zero_order = 0, double infs = 0, int nans = 0)
     {
@@ -348,6 +374,7 @@ namespace
 // Exercise the enduring algebraic invariants independently of an MCMC model.
 int main()
 {
+    check_close_in_log_space();
     check_prob_density_zero();
     check_prob_density_product_accumulation();
     check_finite_weights();

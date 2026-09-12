@@ -179,4 +179,13 @@ inline std::ostream& operator<<(std::ostream& o,const LogNum<T>& e) {
 
 typedef LogNum<double> log_double_t;
 
+// Compare finite logarithms with an absolute tolerance, treating two zeros as equal.
+// NaNs and positive infinities are never close, even to themselves.
+// The tolerance must be positive and finite, in natural-log units.
+inline bool close_in_log_space(log_double_t a, log_double_t b, double tolerance)
+{
+    return (a.is_zero() && b.is_zero()) ||
+           std::abs(log(a) - log(b)) < tolerance;
+}
+
 #endif
