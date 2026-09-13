@@ -135,3 +135,7 @@ div.example {
     padding-right: 1em;
     padding-bottom:1em;
 }
+
+@media print {
+    pre.screen, pre.programlisting { break-inside: avoid; }
+}
