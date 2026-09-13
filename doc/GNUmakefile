@@ -1,6 +1,7 @@
-all: user-guide Tutorial.html Tutorial.pdf Instructions.html Instructions.pdf
+all: user-guide tutorial Instructions.html Instructions.pdf
 
-# Run from doc/; BUILD_DIR contains only generated User Guide outputs.
+# Run from doc/; build directories contain only generated outputs.
+TUTORIAL_BUILD_DIR ?= ../../build/tutorial
 # Dependency setup is explicit; ordinary builds never install packages.
 BUILD_DIR ?= ../../build/user-guide
 TOOLS_DIR ?= ../../build/user-guide-tools
@@ -13,7 +14,7 @@ GUIDE_ASSETS = $(addprefix $(ASSET_DIR)/,docbook.css docbook-paged.css docbook-t
 MATH_ASSETS = $(addprefix $(ASSET_DIR)/,mathjax-config.js tex-svg.js MathJax-LICENSE)
 
 .DELETE_ON_ERROR:
-.PHONY: all user-guide README.html README.pdf README-A4.pdf clean clean-user-guide setup-user-guide check-user-guide
+.PHONY: all user-guide README.html README.pdf README-A4.pdf clean clean-user-guide setup-user-guide check-user-guide tutorial Tutorial.html Tutorial.pdf clean-tutorial
 
 setup-user-guide:
 	python3 setup-guide.py "$(TOOLS_DIR)" "$(DOCBOOK_XSLTNG)"
@@ -88,14 +89,36 @@ $(BUILD_DIR)/README-A4.pdf: $(BUILD_DIR)/README.print.html \
                           $(BUILD_DIR)/user-guide.css $(GUIDE_ASSETS) user-guide-A4.css
 	weasyprint --stylesheet user-guide-A4.css "$<" "$@"
 
-Tutorial.pdf Instructions.pdf: guide.css
+tutorial: $(TUTORIAL_BUILD_DIR)/Tutorial.html $(TUTORIAL_BUILD_DIR)/Tutorial.pdf
+Tutorial.html: $(TUTORIAL_BUILD_DIR)/Tutorial.html $(TUTORIAL_BUILD_DIR)/guide.css
+Tutorial.pdf: $(TUTORIAL_BUILD_DIR)/Tutorial.pdf
+
+$(TUTORIAL_BUILD_DIR)/Tutorial.xml: Tutorial.tut.xml add_screen.py
+	mkdir -p "$(TUTORIAL_BUILD_DIR)"
+	./add_screen.py < "$<" > "$@"
+
+$(TUTORIAL_BUILD_DIR)/Tutorial.html: $(TUTORIAL_BUILD_DIR)/Tutorial.xml docbook-html.xsl
+	xsltproc --nonet --xinclude docbook-html.xsl "$<" > "$@"
+
+$(TUTORIAL_BUILD_DIR)/guide.css: guide.css
+	mkdir -p "$(TUTORIAL_BUILD_DIR)"
+	cp "$<" "$@"
+
+$(TUTORIAL_BUILD_DIR)/Tutorial.pdf: $(TUTORIAL_BUILD_DIR)/Tutorial.html $(TUTORIAL_BUILD_DIR)/guide.css
+	weasyprint "$<" "$@"
+
+clean-tutorial:
+	$(RM) "$(TUTORIAL_BUILD_DIR)/Tutorial.xml" "$(TUTORIAL_BUILD_DIR)/Tutorial.html" \
+	    "$(TUTORIAL_BUILD_DIR)/Tutorial.pdf" "$(TUTORIAL_BUILD_DIR)/guide.css"
+
+Instructions.pdf: guide.css
 
 # Name the generated files explicitly: README.xml is now a source file.
 clean-user-guide:
 	$(RM) "$(BUILD_DIR)/README.html" "$(BUILD_DIR)/README.print.html" "$(BUILD_DIR)/README.pdf" "$(BUILD_DIR)/README-A4.pdf"
 	$(RM) "$(BUILD_DIR)/user-guide.css" $(GUIDE_ASSETS) $(MATH_ASSETS)
 
-clean: clean-user-guide
+clean: clean-user-guide clean-tutorial
 	$(RM) Tutorial.html Tutorial.pdf Instructions.html Instructions.pdf *.xhtml *.fo *~
 
 %.xml: %.tut.xml
