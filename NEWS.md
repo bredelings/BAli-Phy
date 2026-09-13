@@ -1,4 +1,4 @@
-# 4.3 (UNRELEASED)
+# 4.3 (Sep 12, 2026)
 
 ## Breaking changes
 
