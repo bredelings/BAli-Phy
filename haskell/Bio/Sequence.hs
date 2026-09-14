@@ -1,6 +1,8 @@
 module Bio.Sequence where
 
 import qualified Data.Map as Map
+import qualified Data.Set as Set
+import System.FilePath (FilePath)
 import Bio.Alphabet
 import Compiler.FFI.Import (CInput)
 import Data.Text (Text)
@@ -33,6 +35,41 @@ foreign import trcall "Alignment:statesToLetters" statesToLetters :: U.Vector In
 foreign import trcall "Alignment:loadSequences" loadSequencesRaw :: String -> IO (EVector ESequence)
 loadSequences :: String -> IO [Sequence]
 loadSequences filename = fmap (fmap mkSequence . vectorToList) $ loadSequencesRaw filename
+
+-- Compare named files by taxon membership, retaining the first file's ordering on success.
+-- The guard checks every file before exposing the list, so forcing the result also checks fixed-tree runs.
+commonTaxa :: [(FilePath, [Text])] -> [Text]
+commonTaxa [] = []
+commonTaxa files@((_, names):_)
+    | null mismatches = names
+    | otherwise = error $ "Partition files must contain the same set of sequence names.\n\n"
+                       ++ concatMap describeFile mismatches
+                       ++ "Sequence order may differ, but names must match exactly."
+  where
+    fileSets = [(filename, Set.fromList taxa) | (filename, taxa) <- files]
+    -- Count each name once per file, keeping the earliest source for the diagnostic.
+    addFile sources (filename, taxa) = foldl addName sources (Set.toList taxa)
+      where
+        -- Retain the first source while accumulating file occurrences for this name.
+        addName m name = Map.insert name entry m
+          where entry = case Map.lookup name m of
+                          Nothing -> (1 :: Int, filename)
+                          Just (count, first) -> (count + 1, first)
+    sources = foldl addFile Map.empty fileSets
+    allNames = Map.keySet sources
+    mismatches = [(filename, taxa, missing) | (filename, taxa) <- fileSets,
+                    let missing = Set.toList (Set.difference allNames taxa), not (null missing)]
+    -- List missing names in sorted order and files in input order; counts refer to files, not partitions.
+    describeFile (filename, taxa, missing) =
+        "  Missing from " ++ show filename ++ " (" ++ show (Set.size taxa) ++ " sequences):\n"
+        ++ concatMap describeName missing ++ "\n"
+    -- Include prevalence only when more than two files make it informative.
+    describeName name = "    " ++ show (T.unpack name) ++ " — present in " ++ location ++ "\n"
+      where
+        (count, first) = sources Map.! name
+        location | length files < 3 = show first
+                 | otherwise = show count ++ " of " ++ show (length files)
+                               ++ " files, including " ++ show first
 
 foreign import trcall "Alignment:getRange" getRange :: String -> Int -> U.Vector Int
 foreign import trcall "Alignment:" selectRangeRaw :: U.Vector Int -> Text -> Text

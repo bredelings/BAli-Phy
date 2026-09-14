@@ -389,6 +389,7 @@ Hs::Stmts generate_main(const InferOptions& options,
 		       const vector<Hs::Exp>& alphabet_exps,
 		       const vector<int>& partition_group,
 		       const vector<Hs::Var>& partition_sequence_data_vars,
+		       const Hs::Var& taxa,
 		       const Hs::Var& tree,
 		       const Hs::Var& topology,
 		       const Hs::Var& tsvLogger,
@@ -506,6 +507,11 @@ Hs::Stmts generate_main(const InferOptions& options,
             {
                 HsG::Bind(main, HsG::VarPat(filename_to_seqs), HsG::Apply(Hs::Var("mapM"), {Hs::Var("loadSequences"), filenames_var}));
             }
+
+            // Compute shared taxa from the loaded files without repeating filename literals.
+            auto names = HsG::Apply(Hs::Var("map"), {HsG::Apply(Hs::Var("map"), {Hs::Var("fst")}), filename_to_seqs});
+            HsG::Let(main, taxa,
+                     HsG::Apply(Hs::Var("commonTaxa"), {HsG::Apply(Hs::Var("zip"), {filenames_var, names})}));
 
             // Main.3. Emit let sequenceData<n> = ...
             for(int i=0;i<n_partitions;i++)
@@ -654,7 +660,11 @@ Hs::Stmts generate_main(const InferOptions& options,
     HsG::Expr(main, HsG::Apply(Hs::Var("unless"), {is_test, HsG::Do(report)}));
 
     // Main.5. Emit mcmcState <- makeMCMCState $ model sequence_data
-    HsG::Bind(main, HsG::VarPat(Hs::Var("mcmcState")), HsG::Apply(Hs::Var("$"), {Hs::Var("makeMCMCState"), model_fn}));
+    auto make_state = HsG::Apply(Hs::Var("$"), {Hs::Var("makeMCMCState"), model_fn});
+    // Fixed trees may not use taxa in the model; force agreement before constructing any MCMC state.
+    if (n_partitions > 1)
+        make_state = HsG::Apply(Hs::Var("seq"), {taxa, make_state});
+    HsG::Bind(main, HsG::VarPat(Hs::Var("mcmcState")), make_state);
 
     // Main.6. Inspect the initial state or run MCMC according to the parsed runtime mode.
     auto inspect_model = HsG::Apply(Hs::Var("printInitialModel"),
@@ -941,7 +951,7 @@ std::string generate_atmodel_program(const InferOptions& options,
         partition_sequence_data_vars.emplace_back(var_name);
     }
 
-    if (n_partitions > 0)
+    if (n_partitions == 1)
     {
         HsG::Let(model,
                  taxon_names_var,
@@ -1219,6 +1229,8 @@ std::string generate_atmodel_program(const InferOptions& options,
                   {});
 
     Hs::Exp model_fn = Hs::Var("model");
+    if (n_partitions > 1)
+        model_fn = HsG::Apply(model_fn, {taxon_names_var});
 
     // Pass each partition's sequence data as a separate argument in partition order.
     for(const auto& sequence_data_var: partition_sequence_data_vars)
@@ -1345,6 +1357,7 @@ reportOutput description filename suffix =
 			      alphabet_exps,
 			      partition_group,
 			      partition_sequence_data_vars,
+                              taxon_names_var,
 			      tree,
 			      topology,
 			      tsvLogger,

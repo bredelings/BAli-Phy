@@ -137,6 +137,26 @@ def main():
         if (work_directory / "fixed-retained-1").exists():
             raise AssertionError("the retained fixed-alignment program created an output directory")
 
+        # Generated multi-partition programs must diagnose name mismatches even if a fixed tree
+        # makes taxa otherwise unused. Ordinary model tests do not cover that lazy-evaluation path.
+        # These checks can go away if partitions are allowed to contain different taxon sets.
+        (work_directory / "second.fasta").write_text(">one\nACGT\n>three\nACGT\n", encoding="utf-8")
+        (work_directory / "third.fasta").write_text(">two\nACGT\n>three\nACGT\n", encoding="utf-8")
+        (work_directory / "tree.nwk").write_text("(one:0.1,two:0.1);\n", encoding="utf-8")
+        for extra, expected in [
+            ([], '"three" — present in "second.fasta"'),
+            (["third.fasta", "--fix=tree=tree.nwk"],
+             '"three" — present in 2 of 3 files, including "second.fasta"'),
+        ]:
+            mismatch = run_command(args.wrapper + [
+                args.executable, "--seed=1", args.package_path,
+                "input.fasta", "second.fasta", *extra, "--imodel=none", "--test",
+            ], work_directory)
+            if mismatch.returncode == 0 or expected not in mismatch.stderr:
+                raise AssertionError(mismatch.stdout + mismatch.stderr)
+            if 'Missing from "input.fasta"' not in mismatch.stderr:
+                raise AssertionError(mismatch.stderr)
+
     return 0
 
 
