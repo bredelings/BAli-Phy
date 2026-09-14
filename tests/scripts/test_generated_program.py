@@ -139,14 +139,14 @@ def main():
 
         # Generated multi-partition programs must diagnose name mismatches even if a fixed tree
         # makes taxa otherwise unused. Ordinary model tests do not cover that lazy-evaluation path.
-        # These checks can go away if partitions are allowed to contain different taxon sets.
+        # The fixed-tree check remains necessary even if missing partition observations become supported.
         (work_directory / "second.fasta").write_text(">one\nACGT\n>three\nACGT\n", encoding="utf-8")
         (work_directory / "third.fasta").write_text(">two\nACGT\n>three\nACGT\n", encoding="utf-8")
         (work_directory / "tree.nwk").write_text("(one:0.1,two:0.1);\n", encoding="utf-8")
         for extra, expected in [
             ([], '"three" — present in "second.fasta"'),
             (["third.fasta", "--fix=tree=tree.nwk"],
-             '"three" — present in 2 of 3 files, including "second.fasta"'),
+             'Observation labels with no tree node:\n    "three"'),
         ]:
             mismatch = run_command(args.wrapper + [
                 args.executable, "--seed=1", args.package_path,
@@ -154,8 +154,38 @@ def main():
             ], work_directory)
             if mismatch.returncode == 0 or expected not in mismatch.stderr:
                 raise AssertionError(mismatch.stdout + mismatch.stderr)
-            if 'Missing from "input.fasta"' not in mismatch.stderr:
+            if not extra and 'Missing from "input.fasta"' not in mismatch.stderr:
                 raise AssertionError(mismatch.stderr)
+
+        # Check the generic association directly, including numeric internal-node observations.
+        # This protects complete matching even when no generated analysis supplies validation.
+        (work_directory / "observations.nwk").write_text("((one,two)ancestor,three);\n", encoding="utf-8")
+        (work_directory / "Observations.hs").write_text("""{-# LANGUAGE NoImplicitPrelude #-}
+import Prelude
+import Bio.Alignment (observationsOnTree)
+import Tree.Newick (readTreeTopology)
+import qualified Data.Text as Text
+import qualified Data.IntMap as IntMap
+import Data.Maybe (catMaybes, isNothing)
+import System.Environment (getArgs)
+main = do
+    tree <- readTreeTopology "observations.nwk"
+    args <- getArgs
+    let base = [(Text.pack n, v) | (n,v) <- [("one",1), ("two",2), ("three",3), ("ancestor",4)]]
+        observations = case args of
+            ["extra"] -> (Text.pack "absent", 5) : base
+            ["missing"] -> tail base
+            _ -> base
+        values = IntMap.elems (observationsOnTree tree observations)
+    print (sum (catMaybes values) :: Int, length (filter isNothing values))
+""", encoding="utf-8")
+        for mode, expected in [("valid", "(10,1)"),
+                               ("extra", 'Observation labels with no tree node:\n    "absent"'),
+                               ("missing", 'Tree-node labels with no observation:\n    "one"')]:
+            result = run_command(args.wrapper + [args.executable, args.package_path,
+                                 "run", "Observations.hs", mode], work_directory)
+            if (result.returncode == 0) != (mode == "valid") or expected not in result.stdout + result.stderr:
+                raise AssertionError(result.stdout + result.stderr)
 
     return 0
 

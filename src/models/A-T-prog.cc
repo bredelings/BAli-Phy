@@ -661,9 +661,6 @@ Hs::Stmts generate_main(const InferOptions& options,
 
     // Main.5. Emit mcmcState <- makeMCMCState $ model sequence_data
     auto make_state = HsG::Apply(Hs::Var("$"), {Hs::Var("makeMCMCState"), model_fn});
-    // Fixed trees may not use taxa in the model; force agreement before constructing any MCMC state.
-    if (n_partitions > 1)
-        make_state = HsG::Apply(Hs::Var("seq"), {taxa, make_state});
     HsG::Bind(main, HsG::VarPat(Hs::Var("mcmcState")), make_state);
 
     // Main.6. Inspect the initial state or run MCMC according to the parsed runtime mode.
