@@ -605,7 +605,12 @@ nav.toc:empty, nav.tocopen:empty {
 }
 
 /* Keep the compact rate figure readable without enlarging it across wide screens. */
-.rate-illustration { max-width: 36rem; }
+.rate-illustration { max-width: 36rem; margin-left: auto; margin-right: auto; }
+/* Override DocBook's fixed-width image wrappers on narrow screens. */
+@media screen {
+  .rate-illustration .media.image span { display: block; max-width: 100%; }
+  .rate-illustration img { max-width: 100%; height: auto; }
+}
 @media print {
   .html-only { display: none; }
 }
