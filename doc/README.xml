@@ -127,7 +127,7 @@
       <anchor xml:id="install-macos_s2"/>
       <para>On macOS, first install Apple's Command Line Tools:</para>
 <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>
-      <para>On either macOS or Linux, follow the
+      <para>On macOS or Linux (including WSL), follow the
         <link xmlns:xlink="http://www.w3.org/1999/xlink"
         xlink:href="https://docs.brew.sh/Installation">Homebrew installation requirements</link>,
         install <link xmlns:xlink="http://www.w3.org/1999/xlink"
