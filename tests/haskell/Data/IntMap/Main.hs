@@ -1,5 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
+import Compiler.Error (error)
+import Data.Maybe (isJust)
 import Compiler.Enum
 import Compiler.Num
 import Data.IntMap as I
@@ -44,6 +46,16 @@ main = do
   putStrLn $ show $ forceAll m8
   putStrLn $ show $ U.toList $ keysVector m4
   putStrLn $ show $ U.length $ keysVector (empty :: IntMap Int)
+
+  -- Native lookup must preserve lazy entries/defaults; the earlier map tests only check values.
+  let lazyMap = I.singleton 7 (error "lookup forced its value" :: Int)
+  putStrLn $ show $ I.lookup 2 m6
+  putStrLn $ show $ I.lookup 9 m6
+  putStrLn $ show $ I.lookup 0 (I.empty :: IntMap Int)
+  putStrLn $ show $ isJust $ I.lookup 7 lazyMap
+  putStrLn $ show $ I.findWithDefault (error "default was forced") 2 m6
+  putStrLn $ show $ I.findWithDefault 42 9 lazyMap
+  putStrLn $ show $ I.findWithDefault 42 0 I.empty
 
 
 -- maybe make Foldable?

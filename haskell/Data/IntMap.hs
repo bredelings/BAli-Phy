@@ -64,19 +64,14 @@ foreign import bpcall "IntMap:" delete :: Key -> IntMap a -> IntMap a
 
 -- alterF :: Functor f => (Maybe a -> f (Maybe a)) -> Key -> IntMap a -> f (IntMap a)
 
-lookup :: Int -> IntMap a -> Maybe a
-lookup key m | member key m  = Just (m!key)
-             | otherwise     = Nothing
+foreign import bpcall "IntMap:lookup" lookup :: Int -> IntMap a -> Maybe a
 
 infixl 9 !?
 m !? k = lookup k m
 
 foreign import bpcall "IntMap:subscript" (!) :: IntMap a -> Int -> a
 
--- We could make a builtin for this
-findWithDefault def key m = case lookup key m of
-                              Just x  -> x
-                              Nothing -> def
+foreign import bpcall "IntMap:findWithDefault" findWithDefault :: a -> Int -> IntMap a -> a
 
 foreign import ecall "IntMap:" member :: Int -> IntMap a -> Bool
 

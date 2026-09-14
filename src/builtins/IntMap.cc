@@ -58,6 +58,27 @@ extern "C" R::Exp simple_function_member(vector<R::Exp>& args)
     return m.has_key(key);
 }
 
+// Return a lazy Maybe: Just retains the existing value register without evaluating it.
+extern "C" closure builtin_function_lookup(OperationArgs& Args)
+{
+    int key = Args.evaluate_slot_to_value(0).as_int();
+    auto map_value = Args.evaluate_slot_to_value(1);
+    auto result = map_value.as_<IntMap>().lookup(key);
+    if (result)
+        return {R::ConstructorApp("Data.Maybe.Just", 1, {R::IndexVar(0)}), {*result}};
+    return {R::ConstructorApp("Data.Maybe.Nothing", 0, {})};
+}
+
+// Forward the selected register directly; neither candidate is forced during selection.
+extern "C" closure builtin_function_findWithDefault(OperationArgs& Args)
+{
+    int key = Args.evaluate_slot_to_value(1).as_int();
+    auto map_value = Args.evaluate_slot_to_value(2);
+    auto result = map_value.as_<IntMap>().lookup(key);
+    int result_reg = result ? *result : Args.reg_for_slot(0);
+    return {R::IndexVar(0), {result_reg}};
+}
+
 extern "C" closure builtin_function_subscript(OperationArgs& Args)
 {
     int key = Args.evaluate_slot_to_value(1).as_int();

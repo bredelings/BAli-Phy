@@ -2,6 +2,7 @@
 #define GCOBJECT_H
 
 #include <vector>
+#include <optional>
 #include "immer/map.hpp" // for immer::map
 #include "computation/object.hh"
 
@@ -42,6 +43,13 @@ public:
 
     int size() const {return regs.size();}
     bool has_key(int i) const {return regs.count(i);}
+    // Find the stored interpreter register in one search, without evaluating its value.
+    std::optional<int> lookup(int key) const
+    {
+        if (auto value = regs.find(key))
+            return *value;
+        return std::nullopt;
+    }
     int operator[](int i) const {return regs.at(i);}
 
     void erase(int k);
