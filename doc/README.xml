@@ -95,39 +95,37 @@
       <para>Install the Bioconda package using either Pixi or conda:</para>
 <variablelist role="panelset">
   <varlistentry><term>Pixi</term><listitem>
-    <para><link xmlns:xlink="http://www.w3.org/1999/xlink"
-      xlink:href="https://pixi.prefix.dev/latest/installation/">Install Pixi</link> and complete
-      its PATH setup. Then run:</para>
+    <para>If needed, <link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="https://pixi.prefix.dev/latest/installation/">install Pixi</link> and complete
+      its shell setup. Then run:</para>
 <screen><prompt>%</prompt> <userinput>pixi global install -c conda-forge -c bioconda bali-phy</userinput>
 <prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
-    <para>This installation does not require activating an environment in each terminal.</para>
+    <para>No environment activation is required.</para>
   </listitem></varlistentry>
   <varlistentry><term>Conda</term><listitem>
-    <para>If you don't already have conda, install
+    <para>If you don't already have conda, install it through
       <link xmlns:xlink="http://www.w3.org/1999/xlink"
       xlink:href="https://github.com/conda-forge/miniforge#install">Miniforge</link>
-      and complete its shell setup first. Create and activate an environment:</para>
+      and complete its shell setup. Then run:</para>
 <screen><prompt>%</prompt> <userinput>conda create -n bali-phy --override-channels \
   -c conda-forge -c bioconda --strict-channel-priority bali-phy</userinput>
 <prompt>%</prompt> <userinput>conda activate bali-phy</userinput>
 <prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
     <para>In each new terminal, run <command>conda activate bali-phy</command> before using
-      BAli-Phy. No additional BAli-Phy-specific PATH setting is needed while the environment
-      is active.</para>
+      BAli-Phy.</para>
   </listitem></varlistentry>
 </variablelist>
       <para>Bioconda includes programs used by <command>bpy-summarize</command>, including R.
         See the <link xmlns:xlink="http://www.w3.org/1999/xlink"
         xlink:href="https://bioconda.github.io/recipes/bali-phy/README.html">Bioconda package page</link>
-        for available versions and platforms. On Apple Silicon, use BAli-Phy 4.2 or newer;
-        earlier Bioconda builds have a model-parsing bug.</para>
+        for available versions and platforms.</para>
     </section>
 
     <section xml:id="install-homebrew"><info><title>Homebrew</title></info>
       <anchor xml:id="install-macos_s2"/>
-      <para>On macOS, first install Apple's Command Line Tools:</para>
+      <para>On macOS, install Apple's Command Line Tools if needed:</para>
 <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>
-      <para>On macOS or Linux (including WSL), follow the
+      <para>Check the
         <link xmlns:xlink="http://www.w3.org/1999/xlink"
         xlink:href="https://docs.brew.sh/Installation">Homebrew installation requirements</link>,
         install <link xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -4171,6 +4169,8 @@ The command <command>bali-phy</command> and its associated tools should then be 
 
 
   <section xml:id="FAQ"><info><title>Frequently Asked Questions (FAQ)</title></info>
+
+
     
     <section><info><title>Input files</title></info>
       <qandaset>
@@ -4512,6 +4512,15 @@ Here the PID is 549319.  Therefore you can type:
 	  </answer>	
 	</qandaentry -->
 
+      </qandaset>
+    </section>
+      <section><info><title>Installation</title></info>
+      <qandaset>
+        <qandaentry>
+          <question><para>Why does an older Bioconda build fail to parse models on Apple Silicon?</para></question>
+          <answer><para>Bioconda builds before BAli-Phy 4.2 have a model-parsing bug on Apple
+            Silicon. Install BAli-Phy 4.2 or newer.</para></answer>
+        </qandaentry>
       </qandaset>
     </section>
   </section>
