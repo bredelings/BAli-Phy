@@ -36,6 +36,14 @@
   <xsl:param name="verbatim-trim-leading-blank-lines" select="'false'"/>
   <xsl:param name="verbatim-trim-trailing-blank-lines" select="'false'"/>
 
+  <!-- Offer printable formats immediately after the HTML title; print CSS omits this line. -->
+  <xsl:template match="db:article" mode="m:generate-titlepage">
+    <xsl:next-match/>
+    <p class="guide-pdf-downloads">Download PDF:
+      <a href="README.pdf">Letter</a> · <a href="README-A4.pdf">A4</a>
+    </p>
+  </xsl:template>
+
   <!-- Print navigation lists immediate subsections, using the same IDs and heading
        renderer as the main contents. Screen CSS hides these extra lists. -->
   <xsl:template match="db:article/db:section" mode="m:generate-titlepage">

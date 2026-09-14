@@ -598,3 +598,8 @@ nav.toc:empty, nav.tocopen:empty {
         --default-line-height: 1.4;
     }
 }
+
+/* PDF download choices are useful only while reading the HTML guide. */
+@media print {
+  .guide-pdf-downloads { display: none; }
+}
