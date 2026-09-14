@@ -34,7 +34,7 @@ annotated_subst_like_on_tree tree alignment smodel propertyModel sequenceData = 
               else tree
 
   let as = pairwiseAlignments alignment
-      maybeNodeSequences = labelToNodeMap rtree (getSequences sequenceData)
+      maybeNodeSequences = observationsOnTree rtree (getSequences sequenceData)
       nModels = rows f
       nodeCLVs = simpleNodeCLVs alphabet ambiguities smap nModels maybeNodeSequences
       alphabet = getAlphabet smodel

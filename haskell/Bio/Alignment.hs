@@ -150,7 +150,7 @@ select_alignment_pairs alignment sites doublets = builtin_select_alignment_pairs
 
 alignmentOnTreeFromSequences tree (Aligned sequences) = AlignmentOnTree tree numSequences lengths pairwiseAs
     where -- observedSequences :: IntMap (Maybe (U.Vector Int))
-          observedSequences = labelToNodeMap tree $ getSequences sequences
+          observedSequences = observationsOnTree tree $ getSequences sequences
           observedMasks = fmap (fmap bitmaskFromSequence) observedSequences
           -- What is going on here with addAllMissingAncestors?
           allSequences = minimallyConnectCharacters observedMasks tree (addAllMissingAncestors observedSequences tree)
@@ -165,16 +165,23 @@ alignmentOnTreeFromSequences tree (Aligned sequences) = AlignmentOnTree tree num
 
 find_sequence label sequences = find (\s -> fst s == label) sequences
 
--- Get a map from labeled nodes to Just v, and unlabeled nodes to Nothing.
--- Complain if a labeled node doesn't have a corresponding entry in the Map.
-labelToNodeMap :: (IsGraph t, Eq (LabelType t), Show (LabelType t)) => t -> [(LabelType t, v)] -> IntMap (Maybe v)
-labelToNodeMap tree things = getNodesSet tree & IntMap.fromSet objectForNode where
-    objectForNode node = case getLabel tree node of
-                           Nothing -> Nothing
-                           Just label ->
-                               case lookup label things of
-                                 Just object -> Just object
-                                 Nothing -> error $ "Can't find sequence data for tree node with label " ++ show label
+-- Associate observations with all labeled nodes, including internal nodes; unlabeled nodes get Nothing.
+-- Check both directions before exposing the map so evaluating only part cannot silently drop observations.
+observationsOnTree :: (IsGraph t, Eq (LabelType t), Show (LabelType t)) => t -> [(LabelType t, v)] -> IntMap (Maybe v)
+observationsOnTree tree observations
+    | null unmatchedObservations && null unobservedNodes =
+        getNodesSet tree & IntMap.fromSet observationForNode
+    | otherwise = error $ "Observations do not match the labeled tree nodes.\n"
+                       ++ describe "Observation labels with no tree node" unmatchedObservations
+                       ++ describe "Tree-node labels with no observation" unobservedNodes
+  where
+    labels = [label | node <- getNodes tree, Just label <- [getLabel tree node]]
+    observationLabels = map fst observations
+    unmatchedObservations = filter (`notElem` labels) observationLabels
+    unobservedNodes = filter (`notElem` observationLabels) labels
+    observationForNode node = getLabel tree node >>= (`lookup` observations)
+    describe _ [] = ""
+    describe title names = "\n  " ++ title ++ ":\n" ++ concatMap (\name -> "    " ++ show name ++ "\n") names
 
 getSequencesOnTree :: (IsGraph t, LabelType t ~ Text) => [Sequence] -> t -> IntMap (Maybe Sequence)
 getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequence_for_node where
@@ -248,7 +255,7 @@ instance ToFasta AlignedCharacterData where
 align alignment (Unaligned (CharacterData alphabet ambiguities seqs)) =
     Aligned (CharacterData alphabet ambiguities alignedSeqs)
     where AlignmentOnTree tree _ _ _ = alignment
-          seqsOnTree = fromMaybe (error "No label") <$> labelToNodeMap tree seqs
+          seqsOnTree = fromMaybe (error "No label") <$> observationsOnTree tree seqs
           alignedSeqsOnTree = alignedSequences alignment seqsOnTree
           alignedSeqs = getLabelled tree (,) alignedSeqsOnTree
 
@@ -290,7 +297,7 @@ instance IsTree t => AncestralAlignment (AlignmentOnTree t) where
         where letterSequences = statesToLetters smap . componentStates <$> componentStateSequences
               alignedLetterSequences = alignedSequences alignment letterSequences
 
-leafAlignment tree sequenceData = labelToNodeMap tree $ fmap (fmap bitmaskFromSequence) $ getSequences sequenceData
+leafAlignment tree sequenceData = observationsOnTree tree $ fmap (fmap bitmaskFromSequence) $ getSequences sequenceData
 
 
 instance ToJSON ComponentStateSequence where

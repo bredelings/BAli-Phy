@@ -31,7 +31,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel propertyModel seq
 
   let (isequences, columnCounts, mapping) = compressAlignment $ getSequences sequenceData
 
-      maybeNodeISequences = labelToNodeMap rtree isequences
+      maybeNodeISequences = observationsOnTree rtree isequences
       maybeNodeSeqsBits = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences
       nModels = rows f
       nodeCLVs = simpleNodeCLVs alphabet ambiguities smap nModels maybeNodeSeqsBits
@@ -53,7 +53,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel propertyModel seq
 
       -- computing the probability of the condition
       (isequences2, columnCounts2) = compressAlignmentVarNonvar (getSequences sequenceData) alphabet
-      maybeNodeISequences2 = labelToNodeMap rtree isequences2
+      maybeNodeISequences2 = observationsOnTree rtree isequences2
       maybeNodeSeqsBits2 = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences2
       nodeCLVs2 = simpleNodeCLVs alphabet ambiguities smap nModels maybeNodeSeqsBits2
       cls2 | isReversible smodel = cachedConditionalLikelihoodsEqRev rtree nodeCLVs2 transitionPs f

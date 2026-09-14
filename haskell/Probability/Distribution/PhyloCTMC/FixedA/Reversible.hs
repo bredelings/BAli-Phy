@@ -26,7 +26,7 @@ annotatedSubstLikelihoodFixedA tree length smodel propertyModel sequenceData = d
 
   let (isequences, columnCounts, mapping) = compressAlignment $ getSequences sequenceData
 
-      maybeNodeISequences = labelToNodeMap rtree isequences
+      maybeNodeISequences = observationsOnTree rtree isequences
       maybeNodeSeqsBits = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences
       nModels = rows f
       nodeCLVs = simpleNodeCLVs alphabet ambiguities smap nModels maybeNodeSeqsBits

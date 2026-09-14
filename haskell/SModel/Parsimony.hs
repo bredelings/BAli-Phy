@@ -82,7 +82,7 @@ instance Parsimony (UnalignedCharacterData, AlignmentOnTree t) where
     parsimony tree costs (sequenceData,alignment) = let as = pairwiseAlignments alignment
                                                         alphabet = getAlphabet sequenceData
                                                         ambiguities = getAmbiguities sequenceData
-                                                        maybeNodeSequences = labelToNodeMap tree (getSequences sequenceData)
+                                                        maybeNodeSequences = observationsOnTree tree (getSequences sequenceData)
                                                     in parsimony_root tree maybeNodeSequences as alphabet ambiguities costs
 
 ----
@@ -125,7 +125,7 @@ parsimony_root_fixed_A t seqs alpha ambiguities cost counts =
 
 instance Parsimony AlignedCharacterData where
     parsimony tree cost alignment = let (isequences, columnCounts, mapping) = compressAlignment $ getSequences alignment
-                                        maybeNodeISequences = labelToNodeMap tree isequences
+                                        maybeNodeISequences = observationsOnTree tree isequences
                                         maybeNodeSeqsBits = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences
                                         alphabet = getAlphabet alignment
                                         ambiguities = getAmbiguities alignment
