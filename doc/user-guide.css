@@ -603,3 +603,9 @@ nav.toc:empty, nav.tocopen:empty {
 @media print {
   .guide-pdf-downloads { display: none; }
 }
+
+/* Keep the compact rate figure readable without enlarging it across wide screens. */
+.rate-illustration { max-width: 36rem; }
+@media print {
+  .html-only { display: none; }
+}

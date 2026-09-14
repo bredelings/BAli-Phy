@@ -3011,20 +3011,56 @@ By default each partition has a separate scale, but you can force groups of part
     discarding the first <replaceable>burnin</replaceable> iterations of each run:</para>
 <screen><prompt>%</prompt> bpy-summarize --skip=<replaceable>burnin</replaceable> <replaceable>run-1</replaceable>/ <replaceable>run-2</replaceable>/</screen>
     <para>Open <filename>Results/index.html</filename> and follow a partition's alignment link.
-    Choose <literal>rate</literal> in the property viewer and point to a letter to see its
-    estimates. The standard deviation measures uncertainty about the property's value, not
-    the sampling error of its estimated mean. The alignment uncertainty overlay shows
-    uncertainty about which letters align.</para>
+    Choose <literal>rate</literal> under <literal>Color by</literal> and clear
+    <literal>Original colors</literal>. Colors show the posterior mean rate of each letter.
+    Point to a letter to inspect its estimates. The standard deviation measures uncertainty
+    about the property's value, not the sampling error of its estimated mean.</para>
 
-    <para>Heterotachy models allow a site's rate to change along the tree. For example,
-    <code language="bali-phy-model">GTR +> ASRV.Free +> Covarion.Huelsenbeck02</code>, used in the
-    <link linkend="running_s1">Quick Start</link>, allows switching between rate categories
-    in a DNA analysis. Choose <literal>rate</literal> in the alignment viewer to examine the
-    posterior rate estimates for individual letters. This can reveal rate differences between
-    sequences even within one column of a fixed alignment. Such differences arise from the
-    rate model, independently of differences caused by alignment uncertainty. This display
-    also applies to supported codon models and does not require a positive-selection analysis;
-    it visualizes rate estimates rather than performing a formal test for heterotachy.</para>
+    <para>Heterotachy models allow a site's rate to change along the tree. The example below
+    uses <code language="bali-phy-model">GTR +> ASRV.Gamma(4) +> Inv +> Covarion.Huelsenbeck02</code>
+    for 25 RNA sequences. Compare colors down a column as well as across a row: letters in
+    the same column can have different inferred rates under the covarion model. The estimates
+    average over sampled alignments; the AMA alignment shown here is used to display them.
+    This illustrates inferred rate variation, rather than a formal test for heterotachy.</para>
+
+    <figure xml:id="rate-heterotachy-example" role="rate-illustration">
+      <info><title>Inferred rates for individual letters</title></info>
+      <mediaobject>
+        <imageobject><imagedata fileref="guide-images/rate-heterotachy.png" width="100%"/></imageobject>
+        <textobject><phrase>Columns 110–145 of a 25-sequence RNA alignment, with sequence names
+          and a rate legend. Blue and red backgrounds within the same column show lower and higher
+          posterior mean rates, respectively.</phrase></textobject>
+        <caption><para>Blue indicates lower posterior mean rates and red higher rates.
+          Colors use a Log10 scale; legend labels are rate values. The robust range clips
+          the lowest and highest 2% of values to the endpoint colors. Columns 110–145 of the
+          AMA alignment are shown, with all 25 sequences.</para></caption>
+      </mediaobject>
+    </figure>
+
+    <para>To explore this example, open the
+    <link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="https://bali-phy.org/Examples/5S/25-GTR-Gamma-INV-Covarion/P1.consensus.pd-wsum.html">interactive
+    alignment</link>. Select <literal>rate</literal>, clear <literal>Original colors</literal>,
+    and choose <literal>Log10</literal>, <literal>Blue–gray–red</literal>, and
+    <literal>Robust (2–98%)</literal>. Scroll to column 130 to compare the same region.</para>
+
+    <figure xml:id="rate-viewer-controls" role="html-only">
+      <info><title>Choosing rate colors in the alignment viewer</title></info>
+      <mediaobject>
+        <imageobject><imagedata fileref="guide-images/rate-viewer.png" width="100%"/></imageobject>
+        <textobject><phrase>The rate viewer with Original colors off, Log10 scale,
+          Blue–gray–red palette, Robust range, and Column summaries collapsed.</phrase></textobject>
+        <caption><para>The controls and legend while scrolling through the same alignment.
+          Open <literal>Column summaries</literal> to inspect and sort numerical results.</para></caption>
+      </mediaobject>
+    </figure>
+
+    <para><literal>Column summaries</literal> starts collapsed for rates and positive-selection
+    properties. Open it to inspect or sort the numerical table, then select a column number
+    to locate it in the alignment. The color legend stays immediately above the alignment
+    whether the table is open or closed. Sequence names stay visible as you scroll
+    horizontally. In AU views, <literal>Fade by AU</literal> additionally
+    fades colors according to alignment uncertainty; leave it off to compare rates alone.</para>
 
     <para>Clear <literal>Show letters</literal> to compare background colors without the
     sequence letters. You can still point to cells to inspect their estimates. This setting

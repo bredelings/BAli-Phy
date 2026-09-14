@@ -9,6 +9,7 @@ DOCBOOK_XSLTNG ?= $(TOOLS_DIR)/docbook-xslTNG-2.8.4
 NODE_MODULES = $(abspath $(TOOLS_DIR)/npm/node_modules)
 export NODE_PATH = $(NODE_MODULES)
 ASSET_DIR = $(BUILD_DIR)/user-guide-assets
+GUIDE_IMAGES = $(addprefix $(BUILD_DIR)/guide-images/,rate-heterotachy.png rate-viewer.png)
 GUIDE_ASSETS = $(addprefix $(ASSET_DIR)/,docbook.css docbook-paged.css docbook-toc.css \
                persistent-toc.js guide-toc.js draft-left.svg draft-right.svg LICENSE)
 MATH_ASSETS = $(addprefix $(ASSET_DIR)/,mathjax-config.js tex-svg.js MathJax-LICENSE)
@@ -35,7 +36,7 @@ README.pdf: $(BUILD_DIR)/README.pdf
 README-A4.pdf: $(BUILD_DIR)/README-A4.pdf
 
 $(BUILD_DIR)/README.html: $(DOCBOOK_XSLTNG)/bin/docbook $(NODE_MODULES)/mathjax-full/package.json \
-                        README.xml user-guide.xsl $(GUIDE_ASSETS) $(MATH_ASSETS) $(BUILD_DIR)/user-guide.css \
+                        README.xml user-guide.xsl $(GUIDE_IMAGES) $(GUIDE_ASSETS) $(MATH_ASSETS) $(BUILD_DIR)/user-guide.css \
                         $(DOCBOOK_XSLTNG)/xslt/catalog.xml $(DOCBOOK_XSLTNG)/xslt/docbook.xsl
 	@command -v pygmentize >/dev/null || { echo 'User Guide requires pygmentize (Pygments).' >&2; exit 1; }
 	"$(DOCBOOK_XSLTNG)/bin/docbook" -catalog:"$(DOCBOOK_XSLTNG)/xslt/catalog.xml" \
@@ -60,6 +61,10 @@ $(ASSET_DIR)/guide-toc.js: guide-toc.js
 
 $(ASSET_DIR)/LICENSE: $(DOCBOOK_XSLTNG)/LICENSE
 	mkdir -p "$(ASSET_DIR)"
+	cp "$<" "$@"
+
+$(BUILD_DIR)/guide-images/%.png: guide-images/%.png
+	mkdir -p "$(BUILD_DIR)/guide-images"
 	cp "$<" "$@"
 
 $(BUILD_DIR)/user-guide.css: user-guide.css
@@ -116,7 +121,7 @@ Instructions.pdf: guide.css
 # Name the generated files explicitly: README.xml is now a source file.
 clean-user-guide:
 	$(RM) "$(BUILD_DIR)/README.html" "$(BUILD_DIR)/README.print.html" "$(BUILD_DIR)/README.pdf" "$(BUILD_DIR)/README-A4.pdf"
-	$(RM) "$(BUILD_DIR)/user-guide.css" $(GUIDE_ASSETS) $(MATH_ASSETS)
+	$(RM) "$(BUILD_DIR)/user-guide.css" $(GUIDE_IMAGES) $(GUIDE_ASSETS) $(MATH_ASSETS)
 
 clean: clean-user-guide clean-tutorial
 	$(RM) Tutorial.html Tutorial.pdf Instructions.html Instructions.pdf *.xhtml *.fo *~
