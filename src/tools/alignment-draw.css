@@ -104,12 +104,19 @@ td.alignment-cell:focus-visible {
 }
 
 .alignment-viewer-legend {
+    --alignment-viewer-muted: #475569;
+    box-sizing: border-box;
+    position: sticky;
+    left: 0.5rem;
+    width: calc(100vw - 1rem);
+    color: #0f172a;
+    font: 0.875rem/1.35 system-ui, sans-serif;
     display: grid;
     grid-template-columns: minmax(14rem, 32rem) auto;
     gap: 0.25rem 0.85rem;
     align-items: center;
     min-height: 4.2rem;
-    margin: 0.75rem 0 0;
+    margin: 0.75rem 0 0.5rem;
 }
 
 .alignment-viewer-legend-caption {
@@ -220,6 +227,17 @@ td.alignment-cell:focus-visible {
     border-bottom: 1px solid #cbd5e1;
     color: #0f172a;
     font: 0.8rem/1.35 system-ui, sans-serif;
+}
+
+.alignment-viewer-report-toggle {
+    cursor: pointer;
+    padding: 0.55rem 0;
+    font-weight: 600;
+}
+
+.alignment-viewer-report-toggle:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
 }
 
 .alignment-viewer-report-header {
@@ -397,26 +415,17 @@ td.alignment-cell.alignment-au-missing {
 
 @media print {
     .alignment-viewer-toolbar,
-    .alignment-viewer-report {
-        position: static;
-        width: auto;
-    }
-
-    .alignment-viewer-toolbar {
-        border: 0;
-        box-shadow: none;
-        background: white;
-    }
-
-    .alignment-viewer-control-row,
-    .alignment-viewer-status,
+    .alignment-viewer-report,
     .alignment-viewer-tooltip {
         display: none !important;
     }
 
-    .alignment-viewer-report-scroll {
-        height: auto;
-        overflow: visible;
+    .alignment-viewer-legend {
+        position: static;
+        width: auto;
+        break-after: avoid;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
     }
 }
 

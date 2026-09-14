@@ -218,9 +218,9 @@ class AlignmentPropertyViewer {
 
         const firstTable = this.document.querySelector('table.sequences');
         if (firstTable)
-            firstTable.before(this.toolbar, this.reportPanel);
+            firstTable.before(this.toolbar, this.reportPanel, this.legend);
         else
-            this.document.body.prepend(this.toolbar, this.reportPanel);
+            this.document.body.prepend(this.toolbar, this.reportPanel, this.legend);
     }
 
     // Builds reusable legend nodes whose labels and gradients change with the scale.
@@ -244,7 +244,6 @@ class AlignmentPropertyViewer {
         this.missingKey.append(makeElement(doc, 'span', 'alignment-viewer-missing-swatch'));
         this.missingKey.append(makeElement(doc, 'span', '', 'unavailable'));
         this.legend.append(this.missingKey);
-        this.toolbar.append(this.legend);
     }
 
     // Creates the shared tooltip used by pointer and keyboard navigation.
@@ -257,12 +256,13 @@ class AlignmentPropertyViewer {
         this.document.body.append(this.tooltip);
     }
 
-    // Builds the fixed-height column report with no report-specific controls.
+    // Keeps either kind of column report in a native disclosure, initially collapsed.
     buildReportPanel()
     {
         const doc = this.document;
-        this.reportPanel = makeElement(doc, 'section', 'alignment-viewer-report');
+        this.reportPanel = makeElement(doc, 'details', 'alignment-viewer-report');
         this.reportPanel.setAttribute('aria-label', 'Character property columns');
+        this.reportPanel.append(makeElement(doc, 'summary', 'alignment-viewer-report-toggle', 'Column summaries'));
         const header = makeElement(doc, 'div', 'alignment-viewer-report-header');
         this.reportTitle = makeElement(doc, 'h2', 'alignment-viewer-report-title', 'Property columns');
         header.append(this.reportTitle);
