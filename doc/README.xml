@@ -84,6 +84,64 @@
     between installed versions and are not removed when you delete a program directory.</para>
   </section>
 
+  <section xml:id="install-package-managers">
+    <info><title>Install with a package manager</title></info>
+    <para>Bioconda and Homebrew provide BAli-Phy packages for macOS and Linux. On Windows,
+      use these instructions <link linkend="install-wsl">inside WSL</link>. Package versions
+      may differ from the latest BAli-Phy release.</para>
+
+    <section xml:id="install-bioconda"><info><title>Bioconda</title></info>
+      <anchor xml:id="install-macos_s1"/>
+      <para>Install the Bioconda package using either Pixi or conda:</para>
+<variablelist role="panelset">
+  <varlistentry><term>Pixi</term><listitem>
+    <para><link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="https://pixi.prefix.dev/latest/installation/">Install Pixi</link> and complete
+      its PATH setup. Then run:</para>
+<screen><prompt>%</prompt> <userinput>pixi global install -c conda-forge -c bioconda bali-phy</userinput>
+<prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
+    <para>This installation does not require activating an environment in each terminal.</para>
+  </listitem></varlistentry>
+  <varlistentry><term>Conda</term><listitem>
+    <para>If you don't already have conda, install
+      <link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="https://github.com/conda-forge/miniforge#install">Miniforge</link>
+      and complete its shell setup first. Create and activate an environment:</para>
+<screen><prompt>%</prompt> <userinput>conda create -n bali-phy --override-channels \
+  -c conda-forge -c bioconda --strict-channel-priority bali-phy</userinput>
+<prompt>%</prompt> <userinput>conda activate bali-phy</userinput>
+<prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
+    <para>In each new terminal, run <command>conda activate bali-phy</command> before using
+      BAli-Phy. No additional BAli-Phy-specific PATH setting is needed while the environment
+      is active.</para>
+  </listitem></varlistentry>
+</variablelist>
+      <para>Bioconda includes programs used by <command>bpy-summarize</command>, including R.
+        See the <link xmlns:xlink="http://www.w3.org/1999/xlink"
+        xlink:href="https://bioconda.github.io/recipes/bali-phy/README.html">Bioconda package page</link>
+        for available versions and platforms. On Apple Silicon, use BAli-Phy 4.2 or newer;
+        earlier Bioconda builds have a model-parsing bug.</para>
+    </section>
+
+    <section xml:id="install-homebrew"><info><title>Homebrew</title></info>
+      <anchor xml:id="install-macos_s2"/>
+      <para>On macOS, first install Apple's Command Line Tools:</para>
+<screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>
+      <para>On either macOS or Linux, follow the
+        <link xmlns:xlink="http://www.w3.org/1999/xlink"
+        xlink:href="https://docs.brew.sh/Installation">Homebrew installation requirements</link>,
+        install <link xmlns:xlink="http://www.w3.org/1999/xlink"
+        xlink:href="https://brew.sh/">Homebrew</link>, and complete its shell setup. Then run:</para>
+<screen><prompt>%</prompt> <userinput>brew install brewsci/bio/bali-phy</userinput>
+<prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
+      <para>Homebrew uses a prebuilt package when available; otherwise, it builds from source.
+        No additional BAli-Phy-specific PATH setting is needed. If the formula lags behind a
+        release you need, use the archives for <link linkend="install-macos">macOS</link> or
+        <link linkend="install-linux">Linux</link>.</para>
+    </section>
+    <para>Continue with <xref linkend="tests"/> after installation.</para>
+  </section>
+
   <section xml:id="install-windows"><info><title>Install on Windows</title></info>
     <para>The preferred way to run BAli-Phy on Windows is through Windows Subsystem for
       Linux (WSL2). This lets you follow the Linux commands in this guide, including commands
@@ -93,8 +151,8 @@
     <section xml:id="install-wsl"><info><title>Install inside WSL2 (preferred)</title></info>
       <para><link xmlns:xlink="http://www.w3.org/1999/xlink"
                   xlink:href="https://learn.microsoft.com/en-us/windows/wsl/install">Install WSL2</link>
-        and open its Linux terminal. Download the Linux BAli-Phy package and follow the
-        Linux installation instructions below inside WSL2. Continue using that terminal for
+        and open its Linux terminal. Follow the <link linkend="install-linux">Linux
+        installation instructions</link> inside WSL2, using a package manager or release archive. Continue using that terminal for
         the Linux commands throughout this guide.</para>
       <para>Programs installed inside WSL2 use Linux paths such as
         <filename>/home/user/data.fasta</filename>.  The native Windows package instead uses
@@ -157,46 +215,12 @@
   </section>
 
     <section xml:id="install-macos"><info><title>Install on macOS</title></info>
-    <para>Bioconda and Homebrew both provide convenient ways to install BAli-Phy.
-      Bioconda is a natural choice if you already use Conda for bioinformatics software or want
-      to keep BAli-Phy and its dependencies in a separate environment. Homebrew is a natural
-      choice if you already use it to manage macOS software.</para>
-    <section><info><title>Install BAli-Phy using Bioconda</title></info>
-    <para>
-      First install Conda and complete its shell setup. Follow the
-      <link xmlns:xlink="http://www.w3.org/1999/xlink"
-      xlink:href="https://bioconda.github.io/#with-conda">Bioconda instructions for Conda</link>
-      to configure the channels, with conda-forge ahead of bioconda and strict channel priority.
-      Then create and activate an environment containing BAli-Phy:
-<screen><prompt>%</prompt> <userinput>conda create -n bali-phy bali-phy</userinput>
-<prompt>%</prompt> <userinput>conda activate bali-phy</userinput></screen>
-      Check that the executable runs:
-<screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
-      In each new terminal, run <command>conda activate bali-phy</command> before using BAli-Phy.
-      No additional BAli-Phy-specific PATH setting is needed while the environment is active.
-      Bioconda packages BAli-Phy together with programs used by <command>bpy-summarize</command>, including R.  On Apple Silicon, use BAli-Phy 4.2 or newer; earlier Bioconda builds have a platform-specific model-parsing bug.
-    </para>
-    </section>
+    <para>Install BAli-Phy with <link linkend="install-bioconda">Bioconda</link> or
+      <link linkend="install-homebrew">Homebrew</link>, or download a release archive as described
+      below.</para>
 
-    <section><info><title>Install BAli-Phy using Homebrew</title></info>
-    <para>First install Apple's Command Line Tools:
-<screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>
-      See the <link xmlns:xlink="http://www.w3.org/1999/xlink"
-      xlink:href="https://docs.brew.sh/Installation">Homebrew installation requirements</link>.
-      Install <link xmlns:xlink="http://www.w3.org/1999/xlink"
-      xlink:href="https://brew.sh/">Homebrew</link> and complete the shell setup instructions
-      printed by its installer. Then install BAli-Phy:
-<screen><prompt>%</prompt> <userinput>brew install brewsci/bio/bali-phy</userinput></screen>
-      Homebrew uses a prebuilt package when available; otherwise, it builds from source.
-      Check that the executable runs:
-<screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
-      Once Homebrew is configured in your shell, no additional BAli-Phy-specific PATH setting
-      is needed. The Homebrew formula may lag behind the current BAli-Phy release, so check
-      the installed version and use the release executables below if you need a newer version.
-    </para>
-    </section>
-
-    <section><info><title>Install BAli-Phy using executables from website (alternative)</title></info>
+    <section xml:id="install-macos-archive"><info><title>Install from a release archive</title></info>
+      <anchor xml:id="install-macos_s3"/>
     <para>Open a window in the Terminal app to access the UNIX command line. Follow the
       instructions below to download and extract the executables.</para>
     <important xml:id="macos-quarantine">
@@ -235,13 +259,13 @@
 
     </section>
 
-    <section><info><title>Install programs used by <command>bpy-summarize</command> using Homebrew</title></info>
+    <section xml:id="install-macos_s4"><info><title>Install programs used by <command>bpy-summarize</command> using Homebrew</title></info>
     <para>
       You can install <application>R</application> via Homebrew:
 <screen><prompt>%</prompt> <userinput>brew install r</userinput></screen>
 </para>
     </section>
-    <section><info><title>Install programs used for viewing the results</title></info>
+    <section xml:id="install-macos_s5"><info><title>Install programs used for viewing the results</title></info>
       <para>
 	Programs for viewing trees, alignments, and MCMC traces are optional.  Install them from
 	their project websites as needed; see <xref linkend="software_req"/>.
@@ -251,7 +275,12 @@
 
     <section xml:id="install-linux"><info><title>Install on Linux</title></info>
 
-    <section><info><title>Download BAli-Phy executables from website</title></info>
+    <para>Install BAli-Phy with <link linkend="install-bioconda">Bioconda</link> or
+      <link linkend="install-homebrew">Homebrew</link>, or use a release archive or distribution
+      package as described below.</para>
+
+    <section xml:id="install-linux-archive"><info><title>Install from a release archive</title></info>
+      <anchor xml:id="install-linux_s1"/>
 
     <para>First install <command>wget</command>.  If you have Debian or Ubuntu Linux, type:
     <screen><prompt>%</prompt> <userinput>sudo apt-get install wget</userinput></screen>
