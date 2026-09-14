@@ -1184,12 +1184,26 @@ BODY {\n\
    white-space: nowrap;\n\
 }\n\
 \n\
+/* Put the page gutter inside the sticky cells so it scrolls with neither letters nor ruler. */\n\
+.sequences.has-names { margin-left: -0.5rem; }\n\
+\n\
 .sequences TD.sequencename {\n\
+   position: sticky;\n\
+   left: 0;\n\
+   z-index: 1;\n\
+   padding-left: calc(0.5rem + 0.005em);\n\
+   background: white;\n\
    padding-right: 1em;\n\
 \n\
    font-weight: normal;\n\
    font-style: italic;\n\
    font-family: sans-serif;\n\
+}\n\
+\n\
+@media print {\n\
+   .sequences TD.sequencename { position: static; }\n\
+   .sequences.has-names { margin-left: 0; }\n\
+   .sequences TD.sequencename { padding-left: 0.005em; }\n\
 }\n\
 \n\
 .sequences TD.alignment-ruler-cell {\n\
@@ -1263,13 +1277,13 @@ BODY {\n\
 	    //-------------------- Print the alignment ------------------------//
 	    int pos=start;
 	    while(pos<=end) {
-		cout<<"\n\n<table class=\"sequences\">\n";
+		cout<<"\n\n<table class=\"sequences"<<(show_names ? " has-names" : "")<<"\">\n";
 
 		// Print columns positions
 		if (show_column_numbers) {
 		    cout<<"<tr>";
 		    if (show_names)
-			cout<<"<td></td>";
+			cout<<"<td class=\"sequencename\"></td>";
 	  
 		    for(int column=pos;column<pos+width and column <= end; column++) {
 			double P=colors(column, S.size());
@@ -1334,7 +1348,7 @@ BODY {\n\
 		    cout<<"  </tr>\n";
 		}
 		cout<<"<tr>";
-		if (show_names) cout<<"<td></td>";
+		if (show_names) cout<<"<td class=\"sequencename\"></td>";
 		cout<<"<td>&nbsp;</td></tr>\n";
 		cout<<"</table>"<<endl;
 		pos += width;
