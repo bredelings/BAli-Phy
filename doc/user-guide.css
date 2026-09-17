@@ -211,11 +211,22 @@ nav.toc:empty, nav.tocopen:empty {
     display: none;
 }
 
-@media screen {
-    .section-toc {
-        display: none;
-    }
+.section-toc {
+    margin: 0 0 1.25em;
+}
 
+.section-toc > .title {
+    margin: 0 0 0.35em;
+    font-family: var(--title-family);
+    font-weight: bold;
+}
+
+.section-toc > ul.toc {
+    margin: 0;
+    padding: 0;
+}
+
+@media screen {
     pre.programlisting.expression, pre.synopsis.expression {
         background-color: #edf2f6;
     }
@@ -404,21 +415,12 @@ nav.toc:empty, nav.tocopen:empty {
     }
 
     .section-toc {
-        margin: 0 0 1.25em;
         font-size: 0.9em;
         line-height: 1.3;
     }
 
     .section-toc > .title {
-        margin: 0 0 0.35em;
-        font-family: var(--title-family);
-        font-weight: bold;
         break-after: avoid;
-    }
-
-    .section-toc > ul.toc {
-        margin: 0;
-        padding: 0;
     }
 
     /* FAQ topics are indexed by the section contents; print questions directly above answers. */

@@ -44,8 +44,8 @@
     </p>
   </xsl:template>
 
-  <!-- Print navigation lists immediate subsections, using the same IDs and heading
-       renderer as the main contents. Screen CSS hides these extra lists. -->
+  <!-- HTML and PDF navigation lists immediate subsections, using the same IDs and
+       heading renderer as the main contents. -->
   <xsl:template match="db:article/db:section" mode="m:generate-titlepage">
     <xsl:next-match/>
     <xsl:if test="db:section">
