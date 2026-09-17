@@ -47,6 +47,7 @@ jobs:
             ${{ runner.temp }}/user-guide/README-A4.pdf
             ${{ runner.temp }}/user-guide/user-guide.css
             ${{ runner.temp }}/user-guide/user-guide-assets/
+            ${{ runner.temp }}/user-guide/guide-images/
       - name: Retain build logs
         if: always()
         uses: actions/upload-artifact@v4
