@@ -121,10 +121,12 @@ fmt = dependency('fmt', static: true).as_system()
 
 libxxhash = dependency('libxxhash', static: true, fallback: ['xxhash', 'xxhash_dep']).as_system()
 
+# Build the wrapped Zstd statically by default, while allowing normal library
+# discovery for an installed Zstd.
 libzstd = dependency('libzstd',
-                     static: true,
                      fallback: ['zstd', 'libzstd_dep'],
-                     default_options: ['bin_programs=false',
+                     default_options: ['default_library=static',
+                                       'bin_programs=false',
                                        'legacy_level=0',
                                        'multi_thread=disabled',
                                        'zlib=disabled',
