@@ -52,7 +52,7 @@ class BPYSummarizePropertyTests(unittest.TestCase):
                                                                  "log_odds": "-0.693"} for i in range(3)}
             metadata = directory / "C1.branch-category-usage.json"
             metadata.write_text(json.dumps({"version": 1, "substitution_models": [1],
-                                             "used_categories": [[0], [0, 1], [0, 2]]}))
+                                             "used_categories": [[0], [0, 1], [0, 2]]}), encoding="utf-8")
             commands = []
 
             # Supply just the descriptive output; the native statreport tests check its calculations.
@@ -63,7 +63,7 @@ class BPYSummarizePropertyTests(unittest.TestCase):
                 fields = [str(c)[len("--select="):] for c in command if str(c).startswith("--select=")]
                 text = f"Matching samples [1] = {n}\nMatching samples = {n}\n"
                 text += ''.join(f'{f} = ' + ('0.25' if n else '[no matching samples]') + '\n' for f in fields)
-                kwargs["outfile"].write_text(text)
+                kwargs["outfile"].write_text(text, encoding="utf-8")
 
             analysis.exec_show = execute
             analysis.summarize_branch_models()

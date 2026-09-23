@@ -2,7 +2,7 @@
 # Ordinary statreport tests do not cover filtered timelines; remove this if conditioning is removed.
 import sys
 from pathlib import Path
-text = (Path(sys.argv[1]) / 'output').read_text()
+text = (Path(sys.argv[1]) / 'output').read_text(encoding="utf-8")
 assert 'Matching samples [1] = 2' in text
 assert 'Matching samples = 2' in text
 assert 'E omega = 3' in text

@@ -30,7 +30,7 @@ def run_program(wrapper, executable, fixture, package_path, home):
     env["HOME"] = str(home)
     command = wrapper + [executable, "-V", package_path, "run", "Main"]
     result = subprocess.run(command, cwd=fixture, env=env,
-                            text=True, capture_output=True)
+                            encoding="utf-8", capture_output=True)
     if result.returncode != 0:
         raise RuntimeError(result.stdout + result.stderr)
     return result.stdout + result.stderr
@@ -44,7 +44,7 @@ def run_ffi_dump(wrapper, executable, fixture, package_path, home):
     command = wrapper + [executable, "--dump-ffi", "-V", package_path,
                          "test-module", "Main.hs"]
     result = subprocess.run(command, cwd=fixture, env=env,
-                            text=True, capture_output=True)
+                            encoding="utf-8", capture_output=True)
     if result.returncode != 0:
         raise RuntimeError(result.stdout + result.stderr)
     return result.stdout + result.stderr
@@ -90,7 +90,7 @@ def main():
         retained_legacy = cache_root / "Data"
         retained_legacy.mkdir()
         (retained_legacy / "Old.hs.mod").write_bytes(b"legacy")
-        (retained_legacy / "keep.txt").write_text("unrelated\n")
+        (retained_legacy / "keep.txt").write_text("unrelated\n", encoding="utf-8")
 
         first_log = run_program(args.wrapper, args.executable, args.fixture,
                                 args.package_path, home)

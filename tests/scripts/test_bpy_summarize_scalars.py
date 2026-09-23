@@ -216,7 +216,7 @@ class BPYSummarizeScalarTests(unittest.TestCase):
             report = Path(directory) / "Report"
             report.write_text("Condition: h=1\nMatching samples [1] = 2\nMatching samples [2] = 0\n"
                               "Matching samples = 2\n E w = 3  [+- 1]\n"
-                              "w ~ 3  (NA,NA) @ 95%\nx = 4\ny = [no matching samples]\n")
+                              "w ~ 3  (NA,NA) @ 95%\nx = 4\ny = [no matching samples]\n", encoding="utf-8")
             result = MODULE["parse_scalar_report"](report)
             self.assertEqual(result["matching_samples"], {"1": 2, "2": 0, "pooled": 2})
             self.assertEqual(result["median"]["x"], "4")
@@ -469,7 +469,8 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
             self.assertIn('src="bpy-summarize-assets/haskell.min.js"', page)
             self.assertNotIn("https://", page)
             for filename in asset_names:
-                self.assertEqual((analysis.outdir / "bpy-summarize-assets" / filename).read_text(), filename)
+                self.assertEqual(
+                    (analysis.outdir / "bpy-summarize-assets" / filename).read_text(encoding="utf-8"), filename)
 
     # A 3D report must carry its browser runtime and avoid remote requests; unit HTML tests cannot
     # exercise installation or an offline browser. Remove this if the 3D renderer becomes native.

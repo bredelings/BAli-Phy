@@ -80,12 +80,16 @@ def run_checker(directory, results):
     if not checker.exists():
         return []
 
+    # Set both ends of the pipe: Python checker diagnostics must use the encoding we decode.
+    environment = os.environ.copy()
+    environment["PYTHONIOENCODING"] = "utf-8"
     result = subprocess.run(
         [sys.executable, str(checker), str(results)],
         cwd=directory,
         capture_output=True,
         check=False,
-        text=True,
+        env=environment,
+        encoding="utf-8",
     )
     if result.returncode == 0:
         return []

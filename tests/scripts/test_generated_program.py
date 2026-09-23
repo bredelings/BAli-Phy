@@ -13,7 +13,7 @@ def run_command(command, work_directory):
     return subprocess.run(
         command,
         cwd=work_directory,
-        text=True,
+        encoding="utf-8",
         capture_output=True,
     )
 

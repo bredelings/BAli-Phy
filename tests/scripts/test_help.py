@@ -8,7 +8,7 @@ import subprocess
 def command_result(args, *arguments):
     return subprocess.run(
         args.wrapper + [args.executable, args.package_path, *arguments],
-        text=True,
+        encoding="utf-8",
         capture_output=True,
     )
 

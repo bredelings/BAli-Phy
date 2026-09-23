@@ -92,7 +92,7 @@ class Program(object):
         if self.exec_file:
             return self.cmd + self.extra_args + [args_filename]
         else:
-            args = open(args_filename,'r').read()
+            args = open(args_filename, 'r', encoding='utf-8').read()
             return self.cmd + shlex.split(args) + self.extra_args
 
     def stdin(self, tester, test_subdir):
@@ -158,7 +158,7 @@ class BAliPhy(Program):
     def cmdline(self, tester, test_subdir):
         test_dir = tester.dir_for_test(test_subdir)
         args_filename = os.path.join(test_dir, self.control_file())
-        args = shlex.split(open(args_filename, 'r').read())
+        args = shlex.split(open(args_filename, 'r', encoding='utf-8').read())
         return self.cmd + self.extra_args + args
 
 class IQTREE(Program):
