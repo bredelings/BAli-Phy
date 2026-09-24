@@ -86,7 +86,7 @@
 
   <section xml:id="install-package-managers">
     <info><title>Install with a package manager</title></info>
-    <para>Bioconda and Homebrew provide BAli-Phy packages for macOS and Linux. On Windows,
+    <para>BAli-Phy is available through Bioconda, Homebrew, and Spack. On Windows,
       use these instructions <link linkend="install-wsl">inside WSL</link>. Package versions
       may differ from the latest BAli-Phy release.</para>
 
@@ -136,6 +136,27 @@
         No additional BAli-Phy-specific PATH setting is needed. If the formula lags behind a
         release you need, use the archives for <link linkend="install-macos">macOS</link> or
         <link linkend="install-linux">Linux</link>.</para>
+    </section>
+    <section xml:id="install-spack"><info><title>Spack</title></info>
+      <para>Spack is a package manager for scientific software, designed for computing clusters
+        and also usable on individual computers.</para>
+      <para>If needed, follow Spack's
+        <link xmlns:xlink="http://www.w3.org/1999/xlink"
+        xlink:href="https://spack.readthedocs.io/en/latest/getting_started.html">getting-started
+        instructions</link>, including shell setup, and its
+        <link xmlns:xlink="http://www.w3.org/1999/xlink"
+        xlink:href="https://spack.readthedocs.io/en/latest/configuring_compilers.html">compiler
+        configuration instructions</link>. Installation may compile BAli-Phy and its dependencies.
+        Then run:</para>
+<screen><prompt>%</prompt> <userinput>spack install bali-phy</userinput>
+<prompt>%</prompt> <userinput>spack load bali-phy</userinput>
+<prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
+      <para><command>spack load bali-phy</command> makes the installed programs available in the
+        current shell. In each new terminal, initialize Spack and run this command again before
+        using BAli-Phy.</para>
+      <para>See the <link xmlns:xlink="http://www.w3.org/1999/xlink"
+        xlink:href="https://github.com/spack/spack-packages/blob/develop/repos/spack_repo/builtin/packages/bali_phy/package.py">Spack
+        package recipe</link> for available versions, dependencies, and options.</para>
     </section>
     <para>Continue with <xref linkend="tests"/> after installation.</para>
   </section>
@@ -273,8 +294,9 @@
 
     <section xml:id="install-linux"><info><title>Install on Linux</title></info>
 
-    <para>Install BAli-Phy with <link linkend="install-bioconda">Bioconda</link> or
-      <link linkend="install-homebrew">Homebrew</link>, or use a release archive or distribution
+    <para>Install BAli-Phy with <link linkend="install-bioconda">Bioconda</link>,
+      <link linkend="install-homebrew">Homebrew</link>, or
+      <link linkend="install-spack">Spack</link>, or use a release archive or distribution
       package as described below.</para>
 
     <section xml:id="install-linux-archive"><info><title>Install from a release archive</title></info>
@@ -371,7 +393,9 @@
                 xlink:href="https://www.gnu.org/software/bash/manual/html_node/Bash-Startup-Files.html">Bash's startup-file documentation</link>.</para>
         <para>If you installed BAli-Phy somewhere else, substitute the corresponding
           <filename>bin</filename> directory.  Package managers such as Homebrew and apt
-          normally configure <envar>PATH</envar> automatically.</para>
+          normally configure <envar>PATH</envar> automatically. With Spack, use
+          <command>spack load bali-phy</command> as described in
+          <xref linkend="install-spack"/>.</para>
       </section>
     </section>
 
@@ -390,7 +414,9 @@
 </variablelist>
       <para>If a package manager installed BAli-Phy elsewhere, copy
         <filename>examples/5S-rRNA/25.fasta</filename> from its documentation directory
-        instead.  Then run these commands in the same terminal:</para>
+        instead. For Spack, use:</para>
+<screen><prompt>%</prompt> <userinput>cp "$(spack location -i bali-phy)/share/doc/bali-phy/examples/5S-rRNA/25.fasta" .</userinput></screen>
+      <para>Then run these commands in the same terminal:</para>
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput>
 <prompt>%</prompt> <userinput>draw-tree --help</userinput>
 <prompt>%</prompt> <userinput>bpy-summarize --help</userinput>
