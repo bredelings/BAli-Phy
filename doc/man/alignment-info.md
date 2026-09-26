@@ -1,46 +1,189 @@
 % alignment-info(1)
 % Benjamin Redelings
-% Feb 2018
+% September 2026
 
 # NAME
 
-**alignment-info** - Show useful statistics about the alignment.
+**alignment-info** - Report alignment statistics or per-column parsimony scores.
 
 # SYNOPSIS
 
-**alignment-info** _alignment-file_ [_tree-file_] \[OPTIONS\]
+**alignment-info** [_alignment-file_] [_tree-file_] \[OPTIONS\]
+
+**alignment-info** **`--align`** _alignment-file_ [**`--tree`** _tree-file_] \[OPTIONS\]
+
+**alignment-info** _alignment-file_ _tree-file_ **`--site-parsimony`** \[OPTIONS\]
 
 # DESCRIPTION
 
-Show useful statistics about the alignment.
+By default, print a human-readable summary of alignment dimensions, variation, pairwise
+identity, gaps, and state frequencies. Supplying a tree adds minimum-substitution totals.
 
-# ALLOWED OPTIONS:
-**-h**, **--help**
-: produce help message
+Two alternative modes return before the ordinary report:
 
-**--align** _arg_
-: file with sequences and initial alignment
+- **`--show-names`** and **`--show-lengths`** list information about the input sequences.
+- **`--site-parsimony`** writes a per-column TSV table for one alignment and one tree.
 
-**--tree** _arg_
-: file with initial tree
+Reports go to standard output; errors go to standard error. The command does not infer a
+tree or optimize branch lengths.
 
-**--alphabet** _arg_
-: specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons
+# INPUT AND PREPROCESSING
+
+The alignment can be given positionally or with **`--align`**. If omitted, or given as `-`,
+it is read from standard input. For example, use **`--tree`** when supplying only a tree
+filename and reading the alignment from standard input. Specify **`--alphabet`** when the
+alphabet cannot be inferred reliably.
+
+For an ordinary report with a tree, sequence names are matched to tree-node names and rows
+may be reordered. Normally supply one sequence per tip. The ordinary linking path can also
+accept sequences for every tree node, then discard internal-node sequences; this path may
+remove columns that become empty. Other mismatches are errors. Per-site mode instead requires
+exactly one row per tip and preserves all columns.
+
+For tip-only alignments, empty columns are retained by default. **`--erase-empty-columns`**
+removes columns containing only gaps (`-`), unknown calls (`?`), or a mixture of the two.
+DNA `N` denotes an unknown but present nucleotide and does not by itself make a column empty.
+See LIMITATIONS for ordinary-report behavior on columns with no exact states.
+
+An encoded alignment column contains one alphabet unit. With Triplets or Codons, one unit
+represents three nucleotides. In ordinary reports, sequence lengths count present alphabet
+units, including partial ambiguities and fully ambiguous non-gap states, but excluding gaps
+and `?`. This differs from the raw-character lengths printed by **`--show-lengths`**.
+
+# OPTIONS
+
+**-h**, **`--help`**
+: Print usage and options, then exit.
+
+**`--align`** _file_
+: Read the alignment from _file_. The default is standard input (`-`).
+
+**`--tree`** _file_
+: Read a Newick tree. Optional for the ordinary report and required for per-site parsimony.
+  Branch lengths are not used for the reported parsimony scores.
+
+**`--alphabet`** _name_
+: Specify the alphabet instead of inferring it, for example `DNA`, `RNA`, `Amino-Acids`,
+  `Triplets`, or `Codons`.
+
+**-e**, **`--erase-empty-columns`**
+: Remove empty columns before the ordinary report. Cannot be used with **`--site-parsimony`**.
+
+**-N**, **`--show-names`**
+: Print one sequence name per line and exit. Combined with **`--show-lengths`**, print
+  `name,length` per line. These listings have no header.
+
+**-L**, **`--show-lengths`**
+: Print one sequence length per line and exit. Length is the number of input characters other
+  than `-` and `?`, before alphabet encoding: it counts nucleotides rather than codons even
+  when **`--alphabet Codons`** is supplied. Names/lengths mode preserves input order and runs
+  before tree loading, alphabet encoding, or empty-column removal. It does not validate a
+  supplied tree or apply those preprocessing options.
 
 **`--site-parsimony`**
-: Print a per-column TSV table and exit before the ordinary statistics, including indel
-  analyses. Requires a tree and exactly one alignment sequence per tree tip, matched by name.
-  Cannot be combined with **`--show-names`**, **`--show-lengths`**, or **`--erase-empty-columns`**.
+: Print the TSV table described below and exit before ordinary statistics. Requires a tree
+  and exactly one alignment sequence per tree tip, matched by name. Cannot be combined with
+  **`--show-names`**, **`--show-lengths`**, or **`--erase-empty-columns`**.
 
-**-e**, **--erase-empty-columns**
-: Remove columns with no characters (all gaps).
+# ORDINARY REPORT
 
-**-N**, **--show-names**
-: Print the sequence-names and exit
+## Dimensions and lengths
 
-**-L**, **--show-lengths**
-: Print the sequence-lengths and exit
+The first lines report alignment columns, sequence count, alphabet, and the minimum, maximum,
+mean, and median sequence lengths after preprocessing. Lengths are in alphabet units.
 
+## Variation without indels
+
+Under `w/o indels`, `non-const.` counts columns containing at least two different exact
+alphabet states; `const.` is the remaining column count. `inform.` counts columns in which
+at least two exact states each occur at least twice. Gaps and ambiguous observations do not
+contribute to exact-state counts. Percentages use the total processed column count.
+
+## Variation with indels
+
+Under `w/ indels`, a column is nonconstant if it is nonconstant by the preceding rule or
+contains any gap. It is informative if it is informative by the preceding rule or contains
+at least two gaps and at least two present characters. Present characters include partial
+ambiguities and fully ambiguous non-gap states; `?` contributes to neither side of this
+presence/absence count. These are column classifications, not inferred indel events.
+
+## Minimum sequence identity
+
+Each variation section reports the minimum identity over all unordered sequence pairs.
+For a pair, identity is the fraction of eligible columns whose encoded values are identical.
+Ambiguous observations are compared literally, not by intersection of their allowed states;
+`?` is not automatically excluded from these comparisons.
+
+Without indels, positions with a gap in either sequence are excluded. With indels, a gap
+opposite a non-gap value is a mismatch, while gap-gap positions remain excluded. If a pair
+has no eligible positions, its identity is taken as 100 percent. Thus missing-data handling
+here differs from that used for exact-state counts and parsimony.
+
+## Gaps and estimated indel groups
+
+The gap section reports the fraction of columns containing at least one gap and the fraction
+of all alignment cells that are gaps. Unknown calls are not counted as gaps.
+
+To estimate indel groups, the program finds contiguous gap runs in each sequence and groups
+runs having identical start columns and lengths. For each group it compares the number of
+sequences containing that exact run with the number having no gaps anywhere in that interval.
+If the latter is smaller, it labels the group an insertion and uses that smaller count;
+otherwise it labels it a deletion. Groups with a resulting count of zero are discarded.
+
+The report contains:
+
+- `indel groups`: the number of retained distinct runs;
+- `separate`: the sum of the resulting counts over groups;
+- `unique`: groups whose resulting count is one;
+- `inform.`: groups whose count exceeds one and leaves more than one other sequence;
+- `ins./del.`: numbers of groups assigned each label;
+- gap-length range, mean, and median: one length per retained group, without weighting by
+  its count, in alignment-column units.
+
+The latter details are printed only when the total count is nonzero. These are alignment-based
+heuristics, not a phylogenetic reconstruction of insertion/deletion history; supplying a tree
+does not change how these groups are estimated.
+
+## Tree lengths
+
+When a tree is supplied, `tree length` is the minimum total number of state changes under
+unit substitution costs, summed over columns. It is not the sum of input branch lengths.
+Partial ambiguities constrain allowed states; gaps and fully unknown calls are unconstrained.
+
+Triplet alphabets also report `tree length (nuc)`, using the number of nucleotide differences
+between triplets as the change cost. Codon alphabets additionally report `tree length (aa)`,
+with cost zero between codons encoding the same amino acid and one otherwise.
+
+## Stop codons
+
+For nucleotide alphabets, `Stop Codons` reports three slash-separated counts of literal
+`TAA`, `TGA`, and `TAG` occurrences across sequences, grouped by their zero-based start offset
+modulo three. The search uses stored alignment strings, including gaps, rather than ungapped
+sequences. It is not a gene-aware or strand-aware translation, and it does not substitute
+RNA spellings containing `U` for the searched `T` motifs.
+
+## Frequencies, classes, and wildcards
+
+`Frequencies` uses exact-state counts only, then adds a pseudocount of floor(sequence count / 2)
+to every alphabet state before normalizing. These are smoothed frequencies, not raw observed
+proportions; a state absent from the alignment can have a nonzero reported frequency.
+
+`Classes` counts encoded partial ambiguities. `Wildcards` counts fully ambiguous non-gap
+states, such as DNA `N`. Their percentages use the sum of exact-state, class, and wildcard
+counts as the denominator, excluding gaps and `?`.
+
+# LIMITATIONS AND COST
+
+The ordinary report currently assumes that each retained column contains at least one exact
+alphabet state. An assertion-enabled build stops on columns containing only gaps or ambiguous
+observations. Removing empty columns does not remove all ambiguity-only columns. Per-site
+mode supports these columns and retains their coordinates.
+
+The minimum-identity calculations scan every sequence pair twice, once under each gap rule.
+Their cost is quadratic in sequence count and linear in column count. Indel-group estimation
+also performs additional scans. Large reports may therefore pause after printing the variation
+counts while identity is being computed. Names/lengths mode and per-site mode bypass these
+ordinary-report calculations.
 
 # PER-SITE PARSIMONY
 
@@ -63,6 +206,74 @@ separates the two state groups; a larger score requires multiple changes. This d
 identify the biological cause of conflict. Empty columns receive score zero.
 
 # EXAMPLES
+
+For a reproducible example, create `example.fasta`:
+
+```
+>a
+AAAA
+>b
+ATAA
+>c
+TT-A
+>d
+TT-A
+```
+
+And `example.tree`:
+
+```
+(a,b,(c,d));
+```
+
+Request ordinary reports with and without a tree:
+
+```bash
+alignment-info example.fasta --alphabet DNA
+alignment-info example.fasta example.tree --alphabet DNA
+```
+
+The example has four columns and four sequences. Without indels, two columns are nonconstant
+and one is informative; including indels gives three and two, respectively. Minimum identities
+are approximately 33.3 percent and 25 percent. There is one retained gap-run group with count
+two. The tree's unit-cost parsimony total is two. Despite no observed C or G calls, each has
+reported frequency 9.09 percent because of the pseudocounts.
+
+List input names, raw-character lengths, or both:
+
+```bash
+alignment-info example.fasta --show-names
+alignment-info example.fasta --show-lengths
+alignment-info example.fasta --show-names --show-lengths
+```
+
+The combined output is `a,4`, `b,4`, `c,3`, and `d,3`, one per line.
+
+Remove empty columns explicitly, or read an alignment from standard input:
+
+```bash
+alignment-info example.fasta --alphabet DNA --erase-empty-columns
+alignment-info --alphabet DNA --tree example.tree < example.fasta
+```
+
+The example has no empty columns, so removal does not alter it. In per-site mode:
+
+```bash
+alignment-info example.fasta example.tree --alphabet DNA --site-parsimony
+```
+
+The TSV output is:
+
+```text
+column  n_called  n_states  parsimony
+1       4         2         1
+2       4         2         1
+3       2         1         0
+4       4         1         0
+```
+
+Spacing above is for readability; the actual delimiters are tabs.
+
 
 Score one alignment against one tree:
 
