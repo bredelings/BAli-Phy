@@ -250,7 +250,7 @@ if host_machine.system() == 'windows' and meson.is_cross_build()
   python_tool_wrapper_args = ['--wrapper'] + windows_test_wrapper
 endif
 
-declarative_tool_tests = ['alignment-convert', 'alignment-draw', 'character-properties', 'cut-range', 'mcon-tool', 'statreport']
+declarative_tool_tests = ['alignment-info', 'alignment-convert', 'alignment-draw', 'character-properties', 'cut-range', 'mcon-tool', 'statreport']
 declarative_tool_tests += ['joint-indels', 'tree-mean-lengths', 'trees-distances', 'summarize-ancestors']
 tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
 

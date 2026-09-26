@@ -17,6 +17,7 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <map>
@@ -113,6 +114,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("align", value<string>(),"file with sequences and initial alignment")
 	("tree",value<string>(),"file with initial tree")
 	("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
+        ("site-parsimony","Print per-column parsimony as TSV and skip ordinary statistics")
         ("erase-empty-columns,e","Remove columns with no characters (all gaps).")
 	("show-names,N","Print the sequence-names and exit")
 	("show-lengths,L","Print the sequence-lengths and exit")
@@ -136,7 +138,48 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	exit(0);
     }
 
+    if (args.count("site-parsimony"))
+    {
+        if (not args.count("tree"))
+            throw myexception()<<"--site-parsimony requires --tree";
+        for (const auto* option: {"show-names", "show-lengths", "erase-empty-columns"})
+            if (args.count(option))
+                throw myexception()<<"--site-parsimony cannot be combined with --"<<option;
+    }
+
     return args;
+}
+
+
+// Report every original column using the existing ambiguity-aware unit-cost scorer.
+// Exact-state counts exclude ambiguities; scoring still respects their allowed states.
+static void print_site_parsimony(const alignment& A, const SequenceTree& T)
+{
+    const auto& a = A.get_alphabet();
+    const auto cost = unit_cost_matrix(a);
+    vector<int> letters(T.n_leaves());
+    vector<bool> seen(a.size());
+    cout<<"column\tn_called\tn_states\tparsimony\n";
+    for (int c=0; c<A.length(); c++)
+    {
+        std::fill(seen.begin(), seen.end(), false);
+        int called = 0;
+        int states = 0;
+        for (int i=0; i<T.n_leaves(); i++)
+        {
+            letters[i] = A(c,i);
+            if (a.is_letter(letters[i]))
+            {
+                called++;
+                if (not seen[letters[i]]) states++;
+                seen[letters[i]] = true;
+            }
+        }
+        // Gaps and unknowns remain unconstrained; partial ambiguities use the database.
+        // Empty and constant columns are scored too, preserving one row per input column.
+        int score = n_mutations(a, A.get_ambiguities(), letters, T, cost);
+        cout<<c+1<<'\t'<<called<<'\t'<<states<<'\t'<<score<<'\n';
+    }
 }
 
 
@@ -334,9 +377,21 @@ int main(int argc,char* argv[])
 	if (args.count("tree"))
 	{
 	    T = load_T(args);
+            if (args.count("site-parsimony") and A.n_sequences() != T.n_leaves())
+                throw myexception()<<"--site-parsimony requires one alignment sequence per tree tip";
+            const int columns = A.length();
 	    link(A,T,false);
+            if (args.count("site-parsimony") and A.length() != columns)
+                throw myexception()<<"Tree linking changed alignment columns in --site-parsimony mode";
 	    check_alignment(A,T,false);
 	}
+
+        // This exclusive mode returns before any summary, pairwise, or indel calculations.
+        if (args.count("site-parsimony"))
+        {
+            print_site_parsimony(A,T);
+            return 0;
+        }
 
 	const alphabet& a = A.get_alphabet();
 
