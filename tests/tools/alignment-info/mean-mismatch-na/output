@@ -1,0 +1,20 @@
+Alignment: 3 columns of 3 sequences         Alphabet: DNA
+  sequence lengths: 0-3      mean = 2      median = 3
+
+ ====== w/o indels ======
+  const.: 3 (100%)      non-const.: 0 (0%)      inform.: 0 (0%)
+  mean mismatch fraction = NA
+
+ ====== w/  indels ======
+  const.: 3 (100%)      non-const.: 0 (0%)      inform.: 0 (0%)
+  mean mismatch fraction = NA
+
+ ========   gaps ========
+  0 (0%) sites contain a gap.
+  0% of the matrix is gaps.
+  0 indel groups seem to exist. (0 separate)
+
+Stop Codons:  0/0/0
+
+Frequencies:   A=57.1%  C=14.3%  G=14.3%  T=14.3%  
+  Classes:  1 [16.7%]        Wildcards: 2 [33.3%]

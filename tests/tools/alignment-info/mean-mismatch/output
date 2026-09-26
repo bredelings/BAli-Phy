@@ -1,0 +1,22 @@
+Alignment: 8 columns of 4 sequences         Alphabet: DNA
+  sequence lengths: 5-7      mean = 6      median = 6
+
+ ====== w/o indels ======
+  const.: 5 (62.5%)      non-const.: 3 (37.5%)      inform.: 1 (12.5%)
+  mean mismatch fraction = 0.409
+
+ ====== w/  indels ======
+  const.: 4 (50%)      non-const.: 4 (50%)      inform.: 1 (12.5%)
+  mean mismatch fraction = 0.48
+
+ ========   gaps ========
+  1 (12.5%) sites contain a gap.
+  9.38% of the matrix is gaps.
+  1 indel groups seem to exist. (1 separate)
+       unique/inform. = 1/0       ins./del. = 1/0
+  gap lengths: 1-1      mean = 1      median = 1
+
+Stop Codons:  1/0/0
+
+Frequencies:   A=60.7%  C=7.14%  G=7.14%  T=25%  
+  Classes:  2 [8.33%]        Wildcards: 2 [8.33%]
