@@ -85,6 +85,10 @@ and `?`. This differs from the raw-character lengths printed by **`--show-length
   and exactly one alignment sequence per tree tip, matched by name. Cannot be combined with
   **`--show-names`**, **`--show-lengths`**, or **`--erase-empty-columns`**.
 
+**`--state-groups`**
+: With **`--site-parsimony`**, append exact state counts and observed-tip group sizes from
+  one optimal ancestral reconstruction. Requires **`--site-parsimony`**.
+
 # ORDINARY REPORT
 
 ## Dimensions and lengths
@@ -211,6 +215,30 @@ summarize all constraints when partial ambiguities occur.
 For a biallelic site with otherwise fully missing calls, score 1 means that a tree edge
 separates the two state groups; a larger score requires multiple changes. This does not
 identify the biological cause of conflict. Empty columns receive score zero.
+
+## State groups
+
+Adding **`--state-groups`** appends `state_counts` and `state_groups`. For example,
+`A:51;T:100` and `A:48,3;T:100` describe 51 observed A calls in two same-state components
+and 100 T calls in one component. States appear in alphabet order and component sizes in
+largest-first order. A field is `.` when there are no exact observed calls.
+
+Groups are connected components of one minimum-cost ancestral reconstruction after cutting
+all edges where the state changes. Only exact observed tip states contribute to component
+sizes. Missing and ambiguous tips contribute zero, and components without counted tips are
+omitted. Group sizes for a state sum to its exact observed count. Missing tips alone do not
+split a component.
+
+At the computational root, the first minimum-cost state in alphabet order is selected. Each
+child then takes the first minimum-cost state conditional on its selected parent state.
+This is a jointly valid reconstruction, but other equally optimal reconstructions may yield
+different groups. Results can depend on the computational root and tree representation;
+they are not a summary over all optimal reconstructions. Isolated versus clustered discordance
+is descriptive evidence, not a classification of sequencing errors or admixture.
+
+```bash
+alignment-info alignment.fasta tree.newick --site-parsimony --state-groups > groups.tsv
+```
 
 # EXAMPLES
 

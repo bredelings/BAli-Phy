@@ -115,6 +115,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("align", value<string>(),"file with sequences and initial alignment")
 	("tree",value<string>(),"file with initial tree")
 	("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
+        ("state-groups","Append exact state counts and groups from one optimal reconstruction")
         ("site-parsimony","Print per-column parsimony as TSV and skip ordinary statistics")
         ("erase-empty-columns,e","Remove columns with no characters (all gaps).")
 	("show-names,N","Print the sequence-names and exit")
@@ -139,6 +140,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	exit(0);
     }
 
+    if (args.count("state-groups") and not args.count("site-parsimony"))
+        throw myexception()<<"--state-groups requires --site-parsimony";
     if (args.count("site-parsimony"))
     {
         if (not args.count("tree"))
@@ -152,15 +155,61 @@ variables_map parse_cmd_line(int argc,char* argv[])
 }
 
 
+// Split one optimal reconstruction at changed edges and report observed-tip component sizes.
+// A parent-first traversal inherits a component exactly when states agree. Missing or ambiguous
+// tips contribute zero; empty components are omitted. Ties in reconstruction use alphabet order;
+// output states use that order too, and sizes within each state are sorted descending.
+static void print_state_groups(const alignment& A, const SequenceTree& T, const vector<int>& letters,
+                               const DenseMatrix<int>& cost, int score)
+{
+    const auto& a = A.get_alphabet();
+    const auto reconstructed = get_parsimony_letters(a, A.get_ambiguities(), letters, T, cost);
+    const int root = T.directed_branch(0).target();
+    vector<int> component(T.n_nodes(), -1), sizes(T.n_nodes(), 0);
+    component[root] = root;
+    int reconstructed_score = 0;
+    for (const auto& branch: branches_from_node(T,root))
+    {
+        const int parent = branch.source(), child = branch.target();
+        reconstructed_score += cost(reconstructed[parent], reconstructed[child]);
+        component[child] = reconstructed[parent] == reconstructed[child] ? component[parent] : child;
+    }
+    assert(reconstructed_score == score);
+    for (int i=0; i<T.n_leaves(); i++)
+        if (a.is_letter(letters[i]))
+        {
+            assert(reconstructed[i] == letters[i]);
+            sizes[component[i]]++;
+        }
+
+    vector<vector<int>> groups(a.size());
+    for (int i=0; i<T.n_nodes(); i++)
+        if (sizes[i]) groups[reconstructed[i]].push_back(sizes[i]);
+    vector<string> count_fields, group_fields;
+    for (int l=0; l<a.size(); l++)
+        if (not groups[l].empty())
+        {
+            std::sort(groups[l].begin(), groups[l].end(), std::greater<int>());
+            int total = 0;
+            for (int n: groups[l]) total += n;
+            count_fields.push_back(a.lookup(l) + ":" + std::to_string(total));
+            group_fields.push_back(a.lookup(l) + ":" + join(groups[l], ','));
+        }
+    cout<<'\t'<<(count_fields.empty() ? "." : join(count_fields, ';'))
+        <<'\t'<<(group_fields.empty() ? "." : join(group_fields, ';'));
+}
+
 // Report every original column using the existing ambiguity-aware unit-cost scorer.
 // Exact-state counts exclude ambiguities; scoring still respects their allowed states.
-static void print_site_parsimony(const alignment& A, const SequenceTree& T)
+static void print_site_parsimony(const alignment& A, const SequenceTree& T, bool state_groups)
 {
     const auto& a = A.get_alphabet();
     const auto cost = unit_cost_matrix(a);
     vector<int> letters(T.n_leaves());
     vector<bool> seen(a.size());
-    cout<<"column\tn_called\tn_states\tparsimony\n";
+    cout<<"column\tn_called\tn_states\tparsimony";
+    if (state_groups) cout<<"\tstate_counts\tstate_groups";
+    cout<<'\n';
     for (int c=0; c<A.length(); c++)
     {
         std::fill(seen.begin(), seen.end(), false);
@@ -179,7 +228,9 @@ static void print_site_parsimony(const alignment& A, const SequenceTree& T)
         // Gaps and unknowns remain unconstrained; partial ambiguities use the database.
         // Empty and constant columns are scored too, preserving one row per input column.
         int score = n_mutations(a, A.get_ambiguities(), letters, T, cost);
-        cout<<c+1<<'\t'<<called<<'\t'<<states<<'\t'<<score<<'\n';
+        cout<<c+1<<'\t'<<called<<'\t'<<states<<'\t'<<score;
+        if (state_groups) print_state_groups(A,T,letters,cost,score);
+        cout<<'\n';
     }
 }
 
@@ -380,7 +431,7 @@ int main(int argc,char* argv[])
         // This exclusive mode returns before any summary, pairwise, or indel calculations.
         if (args.count("site-parsimony"))
         {
-            print_site_parsimony(A,T);
+            print_site_parsimony(A,T,args.count("state-groups"));
             return 0;
         }
 

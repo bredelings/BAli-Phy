@@ -5,3 +5,6 @@ column retention or the TSV contract. Retire them if the per-site interface is r
 The mean-mismatch cases check fixed expected reports for unequal overlaps, gaps, ambiguous calls,
 and no eligible comparisons. They protect the documented fractions and NA behavior; explicit
 pair enumeration was used during development to verify the expected numerical answers.
+
+The state-group cases protect root-state selection, tied traceback, and omission of unobserved
+components. Exact output and reconstruction-cost assertions cover behavior not tested by site scores.

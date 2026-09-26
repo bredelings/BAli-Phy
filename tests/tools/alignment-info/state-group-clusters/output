@@ -1,0 +1,3 @@
+column	n_called	n_states	parsimony	state_counts	state_groups
+1	8	2	2	A:3;T:5	A:2,1;T:5
+2	8	2	3	A:3;T:5	A:1,1,1;T:5
