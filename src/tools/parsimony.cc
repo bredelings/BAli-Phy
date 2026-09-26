@@ -262,8 +262,12 @@ vector<int> get_parsimony_letters(const alphabet& a, const ambiguity_database& a
   // Allocate space to store the letter for each node
   vector<int> node_letters(T.n_nodes(),-1);
 
-  // choose the cheapest letter at the root
-  node_letters[root] = row_min(n_muts,root);
+  // Store the state index, not its cost. Strict improvement keeps the first minimum,
+  // matching argmin's alphabet-order tie breaking in the conditional traceback below.
+  node_letters[root] = 0;
+  for (int l=1; l<a.size(); l++)
+    if (n_muts(root,l) < n_muts(root,node_letters[root]))
+      node_letters[root] = l;
 
   const unsigned A = a.size();
   vector<double> temp(A);
