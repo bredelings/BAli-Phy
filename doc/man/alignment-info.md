@@ -16,8 +16,8 @@
 
 # DESCRIPTION
 
-By default, print a human-readable summary of alignment dimensions, variation, pairwise
-identity, gaps, and state frequencies. Supplying a tree adds minimum-substitution totals.
+By default, print a human-readable summary of alignment dimensions, variation, mean mismatch
+fractions, gaps, and state frequencies. Supplying a tree adds minimum-substitution totals.
 
 Two alternative modes return before the ordinary report:
 
@@ -107,17 +107,25 @@ at least two gaps and at least two present characters. Present characters includ
 ambiguities and fully ambiguous non-gap states; `?` contributes to neither side of this
 presence/absence count. These are column classifications, not inferred indel events.
 
-## Minimum sequence identity
+## Mean mismatch fraction
 
-Each variation section reports the minimum identity over all unordered sequence pairs.
-For a pair, identity is the fraction of eligible columns whose encoded values are identical.
-Ambiguous observations are compared literally, not by intersection of their allowed states;
-`?` is not automatically excluded from these comparisons.
+Each variation section reports an overall mismatch fraction between 0 and 1, replacing the
+former minimum pairwise identity. It sums mismatching pair-column observations over the
+alignment and divides by the total eligible pair-column observations. Sequence pairs are
+therefore weighted by their numbers of comparable positions. With complete data, this equals
+the ordinary mean pairwise mismatch fraction; with missing data, it need not equal a mean
+that gives every sequence pair equal weight.
 
-Without indels, positions with a gap in either sequence are excluded. With indels, a gap
-opposite a non-gap value is a mismatch, while gap-gap positions remain excluded. If a pair
-has no eligible positions, its identity is taken as 100 percent. Thus missing-data handling
-here differs from that used for exact-state counts and parsimony.
+Without indels, only pairs of exact alphabet states are eligible: equal states match and
+unequal states mismatch. With indels, an exact state opposite a gap also contributes one
+comparison and one mismatch. Gap-gap pairs are excluded in both cases. Pairs involving `?`,
+fully ambiguous calls such as DNA `N`, or partial ambiguities are excluded. This differs
+from the former identity statistic, which compared ambiguous symbols literally.
+
+At each column, let n be the number of exact calls, n_b the count of state b, and g the gap
+count. There are n(n-1)/2 exact-state pairs, of which sum_b n_b(n_b-1)/2 match. The indel-inclusive
+calculation adds ng to both the comparison and mismatch counts. Counts are summed over
+columns before division. A result with no eligible comparisons is printed as `NA`, not zero.
 
 ## Gaps and estimated indel groups
 
@@ -179,11 +187,10 @@ alphabet state. An assertion-enabled build stops on columns containing only gaps
 observations. Removing empty columns does not remove all ambiguity-only columns. Per-site
 mode supports these columns and retains their coordinates.
 
-The minimum-identity calculations scan every sequence pair twice, once under each gap rule.
-Their cost is quadratic in sequence count and linear in column count. Indel-group estimation
-also performs additional scans. Large reports may therefore pause after printing the variation
-counts while identity is being computed. Names/lengths mode and per-site mode bypass these
-ordinary-report calculations.
+Mean mismatch fractions are computed from column counts without visiting sequence pairs.
+For a fixed alphabet this takes time linear in sequence count times column count. Indel-group
+estimation still performs additional scans and can contribute to runtime on large alignments.
+Names/lengths mode and per-site mode bypass these ordinary-report calculations.
 
 # PER-SITE PARSIMONY
 
@@ -234,8 +241,8 @@ alignment-info example.fasta example.tree --alphabet DNA
 ```
 
 The example has four columns and four sequences. Without indels, two columns are nonconstant
-and one is informative; including indels gives three and two, respectively. Minimum identities
-are approximately 33.3 percent and 25 percent. There is one retained gap-run group with count
+and one is informative; including indels gives three and two, respectively. Mean mismatch fractions
+are approximately 0.368 without indels and 0.478 with indels. There is one retained gap-run group with count
 two. The tree's unit-cost parsimony total is two. Despite no observed C or G calls, each has
 reported frequency 9.09 percent because of the pseudocounts.
 

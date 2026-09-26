@@ -18,6 +18,7 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include <algorithm>
+#include <cstdint>
 #include <iostream>
 #include <fstream>
 #include <map>
@@ -198,16 +199,6 @@ bool is_informative(const valarray<int>& count,int level)
     return n>1;
 }
 
-
-double min_identity(const alignment& A,bool gaps_count)
-{
-    double identity = 1.0;
-    for(int i=0;i<A.n_sequences();i++)
-	for(int j=0;j<i;j++)
-	    identity = std::min(identity,fraction_identical(A,i,j,gaps_count));
-
-    return identity;
-}
 
 unsigned letter_classes(const alignment& A) 
 {
@@ -402,6 +393,7 @@ int main(int argc,char* argv[])
 	dynamic_bitset<> different2(A.length());
 	dynamic_bitset<> contains_a_gap(A.length());
 
+        std::uint64_t comparisons = 0, mismatches = 0, gap_comparisons = 0;
 	valarray<int> count(a.size());
 	valarray<int> count2(2);
 	for(int c=0;c<A.length();c++) {
@@ -417,6 +409,22 @@ int main(int argc,char* argv[])
 		else if (l == alphabet::gap)
 		    count2[1]++;
 	    }
+
+            // Each exact-state pair is eligible; subtract equal-state pairs to count mismatches.
+            // Sum pair-column counts before dividing, so pairs are weighted by their overlap.
+            // Ambiguities are excluded. Each exact-state/gap pair adds one comparison and
+            // one mismatch only to the indel-inclusive result; gap-gap pairs never contribute.
+            std::uint64_t called = 0, equal_pairs = 0;
+            for (int l=0; l<count.size(); l++)
+            {
+                const std::uint64_t n = count[l];
+                called += n;
+                if (n > 1) equal_pairs += n*(n-1)/2;
+            }
+            const std::uint64_t pairs = called > 1 ? called*(called-1)/2 : 0;
+            comparisons += pairs;
+            mismatches += pairs - equal_pairs;
+            gap_comparisons += called * static_cast<std::uint64_t>(count2[1]);
 
 	    different[c]  =   is_informative(count ,0);
 	    informative[c]  = is_informative(count ,1);
@@ -452,13 +460,19 @@ int main(int argc,char* argv[])
 	cout<<"  const.: "<<n_same<<" ("<<double(n_same)/A.length()*100<<"%)    ";
 	cout<<"  non-const.: "<<n_different<<" ("<<double(n_different)/A.length()*100<<"%)    ";
 	cout<<"  inform.: "<<n_informative<<" ("<<double(n_informative)/A.length()*100<<"%)\n";
-	cout<<"  "<<min_identity(A,false)*100<<"% minimum sequence identity.\n";
+        cout<<"  mean mismatch fraction = ";
+        if (comparisons) cout<<double(mismatches) / (comparisons);
+        else cout<<"NA";
+        cout<<"\n";
 	cout<<"\n";
 	cout<<" ====== w/  indels ======\n";
 	cout<<"  const.: "<<n_same2<<" ("<<double(n_same2)/A.length()*100<<"%)    ";
 	cout<<"  non-const.: "<<n_different2<<" ("<<double(n_different2)/A.length()*100<<"%)    ";
 	cout<<"  inform.: "<<n_informative2<<" ("<<double(n_informative2)/A.length()*100<<"%)\n";
-	cout<<"  "<<min_identity(A,true)*100<<"% minimum sequence identity.\n";
+        cout<<"  mean mismatch fraction = ";
+        if (comparisons + gap_comparisons) cout<<double(mismatches + gap_comparisons) / (comparisons + gap_comparisons);
+        else cout<<"NA";
+        cout<<"\n";
 	cout<<"\n";
 
 	//----------- guess # of indels -----------//
