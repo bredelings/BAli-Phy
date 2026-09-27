@@ -502,27 +502,27 @@ int main(int argc,char* argv[])
         // Empty selections have no sequence transformations, but still reach output validation.
         if (not S.empty())
         {
-    	if (app.count("--align-by-amino"))
-    	{
-    	    S = align_by_amino_acids(S,amino_file,missing);
-    	}
-      
-    	if (app.count("--columns"))
+            if (app.count("--align-by-amino"))
+            {
+                S = align_by_amino_acids(S,amino_file,missing);
+            }
+
+            if (app.count("--columns"))
             {
                 check_all_same_length(S, "in order to select columns.");
                 S = select(S,columns);
             }
-    
-    	if (erase_empty_columns) 
-    	    S = remove_empty_columns(S,missing);
 
-    	if (do_strip_gaps)
-    	    S = strip_gaps(S, missing);
+            if (erase_empty_columns)
+                S = remove_empty_columns(S,missing);
 
-    	// Reverse each sequence, if asked.
-    	if (reverse)
-    	    for(sequence& s: S)
-    		std::reverse(s.begin(), s.end());
+            if (do_strip_gaps)
+                S = strip_gaps(S, missing);
+
+            // Reverse each sequence, if asked.
+            if (reverse)
+                for(sequence& s: S)
+                    std::reverse(s.begin(), s.end());
         }
 
 	if (output == "phylip")
