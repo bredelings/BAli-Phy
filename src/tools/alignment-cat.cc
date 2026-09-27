@@ -455,9 +455,7 @@ int main(int argc,char* argv[])
 	else if (app.count("--reorder-by-alignment"))
 	{
 	    vector<sequence> sequences = load_file(alignment_file, false);
-            names = vector<string>();
-	    for(const auto& s: sequences)
-		names->push_back(s.name);
+            names = get_names(sequences);
 	}
 
 	//------- Determine filenames --------//
