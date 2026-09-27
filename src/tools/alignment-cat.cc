@@ -180,18 +180,18 @@ vector<sequence> load_file(istream& file,bool pad)
     return s;
 }
 
+// Load through the stream implementation while retaining filename context in errors.
 vector<sequence> load_file(const string& filename,bool pad)
 {
     checked_ifstream file(filename,"alignment file");
-
-    vector<sequence> s = sequence_format::read_guess(file);
-    if (s.size() == 0)
-	throw myexception()<<"Alignment file '"<<filename<<"' didn't contain any sequences!";
-
-    if (pad)
-	pad_to_same_length(s);
-
-    return s;
+    try
+    {
+        return load_file(file,pad);
+    }
+    catch (std::exception& e)
+    {
+        throw myexception()<<"Alignment file '"<<filename<<"': "<<e.what();
+    }
 }
 
 vector<sequence> select_taxa(const vector<sequence>& S,const vector<string>& names)
