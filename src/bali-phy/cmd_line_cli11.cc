@@ -430,6 +430,7 @@ public:
     CLI11CommandParser()
     {
         help_formatter = std::make_shared<CommandLineHelpFormatter>(&app);
+        help_formatter->long_option_alignment_ratio(0.2f);
         app.formatter(help_formatter);
         app.require_subcommand(0, 1);
 #ifdef _WIN32
