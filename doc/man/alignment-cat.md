@@ -153,9 +153,9 @@ selecting columns to give all sequences the same coordinate range.
 # CODON ALIGNMENT
 
 For **`--align-by-amino`**, supply nucleotide sequences in the reading frame of the
-amino-acid alignment. The nucleotide sequences, after concatenation and before
-removing missing characters, must each have a length divisible by three.
-Ungapped coding sequences are the simplest input.
+amino-acid alignment. After removing characters listed in **`--missing`**, each
+nucleotide sequence must contain exactly three nucleotides per non-missing amino
+acid in its matching reference sequence.
 
 The amino-acid alignment must contain the same number of sequences and matching
 names as the selected nucleotide input. Shorter amino-acid sequences are padded
@@ -167,11 +167,8 @@ amino-acid character is copied three times: for example, **-** becomes `---` and
 **?** becomes **???**. Keep **-** in **`--missing`** so that padding in the amino-acid
 alignment is treated as gaps.
 
-Supply exactly three non-missing nucleotides per non-missing amino acid. The
-program checks the number of complete triplets after removing missing characters,
-but can silently discard one or two trailing nucleotides when that count matches.
-It does not translate the nucleotides or check that their codons encode the
-supplied amino acids.
+The program does not translate the nucleotides or check that their codons encode
+the supplied amino acids.
 
 # EXAMPLES
 

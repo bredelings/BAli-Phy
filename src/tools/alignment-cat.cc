@@ -353,19 +353,14 @@ vector<string> get_names(const vector<sequence>& S)
 
 vector<sequence> align_by_amino_acids(const vector<sequence>& S1, const string& filename, const vector<char>& missing)
 {
-    // 1. Check that codon sequences are a multiple of 3 nucleotides.
-    for(const auto& S: S1)
-	if (S.size() % 3)
-	    throw myexception()<<"Sequence '"<<S.name<<"' has length "<<S.size()<<" which is not a multiple of 3!";
-
-    // 2. Load the amino acid sequence alignment, and pad it.
+    // 1. Load the amino acid sequence alignment, and pad it.
     vector<sequence> aminos = load_file(filename,true);
 
-    // 3. Check that there are the same number of amino and nucleotide sequence.
+    // 2. Check that there are the same number of amino and nucleotide sequence.
     if (S1.size() != aminos.size())
 	throw myexception()<<"Amino acid alignment has "<<aminos.size()<<" sequences, but there are "<<S1.size()<<" nucleotide sequences.";
 
-    // 4. Rearrange nucleotide sequences in the same order as the amino acid sequences.
+    // 3. Rearrange nucleotide sequences in the same order as the amino acid sequences.
     vector<sequence> S2 = select_taxa(S1, get_names(aminos));
 
     for(int i=0;i<S2.size();i++)
@@ -374,7 +369,9 @@ vector<sequence> align_by_amino_acids(const vector<sequence>& S1, const string& 
 	const sequence& aa = aminos[i];
 	assert(nuc.name == aa.name);
 	int aa_length = strip_gaps(aa,missing).size();
-	if (nuc.size()/3 != aa_length)
+	// Each non-missing amino acid consumes three nucleotides; missing positions consume none.
+	// Exact equality after stripping guarantees that the loop neither loses nor overruns nucleotides.
+	if (nuc.size() != 3*aa_length)
 	    throw myexception()<<"Sequence '"<<nuc.name<<"' has "<<nuc.size()<<" nucleotides - cannot match 3*"<<aa_length<<"="<<3*aa_length<<" amino acids.";
 
 	S2[i].resize(3*aa.size());

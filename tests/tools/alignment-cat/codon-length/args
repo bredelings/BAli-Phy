@@ -1,0 +1,3 @@
+# Codon projection must consume exactly the ungapped input, including gapped reading frames.
+# General transformation tests do not exercise this invariant; retire with amino-acid projection.
+--align-by-amino=protein.fasta
