@@ -141,13 +141,10 @@ vector<sequence> concatenate(const vector<sequence>& S1, const vector<sequence>&
 
     assert(S1.size() == S2.size());
 
+    vector<int> mapping = get_mapping(S1,S2);
     vector<sequence> S = S1;
-    for(int i=0;i<S1.size();i++) {
-    
-	vector<int> mapping = get_mapping(S1,S2);
-
+    for(int i=0;i<S1.size();i++)
 	(string&)S[i] = S1[i] + S2[mapping[i]];
-    }
 
     return S;
 }
