@@ -151,19 +151,24 @@ vector<string> parse_string_list(const std::string& values_str)
     return values;
 }
 
+// Interpret a literal list or @filename, with \@ escaping an initial literal '@'.
+std::vector<std::string> get_string_list(const std::string& values)
+{
+    string str = values;
+    // Discard the '@'
+    if (starts_with(str,"@"))
+	str = read_file(str.substr(1));
+    // Keep the '@'
+    else if (starts_with(str,R"(\@)"))
+	str = str.substr(1);
+    return parse_string_list(str);
+}
+
+// Retrieve a Boost option and apply the same list interpretation as other callers.
 std::vector<std::string> get_string_list(const boost::program_options::variables_map& args, const std::string& key)
 {
     if (auto str = get_arg<string>(args,key))
-    {
-	// Discard the '@'
-	if (starts_with(*str,"@"))
-	    str = read_file(str->substr(1));
-	// Keep the '@'
-	else if (starts_with(*str,R"(\@)"))
-	    str = str->substr(1);
-	return parse_string_list(*str);
-    }
+	return get_string_list(*str);
     else
 	return {};
 }
-
