@@ -50,7 +50,8 @@ specify input files as an alternative to positional filenames.
 **`--output`** _format_
 : Write **fasta** (the default) or **phylip**. PHYLIP output is interleaved and
   truncates sequence names to 10 characters; names should remain unique after
-  truncation. Use PHYLIP only when the final sequences have equal lengths.
+  truncation. PHYLIP requires at least one sequence and equal final sequence
+  lengths. Incompatible output is rejected before writing any data.
 
 **-c** _ranges_, **`--columns`** _ranges_
 : Keep the specified columns, for example **1-10,30-**. Positions are numbered

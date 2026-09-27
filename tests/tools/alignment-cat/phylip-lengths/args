@@ -1,0 +1,3 @@
+# PHYLIP requires equal final lengths, even when transformations change aligned inputs.
+# FASTA tests cannot check this output contract; retire if PHYLIP supports unequal lengths.
+--pad --strip-gaps --output=phylip

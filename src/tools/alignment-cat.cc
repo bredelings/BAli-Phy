@@ -153,7 +153,8 @@ vector<sequence> concatenate(const vector<sequence>& S1, const vector<sequence>&
 }
 
 
-void check_all_same_length(const vector<sequence>& s, const string& reason)
+void check_all_same_length(const vector<sequence>& s, const string& reason,
+                           const string& advice = "Consider option -p to pad them to the same length.")
 {
     for(int i=1;i<s.size();i++)
 	if (s[i].size() != s[0].size())
@@ -161,7 +162,7 @@ void check_all_same_length(const vector<sequence>& s, const string& reason)
 	    myexception e;
 	    e<<"All sequences in an alignment must have the same length "<<reason<<"\n";
 	    e<<"Alignment file: sequence #"<<i+1<<" '"<<s[i].name<<"' has length "<<s[i].size()<<" != "<<s[0].size()<<"\n";
-	    e<<"Consider option -p to pad them to the same length.";
+	    e<<advice;
 	    throw e;
 	}
 }
@@ -563,7 +564,13 @@ int main(int argc,char* argv[])
         }
 
 	if (output == "phylip")
-	    write_phylip(cout,S);
+        {
+            if (S.empty())
+                throw myexception()<<"PHYLIP output requires at least one sequence.";
+            check_all_same_length(S, "in order to write PHYLIP.",
+                                  "Use FASTA for unequal lengths; --pad runs before --strip-gaps.");
+            write_phylip(cout,S);
+        }
 	else if (output == "fasta")
 	    write_fasta(cout,S);
 	else

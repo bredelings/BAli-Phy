@@ -1,0 +1,3 @@
+alignment-cat: Error! All sequences in an alignment must have the same length in order to write PHYLIP.
+Alignment file: sequence #2 'b' has length 1 != 3
+Use FASTA for unequal lengths; --pad runs before --strip-gaps.
