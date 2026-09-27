@@ -18,17 +18,13 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include <iostream>
-#include <fstream>
 #include <memory>
 #include <string>
 #include <optional>
-#include <regex>
 #include "alignment/alignment.hh"
 #include "alignment/alignment-util.hh"
 #include "util/set.hh"
 #include "util/mapping.hh"
-#include "util/string/split.hh"
-#include "util/string/convert.hh"
 #include "util/io.hh"
 #include "util/range.hh"
 #include "util/cmdline.hh"
@@ -42,11 +38,9 @@ extern int log_verbose;
 
 using namespace sequence_format;
 
-using std::ifstream;
 using std::istream;
 using std::vector;
 using std::string;
-using std::pair;
 using std::optional;
 
 using std::cin;
@@ -71,21 +65,6 @@ public:
     }
 };
 }
-
-bool all_same_length(const vector<sequence>& s)
-{
-    for(int i=1;i<s.size();i++)
-	if (s[i].size() != s[0].size())
-	    return false;
-    return true;
-}
-
-
-//FIXME - make this handle un-aligned gaps...
-// diagnose sequences which are not a multiple of 3
-// look for reading frames?  start codons?
-// translate just the sequences before translating
-// the ALIGNMENT of the sequences to print out
 
 vector<int> get_mapping(const vector<sequence>& S1, const vector<sequence>& S2)
 {
@@ -410,36 +389,6 @@ vector<sequence> align_by_amino_acids(const vector<sequence>& S1, const string& 
     return S2;
 }
 
-
-vector<pair<int,int>> read_pairs(const string& filename, int first = 0)
-{
-    vector<pair<int,int>> pairs;
-
-    /* I should write a parser for this! */
-    checked_ifstream file(filename,"pairs file");
-    string line;
-    while(portable_getline(file,line))
-    {
-	vector<string> pair_strings;
-        // 2. Split the text on commas and whitespace, and put the items into `options`.
-        // tokenization (non-matched fragments)
-        std::regex sep_re("\\s*,\\s*"); // whitespace
-        std::copy( std::sregex_token_iterator(line.begin(), line.end(), sep_re, -1),
-                   std::sregex_token_iterator(),
-                   std::inserter(pair_strings, pair_strings.end()));
-	for(auto& pair_string: pair_strings)
-	{
-	    if (not pair_string.empty())
-	    {
-		auto pieces = convertTo<int>(split(pair_string,':'));
-		if (pieces.size() != 2)
-		    throw myexception()<<"Malformed pair '"<<pair_string<<"'";
-		pairs.push_back({pieces[0] - first,pieces[1] - first});
-	    }
-	}
-    }
-    return pairs;
-}
 
 int main(int argc,char* argv[]) 
 { 
