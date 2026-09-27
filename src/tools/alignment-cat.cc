@@ -398,6 +398,7 @@ int main(int argc,char* argv[])
 	//---------- Parse command line  -------//
         CLI::App app{"Concatenate, select, reorder, and reformat aligned sequences.", "alignment-cat"};
         app.formatter(std::make_shared<AlignmentCatFormatter>());
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
         string output = "fasta", columns, taxa, missing_characters = "-?";
         string tree_file, alignment_file, amino_file;
         bool pad = false, reverse = false, erase_empty_columns = false;
