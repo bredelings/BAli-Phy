@@ -139,7 +139,8 @@ vector<sequence> concatenate(const vector<sequence>& S1, const vector<sequence>&
     if (not S1.size())
 	return S2;
 
-    assert(S1.size() == S2.size());
+    if (S1.size() != S2.size())
+        throw myexception()<<"Cannot concatenate alignments with "<<S1.size()<<" and "<<S2.size()<<" sequences.";
 
     vector<int> mapping = get_mapping(S1,S2);
     vector<sequence> S = S1;
