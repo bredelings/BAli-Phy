@@ -309,10 +309,10 @@ vector<string> get_names_from_tree(RootedSequenceTree T, bool use_root)
 	double rootd = -1;
 	find_root(T,rootb,rootd);
 	if (log_verbose) {
-	    std::cerr<<"alignment-reorder: root branch = "<<rootb<<std::endl;
-	    std::cerr<<"alignment-reorder: x = "<<rootd<<std::endl;
+	    std::cerr<<"alignment-cat: root branch = "<<rootb<<std::endl;
+	    std::cerr<<"alignment-cat: x = "<<rootd<<std::endl;
 	    for(int i=0;i<T.n_leaves();i++)
-		std::cerr<<"alignment-reorder: "<<T.get_label(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
+		std::cerr<<"alignment-cat: "<<T.get_label(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
 	}
     
 	T = add_root((SequenceTree)T,rootb);  // we don't care about the lengths anymore
