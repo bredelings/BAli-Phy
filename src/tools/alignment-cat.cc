@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <memory>
 #include <string>
 #include <optional>
 #include <regex>
@@ -34,14 +35,12 @@
 #include "util/log-level.hh"
 #include "sequence/sequence.hh"
 #include "sequence/sequence-format.hh"
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 #include "findroot.hh"
 
 extern int log_verbose;
 
 using namespace sequence_format;
-namespace po = boost::program_options;
-using po::variables_map;
 
 using std::ifstream;
 using std::istream;
@@ -54,6 +53,24 @@ using std::cin;
 using std::cout;
 using std::cerr;
 using std::endl;
+
+namespace {
+class AlignmentCatFormatter : public CLI::Formatter
+{
+public:
+    // The description and following option section already supply the blank-line separation.
+    // Remove the extra boundary newlines from CLI11's generated usage.
+    string make_usage(const CLI::App* app, string name) const override
+    {
+        auto usage = CLI::Formatter::make_usage(app, name);
+        if (!usage.empty() and usage.front() == '\n')
+            usage.erase(0, 1);
+        if (usage.ends_with("\n\n"))
+            usage.pop_back();
+        return usage;
+    }
+};
+}
 
 bool all_same_length(const vector<sequence>& s)
 {
@@ -171,69 +188,6 @@ vector<sequence> remove_empty_columns(const vector<sequence>& s,const vector<cha
 
     // select the non-empty columns
     return select(s,columns);
-}
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-	("file", value<vector<string> >(),"Alignment files")
-	;
-
-    options_description visible("All options");
-    visible.add_options()
-	("help,h", "Produce help message")
-	("output", value<string>()->default_value("fasta"),"Which output format: fasta or phylip?")
-	("columns,c", value<string>(),"Ranges of columns to keep, like: 1-10,30-")
-	("taxa,t", value<string>(),"Taxa to keep, comma-separated")
-	("pad,p", "Add gaps to make sequence lengths identical")
-	("reverse,r", "Reverse the sequences")
-	("erase-empty-columns,e","Remove columns with no characters (all gaps).")
-	("missing",value<string>()->default_value("-?"),"What letters are not characters (e.g. gaps)?")
-	("strip-gaps","Remove all non-character letters from sequences.")
-	("reorder-by-tree",value<string>(),"Reorder the sequences given a tree")
-	("use-root","use the root specified in the tree file to reorder")
-	("reorder-by-alignment",value<string>(),"Reorder the sequences following an alignment")
-	("align-by-amino",value<string>(),"Arrange nucleotides into codon alignment")
-	("verbose,V",value<int>()->implicit_value(1),"Show verbose error messages")
-	;
-
-    options_description all("All options");
-    all.add(visible).add(invisible);
-
-    // positional options
-    positional_options_description p;
-    p.add("file", -1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    notify(args);
-
-    bool error = false;
-
-    if (args.count("verbose")) log_verbose = args.at("verbose").as<int>();
-
-    if (args.count("help") or error) {
-	cout<<"Concatenate several alignments (with the same sequence names) end-to-end.\n\n";
-	cout<<"Usage: alignment-cat <file1> [<file2> ...] \n\n";
-	cout<<visible<<"\n";
-	cout<<" Examples:\n\n";
-	cout<<"  To select columns from an alignment:\n";
-	cout<<"    % alignment-cat -c1-10,50-100,600- filename.fasta > result.fasta\n";
-	cout<<"    % alignment-cat -c5-250/3 filename.fasta > first_codon_position.fasta\n";
-	cout<<"    % alignment-cat -c6-250/3 filename.fasta > second_codon_position.fasta\n\n";
-
-	cout<<"  To concatenate two or more alignments:\n";
-	cout<<"    % alignment-cat filename1.fasta filename2.fasta > all.fasta\n";
-    
-	exit(0);
-    }
-
-    return args;
 }
 
 vector<sequence> load_file(istream& file,bool pad)
@@ -480,33 +434,73 @@ int main(int argc,char* argv[])
 
     try {
 	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Concatenate, select, reorder, and reformat aligned sequences.", "alignment-cat"};
+        app.formatter(std::make_shared<AlignmentCatFormatter>());
+        string output = "fasta", columns, taxa, missing_characters = "-?";
+        string tree_file, alignment_file, amino_file;
+        bool pad = false, reverse = false, erase_empty_columns = false;
+        bool do_strip_gaps = false, use_root = false;
+        vector<string> filenames;
 
-	bool pad = (args.count("pad")>0);
+        app.add_option("--output", output, "Output format: fasta or phylip")->capture_default_str();
+        app.add_option("-c,--columns", columns, "Columns to keep, e.g. 1-10,30- or 1-/3");
+        app.add_option("-t,--taxa", taxa, "Taxa to keep in order: comma-separated names or @filename");
+        app.add_flag("-p,--pad", pad, "Pad each input's shorter sequences with gaps");
+        app.add_flag("-r,--reverse", reverse, "Reverse each sequence without complementing it");
+        app.add_flag("-e,--erase-empty-columns", erase_empty_columns, "Remove columns containing only missing characters");
+        app.add_option("--missing", missing_characters, "Characters treated as missing")->capture_default_str();
+        app.add_flag("--strip-gaps", do_strip_gaps, "Remove missing characters from each sequence");
+        app.add_option("--reorder-by-tree", tree_file, "Select and order sequences using a tree");
+        app.add_flag("--use-root", use_root, "Use the specified tree root for ordering");
+        app.add_option("--reorder-by-alignment", alignment_file, "Select and order sequences using another alignment");
+        app.add_option("--align-by-amino", amino_file, "Arrange nucleotides using an amino-acid alignment");
+        auto* verbosity = app.add_option("-V,--verbose", log_verbose, "Diagnostic verbosity (1 if no value is given)")
+            ->type_name("LEVEL")->expected(0, 1);
+
+        // Accept each named option once, including verbosity; flags enable operations without a value.
+        for (auto* option: app.get_options())
+            option->multi_option_policy(CLI::MultiOptionPolicy::Throw)->disable_flag_override();
+        app.add_option("file,--file", filenames, "Input alignments (default: stdin; '-' reads stdin)")
+            ->type_size(1)->expected(-1);
+        // The examples are preformatted; preserve their indentation and line breaks.
+        app.get_formatter()->enable_footer_formatting(false);
+        app.footer("Examples:\n"
+                   "  alignment-cat -c1-10,50-100,600- alignment.fasta > selected.fasta\n"
+                   "  alignment-cat -c1-/3 codons.fasta > position1.fasta\n"
+                   "  alignment-cat gene1.fasta gene2.fasta > combined.fasta\n");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+
+        // CLI11 represents a value-less optional argument as an empty result; -V means level 1.
+        if (verbosity->count() and verbosity->results().front().empty())
+            log_verbose = 1;
 
 	optional<vector<string>> names;
-	if (args.count("taxa"))
-	    names = get_string_list(args, "taxa");
-	else if (auto tree = get_arg<string>(args,"reorder-by-tree"))
+	if (app.count("--taxa"))
+	    names = get_string_list(taxa);
+	else if (app.count("--reorder-by-tree"))
 	{
 	    RootedSequenceTree RT;
-	    RT.read(*tree);
-	    bool use_root = args.count("use-root");
+	    RT.read(tree_file);
 	    names = get_names_from_tree(RT, use_root);
 	}
-	else if (auto align = get_arg<string>(args, "reorder-by-alignment"))
+	else if (app.count("--reorder-by-alignment"))
 	{
-	    vector<sequence> sequences = load_file(*align, false);
+	    vector<sequence> sequences = load_file(alignment_file, false);
             names = vector<string>();
 	    for(const auto& s: sequences)
 		names->push_back(s.name);
 	}
 
 	//------- Determine filenames --------//
-	vector<string> filenames;
-	if (args.count("file"))
-	    filenames = args["file"].as<vector<string> >();
-	else
+	if (filenames.empty())
 	    filenames = {"-"};
 
 	//------- Try to load sequences --------//
@@ -543,39 +537,33 @@ int main(int argc,char* argv[])
 	}
 
 	// determine which chars are not characters
-	vector<char> missing;
-	{
-	    string missing2 = args["missing"].as<string>();
-	    for(char m: missing2)
-		missing.push_back(m);
-	}
+	vector<char> missing(missing_characters.begin(), missing_characters.end());
 
-	if (args.count("align-by-amino"))
+	if (app.count("--align-by-amino"))
 	{
-	    const string& filename = args["align-by-amino"].as<string>();
-	    S = align_by_amino_acids(S,filename,missing);
+	    S = align_by_amino_acids(S,amino_file,missing);
 	}
       
-	if (args.count("columns"))
-	    S = select(S,args["columns"].as<string>());
+	if (app.count("--columns"))
+	    S = select(S,columns);
     
-	if (args.count("erase-empty-columns")) 
+	if (erase_empty_columns) 
 	    S = remove_empty_columns(S,missing);
 
-	if (args.count("strip-gaps"))
+	if (do_strip_gaps)
 	    S = strip_gaps(S, missing);
 
 	// Reverse each sequence, if asked.
-	if (args.count("reverse"))
+	if (reverse)
 	    for(sequence& s: S)
 		std::reverse(s.begin(), s.end());
 
-	if (args["output"].as<string>() == "phylip")
+	if (output == "phylip")
 	    write_phylip(cout,S);
-	else if (args["output"].as<string>() == "fasta")
+	else if (output == "fasta")
 	    write_fasta(cout,S);
 	else
-	    throw myexception()<<"I don't recognize requested format '"<<args["output"].as<string>()<<"'";
+	    throw myexception()<<"I don't recognize requested format '"<<output<<"'";
     }
     catch (std::exception& e) {
 	std::cerr<<"alignment-cat: Error! "<<e.what()<<endl;

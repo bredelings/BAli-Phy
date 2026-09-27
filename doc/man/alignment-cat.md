@@ -37,6 +37,10 @@ A single FASTA input may contain sequences of unequal length.
 
 # OPTIONS
 
+Long option names must be written in full; abbreviations are not accepted.
+Each option may be supplied once, except **`--file`**, which may be repeated to
+specify input files as an alternative to positional filenames.
+
 **-h**, **`--help`**
 : Print usage information and exit.
 

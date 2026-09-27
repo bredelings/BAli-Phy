@@ -237,6 +237,7 @@ extra_sources = {
 }
 
 extra_deps = {
+  'alignment-cat': [cli11],
   'draw-tree': [cairo],
   'character-properties': [libxxhash, fmt],
   'alignment-info': [eigen],
@@ -252,6 +253,7 @@ endif
 
 declarative_tool_tests = ['alignment-info', 'alignment-convert', 'alignment-draw', 'character-properties', 'cut-range', 'mcon-tool', 'statreport']
 declarative_tool_tests += ['joint-indels', 'tree-mean-lengths', 'trees-distances', 'summarize-ancestors']
+declarative_tool_tests += ['alignment-cat']
 tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
 
 foreach tool: tools + prefixed_tools

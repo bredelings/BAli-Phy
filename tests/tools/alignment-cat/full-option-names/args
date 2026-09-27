@@ -1,0 +1,3 @@
+# Reject abbreviated long options; successful command tests cannot exercise this parsing rule.
+# Remove this case if option abbreviations become a supported interface.
+--col=1
