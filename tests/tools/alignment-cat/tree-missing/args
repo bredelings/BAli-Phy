@@ -1,0 +1,3 @@
+# Rooting without a usable metric must match the same topology with all unit lengths.
+# Ordinary rooted-tree tests miss this fallback; retire if topology-only rooting changes.
+--reorder-by-tree=tree.nwk

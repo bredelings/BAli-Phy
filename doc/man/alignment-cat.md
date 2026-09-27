@@ -95,7 +95,9 @@ specify input files as an alternative to positional filenames.
 **`--reorder-by-tree`** _tree-file_
 : Select and order sequences using the leaf names of a Newick tree. Every leaf
   name must occur in every input alignment; sequences absent from the tree are
-  discarded. By default, the program chooses a root using branch lengths.
+  discarded. By default, the program chooses a root using branch lengths. If
+  any lengths are missing, or all are zero, every branch is assigned length 1
+  for root selection. **`--use-root`** bypasses this length assignment and search.
   At each node, subtrees with fewer edges on their longest path to a leaf come
   first, with ties broken by the alphabetically first leaf name in each subtree.
   Thus the output need not follow

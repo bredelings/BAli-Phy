@@ -311,6 +311,22 @@ vector<string> get_names_from_tree(RootedSequenceTree T, bool use_root)
     //------- Re-root the tree appropriately  --------//
     if (not use_root)
     {
+        bool missing_length = false, nonzero_length = false;
+        for(int b=0;b<T.n_branches();b++)
+        {
+            if (not T.branch(b).has_length())
+                missing_length = true;
+            else if (T.branch(b).length() != 0)
+                nonzero_length = true;
+        }
+
+        // Fallback: incomplete or all-zero lengths provide no usable metric for rooting.
+        // Give every edge unit length before the existing root search, preserving its tie rules.
+        // Keep this policy unless a different topology-only rooting rule is explicitly chosen.
+        if (missing_length or not nonzero_length)
+            for(int b=0;b<T.n_branches();b++)
+                T.branch(b).set_length(1.0);
+
 	int rootb=-1;
 	double rootd = -1;
 	find_root(T,rootb,rootd);
