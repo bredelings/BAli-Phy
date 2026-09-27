@@ -148,7 +148,7 @@ vector<sequence> remove_empty_columns(const vector<sequence>& s,const vector<cha
 {
     check_all_same_length(s, "in order to remove empty columns.");
 
-    // cache length of longest sequences
+    // All sequences have the same length after the check above.
     int L = s[0].size();
 
     // find non-empty columns
@@ -157,7 +157,7 @@ vector<sequence> remove_empty_columns(const vector<sequence>& s,const vector<cha
     {
 	bool empty = true;
 	for(int j=0;j<s.size() and empty;j++)
-	    if ((c < s[j].size()) and (not includes(missing,s[j][c])))
+	    if (not includes(missing,s[j][c]))
 		empty=false;
 
 	if (not empty)
