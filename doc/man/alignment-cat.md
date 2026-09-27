@@ -33,7 +33,10 @@ When concatenating multiple files, all sequences within each input must have the
 same length; different files may have different alignment lengths. Use **`--pad`**
 to append gaps to shorter sequences within each file. This length check occurs
 before sequence selection, including for sequences that will be discarded.
-A single FASTA input may contain sequences of unequal length.
+A single FASTA input may contain sequences of unequal length. Input files must
+contain at least one sequence. An empty taxon selection produces an empty FASTA
+file; sequence transformations are skipped, including loading an amino-acid
+reference alignment.
 
 # OPTIONS
 

@@ -1,0 +1,3 @@
+# Empty selections must pass through sequence operations and produce zero bytes.
+# Nonempty-output tests cannot check this; retire if empty selections are no longer supported.
+--taxa=@names.txt -c1 -e --strip-gaps -r --align-by-amino=unused

@@ -539,24 +539,28 @@ int main(int argc,char* argv[])
 	// determine which chars are not characters
 	vector<char> missing(missing_characters.begin(), missing_characters.end());
 
-	if (app.count("--align-by-amino"))
-	{
-	    S = align_by_amino_acids(S,amino_file,missing);
-	}
+        // Empty selections have no sequence transformations, but still reach output validation.
+        if (not S.empty())
+        {
+    	if (app.count("--align-by-amino"))
+    	{
+    	    S = align_by_amino_acids(S,amino_file,missing);
+    	}
       
-	if (app.count("--columns"))
-	    S = select(S,columns);
+    	if (app.count("--columns"))
+    	    S = select(S,columns);
     
-	if (erase_empty_columns) 
-	    S = remove_empty_columns(S,missing);
+    	if (erase_empty_columns) 
+    	    S = remove_empty_columns(S,missing);
 
-	if (do_strip_gaps)
-	    S = strip_gaps(S, missing);
+    	if (do_strip_gaps)
+    	    S = strip_gaps(S, missing);
 
-	// Reverse each sequence, if asked.
-	if (reverse)
-	    for(sequence& s: S)
-		std::reverse(s.begin(), s.end());
+    	// Reverse each sequence, if asked.
+    	if (reverse)
+    	    for(sequence& s: S)
+    		std::reverse(s.begin(), s.end());
+        }
 
 	if (output == "phylip")
 	    write_phylip(cout,S);

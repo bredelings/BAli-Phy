@@ -139,7 +139,7 @@ namespace sequence_format {
     /// Read an alignments letters and names from a file in fasta format
     void write_fasta(std::ostream& file, const std::vector<sequence>& sequences) 
     {
-	assert(sequences.size() > 0);
+	if (sequences.empty()) return;
 
 	const int letters_length = 70;
 
