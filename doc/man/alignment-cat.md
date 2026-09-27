@@ -40,10 +40,6 @@ reference alignment.
 
 # OPTIONS
 
-Long option names must be written in full; abbreviations are not accepted.
-Each option may be supplied once, except **`--file`**, which may be repeated to
-specify input files as an alternative to positional filenames.
-
 **-h**, **`--help`**
 : Print usage information and exit.
 
@@ -51,7 +47,7 @@ specify input files as an alternative to positional filenames.
 : Write **fasta** (the default) or **phylip**. PHYLIP output is interleaved and
   truncates sequence names to 10 characters; names should remain unique after
   truncation. PHYLIP requires at least one sequence and equal final sequence
-  lengths. Incompatible output is rejected before writing any data.
+  lengths.
 
 **-c** _ranges_, **`--columns`** _ranges_
 : Keep the specified columns, for example **1-10,30-**. Positions are numbered
@@ -100,8 +96,8 @@ specify input files as an alternative to positional filenames.
   for root selection. **`--use-root`** bypasses this length assignment and search.
   At each node, subtrees with fewer edges on their longest path to a leaf come
   first, with ties broken by the alphabetically first leaf name in each subtree.
-  Thus the output need not follow
-  the order in which names appear in the Newick file. This option takes precedence
+  Thus the output need not follow the order in which names appear in the Newick
+  file. This option takes precedence
   over **`--reorder-by-alignment`**, but is ignored when **`--taxa`** is supplied.
 
 **`--use-root`**
