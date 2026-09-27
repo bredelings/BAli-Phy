@@ -228,9 +228,10 @@ struct branch_order {
     const Tree& T;
 
     bool operator()(int b1,int b2) const {
-	if (subtree_height(T,b1) < subtree_height(T,b2))
+        int h1 = subtree_height(T,b1), h2 = subtree_height(T,b2);
+	if (h1 < h2)
 	    return true;
-	if (subtree_height(T,b1) > subtree_height(T,b2))
+	if (h1 > h2)
 	    return false;
 	return T.partition(b1).find_first() < T.partition(b2).find_first();
     }
