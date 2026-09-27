@@ -16,6 +16,11 @@ Read sequences in FASTA or PHYLIP format and write the result to standard output
 The input format is detected automatically. With multiple input files, concatenate
 alignments end-to-end in command-line order, matching sequences by name rather than
 by their position in each file. With a single input, select or transform its sequences.
+The default output format is FASTA.
+
+In FASTA input, the sequence name is the text immediately following **>**, up to
+the first space or tab; the rest of the header is a comment. Sequence letters are
+converted to uppercase when read. Sequence names retain their case.
 
 If no input file is given, read standard input. A filename of **-** also denotes
 standard input. If **-** occurs more than once, the same input is reused each time.
@@ -30,9 +35,6 @@ to append gaps to shorter sequences within each file. This length check occurs
 before sequence selection, including for sequences that will be discarded.
 A single FASTA input may contain sequences of unequal length.
 
-Options are applied in the processing order described below, regardless of their
-order on the command line.
-
 # OPTIONS
 
 **-h**, **`--help`**
@@ -44,26 +46,21 @@ order on the command line.
   truncation. Use PHYLIP only when the final sequences have equal lengths.
 
 **-c** _ranges_, **`--columns`** _ranges_
-: Keep the specified columns. Positions are numbered from 1, and range endpoints
-  are inclusive. Separate ranges with commas, for example **1-10,30-**. A single
-  number selects one column; an omitted start or end means the first or last
-  column. Append `/STEP` to select every STEP-th column starting at the range's
-  first position, for example **1-/3** for positions 1, 4, 7, and so on. The step
-  must be a positive integer. Ranges are appended in the order given, and repeated
-  columns are retained. Positions refer to the concatenated alignment, after
-  **`--align-by-amino`** if requested, but before empty-column removal or reversal.
+: Keep the specified columns, for example **1-10,30-**. Positions are numbered
+  from 1 in the concatenated alignment, after **`--align-by-amino`** if requested.
+  See COLUMN SELECTION below for range syntax and unequal-length inputs.
 
 **-t** _names_, **`--taxa`** _names_
 : Keep only the named sequences, in the order listed. Separate names with commas,
   or use `@filename` to read names separated by commas or newlines from a file.
-  Names must match exactly and must be present in every input alignment. This
-  option takes precedence over both reordering options.
+  Names are case-sensitive and must be present in every input alignment. Spaces
+  around names are not removed: use `human,mouse`, not `human, mouse`.
+  This option takes precedence over both reordering options.
 
 **-p**, **`--pad`**
 : Append **-** characters to shorter sequences so that all sequences within each
-  input file have the length of that file's longest sequence. Padding occurs
-  before sequence selection and concatenation, and is not repeated after later
-  operations such as **`--strip-gaps`**.
+  input file have the length of that file's longest sequence. Later operations
+  such as **`--strip-gaps`** may make the lengths unequal again.
 
 **-r**, **`--reverse`**
 : Reverse the characters in each sequence after all other transformations.
@@ -78,8 +75,9 @@ order on the command line.
 : Set the characters treated as gaps or missing data by **`--erase-empty-columns`**,
   **`--strip-gaps`**, and **`--align-by-amino`**. The default is **-?**. The value is a
   literal list of characters, not a regular expression, and replaces the default
-  list. For example, **`--missing='-?N'`** also treats **N** as missing. This option
-  does not change the **-** character inserted by **`--pad`**.
+  list. Matching is case-sensitive, so use uppercase letters to match the sequence
+  data: **`--missing='-?N'`** also treats **N** as missing. This option does not
+  change the **-** character inserted by **`--pad`**.
 
 **`--strip-gaps`**
 : Remove every character in **`--missing`** from each sequence independently.
@@ -90,8 +88,9 @@ order on the command line.
 : Select and order sequences using the leaf names of a Newick tree. Every leaf
   name must occur in every input alignment; sequences absent from the tree are
   discarded. By default, the program chooses a root using branch lengths.
-  At each node, shallower subtrees come first, with ties broken by the
-  alphabetically first leaf name in each subtree. Thus the output need not follow
+  At each node, subtrees with fewer edges on their longest path to a leaf come
+  first, with ties broken by the alphabetically first leaf name in each subtree.
+  Thus the output need not follow
   the order in which names appear in the Newick file. This option takes precedence
   over **`--reorder-by-alignment`**, but is ignored when **`--taxa`** is supplied.
 
@@ -110,22 +109,39 @@ order on the command line.
   amino-acid alignment. Sequences are matched by name, and the output follows
   the amino-acid alignment's order. See CODON ALIGNMENT below.
 
-`-V[LEVEL]`, `--verbose[=LEVEL]`
+**`-V[LEVEL]`**, **`--verbose[=LEVEL]`**
 : Set diagnostic verbosity. Omitting _level_ sets it to 1. Diagnostics are written
   to standard error, including rooting information when a root is chosen for
   **`--reorder-by-tree`**.
 
 # PROCESSING ORDER
 
-1. Read each input and optionally pad its sequences.
-2. For multiple inputs, check that each input has equal sequence lengths.
-3. Select and order sequences in each input using **`--taxa`**,
-   **`--reorder-by-tree`**, or **`--reorder-by-alignment`**, then concatenate the inputs.
-4. Apply **`--align-by-amino`**.
-5. Select **`--columns`**.
-6. Apply **`--erase-empty-columns`**.
-7. Apply **`--strip-gaps`**.
-8. Apply **`--reverse`** and write the requested output format.
+Transformations occur in this order, regardless of their order on the command line:
+
+1. Pad each input if requested, check lengths for concatenation, select and order
+   sequences, and concatenate the inputs.
+2. Arrange nucleotides using **`--align-by-amino`**.
+3. Select **`--columns`**.
+4. Remove empty columns with **`--erase-empty-columns`**.
+5. Remove missing characters with **`--strip-gaps`**.
+6. Reverse each sequence with **`--reverse`**, then write the output.
+
+Thus empty-column removal considers only the retained taxa and columns, and
+column numbers always refer to positions before gap stripping or reversal.
+
+# COLUMN SELECTION
+
+The **`--columns`** argument is a comma-separated list of positions or inclusive
+ranges. For example, **1-10,30-** keeps columns 1 through 10 followed by column 30
+through the end. An omitted start means column 1. A positive step after **/**
+selects columns at that interval from the start of the range: **2-/3** selects
+columns 2, 5, 8, and so on. Ranges are appended in the order given, including
+repeated columns. Range endpoints must lie within the alignment.
+
+For unequal-length sequences, ranges are checked against the longest sequence.
+For each shorter sequence, selection stops at the first requested column beyond
+its end, even if later requested columns would be within it. Use **`--pad`** before
+selecting columns to give all sequences the same coordinate range.
 
 # CODON ALIGNMENT
 
@@ -141,9 +157,14 @@ with **-** to the length of the longest sequence, even without **`--pad`**.
 Characters listed in **`--missing`** are removed from each nucleotide sequence.
 Each non-missing amino acid consumes the next three nucleotides, and each missing
 amino-acid character is copied three times: for example, **-** becomes `---` and
-**?** becomes **???**. The nucleotide count must match three times the number of
-non-missing amino acids. The program does not translate the nucleotides or check
-that their codons encode the supplied amino acids.
+**?** becomes **???**. Keep **-** in **`--missing`** so that padding in the amino-acid
+alignment is treated as gaps.
+
+Supply exactly three non-missing nucleotides per non-missing amino acid. The
+program checks the number of complete triplets after removing missing characters,
+but can silently discard one or two trailing nucleotides when that count matches.
+It does not translate the nucleotides or check that their codons encode the
+supplied amino acids.
 
 # EXAMPLES
 
@@ -217,7 +238,8 @@ Error messages are written to standard error.
 
 **alignment-thin**(1), **alignment-translate**(1), **alignment-info**(1)
 
-# REPORTING BUGS:
- BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
+# REPORTING BUGS
+
+BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 
 Please send bug reports to <bali-phy-users@googlegroups.com>.
