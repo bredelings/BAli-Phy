@@ -545,7 +545,10 @@ int main(int argc,char* argv[])
     	}
       
     	if (app.count("--columns"))
-    	    S = select(S,columns);
+            {
+                check_all_same_length(S, "in order to select columns.");
+                S = select(S,columns);
+            }
     
     	if (erase_empty_columns) 
     	    S = remove_empty_columns(S,missing);

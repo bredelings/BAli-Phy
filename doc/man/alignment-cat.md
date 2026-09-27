@@ -145,10 +145,10 @@ selects columns at that interval from the start of the range: **2-/3** selects
 columns 2, 5, 8, and so on. Ranges are appended in the order given, including
 repeated columns. Range endpoints must lie within the alignment.
 
-For unequal-length sequences, ranges are checked against the longest sequence.
-For each shorter sequence, selection stops at the first requested column beyond
-its end, even if later requested columns would be within it. Use **`--pad`** before
-selecting columns to give all sequences the same coordinate range.
+Column selection requires equal-length sequences after taxon selection and any
+amino-acid alignment. Use **`--pad`** for unequal-length input; it pads each input
+before taxon selection and concatenation. Discarded sequences do not affect the
+length check for column selection.
 
 # CODON ALIGNMENT
 
