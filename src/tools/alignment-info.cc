@@ -501,6 +501,8 @@ int main(int argc,char* argv[])
 	for(int i=0;i<A.n_sequences();i++)
 	    lengths[i] = A.seqlength(i);
 
+        // scripts/bpy-summarize (get_alignment_info) parses this summary's labels and formatting.
+        // Changes to this output require corresponding changes to that parser.
 	cout<<"Alignment: "<<A.length()<<" columns of "<<A.n_sequences()<<" sequences         ";
 	cout<<"Alphabet: "<<a.name<<"\n";
 	cout<<"  sequence lengths: "<<lengths.min()<<"-"<<lengths.max();
