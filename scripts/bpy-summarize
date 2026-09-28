@@ -1630,7 +1630,12 @@ class Analysis(object):
     def get_alignment_info(self,filename,alphabet):
         output = self.exec_show(['alignment-info',filename,'--alphabet',alphabet])
         features = dict()
+        variation_section = None
         for line in output.split('\n'):
+            m = re.match(r'\s*=+\s*(w/o|w/)\s+indels\s*=+\s*$', line)
+            if m:
+                variation_section = m.group(1)
+                continue
             m = re.match(r'Alphabet: (.*)$', line)
             if m:
                 features["alphabet"] = m.group(1)
@@ -1657,9 +1662,9 @@ class Analysis(object):
                 features["n_inform"] = m.group(1)
                 features["p_inform"] = m.group(2)
 
-            m = re.search(r' ([^ ]+)% minimum sequence identity', line)
-            if m:
-                features["min_p_identity"] = m.group(1)
+            m = re.match(r'\s*mean mismatch fraction = (\S+)\s*$', line)
+            if m and variation_section == "w/":
+                features["mean_mismatch_fraction"] = m.group(1)
 
         return features
 
@@ -3148,7 +3153,7 @@ assumes it is included in the model.</p>
        <th scope="col">HTML</th>
        <th scope="col"><span aria-hidden="true">Diff</span><span class="visually-hidden">Difference from the WPD alignment</span></th>
        <th scope="col">AU</th>
-       <th scope="col" class="alignment-stat"><span aria-hidden="true">Min. %identity</span><span class="visually-hidden">Minimum pairwise sequence identity</span></th>
+       <th scope="col" class="alignment-stat"><span aria-hidden="true">Mean %diff</span><span class="visually-hidden">Mean percentage difference, including gaps</span></th>
        <th scope="col" class="alignment-stat"><span aria-hidden="true"># Sites</span><span class="visually-hidden">Number of alignment columns</span></th>
        <th scope="col" class="alignment-stat"><span aria-hidden="true">Constant</span><span class="visually-hidden">Number of invariant columns</span></th>
        <th scope="col" class="alignment-stat"><span aria-hidden="true">Informative</span><span class="visually-hidden">Number of parsimony-informative columns</span></th>
@@ -3181,7 +3186,9 @@ assumes it is included in the model.</p>
                     section +=  '      <td></td>\n'
 
                 features = self.get_alignment_info(self.outdir / f"{alignment}.fasta", alphabet)
-                section += f'<td class="alignment-stat">{features["min_p_identity"]}%</td>\n'
+                mismatch = features["mean_mismatch_fraction"]
+                difference = "NA" if mismatch == "NA" else f"{100 * float(mismatch):.6g}%"
+                section += f'<td class="alignment-stat">{difference}</td>\n'
                 section += f'<td class="alignment-stat">{features["length"]}</td>\n'
                 section += (
                     f'<td class="alignment-stat">{features["n_const"]} ({features["p_const"]}%)</td>\n'
@@ -3195,6 +3202,8 @@ assumes it is included in the model.</p>
             section += '    </tbody>\n'
             section += '  </table>\n'
             section += '  </div>\n'
+        section += ('<p>Mean %diff counts differences across eligible sequence-pair and column comparisons, '
+                    'including comparisons between a state and a gap.</p>\n')
         section += '</section>\n'
         return section
 
