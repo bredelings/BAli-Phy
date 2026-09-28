@@ -1,3 +1,4 @@
 # Reject abbreviated long options; successful command tests cannot exercise this parsing rule.
+# Accept the optional executable prefix used by some CLI11 versions.
 # Remove this case if option abbreviations become a supported interface.
 --col=1

@@ -4,6 +4,7 @@ import argparse
 import difflib
 import os
 from pathlib import Path
+import re
 import shlex
 import shutil
 import subprocess
@@ -67,7 +68,11 @@ def run_test(directory, command):
         expected_output = read_file(directory, "output", "")
         if result.stdout != expected_output:
             failures.append(text_diff("output", expected_output, result.stdout))
-    if result.stderr != expected_error:
+    if (directory / "error.regex").exists():
+        pattern = read_file(directory, "error.regex", "")
+        if re.fullmatch(pattern, result.stderr) is None:
+            failures.append(f"stderr did not match error.regex {pattern!r}:\n{result.stderr}")
+    elif result.stderr != expected_error:
         failures.append(text_diff("error", expected_error, result.stderr))
     if result.returncode != expected_exit:
         failures.append(f"expected exit {expected_exit}, obtained {result.returncode}\n")
@@ -111,6 +116,9 @@ def list_tests(root):
 
 # Run one named test and preserve its results only when a check fails.
 def run_named_test(directory, command):
+    if (directory / "error").exists() and (directory / "error.regex").exists():
+        print(f"Test {directory} specifies both error and error.regex", file=sys.stderr)
+        return 1
     if not (directory / "args").exists():
         print(f"No test found in {directory}", file=sys.stderr)
         return 1
