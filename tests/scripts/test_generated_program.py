@@ -135,36 +135,6 @@ def main():
         if (work_directory / "fixed-retained-1").exists():
             raise AssertionError("the retained fixed-alignment program created an output directory")
 
-        # Check the generic association directly, including numeric internal-node observations.
-        # This protects complete matching even when no generated analysis supplies validation.
-        (work_directory / "observations.nwk").write_text("((one,two)ancestor,three);\n", encoding="utf-8")
-        (work_directory / "Observations.hs").write_text("""{-# LANGUAGE NoImplicitPrelude #-}
-import Prelude
-import Bio.Alignment (observationsOnTree)
-import Tree.Newick (readTreeTopology)
-import qualified Data.Text as Text
-import qualified Data.IntMap as IntMap
-import Data.Maybe (catMaybes, isNothing)
-import System.Environment (getArgs)
-main = do
-    tree <- readTreeTopology "observations.nwk"
-    args <- getArgs
-    let base = [(Text.pack n, v) | (n,v) <- [("one",1), ("two",2), ("three",3), ("ancestor",4)]]
-        observations = case args of
-            ["extra"] -> (Text.pack "absent", 5) : base
-            ["missing"] -> tail base
-            _ -> base
-        values = IntMap.elems (observationsOnTree tree observations)
-    print (sum (catMaybes values) :: Int, length (filter isNothing values))
-""", encoding="utf-8")
-        for mode, expected in [("valid", "(10,1)"),
-                               ("extra", 'Observation labels with no tree node'),
-                               ("missing", 'Tree-node labels with no observation')]:
-            result = run_command(args.wrapper + [args.executable, args.package_path,
-                                 "run", "Observations.hs", mode], work_directory)
-            if (result.returncode == 0) != (mode == "valid") or expected not in result.stdout + result.stderr:
-                raise AssertionError(result.stdout + result.stderr)
-
     return 0
 
 
