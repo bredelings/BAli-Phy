@@ -252,6 +252,8 @@ inline bool operator<(const const_branchview& b1, const const_branchview& b2)
  */
 class Tree 
 {
+    void swap_state(Tree&) noexcept;
+
     /// Are the cached_partitions valid?
     mutable bool caches_valid;
 
@@ -574,7 +576,7 @@ public:
     /// Create an identical tree that does not share memory with the original
     Tree& operator=(const Tree& T); 
 
-    int parse_(const std::string& s, Underscore underscores, std::function<void(BranchNode*)> assign_names);
+    int parse_(const std::string& s, Underscore underscores, std::function<void(Tree&, BranchNode*)> assign_names);
     /// Parse and load the Newick format string 's', discovering and reporting leaf names in 'names'
     virtual int parse_and_discover_names(const std::string& s, Underscore underscores);
     /// Parse and load the Newick format string 's', where node names are given in 'names', or numerical starting at 1

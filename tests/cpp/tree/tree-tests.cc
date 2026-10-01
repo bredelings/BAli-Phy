@@ -48,6 +48,22 @@ int main()
     rooted.parse("single;");
     require(rooted.common_ancestor(0, 0) == 0, "Singleton ancestor");
 
+    // Failed replacements must preserve structure, metadata, and roots, and release partial trees.
+    // Tool error tests cannot inspect the same object after catching a parse failure.
+    rooted.parse("((A[&tag=old]:1,B:2):3,C:4)[&root=yes];");
+    const auto original = rooted.write();
+    const auto original_root = rooted.root().name();
+    for (const std::string input: {"(A[&new=x],B,D);", "((A[&new=x],B,C);", "(A:bad,B,C);"})
+    {
+        bool failed = false;
+        try { rooted.parse_with_names(input, {"A", "B", "C"}, Underscore::literal); }
+        catch (const std::exception&) { failed = true; }
+        require(failed, "Invalid replacement accepted");
+        require(rooted.write() == original and rooted.root().name() == original_root, "Failed parse changed tree");
+    }
+    rooted.parse_with_names("(A:2,B:3,C:4);", {"A", "B", "C"}, Underscore::literal);
+    require(tree_length(rooted) == 9, "Successful parse after failures");
+
     // Joining goes through a virtual base; ordinary copy tests do not cover its initialization.
     RootedSequenceTree left, right;
     left.parse("(A:1,B:2);");

@@ -20,6 +20,7 @@
 #include <iostream>
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <sstream>
 
 #include "util/myexception.hh"
@@ -2095,6 +2096,27 @@ bool has_non_empty_label(BranchNode* BN, optional<int> node_label_index)
     return get_label(BN, node_label_index).size() > 0;
 }
 
+// Exchange a fully indexed replacement with the old tree without copying its structure.
+// The temporary then owns the old nodes and releases them on destruction.
+void Tree::swap_state(Tree& other) noexcept
+{
+    using std::swap;
+    swap(caches_valid, other.caches_valid);
+    swap(cached_partitions, other.cached_partitions);
+    swap(n_leaves_, other.n_leaves_);
+    swap(node_label_index, other.node_label_index);
+    swap(branch_length_index, other.branch_length_index);
+    swap(node_attribute_names, other.node_attribute_names);
+    swap(undirected_branch_attribute_names, other.undirected_branch_attribute_names);
+    swap(directed_branch_attribute_names, other.directed_branch_attribute_names);
+    swap(nodes_, other.nodes_);
+    swap(branches_, other.branches_);
+    swap(leaf_nodes_, other.leaf_nodes_);
+    swap(internal_nodes_, other.internal_nodes_);
+    swap(leaf_branches_, other.leaf_branches_);
+    swap(internal_branches_, other.internal_branches_);
+}
+
 /*
  * Tree -> Branch ;
  * Branch -> [Node] [string] [: double]
@@ -2103,17 +2125,22 @@ bool has_non_empty_label(BranchNode* BN, optional<int> node_label_index)
  * pos == index where we are in the Branch rule, and runs from 0 (before start) to 4 (after end).
  */
 
-int Tree::parse_(const string& line, Underscore underscores, std::function<void(BranchNode*)> assign_names)
+// Parse into separate storage so syntax, label, or indexing failures leave this tree intact.
+int Tree::parse_(const string& line, Underscore underscores, std::function<void(Tree&, BranchNode*)> assign_names)
 {
-    node_attribute_names.clear();
-    if (node_label_index)
-        node_attribute_names.resize(*node_label_index+1);
+    Tree parsed;
+    parsed.node_label_index = node_label_index;
+    parsed.branch_length_index = branch_length_index;
 
-    directed_branch_attribute_names.clear();
+    parsed.node_attribute_names.clear();
+    if (parsed.node_label_index)
+        parsed.node_attribute_names.resize(*parsed.node_label_index+1);
 
-    undirected_branch_attribute_names.clear();
-    if (branch_length_index)
-        undirected_branch_attribute_names.resize(*branch_length_index+1);
+    parsed.directed_branch_attribute_names.clear();
+
+    parsed.undirected_branch_attribute_names.clear();
+    if (parsed.branch_length_index)
+        parsed.undirected_branch_attribute_names.resize(*parsed.branch_length_index+1);
 
     const string delimiters = "(),:;";
     const string whitespace = "\t\n ";
@@ -2127,7 +2154,10 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
     vector< vector<BranchNode*> > tree_stack;
     vector< string > comments;
 
-    push_empty_node(tree_stack, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
+    push_empty_node(tree_stack, parsed.n_node_attributes(),
+                    parsed.n_undirected_branch_attributes(), parsed.n_directed_branch_attributes());
+    std::unique_ptr<BranchNode, decltype(&TreeView::destroy_tree)>
+        partial_tree(tree_stack.front().front(), &TreeView::destroy_tree);
 
     // Extend storage for new property names before construction continues. Newly attached nodes
     // are reachable from the bottom stack entry; shared arrays may be visited more than once,
@@ -2141,11 +2171,11 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
 
         for(BN_iterator node(tree_stack.front().front()); node; node++)
         {
-            (*node)->node_attributes->resize(n_node_attributes());
+            (*node)->node_attributes->resize(parsed.n_node_attributes());
             if ((*node)->undirected_branch_attributes)
-                (*node)->undirected_branch_attributes->resize(n_undirected_branch_attributes());
+                (*node)->undirected_branch_attributes->resize(parsed.n_undirected_branch_attributes());
             if ((*node)->directed_branch_attributes)
-                (*node)->directed_branch_attributes->resize(n_directed_branch_attributes());
+                (*node)->directed_branch_attributes->resize(parsed.n_directed_branch_attributes());
         }
     };
 
@@ -2165,7 +2195,7 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
         if (word == ";")
         {
             if (pos == 0 or pos == 1 or pos == 2)
-                set_parsed_attributes(tags, node_attribute_names, *BN->node_attributes);
+                set_parsed_attributes(tags, parsed.node_attribute_names, *BN->node_attributes);
             else if (pos == 3 or pos == 4)
                 assert( tags.empty() );
 
@@ -2180,7 +2210,8 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
             if (pos != 0)
                 throw myexception()<<"In tree file, found '(' in the middle of word \""<<prev<<"\"";
 
-            push_empty_node(tree_stack, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
+            push_empty_node(tree_stack, parsed.n_node_attributes(),
+                    parsed.n_undirected_branch_attributes(), parsed.n_directed_branch_attributes());
             pos = 0;
         }
         else if (word == ",")
@@ -2188,19 +2219,20 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
             if (tree_stack.size() <= 1)
                 throw myexception()<<"Reading tree: found ',' outside parenthesis!";
             if (pos == 0 or pos == 1 or pos == 2)
-                set_parsed_attributes(tags, node_attribute_names, *BN->node_attributes);
+                set_parsed_attributes(tags, parsed.node_attribute_names, *BN->node_attributes);
             else if (pos == 3 or pos == 4)
-                set_parsed_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
+                set_parsed_attributes(tags, parsed.undirected_branch_attribute_names, *BN->undirected_branch_attributes);
 
-            append_empty_node(tree_stack, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
+            append_empty_node(tree_stack, parsed.n_node_attributes(),
+                      parsed.n_undirected_branch_attributes(), parsed.n_directed_branch_attributes());
             pos = 0;
         }
         else if (word == ")") 
         {
             if (pos == 0 or pos == 1 or pos == 2)
-                set_parsed_attributes(tags, node_attribute_names, *BN->node_attributes);
+                set_parsed_attributes(tags, parsed.node_attribute_names, *BN->node_attributes);
             else if (pos == 3 or pos == 4)
-                set_parsed_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
+                set_parsed_attributes(tags, parsed.undirected_branch_attribute_names, *BN->undirected_branch_attributes);
 
             // We need at least 2 levels of trees
             if (tree_stack.size() < 2)
@@ -2217,7 +2249,7 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
 
             // Handle (a,b):1.0; -- we should ignore any attributes for the branch in this case
             if (tree_stack.size() > 1)
-                set_parsed_attributes(tags, node_attribute_names, *BN->node_attributes);
+                set_parsed_attributes(tags, parsed.node_attribute_names, *BN->node_attributes);
             else
             {
                 // There should be only a single node, or we'd be in a situation like a,b:1.0;
@@ -2231,10 +2263,10 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
         {
             if (pos == 0 or pos == 1) 
             {
-                set_parsed_attributes(tags, node_attribute_names, *BN->node_attributes);
+                set_parsed_attributes(tags, parsed.node_attribute_names, *BN->node_attributes);
 
-                if (node_label_index)
-                    (*BN->node_attributes)[*node_label_index] = unescape_from_newick(word, underscores);
+                if (parsed.node_label_index)
+                    (*BN->node_attributes)[*parsed.node_label_index] = unescape_from_newick(word, underscores);
 
                 pos = 2;
             }
@@ -2245,10 +2277,10 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
                 // Handle (a,b):1.0; -- we should ignore any attributes for the branch in this case
                 if (tree_stack.size() > 1)
                 {
-                    set_parsed_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
+                    set_parsed_attributes(tags, parsed.undirected_branch_attribute_names, *BN->undirected_branch_attributes);
 
-                    if (branch_length_index)
-                        (*BN->undirected_branch_attributes)[*branch_length_index] = convertTo<double>(word);
+                    if (parsed.branch_length_index)
+                        (*BN->undirected_branch_attributes)[*parsed.branch_length_index] = convertTo<double>(word);
                 }
                 pos = 4;
             }
@@ -2265,19 +2297,30 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
 
     BranchNode* root_ = tree_stack.back()[0];
 
-    // destroy old tree structure
-    if (nodes_.size()) TreeView(nodes_[0]).destroy();
+    assign_names(parsed, root_);
 
-    assign_names(root_);
-
-    reanalyze(root_);
+    try
+    {
+        parsed.reanalyze(root_);
+    }
+    catch (...)
+    {
+        // The guard still owns the structure if indexing fails partway through.
+        parsed.nodes_.clear();
+        parsed.branches_.clear();
+        parsed.n_leaves_ = 0;
+        throw;
+    }
+    partial_tree.release();
+    swap_state(parsed);
 
     return root_->node_attributes->name;
 }
 
 int Tree::parse_and_discover_names(const string& line, Underscore underscores)
 {
-    auto namer = [this](BranchNode* root_)
+    // Assign leaf indices using the replacement tree's label and attribute layout.
+    auto namer = [](Tree& parsed, BranchNode* root_)
     {
         // switch to new tree structure
         int L = 0;
@@ -2285,7 +2328,7 @@ int Tree::parse_and_discover_names(const string& line, Underscore underscores)
         // First give integer name to leaves with labels.
         for(BN_iterator BN(root_);BN;BN++)
         {
-            if (::is_leaf_node(*BN) and has_non_empty_label(*BN, node_label_index))
+            if (::is_leaf_node(*BN) and has_non_empty_label(*BN, parsed.node_label_index))
                 (*BN)->node_attributes->name = L++;
             else
                 (*BN)->node_attributes->name = -1;
@@ -2294,14 +2337,14 @@ int Tree::parse_and_discover_names(const string& line, Underscore underscores)
         // Name other leaves and resize attribute objects
         for(BN_iterator BN(root_);BN;BN++)
         {
-            if (::is_leaf_node(*BN) and not has_non_empty_label(*BN, node_label_index))
+            if (::is_leaf_node(*BN) and not has_non_empty_label(*BN, parsed.node_label_index))
                 (*BN)->node_attributes->name = L++;
 
-            (*BN)->node_attributes->resize(n_node_attributes());
+            (*BN)->node_attributes->resize(parsed.n_node_attributes());
             if ((*BN)->undirected_branch_attributes)
-                (*BN)->undirected_branch_attributes->resize(n_undirected_branch_attributes());
+                (*BN)->undirected_branch_attributes->resize(parsed.n_undirected_branch_attributes());
             if ((*BN)->directed_branch_attributes)
-                (*BN)->directed_branch_attributes->resize(n_directed_branch_attributes());
+                (*BN)->directed_branch_attributes->resize(parsed.n_directed_branch_attributes());
         }
 
     };
@@ -2356,21 +2399,22 @@ int Tree::parse_with_names_or_numbers(const string& line, const vector<string>& 
             name_to_index[name] = i;
     }
 
-    auto namer = [this, allow_numbers, &name_to_index](BranchNode* root_)
+    // Resolve labels before the replacement tree is committed to the caller.
+    auto namer = [allow_numbers, &name_to_index](Tree& parsed, BranchNode* root_)
     {
         // Name leaves and resize attribute vectors
         for(BN_iterator BN(root_);BN;BN++)
         {
             if (::is_leaf_node(*BN))
-                (*BN)->node_attributes->name = get_leaf_index(get_label(*BN, node_label_index), allow_numbers, name_to_index);
+                (*BN)->node_attributes->name = get_leaf_index(get_label(*BN, parsed.node_label_index), allow_numbers, name_to_index);
             else
                 (*BN)->node_attributes->name = -1;
 
-            (*BN)->node_attributes->resize(n_node_attributes());
+            (*BN)->node_attributes->resize(parsed.n_node_attributes());
             if ((*BN)->undirected_branch_attributes)
-                (*BN)->undirected_branch_attributes->resize(n_undirected_branch_attributes());
+                (*BN)->undirected_branch_attributes->resize(parsed.n_undirected_branch_attributes());
             if ((*BN)->directed_branch_attributes)
-                (*BN)->directed_branch_attributes->resize(n_directed_branch_attributes());
+                (*BN)->directed_branch_attributes->resize(parsed.n_directed_branch_attributes());
         }
     };
 
