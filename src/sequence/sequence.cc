@@ -72,39 +72,40 @@ bool operator==(const sequence& s1,const sequence& s2) {
 	(string&)s1 == (string&)s2;
 }
 
-int total_length(const vector<int>& letter_counts)
+std::size_t total_length(const vector<std::size_t>& letter_counts)
 {
-    int count = 0;
-    for(int letter_count: letter_counts)
+    std::size_t count = 0;
+    for(auto letter_count: letter_counts)
 	count += letter_count;
     return count;
 }
 
-int letter_count(const string& letters, const vector<int>& letter_counts)
+std::size_t letter_count(const string& letters, const vector<std::size_t>& letter_counts)
 {
-    int count = 0;
-    for(char c: letters)
+    std::size_t count = 0;
+    for(unsigned char c: letters)
 	count += letter_counts[c];
     return count;
 }
 
-double letter_fraction(const string& letters, const string& gaps, const vector<int>& letter_counts)
+double letter_fraction(const string& letters, const string& gaps, const vector<std::size_t>& letter_counts)
 {
-    int count = letter_count(letters, letter_counts);
-    int total = total_length(letter_counts) - letter_count(gaps, letter_counts);
+    auto count = letter_count(letters, letter_counts);
+    auto total = total_length(letter_counts);
+    auto excluded = letter_count(gaps, letter_counts);
 
-    if (total <= 0)
+    if (total <= excluded)
         return 0.0;
     else
-        return double(count)/total;
+        return double(count)/(total - excluded);
 }
 
-std::vector<int> count_letters(const vector<sequence>& sequences)
+std::vector<std::size_t> count_letters(const vector<sequence>& sequences)
 {
-    std::vector<int> counts(256, 0);
+    std::vector<std::size_t> counts(256, 0);
 
     for(auto& sequence: sequences)
-        for(char c: sequence)
+        for(unsigned char c: sequence)
             counts[c]++;
 
     return counts;
