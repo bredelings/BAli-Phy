@@ -440,7 +440,7 @@ public:
         add_infer_options();
         add_other_commands();
 
-        show_at(app.get_help_ptr(), CommandHelpLevel::basic)->configurable(false)->disable_flag_override();
+        show_at(app.get_help_ptr(), CommandHelpLevel::basic)->configurable(false);
         show_at(app.set_version_flag("-v,--version", [] {
             std::ostringstream out;
             print_version_info(out);

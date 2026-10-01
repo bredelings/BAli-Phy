@@ -38,6 +38,13 @@ def main():
     parser.add_argument("package_path")
     args = parser.parse_args()
 
+    # Plain help cannot detect restrictions on CLI11 flag values or repetition.
+    # Keep the native spellings usable; remove if help deliberately adopts a stricter syntax.
+    plain_help = run_command(args, "--help")
+    for arguments in (("--help=yes",), ("-h", "--help=true")):
+        if run_command(args, *arguments) != plain_help:
+            raise AssertionError("help flag values or repetition changed the help output")
+
     top_level = run_help(args)
     expected_basic_usage = (
         "bali-phy [OPTIONS] [INFER-OPTIONS] SEQUENCE-FILE [SEQUENCE-FILE ...]",
