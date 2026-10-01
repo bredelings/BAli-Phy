@@ -185,7 +185,9 @@ BranchNode* unlink_branch_from_node(BranchNode* n1)
         n2 = n1->out;
         n2->out = n1;
 
-        insert_after(n2, degree_0_node);
+        insert_after(degree_0_node, n2);
+        n2->undirected_branch_attributes = std::move(degree_0_node->undirected_branch_attributes);
+        n2->directed_branch_attributes = std::move(degree_0_node->directed_branch_attributes);
     }
 
     // disconnect node n2 from its node
@@ -397,29 +399,11 @@ int TreeView::remove_node_from_branch(BranchNode* n1, int branch_to_move)
     return b2_name;
 }
 
-BranchNode* TreeView::unlink_subtree(BranchNode* b) 
+// Detach the subtree while keeping the remaining node object alive, even when it
+// becomes a singleton. Saved node pointers and node attributes therefore remain valid.
+BranchNode* TreeView::unlink_subtree(BranchNode* b)
 {
-    if (not is_leaf_node(b)) {
-        BranchNode* prev = b->prev;
-
-        // disconnect from tree
-        b->prev->next = b->next;
-        b->next->prev = b->prev;
-
-        // re-link this node as a leaf node
-        b->prev = b->next = b;
-
-        return prev;
-    }
-    else {
-        // we're trying to remove a subtree from the node, not destroy the node.
-        BranchNode* copy = new BranchNode;
-        copy->prev = copy->next = copy->out = copy;
-        copy->node_attributes = b->node_attributes->unused_copy();
-
-        // we return what remains, which is the copy, NOT b.
-        return copy;
-    }
+    return unlink_branch_from_node(b->out);
 }
 
 void knit_node_together(const vector<BranchNode*>& nodes) {

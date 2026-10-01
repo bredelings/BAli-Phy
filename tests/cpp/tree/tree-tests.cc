@@ -88,6 +88,41 @@ int main()
     rooted.parse_with_names("(A:2,B:3,C:4);", {"A", "B", "C"}, Underscore::literal);
     require(tree_length(rooted) == 9, "Successful parse after failures");
 
+    // Pruning must preserve the survivor itself as well as labels and index mappings;
+    // normal multi-taxon summaries do not reach this ownership boundary.
+    for (const std::string input: {"(A:1,B:2,C:3);", "((A:1,B:2):3,(C:4,D:5):6);"})
+    {
+        SequenceTree original_tree;
+        original_tree.parse(input);
+        for (int kept = 0; kept < original_tree.n_leaves(); ++kept)
+        {
+            SequenceTree pruned(original_tree);
+            const BranchNode* survivor = pruned.node(kept);
+            std::vector<int> removed;
+            for (int n = 0; n < pruned.n_leaves(); ++n)
+                if (n != kept) removed.push_back(n);
+            auto mapping = pruned.prune_leaves(removed);
+            require(mapping == std::vector<int>{kept}, "Pruned singleton mapping");
+            require(pruned.n_nodes() == 1 and pruned.n_branches() == 0, "Pruned singleton counts");
+            require(pruned.node(0) == survivor, "Pruning replaced survivor");
+            require(pruned.get_label(0) == original_tree.get_label(kept), "Pruned label");
+            SequenceTree copy(pruned);
+        }
+    }
+    for (int removed: {0, 1})
+    {
+        RootedSequenceTree pair;
+        pair.parse("(A[&tag=first]:1,B[&tag=second]:2);");
+        pair.remove_node_from_branch(pair.root());
+        pair.reroot(1-removed);
+        const BranchNode* survivor = pair.root();
+        auto mapping = pair.prune_leaf(removed);
+        require(mapping == std::vector<int>{1-removed}, "Single-leaf pruning mapping");
+        require(pair.root() == survivor and pair.root().name() == 0, "Pruned root identity");
+        require(pair.write().find(removed ? "first" : "second") != std::string::npos, "Pruned attributes");
+        RootedSequenceTree copy(pair);
+    }
+
     // Joining goes through a virtual base; ordinary copy tests do not cover its initialization.
     RootedSequenceTree left, right;
     left.parse("(A:1,B:2);");
