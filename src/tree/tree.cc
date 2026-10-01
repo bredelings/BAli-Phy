@@ -2128,6 +2128,27 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
     vector< string > comments;
 
     push_empty_node(tree_stack, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
+
+    // Extend storage for new property names before construction continues. Newly attached nodes
+    // are reachable from the bottom stack entry; shared arrays may be visited more than once,
+    // so resize to the registered counts rather than appending on each visit.
+    auto set_parsed_attributes = [&](const vector<pair<string,any>>& tags,
+                                     vector<string>& names, tree_attributes& attributes)
+    {
+        auto old_count = names.size();
+        set_attributes(tags, names, attributes);
+        if (names.size() == old_count) return;
+
+        for(BN_iterator node(tree_stack.front().front()); node; node++)
+        {
+            (*node)->node_attributes->resize(n_node_attributes());
+            if ((*node)->undirected_branch_attributes)
+                (*node)->undirected_branch_attributes->resize(n_undirected_branch_attributes());
+            if ((*node)->directed_branch_attributes)
+                (*node)->directed_branch_attributes->resize(n_directed_branch_attributes());
+        }
+    };
+
     int pos = 0;
     
     for(int i=0;get_word(word,i,comments,line,delimiters,whitespace);prev=word) 
@@ -2144,7 +2165,7 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
         if (word == ";")
         {
             if (pos == 0 or pos == 1 or pos == 2)
-                set_attributes(tags, node_attribute_names, *BN->node_attributes);
+                set_parsed_attributes(tags, node_attribute_names, *BN->node_attributes);
             else if (pos == 3 or pos == 4)
                 assert( tags.empty() );
 
@@ -2167,9 +2188,9 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
             if (tree_stack.size() <= 1)
                 throw myexception()<<"Reading tree: found ',' outside parenthesis!";
             if (pos == 0 or pos == 1 or pos == 2)
-                set_attributes(tags, node_attribute_names, *BN->node_attributes);
+                set_parsed_attributes(tags, node_attribute_names, *BN->node_attributes);
             else if (pos == 3 or pos == 4)
-                set_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
+                set_parsed_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
 
             append_empty_node(tree_stack, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
             pos = 0;
@@ -2177,9 +2198,9 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
         else if (word == ")") 
         {
             if (pos == 0 or pos == 1 or pos == 2)
-                set_attributes(tags, node_attribute_names, *BN->node_attributes);
+                set_parsed_attributes(tags, node_attribute_names, *BN->node_attributes);
             else if (pos == 3 or pos == 4)
-                set_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
+                set_parsed_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
 
             // We need at least 2 levels of trees
             if (tree_stack.size() < 2)
@@ -2196,7 +2217,7 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
 
             // Handle (a,b):1.0; -- we should ignore any attributes for the branch in this case
             if (tree_stack.size() > 1)
-                set_attributes(tags, node_attribute_names, *BN->node_attributes);
+                set_parsed_attributes(tags, node_attribute_names, *BN->node_attributes);
             else
             {
                 // There should be only a single node, or we'd be in a situation like a,b:1.0;
@@ -2210,7 +2231,7 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
         {
             if (pos == 0 or pos == 1) 
             {
-                set_attributes(tags, node_attribute_names, *BN->node_attributes);
+                set_parsed_attributes(tags, node_attribute_names, *BN->node_attributes);
 
                 if (node_label_index)
                     (*BN->node_attributes)[*node_label_index] = unescape_from_newick(word, underscores);
@@ -2224,7 +2245,7 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
                 // Handle (a,b):1.0; -- we should ignore any attributes for the branch in this case
                 if (tree_stack.size() > 1)
                 {
-                    set_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
+                    set_parsed_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
 
                     if (branch_length_index)
                         (*BN->undirected_branch_attributes)[*branch_length_index] = convertTo<double>(word);

@@ -1,0 +1,2 @@
+((A:1[&foreground=1],B[&observed=yes]:2):3,C:4[&other=x],D:5)[&root=yes];
+((A[&observed=yes]:3,B:4):5[&foreground=1],C[&later=yes]:6,D:7[&other=y]);

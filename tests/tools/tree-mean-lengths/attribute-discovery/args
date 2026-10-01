@@ -1,0 +1,3 @@
+# Exercise attribute discovery before further tree construction, which plain-tree tests miss.
+# Remove this check if tree construction no longer requires uniform attribute arrays.
+--tree=../query.tree --no-node-lengths --simple samples.trees
