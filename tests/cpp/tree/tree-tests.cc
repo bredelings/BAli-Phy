@@ -1,4 +1,5 @@
 #include "tree/sequencetree.hh"
+#include "tools/distance-methods.hh"
 
 #include <cstdlib>
 #include <iostream>
@@ -15,6 +16,21 @@ void require(bool condition, const char* message)
 // cases can move to tool tests if those tools expose the same operations and results.
 int main()
 {
+    // A singleton must use the same representation whether constructed or parsed;
+    // usual tree-tool inputs have several taxa and do not exercise its first edge.
+    Tree singleton;
+    singleton.add_first_node();
+    require(singleton.node(0).name() == 0 and singleton.n_branches() == 0, "Singleton indices");
+    Tree copied(singleton);
+    require(copied.n_nodes() == 1 and copied.leaf_branches().empty(), "Singleton copy");
+    require(singleton.add_leaf_node(0).name() == 1, "Second node index");
+    require(singleton.n_leaves() == 2 and singleton.n_branches() == 1, "First edge counts");
+    singleton.branch(0).set_length(3);
+    require(singleton.distance(0, 1) == 3, "First edge length");
+    Matrix distances(2, 2, 0.0);
+    distances(0, 1) = distances(1, 0) = 3;
+    require(tree_length(NJ(distances)) == 3, "Two-taxon neighbor joining");
+
     // Quote runs must retain taxon identity; ordinary single-apostrophe labels miss this case.
     for (const std::string label: {"'A", "A'", "A''B", "'''", "A_B C"})
         for (auto underscores: {Underscore::literal, Underscore::blank})

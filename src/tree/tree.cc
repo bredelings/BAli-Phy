@@ -1023,11 +1023,12 @@ void Tree::add_first_node() {
         throw myexception()<<"Trying to add first node to tree which is not empty";
 
     BranchNode* BN = get_first_node(n_node_attributes());
+    name_node(BN, 0);
 
     nodes_.push_back(BN);
-    branches_.push_back(BN);
 
     n_leaves_ = 1;
+    caches_valid = false;
 
     leaf_nodes_ = {};
     internal_nodes_ = {};
@@ -1084,6 +1085,18 @@ nodeview Tree::add_leaf_node(int node)
 {
     assert(0 <= node and node < nodes_.size());
     int n_branches_old = n_branches();
+
+    // A singleton has no branch attributes or directed indices to update. Index the
+    // first edge normally, with the original leaf numbered 0 and the new leaf numbered 1.
+    if (n_branches_old == 0)
+    {
+        BranchNode* first = nodes_[node];
+        BranchNode* leaf = ::add_leaf_node(first, n_node_attributes(),
+                                          n_undirected_branch_attributes(), n_directed_branch_attributes());
+        name_node(leaf, 1);
+        reanalyze(first);
+        return leaf;
+    }
 
     // Update the directed branch names
     for(BN_iterator BN(nodes_[0]);BN;BN++) 
