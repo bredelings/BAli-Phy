@@ -1,0 +1,3 @@
+    "three" — present in "../second.fasta"
+    "two" — present in "../input.fasta"
+Sequence order may differ, but names must match exactly.

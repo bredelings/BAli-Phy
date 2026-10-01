@@ -135,24 +135,6 @@ def main():
         if (work_directory / "fixed-retained-1").exists():
             raise AssertionError("the retained fixed-alignment program created an output directory")
 
-        # Generated multi-partition programs must diagnose name mismatches even if a fixed tree
-        # makes taxa otherwise unused. Ordinary model tests do not cover that lazy-evaluation path.
-        # The fixed-tree check remains necessary even if missing partition observations become supported.
-        (work_directory / "second.fasta").write_text(">one\nACGT\n>three\nACGT\n", encoding="utf-8")
-        (work_directory / "third.fasta").write_text(">two\nACGT\n>three\nACGT\n", encoding="utf-8")
-        (work_directory / "tree.nwk").write_text("(one:0.1,two:0.1);\n", encoding="utf-8")
-        for extra, expected in [
-            ([], "Partition files must contain the same set of sequence names"),
-            (["third.fasta", "--fix=tree=tree.nwk"],
-             'Observation labels with no tree node'),
-        ]:
-            mismatch = run_command(args.wrapper + [
-                args.executable, "--seed=1", args.package_path,
-                "input.fasta", "second.fasta", *extra, "--imodel=none", "--test",
-            ], work_directory)
-            if mismatch.returncode == 0 or expected not in mismatch.stderr:
-                raise AssertionError(mismatch.stdout + mismatch.stderr)
-
         # Check the generic association directly, including numeric internal-node observations.
         # This protects complete matching even when no generated analysis supplies validation.
         (work_directory / "observations.nwk").write_text("((one,two)ancestor,three);\n", encoding="utf-8")

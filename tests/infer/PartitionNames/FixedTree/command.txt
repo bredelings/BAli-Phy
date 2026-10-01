@@ -1,0 +1,1 @@
+../input.fasta ../second.fasta ../third.fasta --fix=tree=../tree.nwk --imodel=none --test
