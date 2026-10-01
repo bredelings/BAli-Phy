@@ -822,13 +822,8 @@ compute_logged_quantities(Hs::Stmts& model,
             if (imodel_index)
                 HsG::Let(model, cat_states, HsG::Apply(Hs::Var("labeledNodeMap"), {tree, *anc_states}));
             else
-            {
-                Hs::Var columns("observedColumns" + part_suffix);
-                Hs::Var encoder("encodeFixedLeafStates" + part_suffix);
-                HsG::Let(model, columns, HsG::Apply(Hs::Var("fixedLeafColumns"), {sequence_data}));
-                HsG::Let(model, encoder, HsG::Apply(Hs::Var("fixedLeafStateEncoding"), {columns, tree}));
-                HsG::Let(model, cat_states, HsG::Apply(encoder, {*anc_states}));
-            }
+                HsG::Let(model, cat_states,
+                         HsG::Apply(Hs::Var("fixedLeafStateEncoding"), {sequence_data, tree, *anc_states}));
             Hs::Exp smodel_properties = HsG::Apply(Hs::Var("prop_smodel_properties"), {properties});
             Hs::Exp smodel_conditions = HsG::Apply(Hs::Var("prop_smodel_conditions"), {properties});
             Hs::Exp cat_states_key = HsG::Apply(Hs::Var("J.toJSONKey"), {Hs::Literal(Hs::String("catStates"))});

@@ -1,7 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 import Bio.Alignment (ComponentStateSequence(ComponentStateSequence),
-                      componentStates, fixedLeafColumns, fixedLeafStateEncoding,
+                      componentStates, fixedLeafStateEncoding,
                       mkExactCharacterData)
 import Bio.Alphabet (dna)
 import Compiler.Num
@@ -42,4 +42,4 @@ main = do
             (U.slice 2 4 (U.fromList [99,99,0,1,2,3,99])))
         allStates = IntMap.fromSet (\_ -> sampled) (getNodesSet tree)
     Text.putStrLn (JSON.fromEncoding
-        (fixedLeafStateEncoding (fixedLeafColumns observations) tree allStates))
+        (fixedLeafStateEncoding observations tree allStates))

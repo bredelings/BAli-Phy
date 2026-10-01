@@ -308,12 +308,13 @@ fixedLeafColumns :: HasSequences d => d -> Map.Map Text (U.Vector Int)
 fixedLeafColumns sequenceData = Map.fromList [(label, observedColumns (bitmaskFromSequence sequence))
                                             | (label, sequence) <- getSequences sequenceData]
 
--- Prepare the node encoders independently of sampled states. The generated model reuses this
--- partially applied function; changes to the tree information can still require new preparation.
-fixedLeafStateEncoding :: (IsTree t, LabelType t ~ Text) => Map.Map Text (U.Vector Int) -> t
+-- Column selections depend only on the observations; node encoders also depend on the tree.
+-- Keep both preparation steps independent of the sampled states supplied for each output.
+fixedLeafStateEncoding :: (HasSequences d, IsTree t, LabelType t ~ Text) => d -> t
                       -> IntMap ComponentStateSequence -> Encoding
-fixedLeafStateEncoding columns tree =
-    encodeNodeStates (prepareNodeEncoders columns tree)
+fixedLeafStateEncoding sequenceData tree = encodeNodeStates nodeEncoders
+    where columns = fixedLeafColumns sequenceData
+          nodeEncoders = prepareNodeEncoders columns tree
 
 -- Associate each named node with its JSON key and encoder, keeping entries in label order.
 -- Only observed leaves need column selection; other named nodes use ordinary encoding.
