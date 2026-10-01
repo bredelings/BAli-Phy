@@ -171,14 +171,17 @@ test('compiled module cache',
             packagepath],
      timeout: 120)
 
-# Protect reusing one C++-generated analysis in both Haskell runtime modes; the ordinary
-# declarative harness cannot pass retained source from one invocation to the next.
-test('generated alignment program standalone',
-     python,
-     args: [files('../tests/scripts/test_generated_program.py')] +
-           python_test_wrapper_args +
-           ['--', baliphy.full_path(), packagepath],
-     timeout: 600)
+# Only retained-source workflows need Python: each case reuses source between commands.
+# Keep them independently scheduled; remove each case when its documented contract is retired.
+foreach mode, name : {'standalone': 'generated program runtime modes',
+                     'fixed-alignment': 'generated fixed-alignment rejection'}
+  test(name,
+       python,
+       args: [files('../tests/scripts/test_generated_program.py'), '--case=' + mode] +
+             python_test_wrapper_args +
+             ['--', baliphy.full_path(), packagepath],
+       timeout: 600)
+endforeach
 
 # When running on very slow autobuilders these tests could take a long time.
 test('bali-phy 5d test', baliphy,
