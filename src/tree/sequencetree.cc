@@ -417,7 +417,7 @@ double branch_distance(const Tree& T1, const Tree& T2)
     vector< dynamic_bitset<> > part1(T1.n_branches(),dynamic_bitset<>(T1.n_leaves()));
 
     vector<double> d2(T2.n_branches());
-    vector< dynamic_bitset<> > part2(T1.n_branches(),dynamic_bitset<>(T2.n_leaves()));
+    vector< dynamic_bitset<> > part2(T2.n_branches(),dynamic_bitset<>(T2.n_leaves()));
 
     // get partitions and lengths for T1
     for(int b=0;b<T1.n_branches();b++) {
