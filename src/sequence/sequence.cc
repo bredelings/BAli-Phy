@@ -179,14 +179,8 @@ string guess_alphabet(const vector<sequence>& sequences)
 // DNA wins ties, including empty input. Decoding subsequently validates the chosen alphabet.
 string guess_nucleotides_for(const vector<sequence>& sequences)
 {
-    std::size_t t_count = 0, u_count = 0;
-    for (const auto& sequence: sequences)
-        for (char letter: sequence)
-        {
-            if (letter == 'T') ++t_count;
-            else if (letter == 'U') ++u_count;
-        }
-    return u_count > t_count ? "RNA" : "DNA";
+    const auto letter_counts = count_letters(sequences);
+    return letter_counts['U'] > letter_counts['T'] ? "RNA" : "DNA";
 }
 
 string guess_alphabet(const string& name_, const vector<sequence>& sequences)
