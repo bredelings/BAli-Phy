@@ -69,7 +69,7 @@ sequence::sequence(const string& n,const string& c)
 
 bool operator==(const sequence& s1,const sequence& s2) {
     return s1.name == s2.name and
-	(string&)s1 == (string&)s2;
+	static_cast<const string&>(s1) == static_cast<const string&>(s2);
 }
 
 std::size_t total_length(const vector<std::size_t>& letter_counts)
@@ -169,7 +169,7 @@ string guess_alphabet(const vector<sequence>& sequences)
     myexception e;
     e<<"Can't guess alphabet!\n"
      <<"   AUTGCN="<<int(AUTGCN*100)<<"%    T = "<<int(T*100)<<"%   U = "<<int(U*100)<<"%\n"
-     <<"   ARNDCQEGHILKMFPSTWYVX="<<int(aa*100)<<"%   QEILKFPJZ* = "<<int(aa_not_nuc*100)<<"%\n"
+     <<"   ARNDCQEGHILKMFPSTWYVX="<<int(aa*100)<<"%   QEILFPJZ* = "<<int(aa_not_nuc*100)<<"%\n"
      <<"   0123456789="<<int(digits*100)<<"%";
 
     throw e;

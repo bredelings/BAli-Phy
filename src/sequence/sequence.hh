@@ -48,6 +48,7 @@ struct sequence: public std::string, public sequence_info
     explicit sequence(const std::string& n,const std::string& c);
 };
 
+// Compare names and sequence contents, ignoring comments.
 bool operator==(const sequence&,const sequence&);
 
 std::string guess_alphabet(const std::vector<sequence>& sequences);
