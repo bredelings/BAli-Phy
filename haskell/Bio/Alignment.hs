@@ -308,28 +308,40 @@ fixedLeafColumns :: HasSequences d => d -> Map.Map Text (U.Vector Int)
 fixedLeafColumns sequenceData = Map.fromList [(label, observedColumns (bitmaskFromSequence sequence))
                                             | (label, sequence) <- getSequences sequenceData]
 
--- Project observed leaves only for output: a sampling root may have auxiliary states at gaps.
--- Encode the selected arrays directly, avoiding another scan/copy to remove missing sentinels.
+-- Prepare the node encoders independently of sampled states. The generated model reuses this
+-- partially applied function; changes to the tree information can still require new preparation.
 fixedLeafStateEncoding :: (IsTree t, LabelType t ~ Text) => Map.Map Text (U.Vector Int) -> t
                       -> IntMap ComponentStateSequence -> Encoding
 fixedLeafStateEncoding columns tree =
-    \sequences -> E.pairs (foldr (<>) E.Empty
-        [E.pair key (encoder (sequences IntMap.! n)) | (key, n, encoder) <- encoders])
-    -- Keep label ordering and encoder selection independent of sampled state changes.
-    where encoders = Map.elems (Map.fromList
-              [(label, (toJSONKey label, n, encodeNode n label))
-              | n <- nodes tree, Just label <- [getLabels tree IntMap.! n]])
-          encodeNode n label = case Map.lookup label columns of
-              Just selected | isLeafNode tree n -> encodeSelected selected
+    encodeNodeStates (prepareNodeEncoders columns tree)
+
+-- Associate each named node with its JSON key and encoder, keeping entries in label order.
+-- Only observed leaves need column selection; other named nodes use ordinary encoding.
+prepareNodeEncoders :: (IsTree t, LabelType t ~ Text) => Map.Map Text (U.Vector Int) -> t
+                    -> [(Key, Int, ComponentStateSequence -> Encoding)]
+prepareNodeEncoders columns tree = Map.elems (Map.fromList
+    [(label, (toJSONKey label, node, encoderForNode node label))
+    | node <- nodes tree, Just label <- [getLabels tree IntMap.! node]])
+    where encoderForNode node label = case Map.lookup label columns of
+              Just selected | isLeafNode tree node -> encodeLeafStates selected
               _ -> toEncoding
-          -- Observed columns are ordered and unique, so a full-length selection is the identity.
-          encodeSelected selected sequence@(ComponentStateSequence values) =
-              let ComponentStateSequence projected = if U.length selected == U.length values
-                                                     then sequence
-                                                     else selectComponentStates selected sequence
-                  (categories, states) = U.unzip projected
-              in E.pairs (E.pairStr "categories" (toEncoding categories) <>
-                          E.pairStr "states" (toEncoding states))
+
+-- Look up the current sampled states and apply the prepared encoders to form a JSON object.
+encodeNodeStates :: [(Key, Int, ComponentStateSequence -> Encoding)]
+                 -> IntMap ComponentStateSequence -> Encoding
+encodeNodeStates nodeEncoders nodeStates = E.pairs (foldr (<>) E.Empty
+    [E.pair key (encoder (nodeStates IntMap.! node)) | (key, node, encoder) <- nodeEncoders])
+
+-- Exclude auxiliary leaf states at unobserved columns, then encode both selected arrays directly.
+-- Observed columns are ordered and unique, so a full-length selection is the identity.
+encodeLeafStates :: U.Vector Int -> ComponentStateSequence -> Encoding
+encodeLeafStates columns sampledStates@(ComponentStateSequence values) =
+    E.pairs (E.pairStr "categories" (toEncoding categories) <>
+             E.pairStr "states" (toEncoding states))
+    where ComponentStateSequence selectedStates
+              | U.length columns == U.length values = sampledStates
+              | otherwise = selectComponentStates columns sampledStates
+          (categories, states) = U.unzip selectedStates
 
 
 instance ToJSON ComponentStateSequence where
