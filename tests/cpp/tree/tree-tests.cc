@@ -22,4 +22,12 @@ int main()
     require(branch_distance(star, resolved) == 2, "Star-to-resolved distance");
     require(branch_distance(resolved, star) == 2, "Resolved-to-star distance");
     require(branch_distance(resolved, resolved) == 0, "Identical-tree distance");
+
+    // Joining goes through a virtual base; ordinary copy tests do not cover its initialization.
+    RootedSequenceTree left, right;
+    left.parse("(A:1,B:2);");
+    right.parse("(C:3,D:4);");
+    RootedSequenceTree joined(left, right);
+    require(joined.get_leaf_labels() == std::vector<std::string>({"A", "B", "C", "D"}), "Joined labels");
+    require(joined.root().degree() == 4 and tree_length(joined) == 10, "Joined root and lengths");
 }

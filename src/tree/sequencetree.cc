@@ -340,7 +340,7 @@ RootedSequenceTree::RootedSequenceTree(istream& file) {
 }
 
 RootedSequenceTree::RootedSequenceTree(const RootedSequenceTree& T1, const RootedSequenceTree& T2)
-    :RootedTree(T1,T2)
+    :Tree(T1),RootedTree(T1,T2)
 {
     // This preserves only leaf labels.
 
