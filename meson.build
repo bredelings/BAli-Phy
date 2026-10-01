@@ -1,5 +1,5 @@
 project('bali-phy', ['cpp','c'],
-        version: '4.3',
+        version: '4.4.0-dev',
         default_options : [
           'cpp_std=c++23',
           'warning_level=3',

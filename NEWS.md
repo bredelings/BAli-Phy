@@ -1,3 +1,9 @@
+# 4.4 (unreleased)
+
+## Fixes
+
+ - Better error messages with different partitions have different sequence names.
+
 # 4.3 (Sep 12, 2026)
 
 ## Breaking changes
