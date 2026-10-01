@@ -18,11 +18,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <array>
 #include <algorithm>
+#include <cassert>
 #include <cstdlib>
+#include <vector>
+#include "util/myexception.hh"
 #include "sequence/genetic_code.hh"
 #include "alignment/alignment.hh"
 #include "alignment/alignment-util.hh"
@@ -36,7 +38,6 @@ using std::cerr;
 using std::endl;
 using std::vector;
 using std::string;
-using std::shared_ptr;
 
 // Flush buffered output before reporting success, including help and untranslated sequences.
 static void check_output()
@@ -102,9 +103,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("help,h", "Produce help message")
     ("genetic-code,g",value<string>()->default_value("standard"),"Specify alternate genetic code.")
     ("frame,f",value<int>()->default_value(1),"Frame 1, 2, 3, -1, -2, or -3")
-    ("reverse,r","Just return the reverse")
-    ("complement,c","Just return the complement")
-    ("translate,t",value<bool>()->default_value(true,"yes"),"Translate the sequences")
+    ("reverse,r","Reverse alignment columns before translation")
+    ("complement,c","Complement nucleotides before translation")
+    ("translate,t",value<bool>()->default_value(true,"yes"),"Translate the sequences; --translate=no disables translation")
     ;
 
   variables_map args;     
@@ -113,7 +114,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Translate a DNA/RNA alignment into amino acids.\n\n";
-    cout<<"Usage: alignment-translate [OPTIONS] < sequence-file [OPTIONS]\n";
+    cout<<"Usage: alignment-translate [OPTIONS] < sequence-file > output-file\n";
     cout<<all<<"\n";
     cout<<" Examples:\n\n";
     cout<<"  Translate DNA or RNA to amino acids in reading frame 1:\n";
