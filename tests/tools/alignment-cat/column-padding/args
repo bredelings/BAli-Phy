@@ -1,3 +1,3 @@
-# Column coordinates require equal lengths; padding supplies absent terminal positions.
-# Existing equal-length cases cannot check this boundary; retire if column coordinates change.
+# Explicit input padding must also preserve reordered column correspondence.
+# Implicit-padding coverage does not exercise --pad; retire if that option is removed.
 --pad -c3,1

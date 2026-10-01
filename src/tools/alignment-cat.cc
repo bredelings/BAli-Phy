@@ -507,7 +507,6 @@ int main(int argc,char* argv[])
 
             if (app.count("--columns"))
             {
-                check_all_same_length(S, "in order to select columns.");
                 S = select(S,columns);
             }
 

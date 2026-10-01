@@ -1,3 +1,0 @@
-alignment-cat: Error! All sequences in an alignment must have the same length in order to select columns.
-Alignment file: sequence #2 'b' has length 2 != 3
-Consider option -p to pad them to the same length.

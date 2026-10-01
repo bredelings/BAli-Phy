@@ -144,10 +144,11 @@ selects columns at that interval from the start of the range: **2-/3** selects
 columns 2, 5, 8, and so on. Ranges are appended in the order given, including
 repeated columns. Range endpoints must lie within the alignment.
 
-Column selection requires equal-length sequences after taxon selection and any
-amino-acid alignment. Use **`--pad`** for unequal-length input; it pads each input
-before taxon selection and concatenation. Discarded sequences do not affect the
-length check for column selection.
+Column selection treats shorter sequences as padded with **-** to the length of
+the longest retained sequence, after taxon selection and any amino-acid alignment.
+This preserves column correspondence for reordered and repeated selections.
+Discarded sequences do not affect the available column range. **`--pad`** pads
+each input earlier, before taxon selection and concatenation.
 
 # CODON ALIGNMENT
 

@@ -220,17 +220,30 @@ string guess_alphabet(const string& name_, const vector<sequence>& sequences)
 	return name_;
 }
 
+// Select in the requested order, preserving duplicates. Treat absent trailing positions as gaps
+// so that every output row has the same column correspondence, even for reordered selections.
 vector<sequence> select(const vector<sequence>& s,const vector<int>& columns)
 {
+    std::size_t L = 0;
+    for(const auto& sequence: s)
+        L = std::max(L, sequence.size());
+    for(int column: columns)
+        if (column < 0 or column >= L)
+            throw myexception()<<"Column index "<<column<<" is outside an alignment of length "<<L<<".";
+
     //------- Start with empty sequences --------//
-    vector<sequence> S = s;
-    for(int i=0;i<s.size();i++)
-	S[i].string::operator=("");
+    vector<sequence> S;
+    S.reserve(s.size());
+    for(const auto& sequence: s)
+        S.emplace_back(static_cast<const sequence_info&>(sequence));
 
     //------- Append columns to sequences -------//
     for(int j=0;j<s.size();j++)
-	for(int i=0;i<columns.size() and columns[i] < s[j].size();i++)
-	    S[j] += s[j][columns[i]];
+    {
+        S[j].reserve(columns.size());
+        for(int column: columns)
+            S[j] += column < s[j].size() ? s[j][column] : '-';
+    }
 
     return S;
 }
@@ -238,6 +251,8 @@ vector<sequence> select(const vector<sequence>& s,const vector<int>& columns)
 vector<sequence> select(const vector<sequence>& s,const string& range)
 {
     if (range.empty()) return s;
+    if (s.empty())
+        throw myexception()<<"Cannot select columns from an empty sequence collection.";
 
     auto L = s[0].size();
     for(int i=0;i<s.size();i++)

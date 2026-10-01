@@ -56,7 +56,11 @@ std::string guess_alphabet(const std::string& name_, const std::vector<sequence>
 // Select DNA or RNA from uppercase sequence letters without validating them; DNA wins T/U ties.
 std::string guess_nucleotides_for(const std::vector<sequence>& sequences);
 
+// Select zero-based columns in order, padding short rows with '-'; reject indices outside
+// the longest row. An empty column list produces empty rows with their metadata preserved.
 std::vector<sequence> select(const std::vector<sequence>& s,const std::vector<int>& columns);
+// Parse a one-based range and select columns as above. An empty range leaves the input unchanged;
+// a nonempty range requires at least one sequence.
 std::vector<sequence> select(const std::vector<sequence>& s,const std::string& range);
 
 // Pad with '-' to the longest row; an empty collection is unchanged.
