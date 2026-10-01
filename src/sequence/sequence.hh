@@ -35,8 +35,10 @@ struct sequence_info
 
 struct sequence: public std::string, public sequence_info
 {
+    // Remove gaps ('-') and unknown characters ('?' and '=').
     void strip_gaps();
 
+    // Count characters other than '-', '?', and '='.
     int seq_length() const;
 
     sequence() {}

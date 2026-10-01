@@ -39,7 +39,7 @@ int sequence::seq_length() const
 {
     int total = 0;
     for(char c: (*this))
-	if (c != '-' and c != '?')
+	if (c != '-' and c != '?' and c != '=')
 	    total++;
 
     return total;
@@ -52,8 +52,8 @@ void sequence::strip_gaps()
     for(int i=0;i<size();i++) {
 	char c = (*this)[i];
 
-	// FIXME - this hardcodes the - and ? characters...
-	if (c != '-' and c != '?')
+	// FIXME - this hardcodes the -, ?, and = characters...
+	if (c != '-' and c != '?' and c != '=')
 	    ungapped += c;
     }
     string::operator=(ungapped);
