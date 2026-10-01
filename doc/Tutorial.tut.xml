@@ -459,34 +459,226 @@ You can also use the Huelsenbeck model with the free-rates model:
 % bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> ASRV.Free +> Covarion.Huelsenbeck02'
 </para>
 </section>
-<section><info><title>Codon models</title></info>
-<para>
-We can also conduct codon-based analyses using the Nielsen and Yang (1998) model of diversifying positive selection (dN/dS):
-% bali-phy Globins/bglobin.fasta --test -S 'GY94(pi=F1x4)'
-The GY94_ext model extends the GY94 model by taking a nucleotide exchange model as a parameter. The GY94 model is equivalent to GY94_ext(HKY85_sym).  However, if you want a more flexible codon model, you could use GTR_sym:
-% bali-phy Globins/bglobin.fasta --test -S 'GY94_ext(GTR_sym,pi=F1x4)'
-You can make the codon frequencies to be generated from a single set of nucleotide frequencies:
-% bali-phy Globins/bglobin.fasta --test -S 'MG94_ext(GTR)'
-The M7 model allows different sites to have different dN/dS values, where the probability of dN/dS values follows a beta distribution:
-% bali-phy Globins/bglobin.fasta --test -S M7
-The M7 model has parameters as well. Here are the defaults:
-% bali-phy Globins/bglobin.fasta --test -S '|w:GY94(omega=w)| +> M7'
-The M3 model allows different sites to have different dN/dS values, but directly estimates what these values are:
-% bali-phy Globins/bglobin.fasta --test -S 'M3(n=3)'
-The M8a_test model allows testing for positive selection in some fraction of the sites:
-% bali-phy Globins/bglobin.fasta --test -S '|w:GY94(omega=w,pi=F3x4)| +> M8a_test'
-</para>
+<section xml:id="codon_models"><info><title>Codon models and selection</title></info>
+<para>We will analyze myxovirus resistance (Mx) genes from ten mammals and two birds, using
+sequences downloaded and aligned for Álvarez-Carretero et al. (2023). The data are used with
+permission from Sandra Álvarez-Carretero. See <filename>Mx/README.md</filename> in the examples
+for the citation, provenance, and preprocessing details. The terminal stop codons have been
+removed; the remaining alignment contains 663 codon columns.</para>
+% cd ~/alignment_files/examples/Mx
+
+<para>We first condition on this alignment using <userinput>-I none</userinput>. The single-ω
+and site analyses still estimate the tree topology. Later we will fix the topology for branch
+analyses, and finally revisit the site test while estimating the alignment. These Bayesian
+analyses use different models and methods from the original PAML tutorial; their numerical
+results need not match.</para>
+<para>The commands below start MCMC runs. In contrast, adding <userinput>--test</userinput>
+checks the model setup without sampling: it does not perform a statistical test for selection.
+Run two independent copies of each analysis, as in the earlier alignment exercises, and check
+agreement and effective sample sizes before interpreting the results. Work through the examples
+one at a time; there is no need to run all of them simultaneously. See the
+<link xmlns:xlink="http://www.w3.org/1999/xlink"
+xlink:href="https://www.bali-phy.org/README.html#analysis">User Guide's analysis instructions</link>
+for convergence and burn-in guidance.</para>
+
+<section><info><title>One ω for the whole sequence</title></info>
+<para>Start with one ω shared across sites and branches. GTR describes nucleotide mutation;
+MNM allows changes of more than one nucleotide within a codon; MutSelAA estimates amino-acid
+preferences shared across sites; and dNdS adds the ω multiplier. Here ω describes nonsynonymous
+change beyond the effect of these preferences, not a raw ratio of observed changes.</para>
+<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none \
+  -S 'GTR +> MNM +> MutSelAA +> dNdS' --name Mx-single-fixedA &amp;
+<prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none \
+  -S 'GTR +> MNM +> MutSelAA +> dNdS' --name Mx-single-fixedA &amp;</screen>
+<para>These commands create <filename>Mx-single-fixedA-1</filename> and
+<filename>Mx-single-fixedA-2</filename> in a fresh working directory. Summarize the runs:</para>
+<screen><prompt>%</prompt> bpy-summarize Mx-single-fixedA-1/ \
+  Mx-single-fixedA-2/</screen>
+% mv Results Mx-single-fixedA.Results
+
+<para>Open <filename>Mx-single-fixedA.Results/index.html</filename>. Read the ω estimate and
+credible interval in the parameter report. A single ω averages across the sequence and cannot
+identify selected sites. You can summarize while the runs continue, but a report's existence
+does not establish convergence. Repeat the summary after collecting more samples as needed;
+move aside the previous named report before using the same destination again. Stop the runs
+using the process-control instructions from the earlier exercises when finished.</para>
+<para>The remaining examples each show one launch command. Run it twice to create the two
+independent run directories used by the summary command. If you already have runs with the
+same name, BAli-Phy chooses higher suffixes; substitute the actual directories. Combine runs
+of the same model and settings, not runs from different examples.</para>
+</section>
+
+<section><info><title>Different ω values among sites</title></info>
+<para>M8a allows a distribution of ω values below one and an additional category with ω equal
+to one. It describes variation among sites without allowing a positive-selection category.
+The expression <userinput>|w:...|</userinput> builds the codon model for each supplied ω;
+the mutation parameters and amino-acid preferences are shared across categories.</para>
+<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none \
+  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|
+      +> M8a' \
+  --name Mx-M8a-fixedA &amp;</screen>
+<para>Run this command twice, then summarize:</para>
+<screen><prompt>%</prompt> bpy-summarize Mx-M8a-fixedA-1/ \
+  Mx-M8a-fixedA-2/</screen>
+% mv Results Mx-M8a-fixedA.Results
+
+<para>Open <filename>Mx-M8a-fixedA.Results/index.html</filename> and examine the site-model
+parameters and category proportions. This analysis estimates variation in ω; it does not
+compare a selection hypothesis with a no-selection hypothesis.</para>
+</section>
+
+<section><info><title>Testing for positively selected sites</title></info>
+<para>M8a_test compares M8a with M8, whose additional category has ω above one. Both hypotheses
+are included in one analysis: you do not need to fit M8a and M8 separately to perform this test.</para>
+<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none \
+  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|
+      +> M8a_test' \
+  --name Mx-M8a-test-fixedA &amp;</screen>
+<para>Run this command twice, then summarize:</para>
+<screen><prompt>%</prompt> bpy-summarize Mx-M8a-test-fixedA-1/ \
+  Mx-M8a-test-fixedA-2/</screen>
+% mv Results Mx-M8a-test-fixedA.Results
+
+<para>Open <filename>Mx-M8a-test-fixedA.Results/index.html</filename>. Under
+<literal>Positive selection</literal>, find <literal>Support for positive selection in the
+model</literal>. This reports posterior support and log odds for the selection hypothesis.
+Use this dedicated table to assess model support. See the
+<link xmlns:xlink="http://www.w3.org/1999/xlink"
+xlink:href="https://www.bali-phy.org/README.html#selection-model-support">User Guide</link>
+for the relation between posterior odds, prior odds, and Bayes factors.</para>
+<para>Then examine the site probabilities. <literal>Overall posterior</literal> averages over
+both hypotheses; <literal>Posterior with selection</literal> conditions on the selection
+hypothesis. A high conditional probability at a codon is not by itself strong overall evidence
+if the selection hypothesis has little support. In the alignment viewer, select
+<literal>posSelection</literal>; these views are labelled <literal>Model-averaged</literal>
+and <literal>Conditional on positiveSelectionInModel</literal>.</para>
+</section>
+
+<section><info><title>Different ω values among branches</title></info>
+<para>Now ask whether the terminal chicken and duck branches have a different ω from the
+remaining branches. The supplied <filename>Mx_foreground.tree</filename> labels both with
+<literal>:[&amp;foreground=1]</literal>; unlabelled branches use category 0. The two bird
+branches share one ω, and the ancestral branch leading to birds is not labelled. The annotation
+follows a colon because it belongs to the branch, not the node.</para>
+<para>Fix the supplied topology so these branch groups remain defined. Branch lengths are
+still estimated. BranchModel uses one ω per group, shared across sites:</para>
+<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none \
+  --fix topology=Mx_foreground.tree \
+  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|
+      +> BranchModel' \
+  --name Mx-branch-fixedA &amp;</screen>
+<para>Run this command twice, then summarize:</para>
+<screen><prompt>%</prompt> bpy-summarize Mx-branch-fixedA-1/ \
+  Mx-branch-fixedA-2/</screen>
+% mv Results Mx-branch-fixedA.Results
+
+<para>Open <filename>Mx-branch-fixedA.Results/index.html</filename> and find the category ω
+estimates under <literal>Branch models</literal>. The categories can differ while both ω
+values remain below one. This analysis estimates separate values; the next analysis tests
+whether a separate foreground value is supported.</para>
+</section>
+
+<section><info><title>Testing for a difference between branch groups</title></info>
+<para>For BranchModel_test, use <filename>Mx_branch_test.tree</filename>. Each bird terminal
+branch has <literal>:[&amp;foreground={0,1}]</literal>. The entries specify its category under
+each hypothesis: hypothesis 0 uses category 0 everywhere; hypothesis 1 assigns a shared
+category 1 to chicken and duck. Other branches stay in category 0 under both hypotheses.</para>
+<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none \
+  --fix topology=Mx_branch_test.tree \
+  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|
+      +> BranchModel_test' \
+  --name Mx-branch-test-fixedA &amp;</screen>
+<para>Run this command twice, then summarize:</para>
+<screen><prompt>%</prompt> bpy-summarize Mx-branch-test-fixedA-1/ \
+  Mx-branch-test-fixedA-2/</screen>
+% mv Results Mx-branch-test-fixedA.Results
+
+<para>Open <filename>Mx-branch-test-fixedA.Results/index.html</filename>. Under
+<literal>Branch models</literal>, read <literal>Hypothesis support</literal> and the ω
+summaries for each hypothesis. This tests whether the branch groups need different ω values,
+not specifically whether ω exceeds one. Interpret the posterior support using the manual's
+model-support guidance linked above.</para>
+</section>
+
+<section><info><title>Testing for selection at some sites on foreground branches</title></info>
+<para>BranchSite is a test, despite having no <literal>_test</literal> suffix. It allows some
+sites to have ω above one on foreground branches while their background ω remains at or below
+one, and compares this with a null hypothesis that fixes their foreground ω to one.
+Use the scalar <literal>foreground=1</literal> labels in <filename>Mx_foreground.tree</filename>,
+rather than the hypothesis lists used for BranchModel_test.</para>
+<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none \
+  --fix topology=Mx_foreground.tree \
+  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|
+      +> BranchSite' \
+  --name Mx-branch-site-fixedA &amp;</screen>
+<para>Run this command twice, then summarize:</para>
+<screen><prompt>%</prompt> bpy-summarize Mx-branch-site-fixedA-1/ \
+  Mx-branch-site-fixedA-2/</screen>
+% mv Results Mx-branch-site-fixedA.Results
+
+<para>Open <filename>Mx-branch-site-fixedA.Results/index.html</filename> and read
+<literal>Support for positive selection in the model</literal>. In the alignment viewer,
+<literal>foreground-posSelection</literal> shows selection probabilities for the foreground
+branches and <literal>foreground-dNdS</literal> shows ω estimates. The corresponding
+<literal>background-posSelection</literal> and <literal>background-dNdS</literal> properties
+describe the background branches. Distinguish overall from selection-conditional probabilities
+as in the site test. Foreground branches should be chosen from the biological question before
+examining the selection results.</para>
+</section>
+
+<section><info><title>Estimating the alignment along with selection</title></info>
+<para>So far, we have treated the supplied alignment as known. Return to the M8a site test
+and remove <userinput>-I none</userinput> to estimate the alignment jointly with selection.
+Keep the substitution model and topology treatment the same as in the fixed-alignment site
+test; the topology is estimated in both analyses.</para>
+<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons \
+  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|
+      +> M8a_test' \
+  --name Mx-M8a-test-freeA &amp;</screen>
+<para>Run this command twice, then summarize:</para>
+<screen><prompt>%</prompt> bpy-summarize Mx-M8a-test-freeA-1/ \
+  Mx-M8a-test-freeA-2/</screen>
+% mv Results Mx-M8a-test-freeA.Results
+
+<para>Joint estimation can yield a more accurate alignment and accounts for alignment
+uncertainty when assessing selection, although improved accuracy is not guaranteed. It adds
+alignment sampling, so reassess convergence rather than assuming the same run length suffices.</para>
+<para>As the alignment changes, the grouping of codons into columns changes too. Selection
+summaries follow individual codons across sampled alignments instead of treating a fixed column
+number as a site's identity. Consequently, codons in the same displayed column can have
+different probabilities. Compare the fixed- and variable-alignment reports' model support,
+representative alignments, and codon probabilities. Use sequence names and ungapped positions
+to identify the same codons across reports, rather than matching column numbers.</para>
 <para>See the <link xmlns:xlink="http://www.w3.org/1999/xlink"
-xlink:href="https://www.bali-phy.org/README.html#positive-selection">User Guide's positive-selection section</link>
-for model choices, running analyses, and interpreting posterior support.</para>
+xlink:href="https://www.bali-phy.org/README.html#selection-locations">User Guide's discussion
+of selected codons</link> for details of the site table and alignment display. These comparisons
+show the effect of alignment treatment; without an independent reference, they do not establish
+which inferred alignment is more accurate.</para>
+</section>
+
+<section><info><title>A historical codon model</title></info>
+<para>For comparison with older analyses, the Goldman–Yang model with F1x4 frequencies can
+be specified as follows. Here <userinput>--test</userinput> only displays the setup:</para>
+<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none --test \
+  -S 'GY94(pi=F1x4)'</screen>
+
+<para>This historical model does not include the MNM and amino-acid preference components
+used above. See the <link xmlns:xlink="http://www.w3.org/1999/xlink"
+xlink:href="https://www.bali-phy.org/README.html#selection-background">User Guide's background-model
+discussion</link> for the reasons behind the choices in the worked examples.</para>
+</section>
 </section>
 
 <section><info><title>Fixing parameter values</title></info>
 <para>
+Return to the examples directory:
+% cd ~/alignment_files/examples/
 We can use the TN93+Gamma(4)+Inv model without specifying parameters:
-% bali-phy Globins/bglobin.fasta --test -S 'TN93 +> ASRV.Gamma +> Inv'
+<screen><prompt>%</prompt> bali-phy Mx/Mx_aln.nonstop.fasta --test \
+  -S 'TN93 +> ASRV.Gamma +> Inv'</screen>
 However, we can also fix parameter values:
-% bali-phy Globins/bglobin.fasta --test -S 'TN93 +> ASRV.Gamma(n=4,alpha=1) +> Inv(pInv=0.2)'
+<screen><prompt>%</prompt> bali-phy Mx/Mx_aln.nonstop.fasta --test \
+  -S 'TN93 +> ASRV.Gamma(n=4,alpha=1) +> Inv(pInv=0.2)'</screen>
 Here we have set the shape parameter for the Gamma distribution to 1, and the
 fraction of invariant sites to 20%.  Since these parameters are fixed, they will
 not be estimated and their values will not be shown in the log file.
@@ -503,9 +695,11 @@ This will show the default value or default prior for each parameter, if there i
 By default the fraction of invariant sites follows a Uniform(0,1) distribution:
 % bali-phy help Inv
 However, we can specify an alternative prior:
-% bali-phy Globins/bglobin.fasta --test -S 'TN93 +> ASRV.Gamma(n=4) +> Inv(pInv~Uniform(0,0.2))'
+<screen><prompt>%</prompt> bali-phy Mx/Mx_aln.nonstop.fasta --test \
+  -S 'TN93 +> ASRV.Gamma(n=4) +> Inv(pInv~Uniform(0,0.2))'</screen>
 We can also specify parameters as positional arguments instead of using variable names:
-% bali-phy Globins/bglobin.fasta --test -S 'TN93 +> ASRV.Gamma(4) +> Inv(~Uniform(0,0.2))'
+<screen><prompt>%</prompt> bali-phy Mx/Mx_aln.nonstop.fasta --test \
+  -S 'TN93 +> ASRV.Gamma(4) +> Inv(~Uniform(0,0.2))'</screen>
 Here "<userinput>~</userinput>" indicates a sample from the uniform distribution instead of the distribution
 itself.
 </para>
