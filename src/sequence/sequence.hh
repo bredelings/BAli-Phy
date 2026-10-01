@@ -59,5 +59,6 @@ std::string guess_nucleotides_for(const std::vector<sequence>& sequences);
 std::vector<sequence> select(const std::vector<sequence>& s,const std::vector<int>& columns);
 std::vector<sequence> select(const std::vector<sequence>& s,const std::string& range);
 
+// Pad with '-' to the longest row; an empty collection is unchanged.
 void pad_to_same_length(std::vector<sequence>& s);
 #endif

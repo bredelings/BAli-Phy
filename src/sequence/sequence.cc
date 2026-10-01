@@ -22,7 +22,7 @@
 #include "util/myexception.hh"
 #include "util/cmdline.hh"
 #include <cstddef>
-#include <range/v3/algorithm/max.hpp>
+#include <algorithm>
 
 using std::vector;
 using std::string;
@@ -251,14 +251,12 @@ vector<sequence> select(const vector<sequence>& s,const string& range)
 void pad_to_same_length(vector<sequence>& s)
 {
     // find total alignment length
-    vector<unsigned> L;
-    for(int i=0;i<s.size();i++)
-	L.push_back(s[i].size());
-    unsigned AL = ranges::max(L);
+    std::size_t AL = 0;
+    for(const auto& sequence: s)
+        AL = std::max(AL, sequence.size());
 
     // pad sequences if they are less than this length
-    for(int i=0;i<s.size();i++)
-	if (L[i] < AL)
-	    (string&)s[i] = (string&)s[i] + string(AL-L[i],'-');
+    for(auto& sequence: s)
+        sequence.resize(AL, '-');
 }
 
