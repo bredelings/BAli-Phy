@@ -2588,22 +2588,24 @@ void RootedTree::reroot(int n) {
     root_ = nodes_[n];
 }
 
-int RootedTree::common_ancestor(int i,int j) const {
-    assert(0 <= i and i < n_nodes()); 
-    assert(0 <= j and j < n_nodes()); 
+// Follow the path toward i from the root while j is in the same outgoing subtree.
+// The first split (or either requested node) is their lowest common ancestor.
+int RootedTree::common_ancestor(int i,int j) const
+{
+    assert(0 <= i and i < n_nodes());
+    assert(0 <= j and j < n_nodes());
 
-    BranchNode* BN = root_;
-  
-    do {
-        BN = BN->out;
-        while(not subtree_contains(BN->directed_branch_attributes->name,i))
-            BN = BN->next;
-
-        assert(subtree_contains(BN->directed_branch_attributes->name,j));
-    } while(subtree_contains(BN->directed_branch_attributes->name,j));
-
-    return BN->node_attributes->name;
+    BranchNode* node = root_;
+    while (node->node_attributes->name != i and node->node_attributes->name != j)
+    {
+        while (not subtree_contains(node->directed_branch_attributes->name, i))
+            node = node->next;
+        if (not subtree_contains(node->directed_branch_attributes->name, j)) break;
+        node = node->out;
+    }
+    return node->node_attributes->name;
 }
+
 
 void RootedTree::add_first_node() {
     Tree::add_first_node();

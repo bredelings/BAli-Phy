@@ -34,6 +34,20 @@ int main()
     require(branch_distance(resolved, star) == 2, "Resolved-to-star distance");
     require(branch_distance(resolved, resolved) == 0, "Identical-tree distance");
 
+    // Cover root placement and ancestor arguments, which the three-leaf tool case cannot express.
+    RootedSequenceTree rooted;
+    rooted.parse("((A,B)X,(C,D)Y)R;");
+    int x = rooted.index("X"), r = rooted.index("R");
+    require(rooted.common_ancestor(rooted.index("A"), rooted.index("B")) == x, "Sibling ancestor");
+    require(rooted.common_ancestor(rooted.index("A"), rooted.index("C")) == r, "Root ancestor");
+    require(rooted.common_ancestor(x, rooted.index("A")) == x, "Ancestor argument");
+    require(rooted.common_ancestor(x, x) == x, "Identical ancestor arguments");
+    require(rooted.common_ancestor(rooted.index("A"), r) == r, "Root argument");
+    rooted.reroot(rooted.index("A"));
+    require(rooted.common_ancestor(rooted.index("B"), rooted.index("C")) == x, "Leaf root ancestor");
+    rooted.parse("single;");
+    require(rooted.common_ancestor(0, 0) == 0, "Singleton ancestor");
+
     // Joining goes through a virtual base; ordinary copy tests do not cover its initialization.
     RootedSequenceTree left, right;
     left.parse("(A:1,B:2);");
