@@ -2,3 +2,4 @@
 [-1,4,5]
 {"categories":[2, 3],"states":[4, 5]}
 {"categories":[],"states":[]}
+{"a":{"categories":[10, 13],"states":[0, 3]},"ancestor":{"categories":[10, 11, 12, 13],"states":[0, 1, 2, 3]},"b":{"categories":[10, 11, 12, 13],"states":[0, 1, 2, 3]},"c":{"categories":[],"states":[]}}

@@ -299,12 +299,45 @@ instance IsTree t => AncestralAlignment (AlignmentOnTree t) where
 
 leafAlignment tree sequenceData = observationsOnTree tree $ fmap (fmap bitmaskFromSequence) $ getSequences sequenceData
 
+foreign import trcall "Likelihood:" observedColumns :: U.Vector Bit -> U.Vector Int
+foreign import trcall "Likelihood:" selectComponentStates :: U.Vector Int -> ComponentStateSequence -> ComponentStateSequence
+
+-- These uncompressed column selections depend only on the fixed observations, not the tree
+-- or sampled states. Sharing this binding avoids rebuilding selections at each logging event.
+fixedLeafColumns :: HasSequences d => d -> Map.Map Text (U.Vector Int)
+fixedLeafColumns sequenceData = Map.fromList [(label, observedColumns (bitmaskFromSequence sequence))
+                                            | (label, sequence) <- getSequences sequenceData]
+
+-- Project observed leaves only for output: a sampling root may have auxiliary states at gaps.
+-- Encode the selected arrays directly, avoiding another scan/copy to remove missing sentinels.
+fixedLeafStateEncoding :: (IsTree t, LabelType t ~ Text) => Map.Map Text (U.Vector Int) -> t
+                      -> IntMap ComponentStateSequence -> Encoding
+fixedLeafStateEncoding columns tree =
+    \sequences -> E.pairs (foldr (<>) E.Empty
+        [E.pair key (encoder (sequences IntMap.! n)) | (key, n, encoder) <- encoders])
+    -- Keep label ordering and encoder selection independent of sampled state changes.
+    where encoders = Map.elems (Map.fromList
+              [(label, (toJSONKey label, n, encodeNode n label))
+              | n <- nodes tree, Just label <- [getLabels tree IntMap.! n]])
+          encodeNode n label = case Map.lookup label columns of
+              Just selected | isLeafNode tree n -> encodeSelected selected
+              _ -> toEncoding
+          -- Observed columns are ordered and unique, so a full-length selection is the identity.
+          encodeSelected selected sequence@(ComponentStateSequence values) =
+              let ComponentStateSequence projected = if U.length selected == U.length values
+                                                     then sequence
+                                                     else selectComponentStates selected sequence
+                  (categories, states) = U.unzip projected
+              in E.pairs (E.pairStr "categories" (toEncoding categories) <>
+                          E.pairStr "states" (toEncoding states))
+
 
 instance ToJSON ComponentStateSequence where
     toJSON = error "ComponentStateSequence.toJSON: not implemented"
 
     -- Samplers initialize and overwrite both arrays together, so -1 marks the same absent
     -- characters in each. Independent native filtering retains corresponding ungapped positions.
+    -- Fixed leaves use observation selections above because root auxiliaries need not be -1.
     toEncoding (ComponentStateSequence values) =
         E.pairs (E.pairStr "categories" (toEncoding (removeMinusOnes categories)) <>
                  E.pairStr "states" (toEncoding (removeMinusOnes states)))

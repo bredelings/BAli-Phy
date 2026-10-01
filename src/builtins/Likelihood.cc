@@ -86,6 +86,42 @@ extern "C" closure builtin_function_stripGaps(OperationArgs& Args)
     return result;
 }
 
+// Cache the alignment columns present in an observation mask, in alignment order.
+extern "C" closure builtin_function_observedColumns(OperationArgs& Args)
+{
+    auto arg = Args.evaluate_slot_to_value(0);
+    const auto& mask = arg.as_<Box<dynamic_bitset<>>>();
+    object_ptr<Box<DenseVector<int>>> result(new Box<DenseVector<int>>(mask.count()));
+    int i = 0;
+    for(auto c = mask.find_first(); c != dynamic_bitset<>::npos; c = mask.find_next(c))
+        (*result)[i++] = c;
+    return result;
+}
+
+// Project both sampled arrays onto the same observed columns without boxed per-site work.
+extern "C" closure builtin_function_selectComponentStates(OperationArgs& Args)
+{
+    auto columns_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 0, "Likelihood.selectComponentStates columns");
+    auto components_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 3, "Likelihood.selectComponentStates components");
+    auto states_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 6, "Likelihood.selectComponentStates states");
+    auto columns = columns_input.view();
+    auto components = components_input.view();
+    auto states = states_input.view();
+    assert(components.size() == states.size());
+    ComponentStateVectors result(columns.size());
+    for(int i = 0; i < columns.size(); i++)
+    {
+        int c = columns[i];
+        assert(c >= 0 and c < states.size());
+        result.components[i] = components[c];
+        result.states[i] = states[c];
+    }
+    return component_state_result(std::move(result));
+}
+
 // Decode the smap and sequence after the alphabet and ambiguity database.
 extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Args)
 {

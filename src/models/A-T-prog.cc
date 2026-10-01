@@ -819,14 +819,24 @@ compute_logged_quantities(Hs::Stmts& model,
         if (get_setting_or("write-properties", true))
         {
             Hs::Var cat_states("catStates" + part_suffix);
-            HsG::Let(model, cat_states, HsG::Apply(Hs::Var("labeledNodeMap"), {tree, *anc_states}));
+            if (imodel_index)
+                HsG::Let(model, cat_states, HsG::Apply(Hs::Var("labeledNodeMap"), {tree, *anc_states}));
+            else
+            {
+                Hs::Var columns("observedColumns" + part_suffix);
+                Hs::Var encoder("encodeFixedLeafStates" + part_suffix);
+                HsG::Let(model, columns, HsG::Apply(Hs::Var("fixedLeafColumns"), {sequence_data}));
+                HsG::Let(model, encoder, HsG::Apply(Hs::Var("fixedLeafStateEncoding"), {columns, tree}));
+                HsG::Let(model, cat_states, HsG::Apply(encoder, {*anc_states}));
+            }
             Hs::Exp smodel_properties = HsG::Apply(Hs::Var("prop_smodel_properties"), {properties});
             Hs::Exp smodel_conditions = HsG::Apply(Hs::Var("prop_smodel_conditions"), {properties});
             Hs::Exp cat_states_key = HsG::Apply(Hs::Var("J.toJSONKey"), {Hs::Literal(Hs::String("catStates"))});
             Hs::Exp properties_key = HsG::Apply(Hs::Var("J.toJSONKey"), {Hs::Literal(Hs::String("properties"))});
             Hs::Exp conditions_key = HsG::Apply(Hs::Var("J.toJSONKey"), {Hs::Literal(Hs::String("conditions"))});
             Hs::Exp cat_state_and_property_fields = HsG::Apply(Hs::Var("<>"),
-                {HsG::Apply(Hs::Var(".="), {cat_states_key, cat_states}),
+                {imodel_index ? HsG::Apply(Hs::Var(".="), {cat_states_key, cat_states})
+                              : HsG::Apply(Hs::Var("J.explicitToField"), {Hs::Var("id"), cat_states_key, cat_states}),
                  HsG::Apply(Hs::Var(".="), {properties_key, smodel_properties})});
             Hs::Exp cat_state_fields = HsG::Apply(Hs::Var("<>"),
                 {cat_state_and_property_fields,
