@@ -191,6 +191,11 @@ string guess_alphabet(const string& name_, const vector<sequence>& sequences)
     string name = name_;
     vector<string> arguments = get_arguments(name,'(',')');
 
+    // Preserve excess arguments so get_alphabet can report its usual argument-count error.
+    if ((name == "Codons" and arguments.size() > 2) or
+        ((name == "Doublets" or name == "RNAEdits" or name == "Triplets") and arguments.size() > 1))
+        return name_;
+
     if (name == "Codons")
     {
 	if (arguments.size() < 2) arguments.resize(2);
