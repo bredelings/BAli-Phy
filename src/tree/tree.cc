@@ -307,7 +307,7 @@ BranchNode* TreeView::create_node_on_branch(BranchNode* b1, int  new_branchname)
     // set new branch name and set length to 0
     b2->undirected_branch_attributes = new tree_attributes(b1->undirected_branch_attributes->size());
     b2->out->undirected_branch_attributes = b2->undirected_branch_attributes;
-    if (not (*b2->out->undirected_branch_attributes)[0].empty())
+    if (not b1->undirected_branch_attributes->empty() and not (*b1->undirected_branch_attributes)[0].empty())
         (*b2->undirected_branch_attributes)[0] = double(0.0);
 
     b2->undirected_branch_attributes->name = new_branchname;

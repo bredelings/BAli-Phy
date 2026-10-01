@@ -30,4 +30,19 @@ int main()
     RootedSequenceTree joined(left, right);
     require(joined.get_leaf_labels() == std::vector<std::string>({"A", "B", "C", "D"}), "Joined labels");
     require(joined.root().degree() == 4 and tree_length(joined) == 10, "Joined root and lengths");
+
+    // Splitting preserves total length, including reverse orientations and absent lengths;
+    // rerooting tools overwrite the new lengths and would conceal this regression.
+    for (bool lengths: {false, true})
+        for (int b: {0, star.n_branches()})
+        {
+            SequenceTree split;
+            split.parse(lengths ? "(A:1,B:1,C:1,D:1);" : "(A,B,C,D);");
+            int inserted = split.create_node_on_branch(b);
+            for (int edge = 0; edge < split.n_branches(); ++edge)
+                require(split.branch(edge).has_length() == lengths, "Split length presence");
+            if (lengths) require(tree_length(split) == 4, "Split total length");
+            split.remove_node_from_branch(inserted);
+            if (lengths) require(branch_distance(split, star) == 0, "Split/remove round-trip");
+        }
 }
