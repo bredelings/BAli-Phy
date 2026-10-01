@@ -21,6 +21,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <fstream>
 #include <string>
 #include <array>
+#include <algorithm>
+#include <cstdlib>
 #include "sequence/genetic_code.hh"
 #include "alignment/alignment.hh"
 #include "alignment/alignment-util.hh"
@@ -138,21 +140,21 @@ int main(int argc,char* argv[])
       return 0;
     }
 
+    //------- Validate the reading frame before consuming input --------//
+    const int frame = args["frame"].as<int>();
+
+    if (frame < -3 or frame > 3 or frame == 0)
+      throw myexception()<<"You may only specify frame 1, 2, 3, -1, -2, or -3: "<<frame<<" is right out.";
+    const bool do_reverse_complement = frame < 0;
+
+    // Frames +/-1, +/-2, and +/-3 start at zero-based column offsets 0, 1, and 2.
+    const int column_offset = std::abs(frame) - 1;
+
     //------- Try to load sequences --------//
     vector<sequence> sequences = sequence_format::read_guess(std::cin);
 
     if (sequences.size() == 0)
       throw myexception()<<"Alignment file read from STDIN  didn't contain any sequences!";
-
-    //------- Convert sequences to specified reading frame --------//
-    int frame = args["frame"].as<int>();
-
-    if (frame < -3 or frame > 3 or frame == 0)
-      throw myexception()<<"You may only specify frame 1, 2, 3, -1, -2, or -3: "<<frame<<" is right out.";
-    bool do_reverse = (frame < 0);
-
-    // shift to the 0,1,2 scale
-    frame = (std::abs(frame)+2)%3;
     
     //--------- Load alignment & determine RNA or DNA ----------//
     alignment A1{DNA()};
@@ -192,7 +194,7 @@ int main(int argc,char* argv[])
       return 0;
     }
       
-    if (do_reverse) 
+    if (do_reverse_complement)
       A1 = reverse_complement(A1);
 
     //------- Construct the alphabets that we are using  --------//
@@ -201,9 +203,7 @@ int main(int argc,char* argv[])
     AminoAcidsWithStop AA;
 
     //------- Convert sequence codons to amino acids  --------//
-    int translated_length = 0;
-    for(int column=frame;column<A1.length()-2;column+=3)
-      translated_length++;
+    const int translated_length = std::max(0, A1.length() - column_offset) / 3;
 
     vector<sequence> translated_sequences(A1.n_sequences());
     for(int i=0;i<A1.n_sequences();i++)
@@ -216,7 +216,7 @@ int main(int argc,char* argv[])
     for(int i=0;i<A1.n_sequences();i++)
     {
       int output_column = 0;
-      for(int column=frame;column<A1.length()-2;column+=3) 
+      for(int column=column_offset;column<A1.length()-2;column+=3)
       {
 	int n0 = A1(column,i);
 	int n1 = A1(column+1,i);
@@ -224,7 +224,10 @@ int main(int argc,char* argv[])
 
 	int aa = translate_codon(n0, n1, n2, G, AA, A1.get_ambiguities(), A2.get_ambiguities());
 	A2.set_value(output_column++, i, aa);
-	A2.seq(i) += A2.lookup(aa);
+	// Keep gaps and unknowns in the matrix, but omit them from the ungapped sequence
+	// string, as alignment::load does. Ambiguous amino acids remain in both.
+	if (alphabet::is_character(aa))
+	    A2.seq(i) += A2.lookup(aa);
       }
     }
 
