@@ -51,7 +51,7 @@ public:
   /// compute a string representing the tree, w/ or w/o branch lengths
   virtual std::string write_with_bootstrap_fraction(const std::vector<double>& bf, bool print_lengths=true) const;
 
-  /// add a degree 0 , linking to node 'n'.  However, the index will not be a leaf index
+  /// Append an unnamed leaf using Tree::add_leaf_node's intermediate numbering convention.
   virtual nodeview add_leaf_node(int n);
 
   /// Add a node onto a branch 'b', splitting it into two sub-neighbors

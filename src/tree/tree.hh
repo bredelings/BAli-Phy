@@ -566,7 +566,9 @@ public:
     /// create a node
     virtual void add_first_node();
 
-    /// add a degree 0 , linking to node 'n'.  However, the index will not be a leaf index
+    /// Append a leaf attached to n. Except for the first edge, this is an intermediate
+    /// topology-building step: the new index is last and the stored leaf count is unchanged.
+    /// Callers must finish their reconnections before querying leaf lists or copying the tree.
     virtual nodeview add_leaf_node(int n);
 
     void reconnect_branch(int source, int target, int new_target);

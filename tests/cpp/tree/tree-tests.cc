@@ -50,6 +50,14 @@ int main()
     require(branch_distance(resolved, star) == 2, "Resolved-to-star distance");
     require(branch_distance(resolved, resolved) == 0, "Identical-tree distance");
 
+    // Splitting a polytomy exercises temporary leaf insertion followed by reconnection.
+    SequenceTree partitioned(star);
+    int new_branch = partitioned.induce_partition(boost::dynamic_bitset<>(4, 3));
+    auto partition = branch_partition(partitioned, new_branch);
+    require(partition == boost::dynamic_bitset<>(4, 3) or ~partition == boost::dynamic_bitset<>(4, 3),
+            "Induced partition");
+    require(partitioned.n_leaves() == 4, "Leaf count after reconnection");
+
     // Cover root placement and ancestor arguments, which the three-leaf tool case cannot express.
     RootedSequenceTree rooted;
     rooted.parse("((A,B)X,(C,D)Y)R;");

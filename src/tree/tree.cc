@@ -1129,7 +1129,8 @@ nodeview Tree::add_leaf_node(int node)
     for(BN_iterator BN(nodes_[0]);BN;BN++) 
     {
         branches_[ (*BN)->directed_branch_attributes->name ] = *BN;
-        assert( nodes_[ (*BN)->node_attributes->name ] = *BN);
+        // Representatives may differ within a node ring; checking must not select a new one.
+        assert(nodes_[(*BN)->node_attributes->name]->node_attributes == (*BN)->node_attributes);
     }
 
     caches_valid = false;
