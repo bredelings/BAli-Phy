@@ -155,24 +155,27 @@ int main(int argc,char* argv[])
     frame = (std::abs(frame)+2)%3;
     
     //--------- Load alignment & determine RNA or DNA ----------//
-    alignment A1;
+    alignment A1{DNA()};
     try
     {
-	DNA d;
-	alignment A(d);
-	A.load(sequences);
-	A1 = A;
+      A1.load(sequences);
     }
-    catch (...)
+    catch (const myexception& dna_error)
     {
-	RNA r;
-	alignment A(r);
-	A.load(sequences);
-	A1 = A;
+      const string dna_message = dna_error.what();
+      // Discard any partially loaded DNA data before trying RNA. If neither alphabet works,
+      // retain both diagnostics rather than guessing which alphabet the input was meant to use.
+      A1 = alignment(RNA());
+      try
+      {
+        A1.load(sequences);
+      }
+      catch (const myexception& rna_error)
+      {
+        throw myexception()<<"Could not read the alignment as DNA or RNA.\n"
+                           <<"DNA: "<<dna_message<<"\nRNA: "<<rna_error.what();
+      }
     }
-
-    owned_ptr<Nucleotides> N(dynamic_cast<const Nucleotides&>(A1.get_alphabet()));
-    assert(N);
 
     //------------------ Reverse Complement? -------------------//
 
