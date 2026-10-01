@@ -72,15 +72,15 @@ reference alignment.
 
 **-e**, **`--erase-empty-columns`**
 : Remove columns consisting entirely of characters in **`--missing`** (by default,
-  **-** and **?**). This examines the retained sequences after column selection.
+  **-**, **?**, and **=**). This examines the retained sequences after column selection.
   Sequences must have equal lengths at this stage.
 
 **`--missing`** _characters_
 : Set the characters treated as gaps or missing data by **`--erase-empty-columns`**,
-  **`--strip-gaps`**, and **`--align-by-amino`**. The default is **-?**. The value is a
+  **`--strip-gaps`**, and **`--align-by-amino`**. The default is **-?=**. The value is a
   literal list of characters, not a regular expression, and replaces the default
   list. Matching is case-sensitive, so use uppercase letters to match the sequence
-  data: **`--missing='-?N'`** also treats **N** as missing. This option does not
+  data: **`--missing='-?=N'`** also treats **N** as missing. This option does not
   change the **-** character inserted by **`--pad`**.
 
 **`--strip-gaps`**
