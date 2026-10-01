@@ -1,4 +1,2 @@
-bali-phy: Error! In file 'test.fasta': Can't guess alphabet!
-   AUTGCN=100%    T = 33%   U = 5%
-   ARNDCQEGHILKMFPSTWYVX=94%   QEILKFPJZ* = 0%
-   0123456789=0%
+bali-phy: Error! In file 'test.fasta': sequence #1 '1':
+Nucleotide symbol 'U' at alignment column 5 is not recognized by alphabet 'DNA'.

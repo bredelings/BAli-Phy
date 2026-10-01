@@ -21,6 +21,7 @@
 #include "sequence.hh"
 #include "util/myexception.hh"
 #include "util/cmdline.hh"
+#include <cstddef>
 #include <range/v3/algorithm/max.hpp>
 
 using std::vector;
@@ -173,12 +174,18 @@ string guess_alphabet(const vector<sequence>& sequences)
     throw e;
 }
 
-string guess_nucleotides_for(const string& name, const vector<sequence>& sequences)
+// File readers uppercase sequence letters. Count T and U across all rows, ignoring other symbols;
+// DNA wins ties, including empty input. Decoding subsequently validates the chosen alphabet.
+string guess_nucleotides_for(const vector<sequence>& sequences)
 {
-    auto a = guess_alphabet(sequences);
-    if (a != "DNA" and a != "RNA")
-	throw myexception()<<"Can't guess nucleotide alphabet for '"<<name<<"': sequences appear to be '"<<a<<"'";
-    return a;
+    std::size_t t_count = 0, u_count = 0;
+    for (const auto& sequence: sequences)
+        for (char letter: sequence)
+        {
+            if (letter == 'T') ++t_count;
+            else if (letter == 'U') ++u_count;
+        }
+    return u_count > t_count ? "RNA" : "DNA";
 }
 
 string guess_alphabet(const string& name_, const vector<sequence>& sequences)
@@ -192,26 +199,26 @@ string guess_alphabet(const string& name_, const vector<sequence>& sequences)
     if (name == "Codons")
     {
 	if (arguments.size() < 2) arguments.resize(2);
-	if (arguments[0].empty()) arguments[0] = guess_nucleotides_for(name_, sequences);
+	if (arguments[0].empty()) arguments[0] = guess_nucleotides_for(sequences);
 	if (arguments[1].empty()) arguments[1] = "standard";
 	return "Codons(" + arguments[0] + "," + arguments[1] + ")";
     }
     else if (name == "Doublets")
     {
 	if (arguments.size() < 1) arguments.resize(1);
-	if (arguments[0].empty()) arguments[0] = guess_nucleotides_for(name_, sequences);
+	if (arguments[0].empty()) arguments[0] = guess_nucleotides_for(sequences);
 	return "Doublets(" + arguments[0] + ")";
     }
     else if (name == "RNAEdits")
     {
 	if (arguments.size() < 1) arguments.resize(1);
-	if (arguments[0].empty()) arguments[0] = guess_nucleotides_for(name_, sequences);
+	if (arguments[0].empty()) arguments[0] = guess_nucleotides_for(sequences);
 	return "RNAEdits(" + arguments[0] + ")";
     }
     else if (name == "Triplets")
     {
 	if (arguments.size() < 1) arguments.resize(1);
-	if (arguments[0].empty()) arguments[0] = guess_nucleotides_for(name_, sequences);
+	if (arguments[0].empty()) arguments[0] = guess_nucleotides_for(sequences);
 	return "Triplets(" + arguments[0] + ")";
     }
     else
