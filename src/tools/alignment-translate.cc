@@ -150,27 +150,8 @@ int main(int argc,char* argv[])
       throw myexception()<<"Alignment file read from STDIN  didn't contain any sequences!";
     
     //--------- Load alignment & determine RNA or DNA ----------//
-    alignment A1{DNA()};
-    try
-    {
-      A1.load(sequences);
-    }
-    catch (const myexception& dna_error)
-    {
-      const string dna_message = dna_error.what();
-      // Discard any partially loaded DNA data before trying RNA. If neither alphabet works,
-      // retain both diagnostics rather than guessing which alphabet the input was meant to use.
-      A1 = alignment(RNA());
-      try
-      {
-        A1.load(sequences);
-      }
-      catch (const myexception& rna_error)
-      {
-        throw myexception()<<"Could not read the alignment as DNA or RNA.\n"
-                           <<"DNA: "<<dna_message<<"\nRNA: "<<rna_error.what();
-      }
-    }
+    alignment A1;
+    A1.load(guess_nucleotides_for(sequences), sequences);
 
     //------------------ Reverse Complement? -------------------//
 
