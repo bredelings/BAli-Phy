@@ -15,6 +15,17 @@ void require(bool condition, const char* message)
 // cases can move to tool tests if those tools expose the same operations and results.
 int main()
 {
+    // Quote runs must retain taxon identity; ordinary single-apostrophe labels miss this case.
+    for (const std::string label: {"'A", "A'", "A''B", "'''", "A_B C"})
+        for (auto underscores: {Underscore::literal, Underscore::blank})
+        {
+            auto quoted = escape_for_newick(label, underscores);
+            require(unescape_from_newick(quoted, underscores) == label, "Quoted label round-trip");
+            SequenceTree tree;
+            tree.parse("(" + quoted + ",other);");
+            require(tree.get_label(0) == label, "Quoted label parsing");
+        }
+
     // Different resolutions must yield a symmetric distance, regardless of array sizes.
     SequenceTree star, resolved;
     star.parse("(A:1,B:1,C:1,D:1);");

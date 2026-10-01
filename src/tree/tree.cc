@@ -517,8 +517,8 @@ string unquote_for_newick(const string& s)
     for(int i=1;i<s.size()-1;i++)
     {
         char c = s[i];
-        if (c == '\'' and i > 1 and s[i-1] == '\'') continue;
         s2.append(1,c);
+        if (c == '\'' and i+1 < s.size()-1 and s[i+1] == '\'') ++i;
     }
     return s2;
 }
