@@ -2120,7 +2120,8 @@ void Tree::swap_state(Tree& other) noexcept
  * Branch -> [Node] [string] [: double]
  * Node -> (Branch [, Branch]* )
  *
- * pos == index where we are in the Branch rule, and runs from 0 (before start) to 4 (after end).
+ * The parser tracks the start of a branch, completed children or label, and the two sides
+ * of a branch length. Comments before the colon belong to the node; later ones to the edge.
  */
 
 // Parse into separate storage so syntax, label, or indexing failures leave this tree intact.
@@ -2177,7 +2178,9 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
         }
     };
 
-    int pos = 0;
+    // Before ':' comments belong to the node; after it they belong to the edge.
+    enum Position { branch_start, after_children, after_label, before_length, after_length };
+    Position pos = branch_start;
     
     for(int i=0;get_word(word,i,comments,line,delimiters,whitespace);prev=word) 
     {
@@ -2192,9 +2195,9 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
 
         if (word == ";")
         {
-            if (pos == 0 or pos == 1 or pos == 2)
+            if (pos == branch_start or pos == after_children or pos == after_label)
                 set_parsed_attributes(tags, parsed.node_attribute_names, *BN->node_attributes);
-            else if (pos == 3 or pos == 4)
+            else if (pos == before_length or pos == after_length)
                 assert( tags.empty() );
 
             break;
@@ -2205,31 +2208,31 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
         {
             assert( tags.empty() );
 
-            if (pos != 0)
+            if (pos != branch_start)
                 throw myexception()<<"In tree file, found '(' in the middle of word \""<<prev<<"\"";
 
             push_empty_node(tree_stack, parsed.n_node_attributes(),
-                    parsed.n_undirected_branch_attributes(), parsed.n_directed_branch_attributes());
-            pos = 0;
+                            parsed.n_undirected_branch_attributes(), parsed.n_directed_branch_attributes());
+            pos = branch_start;
         }
         else if (word == ",")
         {
             if (tree_stack.size() <= 1)
                 throw myexception()<<"Reading tree: found ',' outside parenthesis!";
-            if (pos == 0 or pos == 1 or pos == 2)
+            if (pos == branch_start or pos == after_children or pos == after_label)
                 set_parsed_attributes(tags, parsed.node_attribute_names, *BN->node_attributes);
-            else if (pos == 3 or pos == 4)
+            else if (pos == before_length or pos == after_length)
                 set_parsed_attributes(tags, parsed.undirected_branch_attribute_names, *BN->undirected_branch_attributes);
 
             append_empty_node(tree_stack, parsed.n_node_attributes(),
-                      parsed.n_undirected_branch_attributes(), parsed.n_directed_branch_attributes());
-            pos = 0;
+                              parsed.n_undirected_branch_attributes(), parsed.n_directed_branch_attributes());
+            pos = branch_start;
         }
         else if (word == ")") 
         {
-            if (pos == 0 or pos == 1 or pos == 2)
+            if (pos == branch_start or pos == after_children or pos == after_label)
                 set_parsed_attributes(tags, parsed.node_attribute_names, *BN->node_attributes);
-            else if (pos == 3 or pos == 4)
+            else if (pos == before_length or pos == after_length)
                 set_parsed_attributes(tags, parsed.undirected_branch_attribute_names, *BN->undirected_branch_attributes);
 
             // We need at least 2 levels of trees
@@ -2238,11 +2241,11 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
 
             // destroy the top level
             tree_stack.pop_back();
-            pos = 1;
+            pos = after_children;
         }
         else if (word == ":")
         {
-            if (pos > 2)
+            if (pos == before_length or pos == after_length)
                 throw myexception()<<"Cannot have a ':' here! (pos == "<<pos<<")";
 
             // Handle (a,b):1.0; -- we should ignore any attributes for the branch in this case
@@ -2255,22 +2258,22 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
                 assert(tree_stack.back().size() == 1);
             }
 
-            pos = 3;
+            pos = before_length;
         }
         else
         {
-            if (pos == 0 or pos == 1) 
+            if (pos == branch_start or pos == after_children) 
             {
                 set_parsed_attributes(tags, parsed.node_attribute_names, *BN->node_attributes);
 
                 if (parsed.node_label_index)
                     (*BN->node_attributes)[*parsed.node_label_index] = unescape_from_newick(word, underscores);
 
-                pos = 2;
+                pos = after_label;
             }
-            else if (pos == 2)
+            else if (pos == after_label)
                 throw myexception()<<"Node name '"<<word<<"' comes directly after '"<<prev<<"'";
-            else if (pos == 3)
+            else if (pos == before_length)
             {
                 // Handle (a,b):1.0; -- we should ignore any attributes for the branch in this case
                 if (tree_stack.size() > 1)
@@ -2280,9 +2283,9 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
                     if (parsed.branch_length_index)
                         (*BN->undirected_branch_attributes)[*parsed.branch_length_index] = convertTo<double>(word);
                 }
-                pos = 4;
+                pos = after_length;
             }
-            else if (pos == 4)
+            else if (pos == after_length)
                 throw myexception()<<"Word name '"<<word<<"' comes directly after branch length '"<<prev<<"'";
         }
     }
