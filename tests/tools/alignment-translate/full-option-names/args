@@ -1,0 +1,3 @@
+# Reject abbreviated long names across parser changes; help tests cannot exercise rejection.
+# Remove if option abbreviations become part of the interface.
+--fram=2

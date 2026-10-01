@@ -1,0 +1,3 @@
+# Translation is a value-taking Boolean option, not a flag.
+# Successful commands do not check missing values; remove if --translate becomes a flag.
+--translate

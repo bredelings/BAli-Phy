@@ -1,0 +1,3 @@
+# Scalar options must reject excess values rather than silently choosing one.
+# Successful commands cannot cover rejection; remove if scalar repetition becomes supported.
+-f1 --frame=2

@@ -1,0 +1,3 @@
+# Preserve negative frames and alternate-code selection without cancelling transformations.
+# Help tests cannot check translation output; remove if these options are retired.
+-f-2 --genetic-code=mt-vert

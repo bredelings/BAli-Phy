@@ -28,10 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sequence/genetic_code.hh"
 #include "alignment/alignment.hh"
 #include "alignment/alignment-util.hh"
-#include <boost/program_options.hpp>
-
-namespace po = boost::program_options;
-using po::variables_map;
+#include <CLI/CLI.hpp>
 
 using std::cout;
 using std::cerr;
@@ -93,57 +90,52 @@ int translate_codon(int n0, int n1, int n2, const Genetic_Code& code, const Amin
 // translate just the sequences before translating
 // the ALIGNMENT of the sequences to print out
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-  using namespace po;
-
-  // named options
-  options_description all("Allowed options");
-  all.add_options()
-    ("help,h", "Produce help message")
-    ("genetic-code,g",value<string>()->default_value("standard"),"Specify alternate genetic code.")
-    ("frame,f",value<int>()->default_value(1),"Frame 1, 2, 3, -1, -2, or -3")
-    ("reverse,r","Reverse alignment columns before translation")
-    ("complement,c","Complement nucleotides before translation")
-    ("translate,t",value<bool>()->default_value(true,"yes"),"Translate the sequences; --translate=no disables translation")
-    ;
-
-  variables_map args;     
-  store(parse_command_line(argc, argv, all), args);
-  notify(args);    
-
-  if (args.count("help")) {
-    cout<<"Translate a DNA/RNA alignment into amino acids.\n\n";
-    cout<<"Usage: alignment-translate [OPTIONS] < sequence-file > output-file\n";
-    cout<<all<<"\n";
-    cout<<" Examples:\n\n";
-    cout<<"  Translate DNA or RNA to amino acids in reading frame 1:\n";
-    cout<<"    % alignment-translate < dna.fasta > aa.fasta\n\n";
-    cout<<"  Give the reverse complement without translation:\n";
-    cout<<"    % alignment-translate -rc --translate=no < dna.fasta > dna2.fasta\n\n";
-    cout<<"  The following commands are identical:\n";
-    cout<<"    % alignment-translate --frame=-2 < dna.fasta > aa2.fasta\n";
-    cout<<"    % alignment-translate -rc --frame=2 < dna.fasta > aa2.fasta\n";
-  }
-
-  return args;
-}
-
-
 int main(int argc,char* argv[]) 
 { 
 
   try {
     //---------- Parse command line  -------//
-    variables_map args = parse_cmd_line(argc,argv);
-    if (args.count("help")) {
+    CLI::App app{"Translate a DNA/RNA alignment into amino acids.", "alignment-translate"};
+    app.usage("Usage: alignment-translate [OPTIONS] < sequence-file > output-file");
+    app.get_formatter()->long_option_alignment_ratio(0.2f);
+    string genetic_code = "standard";
+    int frame = 1;
+    bool do_reverse = false, do_complement = false, translate = true;
+
+    app.add_option("-g,--genetic-code", genetic_code, "Specify alternate genetic code")
+        ->type_name("CODE")->capture_default_str();
+    app.add_option("-f,--frame", frame, "Frame 1, 2, 3, -1, -2, or -3")
+        ->type_name("FRAME")->capture_default_str();
+    app.add_flag("-r,--reverse", do_reverse, "Reverse alignment columns before translation");
+    app.add_flag("-c,--complement", do_complement, "Complement nucleotides before translation");
+    app.add_option("-t,--translate", translate, "Translate the sequences; --translate=no disables translation")
+        ->type_name("BOOL")->default_str("yes");
+
+    // The examples are preformatted; preserve their indentation and line breaks.
+    app.get_formatter()->enable_footer_formatting(false);
+    app.footer("Examples:\n\n"
+               "  Translate DNA or RNA to amino acids in reading frame 1:\n"
+               "    alignment-translate < dna.fasta > aa.fasta\n\n"
+               "  Give the reverse complement without translation:\n"
+               "    alignment-translate -rc --translate=no < dna.fasta > dna2.fasta\n\n"
+               "  The following commands are identical:\n"
+               "    alignment-translate --frame=-2 < dna.fasta > aa2.fasta\n"
+               "    alignment-translate -rc --frame=2 < dna.fasta > aa2.fasta\n");
+    try
+    {
+      app.parse(argc, argv);
+    }
+    catch (const CLI::ParseError& error)
+    {
+      // Let CLI11 print help or diagnostics, while retaining this tool's 0/1 exit statuses.
+      app.exit(error);
+      if (error.get_exit_code() != 0)
+        return 1;
       check_output();
       return 0;
     }
 
     //------- Validate the reading frame before consuming input --------//
-    const int frame = args["frame"].as<int>();
-
     if (frame < -3 or frame > 3 or frame == 0)
       throw myexception()<<"You may only specify frame 1, 2, 3, -1, -2, or -3: "<<frame<<" is right out.";
     const bool do_reverse_complement = frame < 0;
@@ -182,14 +174,14 @@ int main(int argc,char* argv[])
 
     //------------------ Reverse Complement? -------------------//
 
-    if (args.count("reverse") and args.count("complement"))
+    if (do_reverse and do_complement)
       A1 = reverse_complement(A1);
-    else if (args.count("reverse"))
+    else if (do_reverse)
       A1 = reverse(A1);
-    else if (args.count("complement"))
+    else if (do_complement)
       A1 = complement(A1);
 
-    if (not args["translate"].as<bool>()) {
+    if (not translate) {
       cout<<A1;
       check_output();
       return 0;
@@ -199,7 +191,7 @@ int main(int argc,char* argv[])
       A1 = reverse_complement(A1);
 
     //------- Construct the alphabets that we are using  --------//
-    auto G = get_genetic_code(args["genetic-code"].as<string>());
+    auto G = get_genetic_code(genetic_code);
 
     AminoAcidsWithStop AA;
 

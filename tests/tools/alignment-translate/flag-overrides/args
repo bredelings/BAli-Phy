@@ -1,0 +1,3 @@
+# Preserve native CLI11 repetition, false overrides, and Boolean values.
+# Translation-only tests do not exercise disabled operations; remove if flags become non-overridable.
+-rc --reverse=false --complement=false --translate=off
