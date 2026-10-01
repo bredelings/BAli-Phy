@@ -36,6 +36,14 @@ using std::vector;
 using std::string;
 using std::shared_ptr;
 
+// Flush buffered output before reporting success, including help and untranslated sequences.
+static void check_output()
+{
+    cout.flush();
+    if (not cout)
+        throw myexception()<<"Failed writing standard output.";
+}
+
 // Exact codons retain the direct table lookup. An ambiguous codon is the
 // Cartesian product of its three nucleotide sets; translating all matching
 // exact codons gives precisely the amino-acid set represented by the output code.
@@ -113,7 +121,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<"  The following commands are identical:\n";
     cout<<"    % alignment-translate --frame=-2 < dna.fasta > aa2.fasta\n";
     cout<<"    % alignment-translate -rc --frame=2 < dna.fasta > aa2.fasta\n";
-    exit(0);
   }
 
   return args;
@@ -126,6 +133,10 @@ int main(int argc,char* argv[])
   try {
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
+    if (args.count("help")) {
+      check_output();
+      return 0;
+    }
 
     //------- Try to load sequences --------//
     vector<sequence> sequences = sequence_format::read_guess(std::cin);
@@ -174,7 +185,8 @@ int main(int argc,char* argv[])
 
     if (not args["translate"].as<bool>()) {
       cout<<A1;
-      exit(0);
+      check_output();
+      return 0;
     }
       
     if (do_reverse) 
@@ -214,10 +226,11 @@ int main(int argc,char* argv[])
     }
 
     cout<<A2;
+    check_output();
   }
   catch (std::exception& e) {
     cerr<<"alignment-translate: Error! "<<e.what()<<endl;
-    exit(1);
+    return 1;
   }
   return 0;
 
