@@ -1,3 +1,3 @@
-# Preserve stdin defaults, attached values, and transformation order across parser changes.
+# Preserve stdin defaults, attached values, transformation order, and native flag overrides.
 # The help test cannot check sequence output; remove this case if those operations are retired.
--c2-5 -e --strip-gaps -r -V2
+-c2-5 -e --strip-gaps -r --reverse=false --reverse -V2

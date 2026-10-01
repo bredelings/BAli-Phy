@@ -420,9 +420,6 @@ int main(int argc,char* argv[])
         auto* verbosity = app.add_option("-V,--verbose", log_verbose, "Diagnostic verbosity (1 if no value is given)")
             ->type_name("LEVEL")->expected(0, 1);
 
-        // Accept each named option once, including verbosity; flags enable operations without a value.
-        for (auto* option: app.get_options())
-            option->multi_option_policy(CLI::MultiOptionPolicy::Throw)->disable_flag_override();
         app.add_option("file,--file", filenames, "Input alignments (default: stdin; '-' reads stdin)")
             ->type_size(1)->expected(-1);
         // The examples are preformatted; preserve their indentation and line breaks.
