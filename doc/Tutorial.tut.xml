@@ -461,8 +461,7 @@ You can also use the Huelsenbeck model with the free-rates model:
 </section>
 <section xml:id="codon_models"><info><title>Codon models and selection</title></info>
 <para>We will analyze myxovirus resistance (Mx) genes from ten mammals and two birds, using
-sequences downloaded and aligned for Álvarez-Carretero et al. (2023). The data are used with
-permission from Sandra Álvarez-Carretero. See <filename>Mx/README.md</filename> in the examples
+sequences from Álvarez-Carretero et al. (2023). See <filename>Mx/README.md</filename> in the examples
 for the citation, provenance, and preprocessing details. The terminal stop codons have been
 removed; the remaining alignment contains 663 codon columns.</para>
 % cd ~/alignment_files/examples/Mx
@@ -471,9 +470,10 @@ removed; the remaining alignment contains 663 codon columns.</para>
 and site analyses still estimate the tree topology. Later we will fix the topology for branch
 analyses, and finally revisit the site test while estimating the alignment. These Bayesian
 analyses use different models and methods from the original PAML tutorial; their numerical
-results need not match.</para>
-<para>The commands below start MCMC runs. In contrast, adding <userinput>--test</userinput>
-checks the model setup without sampling: it does not perform a statistical test for selection.
+results need not match exactly.</para>
+
+<para>The commands below start MCMC runs for an analysis.
+In contrast, adding <userinput>--test</userinput> checks the model setup without performing an analysis.
 Run two independent copies of each analysis, as in the earlier alignment exercises, and check
 agreement and effective sample sizes before interpreting the results. Work through the examples
 one at a time; there is no need to run all of them simultaneously. See the
@@ -486,14 +486,11 @@ for convergence and burn-in guidance.</para>
 MNM allows changes of more than one nucleotide within a codon; MutSelAA estimates amino-acid
 preferences shared across sites; and dNdS adds the ω multiplier. Here ω describes nonsynonymous
 change beyond the effect of these preferences, not a raw ratio of observed changes.</para>
-<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none \
-  -S 'GTR +> MNM +> MutSelAA +> dNdS' --name Mx-single-fixedA &amp;
-<prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none \
-  -S 'GTR +> MNM +> MutSelAA +> dNdS' --name Mx-single-fixedA &amp;</screen>
+% bali-phy Mx_aln.nonstop.fasta -A Codons -I none -S 'GTR +> MNM +> MutSelAA +> dNdS' --name Mx-single-fixedA &amp;
+% bali-phy Mx_aln.nonstop.fasta -A Codons -I none -S 'GTR +> MNM +> MutSelAA +> dNdS' --name Mx-single-fixedA &amp;
 <para>These commands create <filename>Mx-single-fixedA-1</filename> and
 <filename>Mx-single-fixedA-2</filename> in a fresh working directory. Summarize the runs:</para>
-<screen><prompt>%</prompt> bpy-summarize Mx-single-fixedA-1/ \
-  Mx-single-fixedA-2/</screen>
+% bpy-summarize Mx-single-fixedA-1/ Mx-single-fixedA-2/
 % mv Results Mx-single-fixedA.Results
 
 <para>Open <filename>Mx-single-fixedA.Results/index.html</filename>. Read the ω estimate and
@@ -513,13 +510,9 @@ of the same model and settings, not runs from different examples.</para>
 to one. It describes variation among sites without allowing a positive-selection category.
 The expression <userinput>|w:...|</userinput> builds the codon model for each supplied ω;
 the mutation parameters and amino-acid preferences are shared across categories.</para>
-<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none \
-  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|
-      +> M8a' \
-  --name Mx-M8a-fixedA &amp;</screen>
+% bali-phy Mx_aln.nonstop.fasta -A Codons -I none -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M8a' --name Mx-M8a-fixedA &amp;
 <para>Run this command twice, then summarize:</para>
-<screen><prompt>%</prompt> bpy-summarize Mx-M8a-fixedA-1/ \
-  Mx-M8a-fixedA-2/</screen>
+% bpy-summarize Mx-M8a-fixedA-1/ Mx-M8a-fixedA-2/
 % mv Results Mx-M8a-fixedA.Results
 
 <para>Open <filename>Mx-M8a-fixedA.Results/index.html</filename> and examine the site-model
@@ -530,13 +523,9 @@ compare a selection hypothesis with a no-selection hypothesis.</para>
 <section><info><title>Testing for positively selected sites</title></info>
 <para>M8a_test compares M8a with M8, whose additional category has ω above one. Both hypotheses
 are included in one analysis: you do not need to fit M8a and M8 separately to perform this test.</para>
-<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none \
-  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|
-      +> M8a_test' \
-  --name Mx-M8a-test-fixedA &amp;</screen>
+% bali-phy Mx_aln.nonstop.fasta -A Codons -I none -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M8a_test' --name Mx-M8a-test-fixedA &amp;
 <para>Run this command twice, then summarize:</para>
-<screen><prompt>%</prompt> bpy-summarize Mx-M8a-test-fixedA-1/ \
-  Mx-M8a-test-fixedA-2/</screen>
+% bpy-summarize Mx-M8a-test-fixedA-1/ Mx-M8a-test-fixedA-2/
 % mv Results Mx-M8a-test-fixedA.Results
 
 <para>Open <filename>Mx-M8a-test-fixedA.Results/index.html</filename>. Under
@@ -562,14 +551,10 @@ branches share one ω, and the ancestral branch leading to birds is not labelled
 follows a colon because it belongs to the branch, not the node.</para>
 <para>Fix the supplied topology so these branch groups remain defined. Branch lengths are
 still estimated. BranchModel uses one ω per group, shared across sites:</para>
-<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none \
-  --fix topology=Mx_foreground.tree \
-  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|
-      +> BranchModel' \
-  --name Mx-branch-fixedA &amp;</screen>
+% bali-phy Mx_aln.nonstop.fasta -A Codons -I none --fix topology=Mx_foreground.tree -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> BranchModel' --name Mx-branch-fixedA &amp;
+
 <para>Run this command twice, then summarize:</para>
-<screen><prompt>%</prompt> bpy-summarize Mx-branch-fixedA-1/ \
-  Mx-branch-fixedA-2/</screen>
+% bpy-summarize Mx-branch-fixedA-1/ Mx-branch-fixedA-2/
 % mv Results Mx-branch-fixedA.Results
 
 <para>Open <filename>Mx-branch-fixedA.Results/index.html</filename> and find the category ω
@@ -583,14 +568,9 @@ whether a separate foreground value is supported.</para>
 branch has <literal>:[&amp;foreground={0,1}]</literal>. The entries specify its category under
 each hypothesis: hypothesis 0 uses category 0 everywhere; hypothesis 1 assigns a shared
 category 1 to chicken and duck. Other branches stay in category 0 under both hypotheses.</para>
-<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none \
-  --fix topology=Mx_branch_test.tree \
-  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|
-      +> BranchModel_test' \
-  --name Mx-branch-test-fixedA &amp;</screen>
+% bali-phy Mx_aln.nonstop.fasta -A Codons -I none --fix topology=Mx_branch_test.tree -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> BranchModel_test' --name Mx-branch-test-fixedA &amp;
 <para>Run this command twice, then summarize:</para>
-<screen><prompt>%</prompt> bpy-summarize Mx-branch-test-fixedA-1/ \
-  Mx-branch-test-fixedA-2/</screen>
+% bpy-summarize Mx-branch-test-fixedA-1/ Mx-branch-test-fixedA-2/
 % mv Results Mx-branch-test-fixedA.Results
 
 <para>Open <filename>Mx-branch-test-fixedA.Results/index.html</filename>. Under
@@ -606,14 +586,9 @@ sites to have ω above one on foreground branches while their background ω rema
 one, and compares this with a null hypothesis that fixes their foreground ω to one.
 Use the scalar <literal>foreground=1</literal> labels in <filename>Mx_foreground.tree</filename>,
 rather than the hypothesis lists used for BranchModel_test.</para>
-<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none \
-  --fix topology=Mx_foreground.tree \
-  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|
-      +> BranchSite' \
-  --name Mx-branch-site-fixedA &amp;</screen>
+% bali-phy Mx_aln.nonstop.fasta -A Codons -I none --fix topology=Mx_foreground.tree -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> BranchSite' --name Mx-branch-site-fixedA &amp;
 <para>Run this command twice, then summarize:</para>
-<screen><prompt>%</prompt> bpy-summarize Mx-branch-site-fixedA-1/ \
-  Mx-branch-site-fixedA-2/</screen>
+% bpy-summarize Mx-branch-site-fixedA-1/ Mx-branch-site-fixedA-2/
 % mv Results Mx-branch-site-fixedA.Results
 
 <para>Open <filename>Mx-branch-site-fixedA.Results/index.html</filename> and read
@@ -631,13 +606,9 @@ examining the selection results.</para>
 and remove <userinput>-I none</userinput> to estimate the alignment jointly with selection.
 Keep the substitution model and topology treatment the same as in the fixed-alignment site
 test; the topology is estimated in both analyses.</para>
-<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons \
-  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|
-      +> M8a_test' \
-  --name Mx-M8a-test-freeA &amp;</screen>
+% bali-phy Mx_aln.nonstop.fasta -A Codons -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M8a_test' --name Mx-M8a-test-freeA &amp;
 <para>Run this command twice, then summarize:</para>
-<screen><prompt>%</prompt> bpy-summarize Mx-M8a-test-freeA-1/ \
-  Mx-M8a-test-freeA-2/</screen>
+% bpy-summarize Mx-M8a-test-freeA-1/ Mx-M8a-test-freeA-2/
 % mv Results Mx-M8a-test-freeA.Results
 
 <para>Joint estimation can yield a more accurate alignment and accounts for alignment
@@ -659,8 +630,7 @@ which inferred alignment is more accurate.</para>
 <section><info><title>A historical codon model</title></info>
 <para>For comparison with older analyses, the Goldman–Yang model with F1x4 frequencies can
 be specified as follows. Here <userinput>--test</userinput> only displays the setup:</para>
-<screen><prompt>%</prompt> bali-phy Mx_aln.nonstop.fasta -A Codons -I none --test \
-  -S 'GY94(pi=F1x4)'</screen>
+% bali-phy Mx_aln.nonstop.fasta -A Codons -I none --test -S 'GY94(pi=F1x4)'
 
 <para>This historical model does not include the MNM and amino-acid preference components
 used above. See the <link xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -674,11 +644,9 @@ discussion</link> for the reasons behind the choices in the worked examples.</pa
 Return to the examples directory:
 % cd ~/alignment_files/examples/
 We can use the TN93+Gamma(4)+Inv model without specifying parameters:
-<screen><prompt>%</prompt> bali-phy Mx/Mx_aln.nonstop.fasta --test \
-  -S 'TN93 +> ASRV.Gamma +> Inv'</screen>
+% bali-phy Mx/Mx_aln.nonstop.fasta --test -S 'TN93 +> ASRV.Gamma +> Inv'
 However, we can also fix parameter values:
-<screen><prompt>%</prompt> bali-phy Mx/Mx_aln.nonstop.fasta --test \
-  -S 'TN93 +> ASRV.Gamma(n=4,alpha=1) +> Inv(pInv=0.2)'</screen>
+% bali-phy Mx/Mx_aln.nonstop.fasta --test -S 'TN93 +> ASRV.Gamma(n=4,alpha=1) +> Inv(pInv=0.2)'
 Here we have set the shape parameter for the Gamma distribution to 1, and the
 fraction of invariant sites to 20%.  Since these parameters are fixed, they will
 not be estimated and their values will not be shown in the log file.
@@ -695,11 +663,9 @@ This will show the default value or default prior for each parameter, if there i
 By default the fraction of invariant sites follows a Uniform(0,1) distribution:
 % bali-phy help Inv
 However, we can specify an alternative prior:
-<screen><prompt>%</prompt> bali-phy Mx/Mx_aln.nonstop.fasta --test \
-  -S 'TN93 +> ASRV.Gamma(n=4) +> Inv(pInv~Uniform(0,0.2))'</screen>
+% bali-phy Mx/Mx_aln.nonstop.fasta --test -S 'TN93 +> ASRV.Gamma(n=4) +> Inv(pInv~Uniform(0,0.2))'
 We can also specify parameters as positional arguments instead of using variable names:
-<screen><prompt>%</prompt> bali-phy Mx/Mx_aln.nonstop.fasta --test \
-  -S 'TN93 +> ASRV.Gamma(4) +> Inv(~Uniform(0,0.2))'</screen>
+% bali-phy Mx/Mx_aln.nonstop.fasta --test -S 'TN93 +> ASRV.Gamma(4) +> Inv(~Uniform(0,0.2))'
 Here "<userinput>~</userinput>" indicates a sample from the uniform distribution instead of the distribution
 itself.
 </para>
