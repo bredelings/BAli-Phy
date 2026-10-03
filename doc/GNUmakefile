@@ -95,26 +95,26 @@ $(BUILD_DIR)/README-A4.pdf: $(BUILD_DIR)/README.print.html \
 	weasyprint --stylesheet user-guide-A4.css "$<" "$@"
 
 tutorial: $(TUTORIAL_BUILD_DIR)/Tutorial.html $(TUTORIAL_BUILD_DIR)/Tutorial.pdf
-Tutorial.html: $(TUTORIAL_BUILD_DIR)/Tutorial.html $(TUTORIAL_BUILD_DIR)/guide.css
+Tutorial.html: $(TUTORIAL_BUILD_DIR)/Tutorial.html $(TUTORIAL_BUILD_DIR)/guide.css $(TUTORIAL_BUILD_DIR)/tutorial.css
 Tutorial.pdf: $(TUTORIAL_BUILD_DIR)/Tutorial.pdf
 
 $(TUTORIAL_BUILD_DIR)/Tutorial.xml: Tutorial.tut.xml add_screen.py
 	mkdir -p "$(TUTORIAL_BUILD_DIR)"
 	./add_screen.py < "$<" > "$@"
 
-$(TUTORIAL_BUILD_DIR)/Tutorial.html: $(TUTORIAL_BUILD_DIR)/Tutorial.xml docbook-html.xsl
-	xsltproc --nonet --xinclude docbook-html.xsl "$<" > "$@"
+$(TUTORIAL_BUILD_DIR)/Tutorial.html: $(TUTORIAL_BUILD_DIR)/Tutorial.xml docbook-html.xsl GNUmakefile
+	xsltproc --nonet --xinclude --stringparam html.stylesheet "guide.css tutorial.css" docbook-html.xsl "$<" > "$@"
 
-$(TUTORIAL_BUILD_DIR)/guide.css: guide.css
+$(TUTORIAL_BUILD_DIR)/%.css: %.css
 	mkdir -p "$(TUTORIAL_BUILD_DIR)"
 	cp "$<" "$@"
 
-$(TUTORIAL_BUILD_DIR)/Tutorial.pdf: $(TUTORIAL_BUILD_DIR)/Tutorial.html $(TUTORIAL_BUILD_DIR)/guide.css
+$(TUTORIAL_BUILD_DIR)/Tutorial.pdf: $(TUTORIAL_BUILD_DIR)/Tutorial.html $(TUTORIAL_BUILD_DIR)/guide.css $(TUTORIAL_BUILD_DIR)/tutorial.css
 	weasyprint "$<" "$@"
 
 clean-tutorial:
 	$(RM) "$(TUTORIAL_BUILD_DIR)/Tutorial.xml" "$(TUTORIAL_BUILD_DIR)/Tutorial.html" \
-	    "$(TUTORIAL_BUILD_DIR)/Tutorial.pdf" "$(TUTORIAL_BUILD_DIR)/guide.css"
+	    "$(TUTORIAL_BUILD_DIR)/Tutorial.pdf" "$(TUTORIAL_BUILD_DIR)/guide.css" "$(TUTORIAL_BUILD_DIR)/tutorial.css"
 
 Instructions.pdf: guide.css
 

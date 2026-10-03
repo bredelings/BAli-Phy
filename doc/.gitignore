@@ -2,6 +2,7 @@
 *.html
 *.xhtml
 *.css
+!tutorial.css
 !guide.css
 !user-guide.css
 /user-guide-assets/

@@ -24,6 +24,12 @@ Outputs are in `../../build/user-guide` relative to `doc/`. Publish `README.html
 `make -C doc clean-user-guide` removes generated guide files, preserving the source
 and installed tools. Tutorial and Instructions retain their older build rules.
 
+Build the tutorial with `make -C doc tutorial`. Outputs are in `../../build/tutorial`
+relative to `doc/`. Publish `Tutorial.html` with both `guide.css` and `tutorial.css`;
+`Tutorial.pdf` is standalone. The tutorial keeps the legacy DocBook processor and uses
+`tutorial.css` for its white background, typography, and automatic command wrapping.
+Adjust `--tutorial-width` there to change the browser reading width (initially 50rem).
+
 ## Installation choices
 
 Use `BUILD_DIR` and `TOOLS_DIR` to override the output and tool directories. Tools

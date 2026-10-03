@@ -1,0 +1,100 @@
+/* Match the User Guide's typography while retaining the legacy DocBook renderer. */
+:root {
+    --tutorial-width: 50rem;
+    --tutorial-accent: #245a86;
+    --tutorial-border: #c8cdd2;
+    --tutorial-mono: "DejaVu Sans Mono", monospace;
+}
+
+body {
+    background: white;
+    color: #24292f;
+    font-family: "DejaVu Serif", serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 1.5rem 1rem;
+}
+
+body > .article {
+    max-width: var(--tutorial-width);
+    margin: 0 auto;
+}
+
+h1, h2, h3, h4, .toc-title {
+    font-family: "DejaVu Sans", sans-serif;
+    line-height: 1.3;
+}
+
+.article > .section { margin-top: 2.5rem; }
+.section > .section { margin-top: 1.75rem; }
+p { margin: 0.75em 0; }
+li + li { margin-top: 0.35em; }
+
+a, a:visited { color: var(--tutorial-accent); }
+a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+pre, code, .filename, .command, .computeroutput, .userinput, .literal {
+    font-family: var(--tutorial-mono);
+    hyphens: none;
+}
+
+/* Legacy DocBook places strong elements both around input and inside commands. */
+.userinput, .command, .command strong, pre.screen .prompt {
+    font-weight: normal;
+}
+
+.application { font-family: inherit; font-style: normal; }
+.guilabel { font-style: normal; text-decoration: none; font-weight: 600; }
+.prompt { color: #59636e; text-decoration: none; }
+.computeroutput { background: transparent; }
+p .userinput { background: #f3f4f5; }
+
+/* Soft wrapping preserves source newlines and copied commands. Break long tokens
+   only when they cannot fit, without inserting hyphens or continuation characters. */
+pre.screen, pre.programlisting {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: normal;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 1em 0;
+    padding: 0.75em 1em;
+    border: 1px solid var(--tutorial-border);
+    border-radius: 0.2rem;
+    background: #f3f4f5;
+    font-size: 0.875em;
+    line-height: 1.5;
+}
+
+pre.programlisting { background: white; }
+
+.toc {
+    background: transparent;
+    padding: 0;
+    line-height: 1.4;
+}
+
+div.toc {
+    padding: 1em;
+    border: 1px solid var(--tutorial-border);
+    border-radius: 0.2rem;
+}
+
+.toc dl { margin-top: 0.35em; margin-bottom: 0.35em; }
+.toc dt { margin-top: 0.25em; }
+.toc dd { margin-left: 1.25em; }
+
+@media print {
+    /* Work around WeasyPrint moving long nested input below its prompt. Remove this
+       inline-block layout when its ordinary inline wrapping keeps the prompt beside input. */
+    pre.screen .userinput {
+        display: inline-block;
+        max-width: calc(100% - 2ch);
+        vertical-align: top;
+    }
+    body { padding: 0; font-size: 10pt; }
+    body > .article { max-width: none; }
+    h1, h2, h3, h4 { break-after: avoid; }
+    pre.screen, pre.programlisting { break-inside: auto; orphans: 3; widows: 3; }
+    a, a:visited { color: inherit; }
+}
