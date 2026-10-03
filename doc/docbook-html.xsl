@@ -57,6 +57,16 @@
 <!-- end of MathML support. -->
 
 <xsl:param name="html.stylesheet">guide.css</xsl:param>
+<!-- Preserve the presentation roles used for tutorial exercises and file captions;
+     legacy DocBook otherwise emits only the element name as its class. -->
+<xsl:template match="*[local-name() = 'section'][@role = 'exercise'] |
+                     *[local-name() = 'example'][@role = 'file-content']" mode="class.value">
+  <xsl:param name="class" select="local-name(.)"/>
+  <xsl:choose>
+    <xsl:when test="local-name() = 'example'"><xsl:value-of select="@role"/></xsl:when>
+    <xsl:otherwise><xsl:value-of select="concat($class, ' ', @role)"/></xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
 <!-- Embed DocBook defaults before guide.css, without generating a separate CSS file. -->
 <xsl:param name="docbook.css.source">docbook.css.xml</xsl:param>
 <xsl:param name="generate.css.header" select="1"/>

@@ -84,6 +84,29 @@ div.toc {
 .toc dt { margin-top: 0.25em; }
 .toc dd { margin-left: 1.25em; }
 
+/* Captions distinguish editable files from terminal transcripts. */
+div.file-content {
+    width: 100%;
+    margin: 1em 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.file-content .example-title {
+    font-family: "DejaVu Sans", sans-serif;
+    font-size: 0.9em;
+    margin-bottom: 0.35em;
+    break-after: avoid;
+}
+
+.file-content pre { margin-top: 0; }
+
+.section.exercise {
+    border-left: 3px solid var(--tutorial-border);
+    padding-left: 1em;
+}
+
 @media print {
     /* Work around WeasyPrint moving long nested input below its prompt. Remove this
        inline-block layout when its ordinary inline wrapping keeps the prompt beside input. */
