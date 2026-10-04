@@ -2,7 +2,7 @@
 
 ## Fixes
 
- - Better error messages with different partitions have different sequence names.
+ - Better error messages when different data partitions have different sequence names.
 
 # 4.3 (Sep 12, 2026)
 
