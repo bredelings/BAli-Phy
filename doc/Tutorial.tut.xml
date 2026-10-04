@@ -433,39 +433,7 @@ Return to the ITS directory and save the following options as <filename>options4
 <para>This file additionally links the <emphasis>scale</emphasis> for the two ITS partitions (<userinput>--scale=1,3:</userinput>). This forces them to share the same evolutionary rate, and allows more precise estimates of the shared scale.  You can run the analysis with unlinked scales by removing this option in order to determine if (i) the scales are similar enough to share and (ii) the scales have a high enough variance that they need to be linked.</para>
 </section>
 
-<section xml:id="substitution_models"><info><title>Complex substitution models</title></info>
-<para>While those analyses are running, let's look at how to specify more complex substitution models in bali-phy.</para>
-<section><info><title>Defaults</title></info>
-<para>When you don't specify values for parameters like <parameter>imodel</parameter>, bali-phy uses sensible defaults.  For example, these two commands are equivalent:
-% cd ~/alignment_files/examples/
-% bali-phy 5S-rRNA/25-muscle.fasta --test
-% bali-phy 5S-rRNA/25-muscle.fasta --test --alphabet=RNA --smodel=TN93 --imodel=RS07
-You can change the substitution model from the Tamura-Nei model to the General Time-Reversible model:
-% bali-phy 5S-rRNA/25-muscle.fasta --test -S GTR
-Here the <userinput>-S GTR</userinput> is a short form of <userinput>--smodel=GTR</userinput>, where <parameter>smodel</parameter> means the substitution model.
-</para>
-</section>
-<section><info><title>Rate variation</title></info>
-<para>
-You can also allow different sites to evolve at 5 different rates using the ASRV.Gamma(4) + Inv model of rate heterogeneity:
-% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> ASRV.Gamma(4) +> Inv'
-You can also use ASRV.LogNormal instead of ASRV.Gamma.  ASRV.LogNormal+Inv is sometimes better behaved than ASRV.Gamma+Inv, because the smallest rate bin under ASRV.LogNormal is not quite as close to 0.
-% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> ASRV.LogNormal(4) +> Inv'
-You can allow 5 different rates that are all independently estimated:
-% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> ASRV.Free(n=5)'
-</para>
-</section>
-<section><info><title>Heterotachy</title></info>
-<para>
-Heterotachy occurs when the evolutionary rate changes across the tree.  One version of heterotachy is the Tuffley-Steel (1998) model, where each state alternates between an ON and OFF state.
-% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> Covarion.TuffleySteel98'
-The Huelsenbeck (2002) model allows combining rate variation with Tuffley-Steel heterotachy:
-% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> ASRV.Gamma +> Covarion.Huelsenbeck02'
-You can also use the Huelsenbeck model with the free-rates model:
-% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> ASRV.Free +> Covarion.Huelsenbeck02'
-</para>
-</section>
-<section xml:id="codon_models"><info><title>Codon models and selection</title></info>
+<section xml:id="codon_models"><info><title>Analysis 5: Mx genes -- codon models and selection</title></info>
 <para>We will analyze myxovirus resistance (Mx) genes from ten mammals and two birds, using
 sequences from Álvarez-Carretero et al. (2023). See <filename>Mx/README.md</filename> in the examples
 for the citation, provenance, and preprocessing details. The terminal stop codons have been
@@ -645,6 +613,38 @@ discussion</link> for the reasons behind the choices in the worked examples.</pa
 </section>
 </section>
 
+<section xml:id="substitution_models"><info><title>Complex substitution models</title></info>
+<para>While those analyses are running, let's look at how to specify more complex substitution models in bali-phy.</para>
+<section><info><title>Defaults</title></info>
+<para>When you don't specify values for parameters like <parameter>imodel</parameter>, bali-phy uses sensible defaults.  For example, these two commands are equivalent:
+% cd ~/alignment_files/examples/
+% bali-phy 5S-rRNA/25-muscle.fasta --test
+% bali-phy 5S-rRNA/25-muscle.fasta --test --alphabet=RNA --smodel=TN93 --imodel=RS07
+You can change the substitution model from the Tamura-Nei model to the General Time-Reversible model:
+% bali-phy 5S-rRNA/25-muscle.fasta --test -S GTR
+Here the <userinput>-S GTR</userinput> is a short form of <userinput>--smodel=GTR</userinput>, where <parameter>smodel</parameter> means the substitution model.
+</para>
+</section>
+<section><info><title>Rate variation</title></info>
+<para>
+You can also allow different sites to evolve at 5 different rates using the ASRV.Gamma(4) + Inv model of rate heterogeneity:
+% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> ASRV.Gamma(4) +> Inv'
+You can also use ASRV.LogNormal instead of ASRV.Gamma.  ASRV.LogNormal+Inv is sometimes better behaved than ASRV.Gamma+Inv, because the smallest rate bin under ASRV.LogNormal is not quite as close to 0.
+% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> ASRV.LogNormal(4) +> Inv'
+You can allow 5 different rates that are all independently estimated:
+% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> ASRV.Free(n=5)'
+</para>
+</section>
+<section><info><title>Heterotachy</title></info>
+<para>
+Heterotachy occurs when the evolutionary rate changes across the tree.  One version of heterotachy is the Tuffley-Steel (1998) model, where each state alternates between an ON and OFF state.
+% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> Covarion.TuffleySteel98'
+The Huelsenbeck (2002) model allows combining rate variation with Tuffley-Steel heterotachy:
+% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> ASRV.Gamma +> Covarion.Huelsenbeck02'
+You can also use the Huelsenbeck model with the free-rates model:
+% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> ASRV.Free +> Covarion.Huelsenbeck02'
+</para>
+</section>
 <section><info><title>Fixing parameter values</title></info>
 <para>
 Return to the examples directory:
