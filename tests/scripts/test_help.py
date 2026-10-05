@@ -66,8 +66,8 @@ def main():
     # Root usage already names positionals; retain their descriptions only in focused command help.
     if "SEQUENCE-FILE ..." in infer_options or "Help options:" in top_level:
         raise AssertionError("top-level help redundantly described positional arguments")
-    if "--align SEQUENCE-FILE" not in infer_options:
-        raise AssertionError("--align did not use the sequence-file metavariable")
+    if "--align" in infer_options:
+        raise AssertionError("positional sequence files retained a named alias")
     if "--config FILE" not in infer_options:
         raise AssertionError("--config was not presented as an inference option")
     global_options = between(top_level, "Global options:", "Infer options:")

@@ -97,9 +97,6 @@ See the user's guide for the full inventory of output files.
 **`-c`** _FILE_, **`--config`** _FILE_
 : Read analysis options and model-language definitions from FILE. See CONFIGURATION FILES.
 
-**`--align`** _FILE_
-: Supply a sequence file, as an alternative to a positional filename. May be repeated.
-
 ## Models and parameters
 
 The alphabet, substitution model, indel model, and scale options accept partition prefixes.

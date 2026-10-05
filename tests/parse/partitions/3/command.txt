@@ -1,1 +1,1 @@
---config=config '--tree=~UniformTree(taxa)' '--alphabet=2:RNA'
+dna1.fasta --config=config '--tree=~UniformTree(taxa)' '--alphabet=2:RNA'

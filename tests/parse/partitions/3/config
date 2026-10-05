@@ -1,4 +1,5 @@
- # Protect interleaved source, scalar command-line precedence, and additive repeated values.
+ # Protect interleaved source, scalar precedence, and command-line-then-config partition order.
+ # Running inference checks partition alphabets and counts that help tests cannot exercise.
  # This becomes obsolete if command files are replaced with a format that specifies merging itself.
 :test
 
@@ -6,8 +7,7 @@
 configBeforeOption = 1;
 :tree ~Yule(taxa,1)
 
- # Sequence data for the three partitions.
-:align dna1.fasta
+ # The first partition comes from the command line; these follow it without duplicating it.
 :align rna.fasta
 :align dna2.fasta
 :alphabet 1,3:DNA

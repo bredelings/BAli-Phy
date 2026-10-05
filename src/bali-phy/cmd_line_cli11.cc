@@ -79,6 +79,8 @@ public:
     {
         add_targets(root, {});
         add_targets(infer_options, {});
+        // Command files retain :align even though sequence files are positional-only on the command line.
+        targets.emplace("align", Target{infer_options.get_option("SEQUENCE-FILE"), {}});
     }
 
     /// BAli-Phy supports reading command files, but does not use CLI11 to generate them.
@@ -109,7 +111,7 @@ public:
             if (option->count() and option->get_multi_option_policy() == CLI::MultiOptionPolicy::TakeAll)
                 deferred_values.emplace_back(option, values);
 
-            items.push_back({target->second.parents, name, values});
+            items.push_back({target->second.parents, option->get_positional() ? option->get_name(true) : name, values});
         }
         return items;
     }
@@ -252,18 +254,8 @@ class CLI11CommandParser
         help_formatter->set_default_command(infer_options,
                                             "[INFER-OPTIONS] SEQUENCE-FILE [SEQUENCE-FILE ...]");
 
-        auto append_alignments = [this](const vector<string>& alignments)
-        {
-            infer.alignments.insert(infer.alignments.end(), alignments.begin(), alignments.end());
-        };
-        // Separate callbacks keep --align single-valued while positional SEQUENCE-FILE remains variadic.
-        // Appending during parsing preserves the established ordering when the two forms are mixed.
-        show_at(infer_options->add_option_function<vector<string>>("SEQUENCE-FILE", append_alignments,
-                                                                   "Sequence data files"),
-                CommandHelpLevel::basic)->type_name("")->take_all()->trigger_on_parse();
-        composing_option(show_at(infer_options->add_option_function<vector<string>>("--align", append_alignments,
-                                                                                    "Sequence data files"),
-                                  CommandHelpLevel::basic)->type_name("SEQUENCE-FILE"))->trigger_on_parse();
+        show_at(infer_options->add_option("SEQUENCE-FILE", infer.alignments, "Sequence data files"),
+                CommandHelpLevel::basic)->type_name("")->take_all();
         show_at(infer_options->add_flag("-t,--test", infer.test, "Analyze initial values and exit"),
                 CommandHelpLevel::basic);
         show_at(infer_options->add_option("-i,--iterations", infer.iterations, "Number of MCMC iterations"),
