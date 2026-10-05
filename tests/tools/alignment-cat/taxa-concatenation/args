@@ -1,3 +1,3 @@
 # Preserve @file order, name matching, and ignored lower-priority options across parser changes.
 # Help tests and internal assertions cannot check this output; retire with these selection interfaces.
-- --file second.fasta --taxa=@names.txt --reorder-by-tree=unused --reorder-by-alignment=unused -V
+- second.fasta --taxa=@names.txt --reorder-by-tree=unused --reorder-by-alignment=unused -V

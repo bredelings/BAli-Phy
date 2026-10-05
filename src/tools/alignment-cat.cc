@@ -420,7 +420,7 @@ int main(int argc,char* argv[])
         auto* verbosity = app.add_option("-V,--verbose", log_verbose, "Diagnostic verbosity (1 if no value is given)")
             ->type_name("LEVEL")->expected(0, 1);
 
-        app.add_option("file,--file", filenames, "Input alignments (default: stdin; '-' reads stdin)")
+        app.add_option("file", filenames, "Input alignments (default: stdin; '-' reads stdin)")
             ->type_size(1)->expected(-1);
         // The examples are preformatted; preserve their indentation and line breaks.
         app.get_formatter()->enable_footer_formatting(false);
