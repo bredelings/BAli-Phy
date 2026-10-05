@@ -28,10 +28,7 @@
 #include "sequence/sequence-format.hh"
 #include "findroot.hh"
 
-#include <boost/program_options.hpp>
-
-namespace po = boost::program_options;
-using po::variables_map;
+#include <CLI/CLI.hpp>
 
 using std::cout;
 using std::cerr;
@@ -42,57 +39,42 @@ using std::vector;
 using std::set;
 
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description all("Allowed options");
-    all.add_options()
-	("help,h", "produce help message")
-	("align", value<string>(),"file with sequences and initial alignment")
-	("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
-	("tree",value<string>(),"file with tree that specifies leaves to keep")
-	("nleaves,N",value<int>(),"number of sequences to keep")
-	;
-
-    // positional options
-    positional_options_description p;
-    p.add("align", 1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Remove ancestral sequences from an alignment.\n\n";
-	cout<<"Usage: alignment-chop-internal [OPTIONS] < <alignments-file>\n\n";
-	cout<<all<<"\n";
-	exit(0);
-    }
-
-    return args;
-}
-
-
+// Select leaf sequences from each FASTA alignment on stdin and write the resulting stream.
 int main(int argc,char* argv[]) 
 { 
 
     try {
 	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Remove ancestral sequences from a stream of FASTA alignments.", "alignment-chop-internal"};
+        app.usage("Usage: alignment-chop-internal [OPTIONS] < alignments-file > leaves.fastas");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string tree_file;
+        int N = 0;
+        auto* nleaves_option = app.add_option("-N,--nleaves", N, "Keep the first N sequences")
+            ->type_name("N");
+        app.add_option("--tree", tree_file, "Keep sequences named by the tree's leaves")
+            ->type_name("FILE");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            // Let CLI11 print help or diagnostics, retaining the tool's 0/1 exit statuses.
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+
+        if (nleaves_option->count() and app.count("--tree"))
+            throw myexception()<<"Cannot give both --nleaves and --tree.";
+        if (not nleaves_option->count() and not app.count("--tree"))
+            throw myexception()<<"Specify either --nleaves or --tree.";
 
 	//------- Determine number of leaf sequences to keep --------//
-	if (args.count("nleaves") and args.count("tree"))
-	    throw myexception()<<"You can't specify both 'nleaves' and 'tree'!";
-
 	std::function<void(vector<sequence>&)> chop_fn;
 
-	if (args.count("nleaves"))
+	if (nleaves_option->count())
 	{
-	    int N = args["nleaves"].as<int>();
 	    chop_fn = [N](vector<sequence>& S)
 	    {
 		if (S.size() < N)
@@ -101,10 +83,10 @@ int main(int argc,char* argv[])
 		S.resize(N);
 	    };
 	}
-	else if (args.count("tree"))
+	else
 	{
 	    set<string> non_empty_leaf_labels;
-	    for(auto& leaf_label: load_T(args).get_leaf_labels())
+	    for(auto& leaf_label: load_tree_from_file(tree_file).get_leaf_labels())
 		if (leaf_label.empty())
 		    std::cerr<<"Warning: ignoring empty leaf label!\n";
 		else if (non_empty_leaf_labels.count(leaf_label))
@@ -125,8 +107,6 @@ int main(int argc,char* argv[])
 		std::swap(S, S2);
 	    };
 	}
-	else
-	    throw myexception()<<"Both 'n_leaves' nor 'tree' unspecified!";
 	
 	//------ Read sequences and chop off non-leaf sequences -----//
 	while (auto sequences = find_load_next_sequences(std::cin))

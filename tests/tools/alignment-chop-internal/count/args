@@ -1,0 +1,3 @@
+# Protect per-sample selection, input ordering, and retained gap columns. Other tools
+# do not exercise this stream path; retire if equivalent selection coverage replaces it.
+-N 2

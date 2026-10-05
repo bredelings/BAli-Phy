@@ -1,0 +1,16 @@
+sample 1
+>b
+G-
+>a
+A-
+>ancestor
+C-
+
+sample 2
+>b
+T-
+>a
+C-
+>ancestor
+G-
+

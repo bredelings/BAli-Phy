@@ -4115,9 +4115,9 @@ The stabilization criterion is the same one described above for numerical values
 
     <section><info><title>alignment-chop-internal</title></info>
       
-	<para>Remove internal-node ancestral sequences from an alignment.  (This
-	probably only works for alignments output by bali-phy.) </para>
-<screen><prompt>%</prompt> alignment-chop-internal &lt; <replaceable>file</replaceable>.fastas > <replaceable>file</replaceable>-chopped.fastas</screen>
+	<para>Remove ancestral sequences from each alignment, keeping sequences whose names
+        occur as leaves in the specified tree. </para>
+<screen><prompt>%</prompt> alignment-chop-internal --tree <replaceable>tree</replaceable> &lt; <replaceable>file</replaceable>.fastas > <replaceable>file</replaceable>-chopped.fastas</screen>
     </section>
 
   </section>

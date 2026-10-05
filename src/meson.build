@@ -255,7 +255,7 @@ endif
 
 declarative_tool_tests = ['alignment-info', 'alignment-draw', 'character-properties', 'cut-range', 'mcon-tool', 'statreport']
 declarative_tool_tests += ['joint-indels', 'tree-mean-lengths', 'trees-distances', 'summarize-ancestors']
-declarative_tool_tests += ['alignment-cat', 'alignment-translate', 'alignment-find']
+declarative_tool_tests += ['alignment-cat', 'alignment-translate', 'alignment-find', 'alignment-chop-internal']
 tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
 
 foreach tool: tools + prefixed_tools
