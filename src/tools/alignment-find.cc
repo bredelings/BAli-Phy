@@ -19,9 +19,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <iostream>
 #include <vector>
-#include <string>
-#include "sequence/alphabet.hh"
-#include "alignment/alignment.hh"
+#include <utility>
+#include "sequence/sequence.hh"
+#include "sequence/sequence-format.hh"
+#include "util/myexception.hh"
 #include "alignment/load.hh"
 
 #include <CLI/CLI.hpp>
@@ -36,11 +37,7 @@ int main(int argc,char* argv[])
     CLI::App app{"Find the first or last FASTA alignment in a stream.", "alignment-find"};
     app.usage("Usage: alignment-find [OPTIONS] < alignments-file > alignment.fasta");
     app.get_formatter()->long_option_alignment_ratio(0.2f);
-    string alphabet;
     bool first = false, last = false;
-    app.add_option("--alphabet", alphabet,
-                   "Alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop")
-        ->type_name("ALPHABET");
     app.add_flag("--first", first, "Select the first alignment");
     app.add_flag("--last", last, "Select the last alignment (default)");
     try
@@ -58,14 +55,27 @@ int main(int argc,char* argv[])
       throw myexception()<<"Cannot give both --first and --last.";
 
     //--------------- Find the alignment ----------------//
-    alignment A;
-    if (first)
-      A = find_first_alignment(std::cin, alphabet);
-    else
-      A = find_last_alignment(std::cin, alphabet);
+    vector<sequence> sequences;
+    // Replace the retained block only after a successful read, so a later read error
+    // leaves it available. First-selection stops before reading another block.
+    try
+    {
+      while (auto next = find_load_next_sequences(std::cin))
+      {
+        sequences = std::move(*next);
+        if (first) break;
+      }
+    }
+    catch (const std::exception& e)
+    {
+      std::cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
+      std::cerr<<"  Exception: "<<e.what()<<endl;
+    }
+    if (sequences.empty())
+      throw myexception()<<"No alignments found.";
 
     //------------------ Print it out -------------------//
-    std::cout<<A;
+    sequence_format::write_fasta(std::cout, sequences);
   }
   catch (std::exception& e) {
     std::cerr<<"alignment-find: Error! "<<e.what()<<endl;

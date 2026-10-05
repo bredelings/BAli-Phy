@@ -47,10 +47,6 @@ alignment load_next_alignment(std::istream& ifile, const alphabet& a);
 
 alignment load_next_alignment(std::istream& ifile, const alphabet& a, const std::vector<std::string>& names);
 
-alignment find_first_alignment(std::istream& ifile, const std::string& alph_name);
-
-alignment find_last_alignment(std::istream& ifile, const std::string& alph_name);
-
 class alignment_reader: public file_reader<std::string>
 {
     std::string current;

@@ -22,13 +22,10 @@ Text before an alignment, or between alignments, is skipped while searching for 
 next header. This allows extraction from a stream containing sample labels and FASTA
 alignment blocks. PHYLIP input is not supported by this tool.
 
-Sequence letters are converted to uppercase and interpreted using the specified
-alphabet, or an automatically chosen alphabet when **`--alphabet`** is omitted.
-Columns containing only gaps or unknown-presence symbols (**-**, **?**, or **=**
-for single-character alphabets) are removed from the selected alignment. Ambiguous
-residues such as DNA **N** represent present characters and do not make a column
-empty. Output is a parsed and reformatted alignment, not a verbatim copy of the
-input block.
+Sequence letters are converted to uppercase, and spaces and tabs within sequences
+are removed. Sequence lengths and all columns are preserved, including columns
+containing only **-**, **?**, or **=**. Symbols are not interpreted using an alphabet.
+The output is FASTA with normalized formatting.
 
 With **`--first`**, reading stops after the first alignment. With **`--last`**, the
 stream is read until its end or an alignment cannot be loaded. A loading error
@@ -41,11 +38,6 @@ the program reports an error.
 
 **-h**, **`--help`**
 : Print usage information and exit.
-
-**`--alphabet`** _alphabet_
-: Specify the sequence alphabet, for example **DNA**, **RNA**, **Amino-Acids**,
-  **Amino-Acids+stop**, **Triplets**, **Codons**, or **Codons+stop**.
-  By default, choose an alphabet from the sequence data.
 
 **`--first`**
 : Select the first alignment. Cannot be combined with **`--last`**.
@@ -62,10 +54,10 @@ Extract the last alignment in a sample file:
 alignment-find < samples.fastas > last.fasta
 ```
 
-Extract the first alignment using an explicit nucleotide alphabet:
+Extract the first alignment:
 
 ```
-alignment-find --first --alphabet DNA < samples.fastas > first.fasta
+alignment-find --first < samples.fastas > first.fasta
 ```
 
 Convert the selected alignment to PHYLIP:

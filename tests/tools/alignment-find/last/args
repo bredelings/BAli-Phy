@@ -1,3 +1,2 @@
-# Protect stream selection and gap-column removal, absent from the other tool tests.
-# Retire when equivalent selection coverage exists at the reader level.
---alphabet DNA
+# Protect first/last block selection and preservation of columns and symbols. Other
+# tool tests do not cover this selector; retire when equivalent reader coverage exists.
