@@ -1,0 +1,3 @@
+# Protect stream selection and gap-column removal, absent from the other tool tests.
+# Retire when equivalent selection coverage exists at the reader level.
+--alphabet DNA

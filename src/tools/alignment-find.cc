@@ -24,65 +24,45 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment.hh"
 #include "alignment/load.hh"
 
-#include <boost/program_options.hpp>
-
-namespace po = boost::program_options;
-using po::variables_map;
+#include <CLI/CLI.hpp>
 
 using namespace std;
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-  using namespace po;
-
-  // named options
-  options_description all("Allowed options");
-  all.add_options()
-    ("help,h", "produce help message")
-    ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
-    ("first", "get the first alignment in the file")
-    ("last", "get the last alignment in the file (default)")
-    ;
-
-  // positional options
-  positional_options_description p;
-  p.add("align", 1);
-  
-  variables_map args;     
-  store(command_line_parser(argc, argv).
-	    options(all).positional(p).run(), args);
-  // store(parse_command_line(argc, argv, desc), args);
-  notify(args);    
-
-  if (args.count("help")) {
-    cout<<"Find the last (or first) FASTA alignment in a file.\n";
-    cout<<"  (Alignments are ended by blank lines.)\n\n";
-    cout<<"Usage: alignment-find [OPTIONS] < in-file \n\n";
-    cout<<all<<"\n";
-    exit(0);
-  }
-
-  return args;
-}
-
-
-//FIXME - add an argument to select first or last (default)
-
+// Select the first or last FASTA alignment from stdin and write it to stdout.
 int main(int argc,char* argv[]) 
 { 
   try {
     //---------- Parse command line  -------//
-    variables_map args = parse_cmd_line(argc,argv);
+    CLI::App app{"Find the first or last FASTA alignment in a stream.", "alignment-find"};
+    app.usage("Usage: alignment-find [OPTIONS] < alignments-file > alignment.fasta");
+    app.get_formatter()->long_option_alignment_ratio(0.2f);
+    string alphabet;
+    bool first = false, last = false;
+    app.add_option("--alphabet", alphabet,
+                   "Alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop")
+        ->type_name("ALPHABET");
+    app.add_flag("--first", first, "Select the first alignment");
+    app.add_flag("--last", last, "Select the last alignment (default)");
+    try
+    {
+      app.parse(argc, argv);
+    }
+    catch (const CLI::ParseError& error)
+    {
+      // Let CLI11 print help or diagnostics, retaining the tool's 0/1 exit statuses.
+      app.exit(error);
+      return error.get_exit_code() == 0 ? 0 : 1;
+    }
+
+    if (app.count("--first") and app.count("--last"))
+      throw myexception()<<"Cannot give both --first and --last.";
 
     //--------------- Find the alignment ----------------//
     alignment A;
-    if (args.count("first") and args.count("last"))
-      throw myexception()<<"You must choose either --first or --last, not both";
-
-    if (args.count("first"))
-      A = find_first_alignment(std::cin, get_alphabet_name(args));
+    if (first)
+      A = find_first_alignment(std::cin, alphabet);
     else
-      A = find_last_alignment(std::cin, get_alphabet_name(args));
+      A = find_last_alignment(std::cin, alphabet);
 
     //------------------ Print it out -------------------//
     std::cout<<A;
