@@ -1,5 +1,9 @@
 # 4.4 (unreleased)
 
+## Breaking changes
+
+- Remove `alignment-convert` in favor of `alignment-cat -o <format>`.
+
 ## Fixes
 
  - Better error messages when different data partitions have different sequence names.

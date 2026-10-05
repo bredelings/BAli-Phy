@@ -156,7 +156,7 @@ and invalid frame values.
 
 # SEE ALSO
 
-**alignment-convert**(1), **alignment-info**(1)
+**alignment-cat**(1), **alignment-info**(1)
 
 # REPORTING BUGS
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.

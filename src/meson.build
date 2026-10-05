@@ -204,7 +204,7 @@ tools = ['model_P','statreport','stats-select','alignment-gild','alignment-conse
          'summarize-ancestors','mcon-tool','character-properties']
 
 extra_tools = ['stats-merge', 'stats-cat', 'alignment-identity', 'alignment-compare', 'joint-indels', 'joint-parsimony', 'alignment-smc',
-		 'alignment-convert', 'alignment-find-conserved', 'partitions-supported', 'draw-graph', 'trees-pair-distances', 'tree-partitions', 'tree-reroot',
+		 'alignment-find-conserved', 'partitions-supported', 'draw-graph', 'trees-pair-distances', 'tree-partitions', 'tree-reroot',
 		 'path-graph']
 
 if get_option('extra-tools')
@@ -253,7 +253,7 @@ if host_machine.system() == 'windows' and meson.is_cross_build()
   python_tool_wrapper_args = ['--wrapper'] + windows_test_wrapper
 endif
 
-declarative_tool_tests = ['alignment-info', 'alignment-convert', 'alignment-draw', 'character-properties', 'cut-range', 'mcon-tool', 'statreport']
+declarative_tool_tests = ['alignment-info', 'alignment-draw', 'character-properties', 'cut-range', 'mcon-tool', 'statreport']
 declarative_tool_tests += ['joint-indels', 'tree-mean-lengths', 'trees-distances', 'summarize-ancestors']
 declarative_tool_tests += ['alignment-cat', 'alignment-translate']
 tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'

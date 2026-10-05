@@ -1,0 +1,3 @@
+# Preserve PHYLIP layout and EOF handling through the sequence reader. Other cat tests
+# do not cover these combinations; retire when equivalent reader coverage replaces them.
+-o fasta
