@@ -405,7 +405,7 @@ int main(int argc,char* argv[])
         bool do_strip_gaps = false, use_root = false;
         vector<string> filenames;
 
-        app.add_option("--output", output, "Output format: fasta or phylip")->capture_default_str();
+        app.add_option("-o,--output", output, "Output format: fasta or phylip")->capture_default_str();
         app.add_option("-c,--columns", columns, "Columns to keep, e.g. 1-10,30- or 1-/3");
         app.add_option("-t,--taxa", taxa, "Taxa to keep in order: comma-separated names or @filename");
         app.add_flag("-p,--pad", pad, "Pad each input's shorter sequences with gaps");

@@ -43,7 +43,7 @@ reference alignment.
 **-h**, **`--help`**
 : Print usage information and exit.
 
-**`--output`** _format_
+**-o** _format_, **`--output`** _format_
 : Write **fasta** (the default) or **phylip**. PHYLIP output is interleaved and
   truncates sequence names to 10 characters; names should remain unique after
   truncation. PHYLIP requires at least one sequence and equal final sequence
@@ -181,7 +181,7 @@ alignment-cat gene1.fasta gene2.fasta > combined.fasta
 Convert standard input to PHYLIP:
 
 ```
-alignment-cat --output=phylip < alignment.fasta > alignment.phy
+alignment-cat -o phylip < alignment.fasta > alignment.phy
 ```
 
 Keep selected columns from an alignment of at least 600 columns:
