@@ -35,20 +35,16 @@
 #include "findroot.hh"
 #include "parsimony.hh"
 #include "statistics.hh"
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 #include <boost/dynamic_bitset.hpp>
 
 #include "util/string/join.hh"
-#include "util/cmdline.hh"
 
 using std::vector;
 using std::valarray;
 using std::map;
 using std::string;
 using std::endl;
-
-namespace po = boost::program_options;
-using po::variables_map;
 
 using boost::dynamic_bitset;
 
@@ -101,57 +97,6 @@ vector<int> find_triplet(const vector<sequence>& sequences,const string& triplet
     for(int i=0;i<sequences.size();i++)
 	add(found, find_triplet(sequences[i],triplet) );
     return found;
-}
-
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description all("Allowed options");
-    all.add_options()
-	("help,h", "produce help message")
-	("align", value<string>(),"file with sequences and initial alignment")
-	("tree",value<string>(),"file with initial tree")
-	("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
-        ("state-groups","Append exact state counts and groups from one optimal reconstruction")
-        ("site-parsimony","Print per-column parsimony as TSV and skip ordinary statistics")
-        ("erase-empty-columns,e","Remove columns with no characters (all gaps).")
-	("show-names,N","Print the sequence-names and exit")
-	("show-lengths,L","Print the sequence-lengths and exit")
-	;
-
-    // positional options
-    positional_options_description p;
-    p.add("align", 1);
-    p.add("tree", 2);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Show useful statistics about the alignment.\n\n";
-	cout<<"Usage: alignment-info <alignment-file> [<tree-file>] [OPTIONS]\n\n";
-	cout<<all<<"\n";
-	exit(0);
-    }
-
-    if (args.count("state-groups") and not args.count("site-parsimony"))
-        throw myexception()<<"--state-groups requires --site-parsimony";
-    if (args.count("site-parsimony"))
-    {
-        if (not args.count("tree"))
-            throw myexception()<<"--site-parsimony requires --tree";
-        for (const auto* option: {"show-names", "show-lengths", "erase-empty-columns"})
-            if (args.count(option))
-                throw myexception()<<"--site-parsimony cannot be combined with --"<<option;
-    }
-
-    return args;
 }
 
 
@@ -387,15 +332,44 @@ int main(int argc,char* argv[])
 	cout.precision(10);
     
 	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Show useful statistics about the alignment.", "alignment-info"};
+        app.usage("Usage: alignment-info [alignment-file] [tree-file] [OPTIONS]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string filename = "-", tree_file, a_name;
+        bool state_groups = false, site_parsimony = false, erase_empty = false;
+        bool show_names = false, show_lengths = false;
+        app.add_option("alignment-file", filename,
+                       "Alignment file (default: stdin; '-' reads stdin)");
+        auto* tree_option = app.add_option("tree-file", tree_file, "Optional Newick tree file");
+        app.add_option("--alphabet", a_name, "Specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons");
+        app.add_flag("--state-groups", state_groups, "Append exact state counts and groups from one optimal reconstruction");
+        app.add_flag("--site-parsimony", site_parsimony, "Print per-column parsimony as TSV and skip ordinary statistics");
+        app.add_flag("-e,--erase-empty-columns", erase_empty, "Remove columns with no characters (all gaps).");
+        app.add_flag("-N,--show-names", show_names, "Print the sequence-names and exit");
+        app.add_flag("-L,--show-lengths", show_lengths, "Print the sequence-lengths and exit");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            // Let CLI11 print help or diagnostics, retaining the tool's 0/1 exit statuses.
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        if (state_groups and not site_parsimony)
+            throw myexception()<<"--state-groups requires --site-parsimony";
+        if (site_parsimony)
+        {
+            if (not tree_option->count())
+                throw myexception()<<"--site-parsimony requires a tree file";
+            for (const auto* option: {"--show-names", "--show-lengths", "--erase-empty-columns"})
+                if (app.count(option))
+                    throw myexception()<<"--site-parsimony cannot be combined with "<<option;
+        }
 
-	//----------- Load alignment and tree ---------//
-	auto filename = get_arg_default<string>(args,"align","-");
-	vector<sequence> sequences = sequence_format::load_from_file(filename);
-	auto a_name = get_arg_default<string>(args,"alphabet", "");
-
-	bool show_lengths = args.count("show-lengths");
-	bool show_names = args.count("show-names");
+        //----------- Load alignment and tree ---------//
+        vector<sequence> sequences = sequence_format::load_from_file(filename);
 	if (show_lengths or show_names)
 	{
 	    for(auto& sequence: sequences)
@@ -411,27 +385,24 @@ int main(int argc,char* argv[])
 	    exit(0);
 	}
 
-        bool erase_empty = false;
-        if (args.count("erase-empty-columns"))
-            erase_empty = true;
 	alignment A = load_alignment(sequences, a_name, erase_empty);
 	SequenceTree T;
-	if (args.count("tree"))
+	if (tree_option->count())
 	{
-	    T = load_T(args);
-            if (args.count("site-parsimony") and A.n_sequences() != T.n_leaves())
+	    T = load_tree_from_file(tree_file);
+            if (site_parsimony and A.n_sequences() != T.n_leaves())
                 throw myexception()<<"--site-parsimony requires one alignment sequence per tree tip";
             const int columns = A.length();
 	    link(A,T,false);
-            if (args.count("site-parsimony") and A.length() != columns)
+            if (site_parsimony and A.length() != columns)
                 throw myexception()<<"Tree linking changed alignment columns in --site-parsimony mode";
 	    check_alignment(A,T,false);
 	}
 
         // This exclusive mode returns before any summary, pairwise, or indel calculations.
-        if (args.count("site-parsimony"))
+        if (site_parsimony)
         {
-            print_site_parsimony(A,T,args.count("state-groups"));
+            print_site_parsimony(A,T,state_groups);
             return 0;
         }
 
@@ -569,7 +540,7 @@ int main(int argc,char* argv[])
 
 
 	//------------ Get Tree Lengths ------------//
-	if (args.count("tree")) {
+	if (tree_option->count()) {
 	    cout<<"  tree length = "<<n_mutations(A,T)<<"\n";
 	    if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
 		cout<<"  tree length (nuc) = "<<n_mutations(A,T,nucleotide_cost_matrix(*Tr))<<"\n";

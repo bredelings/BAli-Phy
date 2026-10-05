@@ -10,10 +10,6 @@
 
 **alignment-info** [_alignment-file_] [_tree-file_] \[OPTIONS\]
 
-**alignment-info** **`--align`** _alignment-file_ [**`--tree`** _tree-file_] \[OPTIONS\]
-
-**alignment-info** _alignment-file_ _tree-file_ **`--site-parsimony`** \[OPTIONS\]
-
 # DESCRIPTION
 
 By default, print a human-readable summary of alignment dimensions, variation, mean mismatch
@@ -29,10 +25,11 @@ tree or optimize branch lengths.
 
 # INPUT AND PREPROCESSING
 
-The alignment can be given positionally or with **`--align`**. If omitted, or given as `-`,
-it is read from standard input. For example, use **`--tree`** when supplying only a tree
-filename and reading the alignment from standard input. Specify **`--alphabet`** when the
-alphabet cannot be inferred reliably.
+The first positional argument is the alignment file. If omitted, or given as `-`, it is read
+from standard input. Use `-` when supplying a tree file as the second positional argument
+and reading the alignment from standard input. The tree is optional for the ordinary report
+and required for per-site parsimony. Branch lengths are not used for the reported parsimony
+scores. Specify **`--alphabet`** when the alphabet cannot be inferred reliably.
 
 For an ordinary report with a tree, sequence names are matched to tree-node names and rows
 may be reordered. Normally supply one sequence per tip. The ordinary linking path can also
@@ -54,13 +51,6 @@ and `?`. This differs from the raw-character lengths printed by **`--show-length
 
 **-h**, **`--help`**
 : Print usage and options, then exit.
-
-**`--align`** _file_
-: Read the alignment from _file_. The default is standard input (`-`).
-
-**`--tree`** _file_
-: Read a Newick tree. Optional for the ordinary report and required for per-site parsimony.
-  Branch lengths are not used for the reported parsimony scores.
 
 **`--alphabet`** _name_
 : Specify the alphabet instead of inferring it, for example `DNA`, `RNA`, `Amino-Acids`,
@@ -288,7 +278,7 @@ Remove empty columns explicitly, or read an alignment from standard input:
 
 ```bash
 alignment-info example.fasta --alphabet DNA --erase-empty-columns
-alignment-info --alphabet DNA --tree example.tree < example.fasta
+alignment-info - example.tree --alphabet DNA < example.fasta
 ```
 
 The example has no empty columns, so removal does not alter it. In per-site mode:

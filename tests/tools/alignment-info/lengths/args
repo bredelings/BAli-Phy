@@ -1,1 +1,1 @@
---tree ../tree.nwk --site-parsimony --show-lengths
+- ../tree.nwk --site-parsimony --show-lengths

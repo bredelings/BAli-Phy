@@ -1,1 +1,1 @@
---alphabet DNA --tree tree.nwk --site-parsimony --state-groups
+--alphabet DNA - tree.nwk --site-parsimony --state-groups
