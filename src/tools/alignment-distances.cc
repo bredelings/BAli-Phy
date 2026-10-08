@@ -73,15 +73,15 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description input("Input options");
     input.add_options()
 	("help,h", "Produce help message")
-	("skip,s",value<unsigned>()->default_value(0),"Number of alignment samples to skip.")
-	("max,m",value<int>()->default_value(1000),"Maximum number of alignments to analyze.")
+	("skip,s",value<unsigned>()->default_value(0),"Alignments to skip per sample file.")
+	("max,m",value<int>()->default_value(1000),"Maximum retained alignments per sample file (-1: unlimited).")
 	("verbose,V","Output more log messages on stderr.")
 	("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
 	;
 
     options_description analysis("Analysis options");
     analysis.add_options()
-	("distances", value<string>(),"Colon-separated list of distances.")
+	("distances", value<string>(),"Measures (colon-separated for score; one for other analyses).")
 	("analysis", value<string>(), "Analysis: score, AxA, NxN, compare, median, distances")
 	("CI",value<double>()->default_value(0.95),"Confidence interval size.")
 	("mean", "Show mean and standard deviation")
@@ -112,7 +112,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	cout<<visible<<"\n";
 
 	cout<<"Distances:\n";
-	cout<<"  splits, splits2, pairwise, recall, accuracy, nonrecall, inaccuracy\n\n";
+	cout<<"  splits, splits2, pairwise, recall, accuracy, nonrecall, inaccuracy\n";
+        cout<<"  median/compare/distances require splits, splits2, or pairwise.\n";
+        cout<<"  Defaults: score uses splits:splits2:nonrecall:inaccuracy; NxN uses pairwise; others use splits.\n\n";
 
 	cout<<"Examples:\n\n";
 
@@ -122,17 +124,17 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	cout<<" Compute distance matrix between all pairs of alignments in all files:\n";
 	cout<<"   % alignment-distances AxA file1.fasta ... fileN.fasta\n\n";
 
-	cout<<" Compute all NxN pairwise alignment accuracies, averaged over As:\n";
+	cout<<" Compute NxN sequence-pair disagreement scores, averaged over As:\n";
 	cout<<"   % alignment-distances NxN true.fasta As.fasta\n\n";
 
 	cout<<" Find alignment with smallest average distance to other alignments:\n";
-	cout<<"   % alignment-distances median As.fasta A.fasta\n\n";
+	cout<<"   % alignment-distances median As.fasta > A.fasta\n\n";
 
 	cout<<" Compare the distances with-in and between the two groups:\n";
 	cout<<"   % alignment-distances compare A-dist1.fasta A-dist2.fasta\n\n";
 
 	cout<<" Report distribution of average distance to other alignments:\n";
-	cout<<"   % alignment-distances distances As.fasta A.fasta\n\n";
+	cout<<"   % alignment-distances distances As.fasta\n\n";
 
 	exit(0);
     }
@@ -212,7 +214,6 @@ long int total_homologies(const matrix<int>& M1)
 /// The number of letters in sequence i that are aligned against different letters in sequence j
 long int pairwise_alignment_distance_asymmetric(int i, int j, const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
 {
-    // broken
     int Li = CI1[i].size();
     assert(Li == CI2[i].size());
 
@@ -445,7 +446,7 @@ int main(int argc,char* argv[])
             else if (distances[0] == "inaccuracy")
                 distance_fn = pairwise_alignment_distance_inaccuracy;
             else
-                throw myexception()<<"alignment-distances NxN: distance '"<<distances[0]<<"' not recognized!\n  Allowed values: pairwise";
+                throw myexception()<<"alignment-distances NxN: distance '"<<distances[0]<<"' not recognized!\n  Allowed values: pairwise, nonrecall, inaccuracy";
 
 	    alignment_sample A(files[0], alphabet_name, 0, -1);
 
@@ -569,6 +570,13 @@ int main(int argc,char* argv[])
 
 	    alignment_sample As(files[0], alphabet_name, skip, maxalignments);
 
+            if (As.size() == 1)
+            {
+                cout<<As[0]<<endl;
+                cerr<<"Only one alignment; pairwise summaries are unavailable.\n";
+                return 0;
+            }
+
 	    matrix<double> D = distances(As, distance_fns[0]);
 
 	    //----------- accumulate distances ------------- //
@@ -585,7 +593,7 @@ int main(int argc,char* argv[])
 
 	    cout<<As[argmin]<<endl;
 
-	    // Get a list of alignments in decreasing order of E D(i,A)
+	    // Get a list of alignments in increasing order of E D(i,A)
 	    vector<int> items = iota<int>(As.size());
 	    sort(items.begin(),items.end(),sequence_order<double>(ave_distances));
 
@@ -593,7 +601,7 @@ int main(int argc,char* argv[])
 	    for(int i=0;i<As.size() and i < 5;i++) 
 	    {
 		int j = items[i];
-		cerr<<"alignment = "<<i<<"   length = "<<As.Ms[j].size1();
+		cerr<<"rank = "<<i<<"   length = "<<As.Ms[j].size1();
 		cerr<<"   E D = "<<ave_distances[j]<<endl;
 	    }
 
@@ -606,7 +614,7 @@ int main(int argc,char* argv[])
 		cerr<<"fraction = "<<double(i)/(items.size()-1)<<"     AveD = "<<double(total)/(i*i+i)*2<<endl;
 	    }
 	    cerr<<endl;
-	    cerr<<"diameter = "<<diameter(D)<<endl;
+	    cerr<<"mean pairwise distance = "<<diameter(D)<<endl;
 	    exit(0);  
 	}
 	else if (analysis == "distances")
@@ -627,7 +635,7 @@ int main(int argc,char* argv[])
 	    throw myexception()<<"Analysis '"<<analysis<<"' not recognized.";
     }
     catch (exception& e) {
-	cerr<<"alignment-median: Error! "<<e.what()<<endl;
+	cerr<<"alignment-distances: Error! "<<e.what()<<endl;
 	exit(1);
     }
     return 0;
