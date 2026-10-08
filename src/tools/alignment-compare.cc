@@ -319,6 +319,14 @@ int main(int argc,char* argv[])
           if (sequence_names(current) != names)
             current = reorder_sequences(current, names);
           check_same_sequence_lengths(L, current);
+
+          // Counts distinguish a known residue index from a gap. Unknown presence cannot be
+          // indexed or treated as a gap without changing the homology distribution being compared.
+          for(int i=0;i<current.n_sequences();i++)
+            for(int c=0;c<current.length();c++)
+              if (current(c,i) == alphabet::unknown)
+                throw myexception()<<"Unknown gap/residue status in sequence '"<<current.seq(i).name
+                                   <<"', processed column "<<c+1<<": samples cannot contain '?' or '='";
         }
         catch (myexception& e)
         {
