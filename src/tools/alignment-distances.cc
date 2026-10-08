@@ -569,7 +569,8 @@ int main(int argc,char* argv[])
 
 	    matrix<double> D  = distances(both,distance_fns[0],true);
 
-	    report_compare(args, D, N1, N2, directed);
+	    report_compare(D, N1, N2,
+                   args["CI"].as<double>(), args.count("mean"), args.count("median"), args.count("minmax"), directed);
 	}
 	else if (analysis == "median") 
 	{
@@ -635,7 +636,7 @@ int main(int argc,char* argv[])
 	    // computes distribution of distances from A[i] to A[j]
 
 	    // We probably shouldn't call this a diameter
-	    diameter(D,"1",args,directed);
+	    diameter(D,"1", args["CI"].as<double>(), args.count("mean"), args.count("median"), args.count("minmax"), directed);
 	}
 	else
 	    throw myexception()<<"Analysis '"<<analysis<<"' not recognized.";

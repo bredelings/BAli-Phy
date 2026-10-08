@@ -2,25 +2,16 @@
 #include "distance-report.hh"
 
 #include <iostream>
-#include <boost/program_options.hpp>
 #include "util/matrix.hh"
-
-namespace po = boost::program_options;
-using po::variables_map;
 
 using namespace std;
 using namespace statistics;
 
-void report_distances(const valarray<double>& distances,
-		      const string& name,
-		      variables_map& args
-		      )
+// Print the requested summaries, defaulting to the median and central interval.
+void report_distances(const valarray<double>& distances, const string& name,
+                      double interval_probability, bool show_mean, bool show_median, bool show_minmax)
 {
   if (not distances.size()) return;
-
-  bool show_mean = args.count("mean");
-  bool show_median = args.count("median");
-  bool show_minmax = args.count("minmax");
 
   if (not show_mean and not show_median and not show_minmax)
     show_median = true;
@@ -32,8 +23,7 @@ void report_distances(const valarray<double>& distances,
       cout<<"   [+- "<<sqrt(Var(distances))<<"]"<<endl;
   }
   if (show_median) {
-    double P = args["CI"].as<double>();
-    pair<double,double> interval = central_confidence_interval(distances,P);
+    pair<double,double> interval = central_confidence_interval(distances,interval_probability);
     cout<<"    "<<name<<" ~ "<<median(distances);
     cout<<"   ("<<interval.first<<", "<<interval.second<<")"<<endl;
   }
@@ -50,7 +40,8 @@ void report_distances(const valarray<double>& distances,
 
 // Row means exclude self-comparisons. Directed distributions include both orders;
 // symmetric distributions retain one value per pair to preserve their quantiles.
-void diameter(const matrix<double>& D,const string& name,variables_map& args, bool directed)
+void diameter(const matrix<double>& D, const string& name, double interval_probability,
+              bool show_mean, bool show_median, bool show_minmax, bool directed)
 {
   if (D.size1() == 1)
   {
@@ -76,8 +67,8 @@ void diameter(const matrix<double>& D,const string& name,variables_map& args, bo
 
   string name1 = string("D")+name+name + "  ";
   string name2 = string("D")+name+"("+name+")";
-  report_distances(d11,name1, args);cout<<endl;
-  report_distances(d1 ,name2, args);
+  report_distances(d11,name1, interval_probability, show_mean, show_median, show_minmax);cout<<endl;
+  report_distances(d1 ,name2, interval_probability, show_mean, show_median, show_minmax);
   cout<<endl;
 }
 
@@ -89,7 +80,8 @@ double fair_probability_x_less_than_y(const valarray<double>& x,const valarray<d
 
 // D12 and D21 retain their argument order. D1(2) and D2(1) are outgoing row means;
 // the existing probability comparisons retain half weight for ties.
-void report_compare(variables_map& args, const matrix<double>& D, int N1, int N2, bool directed)
+void report_compare(const matrix<double>& D, int N1, int N2, double interval_probability,
+                    bool show_mean, bool show_median, bool show_minmax, bool directed)
 {
   assert(N1+N2 == D.size1());
   assert(D.size1() == D.size2());
@@ -136,10 +128,10 @@ void report_compare(variables_map& args, const matrix<double>& D, int N1, int N2
   }
   
   cout<<endl;
-  diameter(D1,"1",args,directed);
+  diameter(D1,"1", interval_probability, show_mean, show_median, show_minmax, directed);
 
   cout<<endl;
-  diameter(D2,"2",args,directed);cout<<endl;
+  diameter(D2,"2", interval_probability, show_mean, show_median, show_minmax, directed);cout<<endl;
 
   valarray<double> d12(0.0, N1*N2);
   valarray<double> reverse_distances(0.0, directed ? N1*N2 : 0);
@@ -159,14 +151,17 @@ void report_compare(variables_map& args, const matrix<double>& D, int N1, int N2
   d21_2 /= N1;
   
   const auto& d21 = directed ? reverse_distances : d12;
-  report_distances(d12,"D12  ",args);cout<<endl;
-  if (directed) { report_distances(d21,"D21  ",args);cout<<endl; }
+  report_distances(d12,"D12  ", interval_probability, show_mean, show_median, show_minmax);cout<<endl;
+  if (directed)
+  {
+    report_distances(d21,"D21  ", interval_probability, show_mean, show_median, show_minmax);cout<<endl;
+  }
   if (N2 > 1) {
-    report_distances(d12_1 ,"D1(2)",args);cout<<endl;
+    report_distances(d12_1 ,"D1(2)", interval_probability, show_mean, show_median, show_minmax);cout<<endl;
   }
   if (N1 > 1)
   {
-    report_distances(d21_2 ,"D2(1)",args);cout<<endl;
+    report_distances(d21_2 ,"D2(1)", interval_probability, show_mean, show_median, show_minmax);cout<<endl;
   }
   
   // Coincident groups include self-matches in D12, but not in the within-group distributions.

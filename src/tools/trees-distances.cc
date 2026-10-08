@@ -815,7 +815,7 @@ int main(int argc,char* argv[])
 
 	    matrix<double> D = distances(trees,metric_fn);
       
-	    diameter(D,"1",args);
+	    diameter(D,"1", args["CI"].as<double>(), args.count("mean"), args.count("median"), args.count("minmax"));
 	}
 
 	else if (analysis == "node-dist-cvars") 
@@ -892,7 +892,8 @@ int main(int argc,char* argv[])
 		cout<<"closest distance = "<<D(i,j+trees1.size())<<" between trees1["<<i+1<<"] and trees2["<<j+1<<"]\n";
 	    }
 	    else
-		report_compare(args, D, trees1.size(), trees2.size());
+		report_compare(D, trees1.size(), trees2.size(),
+                               args["CI"].as<double>(), args.count("mean"), args.count("median"), args.count("minmax"));
 	}
 
 	else if (analysis == "convergence") 
