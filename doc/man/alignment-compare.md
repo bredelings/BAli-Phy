@@ -1,6 +1,6 @@
 % alignment-compare(1)
 % Benjamin Redelings
-% Feb 2018
+% October 2026
 
 # NAME
 
@@ -8,29 +8,30 @@
 
 # SYNOPSIS
 
-**alignment-compare** _alignment-file1_ _alignment-file2_ [OPTIONS]
+**alignment-compare** [OPTIONS] _sample-file1_ _sample-file2_ _target-alignment_
 
 # DESCRIPTION
 
 Compare two alignment distributions.
 
+All three filenames are required positional arguments. The third specifies the target alignment
+to annotate; `-` reads the target from standard input. Sample filenames do not interpret `-`
+as standard input.
+
 # ALLOWED OPTIONS:
-**-h**, **--help**
+**-h**, **`--help`**
 : produce help message
 
-**--alphabet** _arg_
+**`--alphabet`** _arg_
 : Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.
 
-**--seed** _arg_
+**`--seed`** _arg_
 : random seed
 
-**--align** _arg_
-: alignment to output values for.
+**`--max-alignments`** _arg_ (=1000)
+: Maximum retained alignments per sample. Samples are thinned to this limit; `-1` means unlimited.
 
-**--max-alignments** _arg_ (=1000)
-: maximum number of alignments to analyze
-
-**--verbose**
+**`--verbose`**
 : Output more log messages on stderr.
 
 
@@ -38,4 +39,3 @@ Compare two alignment distributions.
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 
 Please send bug reports to <bali-phy-users@googlegroups.com>.
-

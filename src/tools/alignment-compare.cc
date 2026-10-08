@@ -33,7 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/index-matrix.hh" // for M( )
 #include "distance-methods.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 #include "util/mapping.hh"
 #include "util/string/join.hh"
 #include "util/rng.hh"
@@ -43,8 +43,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 extern int log_verbose;
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 using namespace std;
 
@@ -79,79 +77,6 @@ void load_alignments(vector<alignment>& alignments,
 }
 		     
 
-
-void do_setup(const variables_map& args,
-	      vector<alignment>& alignments1, 
-	      vector<alignment>& alignments2) 
-{
-  //------------ Try to load alignments -----------//
-  int maxalignments = args["max-alignments"].as<int>();
-
-  // --------------------- try ---------------------- //
-  if (not args.count("file1"))
-    throw myexception()<<"File #1 not supplied!";
-  if (not args.count("file2"))
-    throw myexception()<<"File #2 not supplied!";
-
-  {
-    string filename = args["file1"].as<string>();
-    load_alignments(alignments1, filename, get_alphabet_name(args), maxalignments, "#1");
-  }
-
-  {
-    string filename = args["file2"].as<string>();
-    load_alignments(alignments2, filename, get_alphabet_name(args), maxalignments, "#2");
-  }
-}
-
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-  using namespace po;
-
-  // Named options
-  options_description invisible("Invisible options");
-  invisible.add_options()
-    ("file1", value<string>(),"first alignment file")
-    ("file2", value<string>(),"second alignment file");
-
-  // 
-  options_description visible("Allowed options");
-  visible.add_options()
-    ("help,h", "produce help message")
-    ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
-    ("seed", value<unsigned long>(),"random seed")
-    ("align", value<string>(),"alignment to output values for.")
-    ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
-    ("verbose","Output more log messages on stderr.")
-    ;
-
-  options_description all("All options");
-  all.add(invisible).add(visible);
-
-  // positional options
-  positional_options_description p;
-  p.add("file1", 1);
-  p.add("file2", 2);
-
-  variables_map args;     
-  store(command_line_parser(argc, argv).
-	    options(all).positional(p).run(), args);
-  notify(args);    
-
-  if (args.count("help")) {
-    cout<<"Compare two alignment distributions.\n";
-    cout<<" o label each residue by its maximum pairwise homology deviance.\n";
-    cout<<" o output AU-style annotations for the alignment given by --align.\n\n";
-    cout<<"Usage: alignment-compare <alignment-file1> <alignment-file2> [OPTIONS]\n\n";
-    cout<<visible<<"\n";
-    exit(0);
-  }
-
-  if (args.count("verbose")) log_verbose = 1;
-
-  return args;
-}
 
 matrix<double> get_counts(int s1,int s2,int L1,int L2,
 			      const vector<matrix<int> >& Ms)
@@ -269,15 +194,41 @@ int main(int argc,char* argv[])
 { 
   try {
     //---------- Parse command line  -------//
-    variables_map args = parse_cmd_line(argc,argv);
+    CLI::App app{"Compare two alignment distributions and annotate a target alignment.", "alignment-compare"};
+    app.usage("Usage: alignment-compare [OPTIONS] SAMPLE1 SAMPLE2 TARGET");
+    app.get_formatter()->long_option_alignment_ratio(0.2f);
+    string sample1_file, sample2_file, target_file, alphabet_name;
+    unsigned long seed = 0;
+    int max_alignments = 1000;
+    bool verbose = false;
+    app.add_option("SAMPLE1", sample1_file, "First alignment sample file")->required()->type_name("");
+    app.add_option("SAMPLE2", sample2_file, "Second alignment sample file")->required()->type_name("");
+    app.add_option("TARGET", target_file, "Target alignment to annotate ('-' reads stdin)")
+        ->required()->type_name("");
+    app.add_option("--alphabet", alphabet_name,
+                   "Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop")
+        ->type_name("ALPHABET");
+    app.add_option("--seed", seed, "Random seed")->type_name("SEED");
+    app.add_option("--max-alignments", max_alignments, "Maximum retained alignments per sample (-1: unlimited)")
+        ->type_name("N")->capture_default_str();
+    app.add_flag("--verbose", verbose, "Output more log messages on stderr");
+    try
+    {
+      app.parse(argc, argv);
+    }
+    catch (const CLI::ParseError& error)
+    {
+      // Let CLI11 print help or diagnostics, retaining the tool's 0/1 exit statuses.
+      app.exit(error);
+      return error.get_exit_code() == 0 ? 0 : 1;
+    }
+    if (verbose) log_verbose = 1;
 
     // The target is required; load it before reading samples or computing scores.
-    alignment A = load_A(args,false);
+    alignment A = chop_internal(load_alignment(target_file, alphabet_name));
 
     //---------- Initialize random seed -----------//
-    unsigned long seed = 0;
-    if (args.count("seed")) {
-      seed = args["seed"].as<unsigned long>();
+    if (app.count("--seed")) {
       myrand_init(seed);
     }
     else
@@ -292,7 +243,8 @@ int main(int argc,char* argv[])
     vector<matrix<int> > M1;
     vector<matrix<int> > M2;
 
-    do_setup(args,alignments1,alignments2);
+    load_alignments(alignments1, sample1_file, alphabet_name, max_alignments, "#1");
+    load_alignments(alignments2, sample2_file, alphabet_name, max_alignments, "#2");
 
     
     int N = alignments1[0].n_sequences();
@@ -306,7 +258,7 @@ int main(int argc,char* argv[])
     for(int sample=0;sample<2;sample++)
     {
       auto& alignments = sample == 0 ? alignments1 : alignments2;
-      const auto filename = args[sample == 0 ? "file1" : "file2"].as<string>();
+      const auto& filename = sample == 0 ? sample1_file : sample2_file;
       for(int k=0;k<alignments.size();k++)
       {
         auto& current = alignments[k];
@@ -349,7 +301,7 @@ int main(int argc,char* argv[])
     }
     catch (std::exception& e)
     {
-      throw myexception()<<"Target alignment '"<<args["align"].as<string>()<<"': "<<e.what();
+      throw myexception()<<"Target alignment '"<<target_file<<"': "<<e.what();
     }
     
     //--------- Construct alignment indexes ---------//
