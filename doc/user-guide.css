@@ -3,9 +3,9 @@
     --guide-accent: #245a86;
     --guide-code-background: #f3f4f5;
     --guide-border: #c8cdd2;
-    --body-family: "DejaVu Serif", serif;
-    --title-family: "DejaVu Sans", sans-serif;
-    --mono-family: "DejaVu Sans Mono", monospace;
+    --body-family: "DejaVu Serif", Georgia, serif;
+    --title-family: "DejaVu Sans", Arial, sans-serif;
+    --mono-family: "DejaVu Sans Mono", Consolas, Menlo, monospace;
 }
 
 /* User Guide additions to DocBook xslTNG's screen and print styles. */
