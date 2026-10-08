@@ -198,7 +198,7 @@ all_progs = ['bali-phy']
 #--------- Build rules for tools that are always installed ------------#
 
 tools = ['model_P','statreport','stats-select','alignment-gild','alignment-consensus', 'alignment-max','alignment-chop-internal',
-	 'alignment-indices','alignment-info','alignment-cat','alignment-translate','alignment-find','trees-consensus',
+	 'alignment-info','alignment-cat','alignment-translate','alignment-find','trees-consensus',
 	 'tree-mean-lengths','mctree-mean-lengths','trees-to-SRQ','pickout','cut-range','trees-distances', 'alignment-thin',
 	 'alignments-diff','tree-tool','alignment-distances','alignment-draw', 'trees-bootstrap', 'draw-tree', 'extract-ancestors',
          'summarize-ancestors','mcon-tool','character-properties']

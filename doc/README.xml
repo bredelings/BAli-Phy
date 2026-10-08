@@ -887,11 +887,6 @@ option.  For example:
         A similar approach can be taken with RNA stem and loop regions.
       </para>
 
-	<!-- para>You can speed up alignment for long genes by specifying
-	  alignment constraints (See <xref linkend="alignment_constraints"/>).
-	  Ideally, 10 evenly spaced constraints should reduce the cost of
-	  re-aligning a sequence by a factor of 10.
-	</para -->
       </section>
 
     </section>
@@ -4103,16 +4098,6 @@ The stabilization criterion is the same one described above for numerical values
 <prompt>%</prompt> alignment-find &lt; <replaceable>file</replaceable>.fastas &gt; last.fasta</screen>
     </section>
 
-    <section><info><title>alignment-indices</title></info>
-      
-      <para>Turn columns from a template alignment into alignment constraints:</para>
-<screen><prompt>%</prompt> alignment-indices template.fasta > constraints.txt
-<prompt>%</prompt> alignment-indices -c100-110,200,300- template.fasta > constraints.txt</screen>
-
-      <para>Each line in this file corresponds to one
-	alignment column.</para>
-    </section>
-
     <section><info><title>alignment-chop-internal</title></info>
       
 	<para>Remove ancestral sequences from each alignment, keeping sequences whose names
@@ -4647,18 +4632,6 @@ Here the PID is 549319.  Therefore you can type:
 	  </para>
 	  </answer>
 	</qandaentry>
-
-	<!-- qandaentry>
-	  <question xml:id="generating_constraint_files"><para>How do I create an alignment-constraint file
-	      from an alignment?</para></question>
-	  <answer>
-	    <para>To constrain the alignment to match some alignment
-	      file <replaceable>filename.fasta</replaceable> in columns
-	      100, 200-250, and 300, run:
-	      <screen><prompt>%</prompt> alignment-indices -c100,200-250,300 <replaceable>filename.fasta</replaceable> &gt; filename.constraint</screen>
-	    </para>
-	  </answer>	
-	</qandaentry -->
 
       </qandaset>
     </section>
