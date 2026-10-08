@@ -16,7 +16,7 @@
         {
             "name": "n",
             "type": "Int",
-            "default_value": "4",
+            "default_value": "10",
 	    "description": "The number of Gauss-Jacobi quadrature categories for the Beta component"
         },
         {
