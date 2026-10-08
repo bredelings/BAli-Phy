@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a model reference as Pandoc Markdown, independently of the website framework."""
+"""Generate a function reference as Pandoc Markdown, independently of the website framework."""
 
 import argparse
 import html
@@ -126,7 +126,7 @@ def citation_text(citation):
 
 # Breadcrumbs use directory URLs so the Markdown is independent of PHP or static HTML output.
 def navigation(slug):
-    crumbs = [link('Model reference', relative_url(slug, Path('.')))]
+    crumbs = [link('Function reference', relative_url(slug, Path('.')))]
     for parent in reversed(slug.parents):
         if parent != Path('.'):
             crumbs.append(link(parent.name.capitalize() if len(parent.parts) == 1 else parent.name,
@@ -323,7 +323,7 @@ def main():
         missing_main += not bool(entry.get('description'))
         missing_args += sum(not bool(arg.get('description')) for arg in entry['args'])
     for slug in sorted(indexes):
-        title = 'Model reference' if slug == Path('.') else (slug.name.capitalize() if len(slug.parts) == 1
+        title = 'Function reference' if slug == Path('.') else (slug.name.capitalize() if len(slug.parts) == 1
                                                            else slug.name)
         if slug == Path('alphabetical'):
             title = 'Alphabetical index'

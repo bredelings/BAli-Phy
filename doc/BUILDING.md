@@ -222,7 +222,7 @@ requirements. Add compatibility restrictions only for demonstrated problems. A c
 and Node.js 18.19.1. Local checks also passed with WeasyPrint 69.0, Pygments 2.20.0,
 Java 25, and Node.js 24. These are tested examples, not a required version list.
 
-## Model reference
+## Function reference
 
 `make -C doc model-reference` generates Markdown with YAML metadata in
 `../build/model-reference` (override `REFERENCE_BUILD_DIR` to change this). It needs only Python 3
