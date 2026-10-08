@@ -314,9 +314,8 @@ struct alignment_sample
 
     int load(list<alignment>& As);
 
-    int load(const variables_map& args, const string& filename);
-
-    int load(const variables_map& args, const vector<string>& seq_names, const alphabet& a, const string& filename);
+    int load(const string& filename, const string& alphabet_name, unsigned skip, int maxalignments,
+             const vector<string>& seq_names = {});
 
     unsigned size() const {return alignments.size();}
 
@@ -328,21 +327,15 @@ struct alignment_sample
 
     alignment_sample() = default;
 
-    alignment_sample(const variables_map& args, const string& filename)
-	{
-	    load(args,filename);
+    // Load a sample with explicit thinning settings, or an unthinned reference.
+    alignment_sample(const string& filename, const string& alphabet_name, unsigned skip, int maxalignments,
+                     const vector<string>& seq_names = {})
+    {
+        load(filename, alphabet_name, skip, maxalignments, seq_names);
+        if (alignments.empty())
+            throw myexception()<<"Alignment sample is empty.";
+    }
 
-	    if (not alignments.size())
-		throw myexception()<<"Alignment sample is empty.";
-	}
-
-    alignment_sample(const variables_map& args, const vector<string>& seq_names, const alphabet& a, const string& filename)
-	{
-	    load(args,seq_names,a,filename);
-
-	    if (not alignments.size())
-		throw myexception()<<"Alignment sample is empty.";
-	}
 };
 
 int alignment_sample::load(list<alignment>& As)
@@ -359,54 +352,25 @@ int alignment_sample::load(list<alignment>& As)
     return As.size();
 }
 
-int alignment_sample::load(const variables_map& args, const string& filename)
+// Append a file, matching an existing sample or explicitly supplied reference names.
+int alignment_sample::load(const string& filename, const string& alphabet_name, unsigned skip, int maxalignments,
+                           const vector<string>& seq_names)
 {
-    //------------ Try to load alignments -----------//
-    int maxalignments = -1;
-    if (args.count("max"))
-	maxalignments = args["max"].as<int>();
- 
-    unsigned skip = 0;
-    if (args.count("skip"))
-	skip = args["skip"].as<unsigned>();
-
     if (log_verbose) cerr<<"alignment-distances: Loading alignments...";
-
     istream_or_ifstream input(cin,"-",filename,"alignment file");
 
     list<alignment> As;
-    if (not alignments.size())
-	As = load_alignments(input,get_alphabet_name(args),skip,maxalignments);
+    if (not seq_names.empty())
+        As = load_alignments(input, seq_names, alphabet_name, skip, maxalignments);
+    else if (alignments.empty())
+        As = load_alignments(input, alphabet_name, skip, maxalignments);
     else
-	As = load_alignments(input, sequence_names(), get_alphabet(), skip,maxalignments);
+        As = load_alignments(input, sequence_names(), get_alphabet(), skip, maxalignments);
 
     if (log_verbose) cerr<<"done. ("<<As.size()<<" alignments)"<<endl;
-
     return load(As);
 }
 
-int alignment_sample::load(const variables_map& args, const vector<string>& seq_names, const alphabet& a, const string& filename)
-{
-    //------------ Try to load alignments -----------//
-    int maxalignments = -1;
-    if (args.count("max"))
-	maxalignments = args["max"].as<int>();
- 
-    unsigned skip = 0;
-    if (args.count("skip"))
-	skip = args["skip"].as<unsigned>();
-
-    if (log_verbose) cerr<<"alignment-distances: Loading alignments...";
-
-    istream_or_ifstream input(cin,"-",filename,"alignment file");
-
-    list<alignment> As;
-    As = load_alignments(input, seq_names, a, skip, maxalignments);
-
-    if (log_verbose) cerr<<"done. ("<<As.size()<<" alignments)"<<endl;
-
-    return load(As);
-}
 
 matrix<double> distances(const alignment_sample& A, distance_fn distance)
 {
@@ -440,6 +404,9 @@ int main(int argc,char* argv[])
 	variables_map args = parse_cmd_line(argc,argv);
 
         string analysis = args["analysis"].as<string>();
+        const auto alphabet_name = get_alphabet_name(args);
+        const auto skip = args["skip"].as<unsigned>();
+        const auto maxalignments = args["max"].as<int>();
 
 	//--------------- filenames ---------------//
 	vector<string> files;
@@ -468,11 +435,11 @@ int main(int argc,char* argv[])
             else
                 throw myexception()<<"alignment-distances NxN: distance '"<<distances[0]<<"' not recognized!\n  Allowed values: pairwise";
 
-	    alignment_sample A(args, files[0]);
+	    alignment_sample A(files[0], alphabet_name, 0, -1);
 
 	    if (A.size() != 1) throw myexception()<<"The first file should only contain one alignment!";
 
-	    alignment_sample As(args, A.sequence_names(), A.get_alphabet(), files[1]);
+	    alignment_sample As(files[1], A.get_alphabet().name, skip, maxalignments, A.sequence_names());
 
 	    std::cerr<<"Averaging over "<<As.size()<<" sampled alignments.\n";
 
@@ -517,7 +484,7 @@ int main(int argc,char* argv[])
 	    for(auto& file: files)
 	    {
 		// FIXME: handline std::cin like trees-distances.
-		As.load(args,file);
+		As.load(file, alphabet_name, skip, maxalignments);
 	    }
 
 	    matrix<double> D = distances(As.Ms, As.column_indices, distance_fns[0]);
@@ -538,9 +505,9 @@ int main(int argc,char* argv[])
 
 	    // Load the true alignment to compare against
 	    alignment_sample As1;
-	    As1.load(args,files.front());
+	    As1.load(files.front(), alphabet_name, 0, -1);
 	    files.erase(files.begin());
-	    if (As1.size() != 1) throw myexception()<<"The second file should only contain one alignment!";
+	    if (As1.size() != 1) throw myexception()<<"The first file should only contain one alignment!";
 
             vector<string> names;
 
@@ -548,7 +515,7 @@ int main(int argc,char* argv[])
 	    alignment_sample As2;
 	    for(auto& file: files)
             {
-		int delta = As2.load(args, As1.sequence_names(), As1.get_alphabet(), file);
+		int delta = As2.load(file, As1.get_alphabet().name, skip, maxalignments, As1.sequence_names());
                 if (delta == 0) std::cerr<<"WARNING: file '"<<file<<"' contained 0 alignments.\n";
                 for(int i=0;i<delta;i++)
                     names.push_back(file);
@@ -572,9 +539,9 @@ int main(int argc,char* argv[])
 	{
 	    check_supplied_filenames(2,files);
 
-	    alignment_sample both(args,files[0]);
+	    alignment_sample both(files[0], alphabet_name, skip, maxalignments);
 	    int N1 = both.size();
-	    both.load(args, files[1]);
+	    both.load(files[1], alphabet_name, skip, maxalignments);
 	    int N2 = both.size() - N1;
 
 	    matrix<double> D  = distances(both,distance_fns[0]);
@@ -585,7 +552,7 @@ int main(int argc,char* argv[])
 	{
 	    check_supplied_filenames(1,files,false);
 
-	    alignment_sample As(args, files[0]);
+	    alignment_sample As(files[0], alphabet_name, skip, maxalignments);
 
 	    matrix<double> D = distances(As, distance_fns[0]);
 
@@ -631,7 +598,7 @@ int main(int argc,char* argv[])
 	{
 	    check_supplied_filenames(1,files,false);
 
-	    alignment_sample As(args, files[0]);
+	    alignment_sample As(files[0], alphabet_name, skip, maxalignments);
 
 	    matrix<double> D = distances(As, distance_fns[0]);
 
