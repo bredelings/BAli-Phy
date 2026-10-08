@@ -540,6 +540,12 @@ int main(int argc,char* argv[])
 
 	    for(int i=0; i<n_remove; i++)
 	    {
+                // Protected survivors cannot be removed; stop before scoring an empty candidate set.
+                if (std::find(keep.begin(), keep.end(), 1) == keep.end())
+                {
+                    cerr<<"No more taxa can be dropped.\n";
+                    break;
+                }
 		auto columns = conserved_columns(A, keep, conserved_fraction);
 
 		vector<int> sequences;
@@ -564,23 +570,16 @@ int main(int argc,char* argv[])
 		    cerr<<"  max = "<<score[order.back()]<<endl;
 		}
 
-		bool found = true;
 		for(int seq: order)
 		{
 		    if (keep[seq] == 1)
 		    {
 			cerr<<"Remove: "<<names[seq]<<"    "<<score[seq]<<" / " <<columns.size()<<"   median = "<<score[order[order.size()/2]]<<"   max = "<<score[order.back()]<<endl;
 			keep[seq] = 0;
-			found = true;
 			break;
 		    }
 		}
 
-		if (not found)
-		{
-		    std::cerr<<"No more taxa can be dropped.\n";
-		    break;
-		}
 	    }
 	}
 
