@@ -328,7 +328,9 @@ dynamic_bitset<> column_contains_sequence(const alignment& A, int index)
 
 dynamic_bitset<> part_of_long_insertion(const alignment& A, int L)
 {
-    dynamic_bitset<> unique(A.length());
+    // Store the owning sequence index, or -1 for a column that is not unique to one sequence.
+    // A bitset would collapse these indices and misclassify shared columns as unique.
+    vector<int> unique(A.length());
     for(int i=0;i<A.length();i++)
         unique[i] = unique_letter(A,i);
 
