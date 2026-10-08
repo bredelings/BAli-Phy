@@ -26,12 +26,10 @@
 #include "util/string/join.hh"
 #include "util/io.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
 using namespace std;
 
-namespace po = boost::program_options;
-using po::variables_map;
 using std::optional;
 
 string get_value_quoted(const string& line, int pos1)
@@ -81,64 +79,31 @@ string get_largevalue(const string& line,int pos1) {
     return line.substr(pos1);
 }
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-	("fields", value<vector<string> >(),"Fields to select")
-	;
-
-    options_description visible("All options");
-    visible.add_options()
-	("help,h", "Produce help message.")
-	("no-header,n","Suppress the line of field names.")
-	("large","The last value goes to the end of the line.")
-	("multi-line","The last continues until a blank line.")
-	;
-
-    // positional options
-    positional_options_description p;
-    p.add("fields", -1);
-
-    options_description all("All options");
-    all.add(invisible).add(visible);
-
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Generate table from key = value lines in file.\n\n";
-	cout<<"Usage: pickout [OPTIONS] <field1> [<field2> ... ] < <data-file>\n\n";
-	cout<<visible<<"\n";
-	exit(0);
-    }
-
-    if (not args.count("fields")) {
-	throw myexception()<<"No fields specified!";
-	exit(1);
-    }
-
-    return args;
-}
-
 int main(int argc,char* argv[]) 
 { 
     try{
 	//----------- Parse command line  -----------//
-	variables_map args = parse_cmd_line(argc,argv);
-
-	vector<string> patterns = args["fields"].as<vector<string> >();
-
-	if (not patterns.size())
-	    throw myexception()<<"No patterns specified.";
+        CLI::App app{"Generate a table from key = value lines on stdin.", "pickout"};
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        vector<string> patterns;
+        bool no_header = false, large = false, multi_line = false;
+        app.add_option("FIELD", patterns, "Fields to select, in output order")->required()->type_name("");
+        app.add_flag("-n,--no-header", no_header, "Suppress the line of field names");
+        app.add_flag("--large", large, "Take the last requested value through the end of its line");
+        app.add_flag("--multi-line", multi_line, "Continue the last requested value until an empty line");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            // Let CLI11 print help or diagnostics, retaining the tool's 0/1 exit statuses.
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
 
 	// print headers
-	if (not args.count("no-header"))
+	if (not no_header)
 	    cout<<join(patterns,'\t')<<endl;
 
 	// modify patterns
@@ -164,9 +129,9 @@ int main(int argc,char* argv[])
       
 	    for(int i=0;i<patterns.size()-1;i++)
 		words[i] = getvalue(line,matches[i] + patterns[i].size());
-	    if (args.count("large"))
+	    if (large)
 		words.back() = get_largevalue(line,matches.back() + patterns.back().size());
-	    else if (args.count("multi-line"))
+	    else if (multi_line)
 		words.back() = get_multivalue(line,matches.back() + patterns.back().size(),cin);
 	    else
 		words.back() = getvalue(line,matches.back() + patterns.back().size());

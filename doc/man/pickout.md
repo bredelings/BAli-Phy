@@ -1,6 +1,6 @@
 % pickout(1)
 % Benjamin Redelings
-% Feb 2018
+% October 2026
 
 # NAME
 
@@ -12,19 +12,20 @@
 
 # DESCRIPTION
 
-Generate table from key = value lines in file.
+Read standard input and generate a table from lines containing all requested fields.
+Field names are required positional arguments; output columns follow their argument order.
 
 # ALL OPTIONS:
-**-h**, **--help**
+**-h**, **`--help`**
 : Produce help message.
 
-**-n**, **--no-header**
+**-n**, **`--no-header`**
 : Suppress the line of field names.
 
-**--large**
-: The last value goes to the end of the line.
+**`--large`**
+: The last requested value goes to the end of the line. Takes precedence over **`--multi-line`**.
 
-**--multi-line**
+**`--multi-line`**
 : The last continues until a blank line.
 
 
@@ -32,4 +33,3 @@ Generate table from key = value lines in file.
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 
 Please send bug reports to <bali-phy-users@googlegroups.com>.
-
