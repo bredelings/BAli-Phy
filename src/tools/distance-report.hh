@@ -6,8 +6,8 @@
 #include <valarray>
 #include "util/matrix.hh"
 
-void diameter(const matrix<double>& D,const std::string& name,boost::program_options::variables_map& args);
+void diameter(const matrix<double>& D,const std::string& name,boost::program_options::variables_map& args, bool directed = false);
 void report_distances(const std::valarray<double>& distances, const std::string& name, boost::program_options::variables_map& args);
-void report_compare(boost::program_options::variables_map& args, const matrix<double>& D, int N1, int N2);
+void report_compare(boost::program_options::variables_map& args, const matrix<double>& D, int N1, int N2, bool directed = false);
 
 #endif

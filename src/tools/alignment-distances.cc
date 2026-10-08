@@ -113,7 +113,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
 	cout<<"Distances:\n";
 	cout<<"  splits, splits2, pairwise, recall, accuracy, nonrecall, inaccuracy\n";
-        cout<<"  median/compare/distances require splits, splits2, or pairwise.\n";
+        cout<<"  median minimizes distance: use nonrecall/inaccuracy rather than recall/accuracy.\n";
         cout<<"  Defaults: score uses splits:splits2:nonrecall:inaccuracy; NxN uses pairwise; others use splits.\n\n";
 
 	cout<<"Examples:\n\n";
@@ -148,28 +148,33 @@ typedef double (*distance_fn)(const matrix<int>& ,const vector< vector<int> >&,c
 
 typedef double (*pairwise_distance_fn)(int, int, const matrix<int>& ,const vector< vector<int> >&,const matrix<int>& ,const vector< vector<int> >&);
 
+// Evaluate ordered pairs; summaries require finite off-diagonal values.
 matrix<double> distances(const vector<matrix<int> >& Ms,
 			 const vector< vector< vector<int> > >& column_indices,
-			 distance_fn distance)
+			 distance_fn distance, bool require_finite = false)
 {
     assert(Ms.size() == column_indices.size());
     matrix<double> D(Ms.size(),Ms.size());
 
     for(int i=0;i<D.size1();i++) 
 	for(int j=0;j<D.size2();j++)
-	    D(i,j) = distance(Ms[i],column_indices[i],
-			      Ms[j],column_indices[j]);
+        {
+	    D(i,j) = distance(Ms[i],column_indices[i], Ms[j],column_indices[j]);
+            if (require_finite and i != j and not std::isfinite(D(i,j)))
+                throw myexception()<<"Cannot summarize undefined distance from alignment "<<i+1<<" to "<<j+1<<".";
+        }
     return D;
 }
 
-double diameter(const matrix<double>& D)
+// Average off-diagonal distances, including both directions for asymmetric measures.
+double diameter(const matrix<double>& D, bool directed)
 {
     double total = 0;
     for(int i=0;i<D.size1();i++)
 	for(int j=0;j<i;j++)
-	    total += D(i,j);
-  
-    int N = D.size1() * (D.size1() - 1) /2;
+            total += D(i,j) + (directed ? D(j,i) : 0.0);
+
+    int N = D.size1() * (D.size1() - 1) / (directed ? 1 : 2);
 
     return total/N;
 }
@@ -378,9 +383,10 @@ int alignment_sample::load(const string& filename, const string& alphabet_name, 
 }
 
 
-matrix<double> distances(const alignment_sample& A, distance_fn distance)
+// Reuse the cached alignment indices when evaluating a sample.
+matrix<double> distances(const alignment_sample& A, distance_fn distance, bool require_finite = false)
 {
-    return distances(A.Ms, A.column_indices, distance);
+    return distances(A.Ms, A.column_indices, distance, require_finite);
 }
 
 distance_fn get_distance_function(const string& distance_name)
@@ -489,10 +495,10 @@ int main(int argc,char* argv[])
 
         if (analysis != "score" and distance_fns.size() != 1)
             throw myexception()<<analysis<<" accepts only one distance measure.";
-        // These summaries use unordered pairs and minimize distances, so require symmetry.
-        if (summary and distance_names != "splits" and distance_names != "splits2" and distance_names != "pairwise")
-            throw myexception()<<analysis<<" requires splits, splits2, or pairwise; '"<<distance_names
-                               <<"' is not a symmetric distance.";
+        const bool directed = distance_names == "recall" or distance_names == "accuracy"
+                           or distance_names == "nonrecall" or distance_names == "inaccuracy";
+        if (analysis == "median" and (distance_names == "recall" or distance_names == "accuracy"))
+            throw myexception()<<"median minimizes distances; use nonrecall or inaccuracy instead of "<<distance_names<<".";
 
         //---------- write out distance matrix --------- //
 	if (analysis == "AxA") 
@@ -561,9 +567,9 @@ int main(int argc,char* argv[])
 	    both.load(files[1], alphabet_name, skip, maxalignments);
 	    int N2 = both.size() - N1;
 
-	    matrix<double> D  = distances(both,distance_fns[0]);
+	    matrix<double> D  = distances(both,distance_fns[0],true);
 
-	    report_compare(args, D, N1, N2);
+	    report_compare(args, D, N1, N2, directed);
 	}
 	else if (analysis == "median") 
 	{
@@ -577,14 +583,14 @@ int main(int argc,char* argv[])
                 return 0;
             }
 
-	    matrix<double> D = distances(As, distance_fns[0]);
+	    matrix<double> D = distances(As, distance_fns[0],true);
 
-	    //----------- accumulate distances ------------- //
+	    // Row means treat each candidate as the first argument and exclude self-comparisons.
 	    vector<double> ave_distances( As.size() , 0);
 	    for(int i=0;i<ave_distances.size();i++)
 		for(int j=0;j<i;j++) {
 		    ave_distances[i] += D(i,j);
-		    ave_distances[j] += D(i,j);
+		    ave_distances[j] += D(j,i);
 		}
 	    for(int i=0;i<ave_distances.size();i++)
 		ave_distances[i] /= (D.size1()-1);
@@ -609,12 +615,12 @@ int main(int argc,char* argv[])
 	    double total=0;
 	    for(int i=1;i<items.size() and i < 5;i++) {
 		for(int j=0;j<i;j++)
-		    total += D(items[i], items[j]);
+		    total += D(items[i], items[j]) + (directed ? D(items[j], items[i]) : 0.0);
 	
-		cerr<<"fraction = "<<double(i)/(items.size()-1)<<"     AveD = "<<double(total)/(i*i+i)*2<<endl;
+		cerr<<"fraction = "<<double(i)/(items.size()-1)<<"     AveD = "<<double(total)/(i*i+i)*(directed ? 1 : 2)<<endl;
 	    }
 	    cerr<<endl;
-	    cerr<<"mean pairwise distance = "<<diameter(D)<<endl;
+	    cerr<<"mean pairwise distance = "<<diameter(D, directed)<<endl;
 	    exit(0);  
 	}
 	else if (analysis == "distances")
@@ -622,14 +628,14 @@ int main(int argc,char* argv[])
 
 	    alignment_sample As(files[0], alphabet_name, skip, maxalignments);
 
-	    matrix<double> D = distances(As, distance_fns[0]);
+	    matrix<double> D = distances(As, distance_fns[0],true);
 
 	    // from tools/distance-report.hh
 	    // computes distribution of average distance from A[i] to A[j], averaged over j
 	    // computes distribution of distances from A[i] to A[j]
 
 	    // We probably shouldn't call this a diameter
-	    diameter(D,"1",args);
+	    diameter(D,"1",args,directed);
 	}
 	else
 	    throw myexception()<<"Analysis '"<<analysis<<"' not recognized.";

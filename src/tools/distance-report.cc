@@ -1,4 +1,5 @@
 #include "statistics.hh"
+#include "distance-report.hh"
 
 #include <iostream>
 #include <boost/program_options.hpp>
@@ -44,10 +45,12 @@ void report_distances(const valarray<double>& distances,
 //  3. E_t[j] D(t[i],t[j])
 //  4. E_t[i],t[j] D(t[i],t[j])
 //
-//  If t[i] and t[j] have the same distribution then #2 == #3.
+//  For symmetric D, identically distributed t[i] and t[j] give #2 == #3.
 //  Also, #4 is constant so it is not really a distribution.
 
-void diameter(const matrix<double>& D,const string& name,variables_map& args)
+// Row means exclude self-comparisons. Directed distributions include both orders;
+// symmetric distributions retain one value per pair to preserve their quantiles.
+void diameter(const matrix<double>& D,const string& name,variables_map& args, bool directed)
 {
   if (D.size1() == 1)
   {
@@ -59,13 +62,14 @@ void diameter(const matrix<double>& D,const string& name,variables_map& args)
 
   int k=0;
   valarray<double> d1(0.0, N);
-  valarray<double> d11(0.0, N*(N-1)/2);
+  valarray<double> d11(0.0, N*(N-1)/(directed ? 1 : 2));
 
   for(int i=0;i<N;i++)
     for(int j=0;j<i;j++) {
       d1[i] += D(i,j);
-      d1[j] += D(i,j);
+      d1[j] += D(j,i);
       d11[k++] = D(i,j);
+      if (directed) d11[k++] = D(j,i);
     }
   d1 /= (N-1);
 
@@ -83,7 +87,9 @@ double fair_probability_x_less_than_y(const valarray<double>& x,const valarray<d
 }
 
 
-void report_compare(variables_map& args, const matrix<double>& D, int N1, int N2)
+// D12 and D21 retain their argument order. D1(2) and D2(1) are outgoing row means;
+// the existing probability comparisons retain half weight for ties.
+void report_compare(variables_map& args, const matrix<double>& D, int N1, int N2, bool directed)
 {
   assert(N1+N2 == D.size1());
   assert(D.size1() == D.size2());
@@ -100,72 +106,80 @@ void report_compare(variables_map& args, const matrix<double>& D, int N1, int N2
     
   
   valarray<double> d1(0.0, N1);
-  valarray<double> d11(0.0, N1*(N1-1)/2);
+  valarray<double> d11(0.0, N1*(N1-1)/(directed ? 1 : 2));
       
   {
     int k=0;
     for(int i=0;i<N1;i++)
       for(int j=0;j<i;j++) {
 	d1[i] += D1(i,j);
-	d1[j] += D1(i,j);
+	d1[j] += D1(j,i);
 	d11[k++] = D1(i,j);
+        if (directed) d11[k++] = D1(j,i);
       }
     d1 /= (N1-1);
   }
 
   valarray<double> d2(0.0, N2);
-  valarray<double> d22(0.0, N2*(N2-1)/2);
+  valarray<double> d22(0.0, N2*(N2-1)/(directed ? 1 : 2));
       
   {
     int k=0;
     for(int i=0;i<N2;i++)
       for(int j=0;j<i;j++) {
 	d2[i] += D2(i,j);
-	d2[j] += D2(i,j);
+	d2[j] += D2(j,i);
 	d22[k++] = D2(i,j);
+        if (directed) d22[k++] = D2(j,i);
       }
     d2 /= (N2-1);
   }
   
   cout<<endl;
-  diameter(D1,"1",args);
+  diameter(D1,"1",args,directed);
 
   cout<<endl;
-  diameter(D2,"2",args);cout<<endl;
+  diameter(D2,"2",args,directed);cout<<endl;
 
   valarray<double> d12(0.0, N1*N2);
+  valarray<double> reverse_distances(0.0, directed ? N1*N2 : 0);
   valarray<double> d12_1(0.0, N1);
-  valarray<double> d12_2(0.0, N2);
+  valarray<double> d21_2(0.0, N2);
   for(int i=0;i<N1;i++)
     for(int j=0;j<N2;j++) {
       double DIJ = D(i,N1+j);
       d12[i*N2+j] = DIJ;
       d12_1[i] += DIJ;
-      d12_2[j] += DIJ;
+      double DJI = directed ? D(N1+j,i) : DIJ;
+      if (directed) reverse_distances[i*N2+j] = DJI;
+      d21_2[j] += DJI;
     }
   
   d12_1 /= N2;
-  d12_2 /= N1;
+  d21_2 /= N1;
   
+  const auto& d21 = directed ? reverse_distances : d12;
   report_distances(d12,"D12  ",args);cout<<endl;
+  if (directed) { report_distances(d21,"D21  ",args);cout<<endl; }
   if (N2 > 1) {
     report_distances(d12_1 ,"D1(2)",args);cout<<endl;
   }
   if (N1 > 1)
   {
-    report_distances(d12_2 ,"D2(1)",args);cout<<endl;
+    report_distances(d21_2 ,"D2(1)",args);cout<<endl;
   }
   
-  //NOTE: D12 != D11 when 1==2 because D12 includes the zero's on the diagonal.
+  // Coincident groups include self-matches in D12, but not in the within-group distributions.
   
   if (N1 > 1)
     cout<<"    P(D12 > D11) = "<<fair_probability_x_less_than_y(d11,d12)<<endl;
   if (N2 > 1)
-    cout<<"    P(D12 > D22) = "<<fair_probability_x_less_than_y(d22,d12)<<endl;
+    cout<<(directed ? "    P(D21 > D22) = " : "    P(D12 > D22) = ")
+        <<fair_probability_x_less_than_y(d22,d21)<<endl;
   if (N1 > 1 or N2 > 1)
     cout<<endl;
   if (N1 > 1)
-    cout<<"    P(D2(1) > D1(1)) = "<<fair_probability_x_less_than_y(d1,d12_2)<<endl;
+    cout<<"    P(D2(1) > D1(1)) = "<<fair_probability_x_less_than_y(d1,d21_2)<<endl;
   if (N2 > 1)
     cout<<"    P(D1(2) > D2(2)) = "<<fair_probability_x_less_than_y(d2,d12_1)<<endl;
   if (N1 > 1 or N2 > 1)
@@ -173,7 +187,7 @@ void report_compare(variables_map& args, const matrix<double>& D, int N1, int N2
   if (N1 > 1)
     cout<<"    P(D1(2) > D1(1)) = "<<fair_probability_x_less_than_y(d1,d12_1)<<endl;
   if (N2 > 1)
-    cout<<"    P(D2(1) > D2(2)) = "<<fair_probability_x_less_than_y(d2,d12_2)<<endl;
+    cout<<"    P(D2(1) > D2(2)) = "<<fair_probability_x_less_than_y(d2,d21_2)<<endl;
 }
 
 

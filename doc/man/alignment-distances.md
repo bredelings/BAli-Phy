@@ -26,10 +26,25 @@ Analysis modes and inputs:
 - **median**: one sample file; write the retained alignment with smallest average distance to the others.
 - **distances**: one sample file; summarize pairwise distances and each alignment's average distance.
 
-The last three modes require one symmetric distance: `splits`, `splits2`, or `pairwise`.
-`score` and `AxA` also accept `recall`, `accuracy`, `nonrecall`, and `inaccuracy`; recall and accuracy
-are similarities, while their complements are directional losses. Ratios with zero denominators
-are undefined and reported as NaN. They are not replaced with zero or one.
+`median` accepts `splits`, `splits2`, `pairwise`, `nonrecall`, and `inaccuracy`.
+`score`, `AxA`, `compare`, and `distances` also accept the similarities `recall` and `accuracy`.
+Only `score` accepts multiple measures. Ratios with zero denominators remain undefined (NaN)
+in score and matrix output; `median`, `compare`, and `distances` report an error if a required
+pairwise value is undefined, rather than omitting it or replacing it with zero or one.
+
+For directional measures, `D(i,j)` uses alignment `i` as the first argument and `j` as the second.
+Recall divides shared homologies by the number in `i`; accuracy divides by the number in `j`.
+Nonrecall and inaccuracy are their complements. An alignment's average is its outgoing row mean,
+excluding self-comparison. `median` minimizes that mean; switching between nonrecall and
+inaccuracy reverses the direction. Recall and accuracy cannot be minimized by `median`.
+
+`distances` summarizes all ordered pairs for directional measures. `compare` reports both
+cross-group distributions, `D12` (group 1 to group 2) and `D21` (group 2 to group 1).
+`D1(2)` and `D2(1)` summarize each alignment's outgoing mean to the other group;
+`D1(1)` and `D2(2)` are within-group row means excluding self-comparison.
+Probability comparisons give half weight to ties. Larger recall/accuracy values mean greater
+agreement, not greater disagreement. Symmetric measures retain one value per unordered pair
+and a single cross-group report, preserving their existing quantiles.
 
 `NxN` reports disagreement by default: identical alignments give zero. Its `pairwise` scores are
 normalized by the two sequence lengths; the whole-alignment `pairwise` measure is an unnormalized
@@ -106,6 +121,11 @@ Compare the distances within and between the two groups:
 Report distribution of average distance to other alignments:
 ```
 % alignment-distances distances As.fasta
+```
+
+Summarize directional nonrecall between two samples:
+```
+% alignment-distances compare --distances=nonrecall sample1.fastas sample2.fastas
 ```
 
 
