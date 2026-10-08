@@ -228,8 +228,6 @@ def binding_page(slug, entry, lookup, warnings):
     if related:
         parts += ['## See also', ', '.join(related)]
     parts.append('<footer class="reference-footer">')
-    if entry.get('deprecated-synonyms'):
-        parts.append('**Deprecated aliases:** ' + ', '.join(map(code, entry['deprecated-synonyms'])))
     parts += ['Terminal help: ' + code('bali-phy help ' + shlex.quote(entry['name'])) + ' · '
               + link('Binding source', SOURCE_URL + quote(str(slug) + '.json', safe='/')),
               '</footer>', ':::']
@@ -277,18 +275,21 @@ def index_page(slug, title, selected, entries, groups):
             parts.append('<ul class="reference-entries">')
             previous_group = group
         entry = entries[target]
-        names = [entry['name']] + entry.get('synonyms', []) + entry.get('deprecated-synonyms', [])
-        search = ' '.join(names + [entry.get('title', '')])
-        item = f'<li data-search="{html.escape(search, quote=True)}">'
+        names = [entry['name']] + entry.get('synonyms', [])
+        deprecated = entry.get('deprecated-synonyms', [])
+        visible_search = ' '.join(names + [entry.get('title', '')])
+        search = visible_search + ' ' + ' '.join(deprecated)
+        attributes = {'search': search, 'visible-search': visible_search,
+                      'names': json.dumps(names), 'deprecated': json.dumps(deprecated)}
+        item = '<li ' + ' '.join(f'data-{key}="{html.escape(value, quote=True)}"'
+                                for key, value in attributes.items()) + '>'
         item += link(entry['name'], relative_url(slug, target))
         if entry.get('title'):
             item += ' — ' + html.escape(entry['title'])
-        aliases = []
-        for field, label in [('synonyms', 'Aliases'), ('deprecated-synonyms', 'Deprecated aliases')]:
-            if entry.get(field):
-                aliases.append(label + ': ' + ', '.join(map(code, entry[field])))
-        if aliases:
-            item += '<span class="reference-aliases">' + '; '.join(aliases) + '</span>'
+        if entry.get('synonyms'):
+            item += '<span class="reference-aliases">Aliases: ' + ', '.join(map(code, entry['synonyms'])) + '</span>'
+        if deprecated:
+            item += '<span class="deprecated-match" hidden></span>'
         parts.append(item + '</li>')
     if previous_group is not None:
         parts.append('</ul></section>')
