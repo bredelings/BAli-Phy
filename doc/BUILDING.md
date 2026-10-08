@@ -221,3 +221,21 @@ Tool versions used in successful builds are useful diagnostic information, not e
 requirements. Add compatibility restrictions only for demonstrated problems. A clean Ubuntu 24.04 build passed with its packaged WeasyPrint 61.1, Pygments 2.17.2,
 and Node.js 18.19.1. Local checks also passed with WeasyPrint 69.0, Pygments 2.20.0,
 Java 25, and Node.js 24. These are tested examples, not a required version list.
+
+## Model reference
+
+`make -C doc model-reference` generates Markdown with YAML metadata in
+`../build/model-reference` (override `REFERENCE_BUILD_DIR` to change this). It needs only Python 3
+and reads the JSON files under `bindings/`; it does not require a compiled BAli-Phy executable.
+Edit those bindings to update descriptions, arguments, examples, or related entries.
+The generator reports missing descriptions and unresolved references without inventing replacements.
+
+Each binding has a directory URL derived from its source path, with category and alphabetical
+indexes. Argument references in defaults link to the corresponding arguments; expandable source
+expressions retain the original syntax. The Markdown can be rendered with Pandoc or incorporated
+into another publishing system.
+
+The website's `python3 update-reference.py /path/to/bali-phy` renders these pages with its PHP
+template and existing sidebar. It requires Pandoc and PHP CLI, checks PHP syntax and internal
+links, and replaces the generated `reference/` directory only after those checks pass.
+Keep website styles, scripts, and templates outside that directory.

@@ -137,3 +137,9 @@ clean: clean-user-guide clean-tutorial
 
 %.pdf: %.html
 	weasyprint $*.html $*.pdf
+
+# Generate portable Markdown; the website supplies its own Pandoc template.
+REFERENCE_BUILD_DIR ?= ../../build/model-reference
+.PHONY: model-reference
+model-reference:
+	python3 generate-reference.py "$(REFERENCE_BUILD_DIR)"
