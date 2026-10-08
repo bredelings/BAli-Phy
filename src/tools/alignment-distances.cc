@@ -324,7 +324,7 @@ int main(int argc,char* argv[])
 { 
     try {
 	//----------- Parse command line ---------//
-        CLI::App app{"Compute distances between alignments.", "alignment-distances"};
+        CLI::App app{"Compare alternative alignments of the same sequences.", "alignment-distances"};
         app.require_subcommand(1);
         app.get_formatter()->long_option_alignment_ratio(0.2f);
         string reference_file, sample_file, second_sample_file, alphabet_name, requested_distances;
@@ -335,7 +335,7 @@ int main(int argc,char* argv[])
         bool verbose = false, show_mean = false, show_median = false, show_minmax = false;
         app.add_option("-s,--skip", skip, "Alignments to skip per sample file")
             ->type_name("N")->capture_default_str();
-        app.add_option("-m,--max", maxalignments, "Maximum retained alignments per sample file (-1: unlimited)")
+        app.add_option("-m,--max", maxalignments, "Maximum retained alignments per sample after thinning (-1: unlimited)")
             ->type_name("N")->capture_default_str();
         app.add_option("--alphabet", alphabet_name,
                        "Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop")
@@ -348,8 +348,8 @@ int main(int argc,char* argv[])
         auto* axa = app.add_subcommand("AxA", "Compute a matrix of distances between alignments")->fallthrough();
         auto* nxn = app.add_subcommand("NxN", "Compute averaged sequence-pair disagreement scores")->fallthrough();
         auto* compare = app.add_subcommand("compare", "Compare within-group and between-group distances")->fallthrough();
-        auto* median = app.add_subcommand("median", "Find the alignment with smallest mean outgoing distance")->fallthrough();
-        auto* summary = app.add_subcommand("distances", "Summarize pairwise distances and outgoing means")->fallthrough();
+        auto* median = app.add_subcommand("median", "Select a sampled alignment with minimum mean distance")->fallthrough();
+        auto* summary = app.add_subcommand("distances", "Summarize distances and each alignment's mean distance")->fallthrough();
 
         for (auto* command: {score, nxn})
             command->add_option("REFERENCE", reference_file, "File containing one reference alignment ('-' reads stdin)")
@@ -366,7 +366,7 @@ int main(int argc,char* argv[])
             ->required()->type_name("");
         for (auto* command: {compare, summary})
         {
-            command->add_option("--CI", interval_probability, "Central interval probability")
+            command->add_option("--CI", interval_probability, "Central fraction of the distance distribution to report")
                 ->type_name("P")->capture_default_str();
             command->add_flag("--mean", show_mean, "Show mean and standard deviation");
             command->add_flag("--median", show_median, "Show median and central interval (default report)");

@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-distances** - Compute distances between alignments.
+**alignment-distances** - Compare alignments of the same sequences.
 
 # SYNOPSIS
 
@@ -22,130 +22,196 @@
 
 # DESCRIPTION
 
-Compute distances between alignments. Sample files contain FASTA alignments separated by empty
-lines; `-` reads standard input. Internal-node placeholders are removed before matching sequences
-by name. Names must be unique and ungapped lengths must agree; row order may differ.
+Compare alternative alignments of the same sequences, summarize an alignment sample, or choose
+one representative alignment. Comparisons concern which residues are aligned together, rather
+than similarity between their nucleotide or amino-acid values.
 
-Exactly one command is required. Reference and sample filenames are positional arguments.
-Shared options may appear before or after the command. Reporting options apply only to
-`compare` and `distances` and must follow the command. Use `alignment-distances COMMAND --help`
-for command-specific help.
+A sample file contains FASTA alignments separated by empty lines. A reference file contains
+exactly one alignment. Use `-` for standard input. Sequence names must be unique and match
+across alignments; each sequence must have the same ungapped length. Sequence order may differ.
+BAli-Phy internal-node placeholders and empty columns are removed before comparison.
 
-Commands and inputs:
+Exactly one command is required. Filenames are positional arguments. Shared options may appear
+before or after the command; reporting options must follow `compare` or `distances`.
+Use `alignment-distances COMMAND --help` for command-specific help.
 
-- **score**: one reference alignment followed by one or more sample files; report each requested measure.
-- **AxA**: one or more sample files; report a matrix over all retained alignments using one measure.
-- **NxN**: one reference alignment and one sample file; report a matrix of sequence-pair scores,
-  averaged over sampled alignments. Accepts `pairwise`, `nonrecall`, or `inaccuracy`.
-- **compare**: two sample files; summarize within-group and between-group distances.
-- **median**: one sample file; write the retained alignment with smallest average distance to the others.
-- **distances**: one sample file; summarize pairwise distances and each alignment's average distance.
+# COMMANDS
 
-`median` accepts `splits`, `splits2`, `pairwise`, `nonrecall`, and `inaccuracy`.
-`score`, `AxA`, `compare`, and `distances` also accept the similarities `recall` and `accuracy`.
-Only `score` accepts multiple measures. Ratios with zero denominators remain undefined (NaN)
-in score and matrix output; `median`, `compare`, and `distances` report an error if a required
-pairwise value is undefined, rather than omitting it or replacing it with zero or one.
+**score** _REFERENCE_ _SAMPLE_...
+: Compare each sampled alignment with the reference. Write a tab-separated table with one row
+  per retained alignment: its sample filename followed by the requested measures. The reference
+  is the first argument of each comparison. Default measures: `splits:splits2:nonrecall:inaccuracy`.
 
-For directional measures, `D(i,j)` uses alignment `i` as the first argument and `j` as the second.
-Recall divides shared homologies by the number in `i`; accuracy divides by the number in `j`.
-Nonrecall and inaccuracy are their complements. An alignment's average is its outgoing row mean,
-excluding self-comparison. `median` minimizes that mean; switching between nonrecall and
-inaccuracy reverses the direction. Recall and accuracy cannot be minimized by `median`.
+**AxA** _SAMPLE_...
+: Write a tab-separated matrix of distances between all retained alignments. Rows and columns
+  follow file order, then alignment order within each file. There are no row or column labels.
+  Entry `(i,j)` compares alignment `i` with alignment `j`. Default measure: `splits`.
 
-`distances` summarizes all ordered pairs for directional measures. `compare` reports both
-cross-group distributions, `D12` (group 1 to group 2) and `D21` (group 2 to group 1).
-`D1(2)` and `D2(1)` summarize each alignment's outgoing mean to the other group;
-`D1(1)` and `D2(2)` are within-group row means excluding self-comparison.
-Probability comparisons give half weight to ties. Larger recall/accuracy values mean greater
-agreement, not greater disagreement. Symmetric measures retain one value per unordered pair
-and a single cross-group report, preserving their existing quantiles.
+**NxN** _REFERENCE_ _SAMPLE_
+: Write a matrix comparing the alignment of each pair of sequences with the reference, averaged
+  over retained sample alignments. Here `N` is the number of sequences, not alignments. A header
+  lists sequence names in the order used for both rows and columns; rows have no labels.
+  Accepts `pairwise`, `nonrecall`, or `inaccuracy`. Default measure: `pairwise`.
 
-`NxN` reports disagreement by default: identical alignments give zero. Its `pairwise` scores are
-normalized by the two sequence lengths; the whole-alignment `pairwise` measure is an unnormalized
-count. A singleton sample is a valid median, but has no pairwise summary. Median diagnostics use
-zero-based ranks and report the mean pairwise distance, not the maximum distance.
+**compare** _SAMPLE1_ _SAMPLE2_
+: Summarize distances within each sample and between samples. See OUTPUT for the report labels.
+  Default measure: `splits`.
 
-# SHARED OPTIONS:
+**median** _SAMPLE_
+: Write the sampled alignment with the smallest mean distance to the other retained alignments,
+  using the candidate as the first argument of each comparison. This selects an existing
+  alignment; it does not construct a consensus. Ties select the first candidate in sample order.
+  Diagnostics go to standard error. Accepts `splits`, `splits2`, `pairwise`, `nonrecall`, or
+  `inaccuracy`. Default measure: `splits`.
+
+**distances** _SAMPLE_
+: Summarize distances between retained alignments and each alignment's mean distance to the
+  others. Default measure: `splits`.
+
+# MEASURES
+
+A *residue pair* means two residues from different sequences placed in the same column.
+Residues are identified by their positions in their sequences. For a comparison `D(A,B)`,
+let `H(A)` and `H(B)` be the numbers of residue pairs in the two alignments, and `S` the number
+shared by both.
+
+**recall**, **accuracy**
+: Fractions of residue pairs shared: `recall = S/H(A)` and `accuracy = S/H(B)`.
+  Higher values mean greater agreement. In `score`, these measure the fraction of reference
+  pairs recovered and the fraction of sampled pairs supported by the reference, respectively.
+
+**nonrecall**, **inaccuracy**
+: `1 - recall` and `1 - accuracy`. Lower values mean greater agreement; zero means no missing
+  or unsupported pairs, respectively. These measures depend on argument order:
+  `nonrecall(A,B) = inaccuracy(B,A)`.
+
+**splits**, **splits2**
+: Measure how columns are broken apart. If the residues of a column in `A` occupy `k` columns
+  in `B`, that column contributes `k-1` to `splits` or `k*(k-1)/2` to `splits2`. Sum over columns
+  in both directions. Thus `splits2` gives more weight to columns broken into many pieces.
+
+**pairwise**
+: For each pair of sequences, count residues whose aligned partner (a residue or gap) differs
+  between alignments, summing the counts from both alignments. This is an unnormalized count.
+
+`splits`, `splits2`, and `pairwise` are symmetric: exchanging alignments gives the same value.
+The four fractional measures can be asymmetric. Only `score` accepts multiple measures;
+`median` excludes `recall` and `accuracy` because it minimizes distance.
+
+For `NxN`, measures apply separately to each pair of sequences. Its `pairwise` score is the
+fraction of residues whose aligned partner differs, normalized by the sum of the two sequence
+lengths. Values range from zero (agreement) to one (complete disagreement).
+
+A fraction with a zero denominator is undefined. `score`, `AxA`, and `NxN` can report `NaN`;
+`median`, `compare`, and `distances` report an error if a required comparison is undefined.
+
+# OUTPUT
+
+`distances` treats its input as sample 1; `compare` numbers its inputs 1 and 2.
+`D11` and `D22` describe distances within samples 1 and 2,
+excluding self-comparisons. Symmetric measures count each pair once; asymmetric measures count
+both directions. `D12` describes comparisons from sample 1 to sample 2. Asymmetric measures
+also produce `D21`, with the arguments reversed.
+
+`D1(1)` describes the distribution of individual alignments' mean distances to the others in
+sample 1; `D2(2)` does the same for sample 2. `D1(2)` contains one mean per alignment in sample 1,
+comparing it with all alignments in sample 2. `D2(1)` reverses the sample roles. In every mean,
+the individual alignment is the first argument of the distance function.
+
+By default, each distribution is summarized by its median and central 95% interval. `--mean`
+reports its mean and standard deviation; `--minmax` reports its range. The interval describes
+variation in distances, not uncertainty in an estimated mean. Report flags can be combined.
+
+`compare` also prints comparisons such as `P(D12 > D11)`: the fraction of cross-distribution
+value pairs for which the first value is larger, counting ties as one half. These are descriptive
+comparisons, not significance-test p-values. For `recall` and `accuracy`, larger means greater
+agreement. A sample containing only one alignment has no within-sample summary.
+
+`median` writes FASTA to standard output. Its standard-error diagnostics list up to five
+candidates by increasing mean distance (`E D`), with ranks starting at zero, followed by mean
+distances among the best candidates and among all retained alignments. A one-alignment sample
+returns that alignment without pairwise diagnostics.
+
+# SHARED OPTIONS
+
 **-h**, **`--help`**
-: Produce help message
+: Show help. After a command, show help for that command.
 
-**-s** _arg_ (=0), **`--skip`** _arg_ (=0)
-: Number of alignments to skip per sample file; does not apply to the reference.
+**-s** _N_, **`--skip`** _N_
+: Skip the first _N_ alignments in each sample file. Default: 0. Does not affect the reference.
 
-**-m** _arg_ (=1000), **`--max`** _arg_ (=1000)
-: Maximum retained alignments per sample file after thinning; `-1` means unlimited.
-  Does not apply to the reference, which must contain exactly one alignment.
+**-m** _N_, **`--max`** _N_
+: Retain at most _N_ alignments per sample file, thinning the sample as needed. This does not
+  simply take the first _N_ alignments. Default: 1000; `-1` retains all alignments after skipping.
+  Does not affect the reference.
 
 **-V**, **`--verbose`**
-: Output more log messages on stderr.
+: Write additional progress messages to standard error.
 
-**`--alphabet`** _arg_
-: Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.
+**`--alphabet`** _ALPHABET_
+: Specify DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.
+  By default, infer the alphabet from the input.
 
+**`--distances`** _MEASURES_
+: Select the measure. For `score`, separate multiple names with colons, for example
+  `--distances=recall:accuracy`. Defaults are listed under COMMANDS.
 
-**`--distances`** _arg_
-: Colon-separated measures for `score`; exactly one measure for other modes. Defaults to
-  `splits:splits2:nonrecall:inaccuracy` for `score`, `pairwise` for `NxN`, and `splits` otherwise.
+# REPORTING OPTIONS
 
-# REPORTING OPTIONS:
+These options follow `compare` or `distances`.
 
-These options follow `compare` or `distances` and are unavailable for other commands.
-
-**`--CI`** _arg_ (=0.95)
-: Central interval probability for `compare` and `distances`. This describes the distance
-  distribution, not uncertainty in its mean.
+**`--CI`** _P_
+: Central interval probability. Default: 0.95, giving the 2.5th to 97.5th percentiles.
 
 **`--mean`**
-: Show mean and standard deviation in `compare` and `distances`.
+: Show mean and standard deviation.
 
 **`--median`**
-: Show median and central interval in `compare` and `distances` (the default report).
+: Show median and central interval. Used by default when none of the three report flags is given.
 
 **`--minmax`**
-: Show minimum and maximum distances in `compare` and `distances`.
+: Show minimum and maximum.
 
+# EXAMPLES
 
-# EXAMPLES:
- 
-Compute distances from true.fasta to each in As.fasta:
-```
-% alignment-distances score true.fasta As.fasta
-```
+Measure recovery of reference residue pairs:
 
-Compute distance matrix between all pairs of alignments in all files:
 ```
-% alignment-distances AxA file1.fasta ... fileN.fasta
+alignment-distances score reference.fasta sample.fastas --distances=recall:accuracy
 ```
 
-Compute NxN sequence-pair disagreement scores, averaged over As:
+Write an alignment-distance matrix:
+
 ```
-% alignment-distances NxN true.fasta As.fasta
+alignment-distances AxA sample.fastas > distances.tsv
 ```
 
-Find alignment with smallest average distance to other alignments:
+Locate disagreement by sequence pair:
+
 ```
-% alignment-distances median As.fasta > A.fasta
+alignment-distances NxN reference.fasta sample.fastas > sequence-distances.tsv
 ```
 
-Compare the distances within and between the two groups:
+Select a representative alignment after discarding 100 sampled alignments:
+
 ```
-% alignment-distances compare A-dist1.fasta A-dist2.fasta
+alignment-distances median --skip=100 sample.fastas > representative.fasta
 ```
 
-Report distribution of average distance to other alignments:
+Compare two samples using a directional distance:
+
 ```
-% alignment-distances distances As.fasta
+alignment-distances compare --mean --distances=nonrecall sample1.fastas sample2.fastas
 ```
 
-Summarize directional nonrecall between two samples:
+Summarize an entire sample, without thinning:
+
 ```
-% alignment-distances compare --distances=nonrecall sample1.fastas sample2.fastas
+alignment-distances distances --max=-1 --median --minmax sample.fastas
 ```
 
+# REPORTING BUGS
 
-# REPORTING BUGS:
- BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
+BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 
 Please send bug reports to <bali-phy-users@googlegroups.com>.
-
