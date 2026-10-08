@@ -134,6 +134,26 @@ def navigation(slug):
     return '<nav class="reference-breadcrumbs" aria-label="Breadcrumb">' + ' / '.join(crumbs) + '</nav>'
 
 
+# Group each typed argument with its punctuation so CSS can wrap at real argument boundaries.
+# Ordinary text spaces preserve a readable signature when copied or read without the stylesheet.
+def signature_html(entry):
+    arguments = [html.escape(arg['name']) + ': <span class="signature-type">'
+                 + html.escape(arg['type']) + '</span>' for arg in entry['args']]
+    name = html.escape(entry['name'])
+    if 'fixity' in entry and len(arguments) == 2:
+        prefix = ''
+        units = ['(' + arguments[0] + ')', name + ' (' + arguments[1] + ')']
+    else:
+        prefix = '<span class="signature-unit">' + name + ('(' if arguments else '()') + '</span><wbr>'
+        if not arguments:
+            prefix += ' '
+        units = [argument + (',' if i < len(arguments) - 1 else ')')
+                 for i, argument in enumerate(arguments)]
+    units.append('→ <span class="signature-type">' + html.escape(entry['result_type']) + '</span>')
+    signature = prefix + ' '.join('<span class="signature-unit">' + unit + '</span>' for unit in units)
+    return '<div class="reference-signature"><code>' + signature + '</code></div>'
+
+
 # Render only the public documentation fields; implementation expressions are deliberately omitted.
 def binding_page(slug, entry, lookup, warnings):
     args = entry['args']
@@ -142,11 +162,7 @@ def binding_page(slug, entry, lookup, warnings):
              '# ' + code(entry['name'])]
     if entry.get('title'):
         parts.append('<p class="reference-subtitle">' + html.escape(entry['title']) + '</p>')
-    signature = entry['name'] + '(' + ', '.join(names) + ')'
-    if 'fixity' in entry and len(names) == 2:
-        signature = f'{names[0]} {entry["name"]} {names[1]}'
-    parts += ['<div class="reference-signature">', code(signature) + ' → '
-              + '<span class="argument-type">' + code(entry['result_type']) + '</span>', '</div>']
+    parts.append(signature_html(entry))
     metadata = []
     if entry.get('constraints'):
         metadata.append('**Type constraints:** ' + ', '.join(map(code, entry['constraints'])))
@@ -173,15 +189,16 @@ def binding_page(slug, entry, lookup, warnings):
     if args:
         parts.append('<dl class="arguments">')
     for arg in args:
-        parts += [f'<dt id="arg-{quote(arg["name"])}">{code(arg["name"])} '
-                  f'<span class="argument-type">{code(arg["type"])}</span></dt>', '<dd>']
+        parts += [f'<dt id="arg-{quote(arg["name"])}">{code(arg["name"])}</dt>', '<dd>']
         if arg.get('description'):
             parts.append(prose(arg['description']))
         default = arg.get('default_value')
-        rendered = default_text(default, names, warnings) if default is not None else 'No default specified.'
-        parts += ['<strong class="default-label">Default:</strong> ' + rendered, '</dd>']
-        if default is not None and rendered != code(default):
-            originals.append(f'<dt>{code(arg["name"])}</dt><dd><pre>{code(default)}</pre></dd>')
+        if default is not None:
+            rendered = default_text(default, names, warnings)
+            parts.append('<strong class="default-label">Default:</strong> ' + rendered)
+            if rendered != code(default):
+                originals.append(f'<dt>{code(arg["name"])}</dt><dd><pre>{code(default)}</pre></dd>')
+        parts.append('</dd>')
     if args:
         parts.append('</dl>')
     if originals:
