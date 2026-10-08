@@ -589,6 +589,11 @@ int main(int argc,char* argv[])
 	// report distances to specified taxa
 	if (args.count("find-dups"))
 	{
+            // Validate the target list before constructing matrices or searching for neighbors.
+            vector<int> compare_to = get_taxon_indices(names, parse_string_list(args["find-dups"].as<string>()));
+            if (compare_to.empty())
+                throw myexception()<<"--find-dups requires at least one target sequence";
+
 	    D = asymmetric_distance_matrix(A);
 	    matrix<int> DS = symmetric_distance_matrix(A);
 	    matrix<int> DO = symmetric_overlap_matrix(A);
@@ -603,9 +608,6 @@ int main(int argc,char* argv[])
 		    }
 	
       
-	    // get the indices for the taxa to compare to
-	    vector<int> compare_to = get_taxon_indices(names, parse_string_list(args["find-dups"].as<string>()));
-
 	    // convert the indices to a mask
 	    vector<int> target(names.size(),0);
 	    for(int i: compare_to)
