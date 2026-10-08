@@ -39,6 +39,10 @@ def prose(text):
         pieces.extend([html.escape(text[end:match.start()]), match[0]])
         end = match.end()
     pieces.append(html.escape(text[end:]))
+    # Multiplication between operands is literal; preserve emphasis such as *neutral*.
+    # Odd-numbered pieces are code spans, whose contents Pandoc already treats literally.
+    for i in range(0, len(pieces), 2):
+        pieces[i] = re.sub(r'(?<=[\w)\]])\*(?=[\w(])', '&#42;', pieces[i])
     return ''.join(pieces).replace('\n', '  \n')
 
 
