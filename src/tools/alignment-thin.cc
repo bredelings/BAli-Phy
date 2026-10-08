@@ -378,7 +378,6 @@ int main(int argc,char* argv[])
             ->group("Output options");
         app.add_option("-F,--find-dups", duplicate_names, "Report nearest targets from a comma-separated sequence list")
             ->group("Output options");
-        app.get_option("--keep")->excludes("--remove");
         // Preserve the examples' indentation and line breaks in CLI11's footer.
         app.get_formatter()->enable_footer_formatting(false);
         app.footer(
@@ -410,6 +409,9 @@ int main(int argc,char* argv[])
             return error.get_exit_code() == 0 ? 0 : 1;
         }
         if (verbose) log_verbose = 1;
+
+        if (app.count("--keep") and app.count("--remove"))
+            throw myexception()<<"Cannot specify both --keep and --remove.";
 
 
 	//----------- Load alignment and tree ---------//
