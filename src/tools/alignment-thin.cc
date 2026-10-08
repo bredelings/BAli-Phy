@@ -41,10 +41,8 @@ using std::vector;
 using std::string;
 using std::endl;
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 using std::cout;
 using std::cerr;
@@ -52,94 +50,6 @@ using std::endl;
 
 using std::string;
 using boost::dynamic_bitset;
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description general("General options");
-    general.add_options()
-	("help,h", "Print usage information.")
-	("verbose,V","Output more log messages on stderr.");
-
-    options_description invisible("Invisible options");
-    invisible.add_options()
-	("align", value<string>(),"file with sequences and initial alignment");
-
-    options_description seq_filter("Sequence filtering options");
-    seq_filter.add_options()
-	("protect,p",value<string>(),"Sequences that cannot be removed (comma-separated).")
-	("keep,k",value<string>(),"Remove sequences not in comma-separated list <arg>.")
-	("remove,r",value<string>(),"Remove sequences in comma-separated list <arg>.")
-	("longer-than,l",value<unsigned>(),"Remove sequences not longer than <arg>.")
-	("shorter-than,s",value<unsigned>(),"Remove sequences not shorter than <arg>.")
-	("cutoff,c",value<unsigned>(),"Remove similar sequences with #mismatches < cutoff.")
-	("down-to,d",value<int>(),"Remove similar sequences down to <arg> sequences.")
-	("remove-gappy",value<int>(),"Remove <arg> outlier sequences -- defined as sequences that are missing too many conserved sites.")
-	("conserved",value<double>()->default_value(0.75),"Fraction of sequences that must contain a letter for it to be considered conserved.")
-	;
-
-    options_description col_filter("Column filtering options");
-    col_filter.add_options()
-        ("keep-columns,K",value<string>(),"Keep columns from this sequence")
-	("min-letters,m",value<int>(),"Remove columns with fewer than <arg> letters.")
-	("remove-unique,u",value<int>(),"Remove insertions in a single sequence if longer than <arg> letters")
-	("erase-empty-columns,e","Remove columns with no characters (all gaps).");
-
-    options_description output("Output options");
-    output.add_options()
-	("sort,S","Sort partially ordered columns to group similar gaps.")
-	("show-lengths,L","Just print out sequence lengths.")
-	("show-names,N","Just print out sequence lengths.")
-	("find-dups,F", value<string>(),"For each sequence, find the closest other sequence.")
-        ;
-
-    // positional options
-    positional_options_description p;
-    p.add("align", 1);
-  
-    variables_map args;
-    options_description all("All options");
-    all.add(general).add(invisible).add(seq_filter).add(col_filter).add(output);
-
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
-    notify(args);
-
-    if (args.count("help")) {
-	cout<<"Remove sequences or columns from an alignment.\n\n";
-	cout<<"Usage: alignment-thin <alignment-file> [OPTIONS]\n\n";
-	cout<<general<<"\n";
-	cout<<seq_filter<<"\n";
-	cout<<col_filter<<"\n";
-	cout<<output<<"\n";
-	cout<<"Examples:\n\n";
-	cout<<" Remove columns without a minimum number of letters:\n";
-	cout<<"   % alignment-thin --min-letters=5 file.fasta > file-thinned.fasta\n\n";
-	cout<<" Remove sequences by name:\n";
-	cout<<"   % alignment-thin --remove=seq1,seq2 file.fasta > file2.fasta\n\n";
-	cout<<"   % alignment-thin --keep=seq1,seq2   file.fasta > file2.fasta\n\n";
-	cout<<" Remove short sequences:\n";
-	cout<<"   % alignment-thin --longer-than=250 file.fasta > file-long.fasta\n\n";
-	cout<<" Remove similar sequences with <= 5 differences from the closest other sequence:\n";
-	cout<<"   % alignment-thin --cutoff=5 file.fasta > more-than-5-differences.fasta\n\n";
-	cout<<" Remove similar sequences until we have the right number of sequences:\n";
-	cout<<"   % alignment-thin --down-to=30 file.fasta > file-30taxa.fasta\n\n";
-	cout<<" Remove dissimilar sequences that are missing conserved columns:\n";
-	cout<<"   % alignment-thin --remove-gappy=10 file.fasta > file2.fasta\n\n";
-	cout<<" Protect some sequences from being removed:\n";
-	cout<<"   % alignment-thin --down-to=30 file.fasta --protect=seq1,seq2 > file2.fasta\n\n";
-	cout<<"   % alignment-thin --down-to=30 file.fasta --protect=@filename > file2.fasta\n\n";
-
-	exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = 1;
-
-    return args;
-}
 
 std::pair<int,int> argmin(matrix<int>& M)
 {
@@ -424,10 +334,86 @@ int main(int argc,char* argv[])
 	cout.precision(10);
     
 	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Remove sequences or columns from an alignment.", "alignment-thin"};
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        app.get_help_ptr()->group("General options");
+        string filename, protect_names, keep_names, remove_names, column_reference, duplicate_names;
+        unsigned long_length = 0, short_length = 0, similarity_cutoff = 0;
+        int down_to_count = 0, gappy_count = 0, min_letters = 0, unique_limit = 0;
+        double conserved_fraction = 0.75;
+        bool verbose = false, erase_empty = false, sort_alignment = false;
+        app.add_option("ALIGNMENT-FILE", filename, "Alignment file ('-' reads stdin)")
+            ->required()->type_name("");
+        app.add_flag("-V,--verbose", verbose, "Output more log messages on stderr")
+            ->group("General options");
+        app.add_option("-p,--protect", protect_names, "Sequences that cannot be removed (list or @filename)")
+            ->group("Sequence filtering options");
+        app.add_option("-k,--keep", keep_names, "Keep listed sequences and protected sequences (list or @filename)")
+            ->group("Sequence filtering options");
+        app.add_option("-r,--remove", remove_names, "Remove listed unprotected sequences (list or @filename)")
+            ->group("Sequence filtering options");
+        app.add_option("-l,--longer-than", long_length, "Remove sequences not longer than this length")
+            ->group("Sequence filtering options");
+        app.add_option("-s,--shorter-than", short_length, "Remove sequences not shorter than this length")
+            ->group("Sequence filtering options");
+        app.add_option("-c,--cutoff", similarity_cutoff,
+                       "Remove similar sequences with fewer than this many directional mismatches")
+            ->group("Sequence filtering options");
+        app.add_option("-d,--down-to", down_to_count, "Thin similar sequences to this count")
+            ->group("Sequence filtering options");
+        app.add_option("--remove-gappy", gappy_count, "Remove this many sequences missing conserved sites")
+            ->group("Sequence filtering options");
+        app.add_option("--conserved", conserved_fraction,
+                       "Fraction of retained sequences needed to consider a column conserved")
+            ->group("Sequence filtering options")->capture_default_str();
+        app.add_option("-K,--keep-columns", column_reference, "Protect columns occupied by this sequence")
+            ->group("Column filtering options");
+        app.add_option("-m,--min-letters", min_letters, "Remove columns with fewer than this many present characters")
+            ->group("Column filtering options");
+        app.add_option("-u,--remove-unique", unique_limit, "Shorten private insertions to at most this many characters")
+            ->group("Column filtering options");
+        app.add_flag("-e,--erase-empty-columns", erase_empty, "Remove columns with no present characters")
+            ->group("Column filtering options");
+        app.add_flag("-S,--sort", sort_alignment, "Sort partially ordered columns to group similar gaps")
+            ->group("Output options");
+        app.add_option("-F,--find-dups", duplicate_names, "Report nearest targets from a comma-separated sequence list")
+            ->group("Output options");
+        app.get_option("--keep")->excludes("--remove");
+        // Preserve the examples' indentation and line breaks in CLI11's footer.
+        app.get_formatter()->enable_footer_formatting(false);
+        app.footer(
+                   "Examples:\n\n"
+                   " Remove columns without a minimum number of letters:\n"
+                   "   % alignment-thin --min-letters=5 file.fasta > file-thinned.fasta\n\n"
+                   " Remove sequences by name:\n"
+                   "   % alignment-thin --remove=seq1,seq2 file.fasta > file2.fasta\n\n"
+                   "   % alignment-thin --keep=seq1,seq2   file.fasta > file2.fasta\n\n"
+                   " Remove short sequences:\n"
+                   "   % alignment-thin --longer-than=250 file.fasta > file-long.fasta\n\n"
+                   " Remove similar sequences with < 5 differences from the closest other sequence:\n"
+                   "   % alignment-thin --cutoff=5 file.fasta > more-than-5-differences.fasta\n\n"
+                   " Remove similar sequences until we have the right number of sequences:\n"
+                   "   % alignment-thin --down-to=30 file.fasta > file-30taxa.fasta\n\n"
+                   " Remove dissimilar sequences that are missing conserved columns:\n"
+                   "   % alignment-thin --remove-gappy=10 file.fasta > file2.fasta\n\n"
+                   " Protect some sequences from being removed:\n"
+                   "   % alignment-thin --down-to=30 file.fasta --protect=seq1,seq2 > file2.fasta\n\n"
+                   "   % alignment-thin --down-to=30 file.fasta --protect=@filename > file2.fasta\n\n");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            // Let CLI11 print help or diagnostics, retaining the tool's 0/1 exit statuses.
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        if (verbose) log_verbose = 1;
+
 
 	//----------- Load alignment and tree ---------//
-	alignment A = load_A(args,true,false);
+	alignment A = load_alignment(filename, "", false);
 	const int N = A.n_sequences();
 	const int L = A.length();
 
@@ -440,30 +426,13 @@ int main(int argc,char* argv[])
 	for(int i=0;i<N;i++)
 	    AL[i] = A.seqlength(i);
 
-	if (args.count("show-lengths") or args.count("show-names"))
-	{
-	    bool show_lengths = args.count("show-lengths");
-	    bool show_names = args.count("show-names");
-	    for(int i=0;i<A.n_sequences();i++)
-	    {
-		if (show_names)
-		    cout<<names[i];
-		if (show_names and show_lengths)
-		    cout<<",";
-		if (show_lengths)
-		    cout<<AL[i];
-		cout<<endl;
-	    }
-	    exit(0);
-	}
-
 	//--------------------- keep -------------------------//
 
 	// By default every sequence has status 1 which means, removeable, but not removed.
 	vector<int> keep(A.n_sequences(),1);
 
 
-        for(auto& name: get_string_list(args, "protect"))
+        for(auto& name: get_string_list(protect_names))
 	{
 	    if (auto p = find_index(names,name))
 		keep[*p] = 2;
@@ -473,18 +442,18 @@ int main(int argc,char* argv[])
 
 	//----------------- remove by length ------------------//
 
-	if (args.count("longer-than"))
+	if (app.count("--longer-than"))
 	{
-	    unsigned cutoff = args["longer-than"].as<unsigned>();
+	    unsigned cutoff = long_length;
       
 	    for(int i=0;i<A.n_sequences();i++)
 		if (AL[i] <= cutoff and keep[i] < 2)
 		    keep[i] = 0;
 	}
 
-	if (args.count("shorter-than"))
+	if (app.count("--shorter-than"))
 	{
-	    unsigned cutoff = args["shorter-than"].as<unsigned>();
+	    unsigned cutoff = short_length;
       
 	    for(int i=0;i<A.n_sequences();i++)
 		if (AL[i] >= cutoff and keep[i] < 2)
@@ -493,13 +462,12 @@ int main(int argc,char* argv[])
 
 	//-------------------- remove ------------------------//
 
-	if (args.count("keep"))
+	if (app.count("--keep"))
 	{
-	    if (args.count("remove")) throw myexception()<<"You cannot specify both 'keep' and 'remove'!";
 
 	    // FIXME: Currently we protect these and remove everything else.
 	    //        Should instead do remove-all-except these?
-	    for(auto& r: get_string_list(args, "keep"))
+	    for(auto& r: get_string_list(keep_names))
 	    {
 		if (auto r_index = find_index(names,r))
 		{
@@ -513,7 +481,7 @@ int main(int argc,char* argv[])
 		    k=0;
 	}
 
-	for(auto& r: get_string_list(args, "remove"))
+	for(auto& r: get_string_list(remove_names))
 	{
 	    if (auto r_index = find_index(names,r))
 	    {
@@ -532,10 +500,9 @@ int main(int argc,char* argv[])
 
 	//-------------------- remove ------------------------//
 
-	if (args.count("remove-gappy"))
+	if (app.count("--remove-gappy"))
 	{
-	    int n_remove = args["remove-gappy"].as<int>();
-	    double conserved_fraction = args["conserved"].as<double>();
+	    int n_remove = gappy_count;
 	    n_remove = std::min(n_remove, A.n_sequences());
 
 	    for(int i=0; i<n_remove; i++)
@@ -587,10 +554,10 @@ int main(int argc,char* argv[])
 	matrix<int> D;
 
 	// report distances to specified taxa
-	if (args.count("find-dups"))
+	if (app.count("--find-dups"))
 	{
             // Validate the target list before constructing matrices or searching for neighbors.
-            vector<int> compare_to = get_taxon_indices(names, parse_string_list(args["find-dups"].as<string>()));
+            vector<int> compare_to = get_taxon_indices(names, parse_string_list(duplicate_names));
             if (compare_to.empty())
                 throw myexception()<<"--find-dups requires at least one target sequence";
 
@@ -643,17 +610,17 @@ int main(int argc,char* argv[])
 	    }
 	}
 
-	if (args.count("cutoff") or args.count("down-to"))
+	if (app.count("--cutoff") or app.count("--down-to"))
 	{
 	    int cutoff = -1;
-	    if (args.count("cutoff"))
-		cutoff = args["cutoff"].as<unsigned>();
+	    if (app.count("--cutoff"))
+		cutoff = similarity_cutoff;
 
             // Count survivors of earlier filters as well as removals and restorations below.
             int n_retained = n_positive(keep);
             int down_to = n_retained;
-	    if (args.count("down-to"))
-		down_to = args["down-to"].as<int>();
+	    if (app.count("--down-to"))
+		down_to = down_to_count;
 
 	    D = asymmetric_distance_matrix(A);
 	    matrix<int> DS = symmetric_distance_matrix(A);
@@ -668,7 +635,7 @@ int main(int argc,char* argv[])
 		int p2 = p.second;
                 if (p1 == -1)
                 {
-                    if (args.count("down-to") and n_retained > down_to)
+                    if (app.count("--down-to") and n_retained > down_to)
                         cerr<<"Cannot thin to "<<down_to<<" sequences: no removable pair remains ("
                             <<n_retained<<" retained).\n";
                     break;
@@ -735,9 +702,9 @@ int main(int argc,char* argv[])
 	alignment A2 = select_rows(A,keep);
 
         dynamic_bitset<> site_is_protected(A2.length());
-        if (args.count("keep-columns"))
+        if (app.count("--keep-columns"))
         {
-            string reference = args["keep-columns"].as<string>();
+            string reference = column_reference;
             auto index = find_index(names,reference);
             if (not index)
                 throw myexception()<<"--keep-columns: Can't find sequence '"<<reference<<"'";
@@ -748,27 +715,27 @@ int main(int argc,char* argv[])
         dynamic_bitset<> keep_sites(A2.length());
         keep_sites.flip();
 
-	if (args.count("remove-unique"))
+	if (app.count("--remove-unique"))
 	{
             // Question: should I remove ALL of the sites, or just the sites beyond L aa/nucs?
             //    And, how would I remove the MIDDLE sites?
             // Question: should I remove only sites that have no ?  How should I do so?
 
-	    int L = args["remove-unique"].as<int>();
+	    int L = unique_limit;
             keep_sites &= ~part_of_long_insertion(A2, L);
 	}
 
 	// ------- Remove columns with too few letters ------ //
-	if (args.count("min-letters"))
-            keep_sites &= enough_letters( A2, args["min-letters"].as<int>() );
+	if (app.count("--min-letters"))
+            keep_sites &= enough_letters( A2, min_letters );
 
         // ------- Actually remove columns ----------------- //
         A2 = select_columns(A2, keep_sites | site_is_protected);
 
-	if (args.count("erase-empty-columns")) 
+	if (erase_empty) 
 	    remove_empty_columns(A2);
 
-	if (args.count("sort"))
+	if (sort_alignment)
 	    A2 = get_ordered_alignment(A2);
 
 	//------- Print out the alignment -------//
