@@ -71,7 +71,7 @@ The output can be supplied as an AU file to **alignment-draw**(1).
 
 # EXAMPLES
 
-Compare two samples and lay out scores on a target alignment:
+Compare two samples and lay out scores on a target alignment containing only tip sequences:
 
 ```sh
 alignment-compare sample1.fastas sample2.fastas target.fasta > agreement.prob

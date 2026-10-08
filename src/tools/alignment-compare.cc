@@ -225,7 +225,8 @@ int main(int argc,char* argv[])
     if (verbose) log_verbose = 1;
 
     // The target is required; load it before reading samples or computing scores.
-    alignment A = chop_internal(load_alignment(target_file, alphabet_name));
+    // Keep every target column so scores match the original grid used by alignment-draw.
+    alignment A = chop_internal(load_alignment(target_file, alphabet_name, false), true);
 
     //---------- Initialize random seed -----------//
     if (app.count("--seed")) {
