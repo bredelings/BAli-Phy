@@ -189,16 +189,22 @@ def binding_page(slug, entry, lookup, warnings):
     if args:
         parts.append('<dl class="arguments">')
     for arg in args:
-        parts += [f'<dt id="arg-{quote(arg["name"])}">{code(arg["name"])}</dt>', '<dd>']
+        label = html.escape(arg['name'])
+        if arg.get('description'):
+            label += '<span class="argument-colon">:</span>'
+        parts += ['<div class="argument">', f'<dt id="arg-{quote(arg["name"])}"><code>{label}</code></dt>',
+                  '<dd class="argument-description">']
         if arg.get('description'):
             parts.append(prose(arg['description']))
+        parts.append('</dd>')
         default = arg.get('default_value')
         if default is not None:
             rendered = default_text(default, names, warnings)
-            parts.append('<strong class="default-label">Default:</strong> ' + rendered)
+            parts += ['<dd class="argument-default">',
+                      '<strong class="default-label">Default:</strong> ' + rendered, '</dd>']
             if rendered != code(default):
                 originals.append(f'<dt>{code(arg["name"])}</dt><dd><pre>{code(default)}</pre></dd>')
-        parts.append('</dd>')
+        parts.append('</div>')
     if args:
         parts.append('</dl>')
     if originals:
