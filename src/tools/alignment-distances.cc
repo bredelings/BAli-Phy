@@ -418,9 +418,16 @@ int main(int argc,char* argv[])
 	if (args.count("files"))
 	    files = args["files"].as<vector<string> >();
 
+        const bool summary = analysis == "median" or analysis == "compare" or analysis == "distances";
+        if (analysis != "score" and analysis != "AxA" and analysis != "NxN" and not summary)
+            throw myexception()<<"Analysis '"<<analysis<<"' not recognized.";
+        const int nfiles = analysis == "score" or analysis == "NxN" or analysis == "compare" ? 2 : 1;
+        check_supplied_filenames(nfiles, files, false);
+        if (analysis != "score" and analysis != "AxA" and files.size() != nfiles)
+            throw myexception()<<analysis<<" requires exactly "<<nfiles<<" input file(s).";
+
 	if (analysis == "NxN") 
 	{
-	    check_supplied_filenames(2,files,false);
 
             string distance_names = "pairwise";
             if (args.count("distances"))
@@ -467,7 +474,7 @@ int main(int argc,char* argv[])
 	    exit(0);
 	}
 
-	string distance_names = "splits:splits2:nonrecall:inaccuracy";
+	string distance_names = analysis == "score" ? "splits:splits2:nonrecall:inaccuracy" : "splits";
         if (args.count("distances"))
             distance_names = args["distances"].as<string>();
 
@@ -479,10 +486,16 @@ int main(int argc,char* argv[])
 	if (distance_names.empty())
 	    throw myexception()<<"No distance functions provided!";
 
+        if (analysis != "score" and distance_fns.size() != 1)
+            throw myexception()<<analysis<<" accepts only one distance measure.";
+        // These summaries use unordered pairs and minimize distances, so require symmetry.
+        if (summary and distance_names != "splits" and distance_names != "splits2" and distance_names != "pairwise")
+            throw myexception()<<analysis<<" requires splits, splits2, or pairwise; '"<<distance_names
+                               <<"' is not a symmetric distance.";
+
         //---------- write out distance matrix --------- //
 	if (analysis == "AxA") 
 	{
-	    check_supplied_filenames(1,files,false);
 
 	    alignment_sample As;
 
@@ -506,7 +519,6 @@ int main(int argc,char* argv[])
 	//---------- write out distance matrix --------- //
 	else if (analysis == "score") 
 	{
-	    check_supplied_filenames(2,files,false);
 
 	    // Load the true alignment to compare against
 	    alignment_sample As1;
@@ -542,7 +554,6 @@ int main(int argc,char* argv[])
 	}
 	else if (analysis == "compare")
 	{
-	    check_supplied_filenames(2,files);
 
 	    alignment_sample both(files[0], alphabet_name, skip, maxalignments);
 	    int N1 = both.size();
@@ -555,7 +566,6 @@ int main(int argc,char* argv[])
 	}
 	else if (analysis == "median") 
 	{
-	    check_supplied_filenames(1,files,false);
 
 	    alignment_sample As(files[0], alphabet_name, skip, maxalignments);
 
@@ -601,7 +611,6 @@ int main(int argc,char* argv[])
 	}
 	else if (analysis == "distances")
 	{
-	    check_supplied_filenames(1,files,false);
 
 	    alignment_sample As(files[0], alphabet_name, skip, maxalignments);
 
