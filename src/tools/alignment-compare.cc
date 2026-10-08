@@ -76,11 +76,6 @@ void load_alignments(vector<alignment>& alignments,
     alignment = chop_internal(alignment);
 
 
-  if (alignments.size() > 1) {
-    int N = alignments[0].n_sequences();
-    assert(alignments[1].n_sequences() == N);
-    assert(alignments[1].seqlength(N-1) == alignments[0].seqlength(N-1));
-  }
 }
 		     
 
@@ -276,6 +271,9 @@ int main(int argc,char* argv[])
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
 
+    // The target is required; load it before reading samples or computing scores.
+    alignment A = load_A(args,false);
+
     //---------- Initialize random seed -----------//
     unsigned long seed = 0;
     if (args.count("seed")) {
@@ -298,20 +296,52 @@ int main(int argc,char* argv[])
 
     
     int N = alignments1[0].n_sequences();
+    const auto names = sequence_names(alignments1[0]);
+    vector<int> L(N);
+    for(int i=0;i<L.size();i++)
+      L[i] = alignments1[0].seqlength(i);
 
+    // A residue is identified by sequence name and position, not its row in a sample file.
+    // Normalize rows and validate every retained alignment before using those positions as indices.
+    for(int sample=0;sample<2;sample++)
     {
-      int N2 = alignments2[0].n_sequences();
-      if (N != N2)
-	throw myexception()<<"Sample #1 has "<<N<<" sequences, but sample #2 has "<<N2<<".";
+      auto& alignments = sample == 0 ? alignments1 : alignments2;
+      const auto filename = args[sample == 0 ? "file1" : "file2"].as<string>();
+      for(int k=0;k<alignments.size();k++)
+      {
+        auto& current = alignments[k];
+        try
+        {
+          // Name-based reordering must not discard extra rows or reuse a duplicate name.
+          check_names_unique(current);
+          if (current.n_sequences() != N)
+            throw myexception()<<"Expected "<<N<<" sequences, but found "<<current.n_sequences()<<".";
+          if (sequence_names(current) != names)
+            current = reorder_sequences(current, names);
+          check_same_sequence_lengths(L, current);
+        }
+        catch (myexception& e)
+        {
+          e.prepend("Alignment sample '"+filename+"', retained alignment "+std::to_string(k+1)+": ");
+          throw;
+        }
+      }
     }
 
-    vector<int> L(N);
-    for(int i=0;i<L.size();i++) {
-      L[i] = alignments1[0].seqlength(i);
-      int L2 = alignments2[0].seqlength(i);
-      if (L[i] != L2)
-	throw myexception()<<"Sequence "<<i+1<<": sample #1 has length "<<L[i]<<
-	  " but sample #2 has length "<<L2<<".";
+    // Preserve the target's row order while checking its residue indices against the sample lengths.
+    vector<int> pi;
+    try
+    {
+      check_names_unique(A);
+      pi = compute_mapping(sequence_names(A), names);
+      for(int i=0;i<A.n_sequences();i++)
+        if (A.seqlength(i) != L[pi[i]])
+          throw myexception()<<"Sequence '"<<A.seq(i).name<<"': length "<<A.seqlength(i)
+                             <<" differs from expected length "<<L[pi[i]];
+    }
+    catch (std::exception& e)
+    {
+      throw myexception()<<"Target alignment '"<<args["align"].as<string>()<<"': "<<e.what();
     }
     
     //--------- Construct alignment indexes ---------//
@@ -339,10 +369,6 @@ int main(int argc,char* argv[])
     }
 
     //------------- output info --------------//
-    alignment A = load_A(args,false);
-
-    vector<int> pi = compute_mapping(sequence_names(A),sequence_names(alignments1[0]));
-
     matrix<double> m(A.length(),A.n_sequences());
     for(int i=0;i<A.n_sequences();i++) {
       int x=0;
