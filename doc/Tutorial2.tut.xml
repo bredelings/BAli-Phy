@@ -340,7 +340,7 @@ You might want to reduce the number of taxa while attempting to preserve phyloge
 </para>
 <para>
 You can specify that certain sequences should not be removed:
-% alignment-thin --down-to=30 --keep=Csaxicola420 ITS-region.fasta > ITS-region-thinned.fasta
+% alignment-thin --down-to=30 --protect=Csaxicola420 ITS-region.fasta > ITS-region-thinned.fasta
 </para>
 </section>
 
@@ -350,7 +350,7 @@ Keep only columns with a minimum number of residues:
 Keep only sequences that are not too short:
 % alignment-thin --longer-than=250 ITS-region.fasta > ITS-region-long.fasta
 Remove 10 sequences with the smallest number of conserved residues:
-% alignment-thin --remove-crazy=10 ITS-region.fasta > ITS-region-sane.fasta
+% alignment-thin --remove-gappy=10 ITS-region.fasta > ITS-region-sane.fasta
 </section>
 
 

@@ -542,14 +542,14 @@ Later you might want to put them back together again:
 <section><info><title>Shrinking the data set</title></info>
 <para>
 You might want to reduce the number of taxa while attempting to preserve phylogenetic diversity:
-% alignment-thin --cutoff=5 ITS-region.fasta -v --preserve=Csaxicola420 > ITS-region-thinned.fasta
-This removes sequences with 5 or fewer differences to the closest other sequence.
+% alignment-thin --cutoff=5 ITS-region.fasta --verbose --protect=Csaxicola420 > ITS-region-thinned.fasta
+This removes sequences with fewer than 5 directional mismatches to the closest other sequence.
 <itemizedlist>
-  <listitem>The <userinput>-v</userinput> option shows which sequences are removed and the distance to their closest neighbor.</listitem>
-  <listitem>The <userinput>--preserve</userinput> option keeps specific sequences in the data set.</listitem>
+  <listitem>The <userinput>--verbose</userinput> option shows which sequences are removed and the distance to their closest neighbor.</listitem>
+  <listitem>The <userinput>--protect</userinput> option keeps specific sequences in the data set.</listitem>
 </itemizedlist>
 You can also specify that data sets should be shrunk to a specific number of sequences:
-% alignment-thin --down-to=30 ITS-region.fasta -v > ITS-region-thinned.fasta
+% alignment-thin --down-to=30 ITS-region.fasta --verbose > ITS-region-thinned.fasta
 </para>
 <para>To see all options, run:
 % alignment-thin --help
@@ -560,7 +560,7 @@ You can also specify that data sets should be shrunk to a specific number of seq
 Keep only sequences that are not too short:
 % alignment-thin --longer-than=250 ITS-region.fasta > ITS-region-long.fasta
 Remove 10 sequences with the smallest number of conserved residues:
-% alignment-thin --remove-crazy=10 ITS-region.fasta > ITS-region-sane.fasta
+% alignment-thin --remove-gappy=10 ITS-region.fasta > ITS-region-sane.fasta
 Keep only columns with a minimum number of residues:
 % alignment-thin --min-letters=5 ITS-region.fasta > ITS-region-censored.fasta
 </section>

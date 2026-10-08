@@ -773,7 +773,7 @@ Later you might want to put them back together again:
 <para>
 You might want to reduce the number of taxa while attempting to preserve phylogenetic diversity:
 % alignment-thin --cutoff=5 ITS-region.fasta --verbose --protect=Csaxicola420 > ITS-region-thinned.fasta
-This removes sequences with fewer than 5 differences to the closest other sequence.
+This removes sequences with fewer than 5 directional mismatches to the closest other sequence.
 <itemizedlist>
   <listitem>The <userinput>--verbose</userinput> option shows which sequences are removed and the distance to their closest neighbor.</listitem>
   <listitem>The <userinput>--protect</userinput> option keeps specific sequences in the data set.</listitem>

@@ -4079,7 +4079,7 @@ The stabilization criterion is the same one described above for numerical values
       <screen><prompt>%</prompt> alignment-thin --remove=seq1,seq2 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>2.fasta</screen>
       <para>Remove short sequences:</para>
       <screen><prompt>%</prompt> alignment-thin --longer-than=250 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>-long.fasta</screen>
-      <para>Remove sequences with &lt;= 5 differences from the closest other sequence:</para>
+      <para>Remove sequences with fewer than 5 directional mismatches from the closest other sequence:</para>
       <screen><prompt>%</prompt> alignment-thin --cutoff=5 file.fasta > more-than-5-differences.fasta</screen>
       <para>Like <userinput>--cutoff</userinput>, but stop when we have the right number of sequences:</para>
       <screen><prompt>%</prompt> alignment-thin --down-to=30 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>-30taxa.fasta</screen>
