@@ -37,15 +37,11 @@
 #include "util/string/split.hh"
 #include "util/string/join.hh"
 #include "util/string/convert.hh"
-#include "util/cmdline.hh"
 #include "util/range.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
 extern int log_verbose;
-
-namespace po = boost::program_options;
-using po::variables_map;
 
 // FIXME - also show which COLUMNS are more that 99% conserved?
 
@@ -58,91 +54,6 @@ using po::variables_map;
 //            6. E (average distance) and Var (average distance)
 
 using namespace std;
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-	("files",value<vector<string> >()->composing(),"tree samples to examine")
-	;
-
-    // named options
-    options_description input("Input options");
-    input.add_options()
-	("help,h", "Produce help message")
-	("skip,s",value<unsigned>()->default_value(0),"Alignments to skip per sample file.")
-	("max,m",value<int>()->default_value(1000),"Maximum retained alignments per sample file (-1: unlimited).")
-	("verbose,V","Output more log messages on stderr.")
-	("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
-	;
-
-    options_description analysis("Analysis options");
-    analysis.add_options()
-	("distances", value<string>(),"Measures (colon-separated for score; one for other analyses).")
-	("analysis", value<string>(), "Analysis: score, AxA, NxN, compare, median, distances")
-	("CI",value<double>()->default_value(0.95),"Confidence interval size.")
-	("mean", "Show mean and standard deviation")
-	("median", "Show median and confidence interval")
-	("minmax", "Show minimum and maximum distances")
-	;
-
-    options_description visible("All options");
-    visible.add(input).add(analysis);
-
-    options_description all("All options");
-    all.add(invisible).add(input).add(analysis);
-
-    // positional options
-    positional_options_description p;
-    p.add("analysis", 1);
-    p.add("files", -1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    notify(args);    
-
-    if (args.count("help") or not args.count("analysis"))
-    {
-	cout<<"Compute distances between alignments.\n\n";
-	cout<<"Usage: alignment-distances <analysis> alignments-file1 [alignments-file2 ...]\n\n";
-	cout<<visible<<"\n";
-
-	cout<<"Distances:\n";
-	cout<<"  splits, splits2, pairwise, recall, accuracy, nonrecall, inaccuracy\n";
-        cout<<"  median minimizes distance: use nonrecall/inaccuracy rather than recall/accuracy.\n";
-        cout<<"  Defaults: score uses splits:splits2:nonrecall:inaccuracy; NxN uses pairwise; others use splits.\n\n";
-
-	cout<<"Examples:\n\n";
-
-	cout<<" Compute distances from true.fasta to each in As.fasta:\n";
-	cout<<"   % alignment-distances score true.fasta As.fasta\n\n";
-
-	cout<<" Compute distance matrix between all pairs of alignments in all files:\n";
-	cout<<"   % alignment-distances AxA file1.fasta ... fileN.fasta\n\n";
-
-	cout<<" Compute NxN sequence-pair disagreement scores, averaged over As:\n";
-	cout<<"   % alignment-distances NxN true.fasta As.fasta\n\n";
-
-	cout<<" Find alignment with smallest average distance to other alignments:\n";
-	cout<<"   % alignment-distances median As.fasta > A.fasta\n\n";
-
-	cout<<" Compare the distances with-in and between the two groups:\n";
-	cout<<"   % alignment-distances compare A-dist1.fasta A-dist2.fasta\n\n";
-
-	cout<<" Report distribution of average distance to other alignments:\n";
-	cout<<"   % alignment-distances distances As.fasta\n\n";
-
-	exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = 1;
-
-    return args;
-}
 
 typedef double (*distance_fn)(const matrix<int>& ,const vector< vector<int> >&,const matrix<int>& ,const vector< vector<int> >&);
 
@@ -413,32 +324,99 @@ int main(int argc,char* argv[])
 { 
     try {
 	//----------- Parse command line ---------//
-	variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Compute distances between alignments.", "alignment-distances"};
+        app.require_subcommand(1);
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string reference_file, sample_file, second_sample_file, alphabet_name, requested_distances;
+        vector<string> sample_files;
+        unsigned skip = 0;
+        int maxalignments = 1000;
+        double interval_probability = 0.95;
+        bool verbose = false, show_mean = false, show_median = false, show_minmax = false;
+        app.add_option("-s,--skip", skip, "Alignments to skip per sample file")
+            ->type_name("N")->capture_default_str();
+        app.add_option("-m,--max", maxalignments, "Maximum retained alignments per sample file (-1: unlimited)")
+            ->type_name("N")->capture_default_str();
+        app.add_option("--alphabet", alphabet_name,
+                       "Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop")
+            ->type_name("ALPHABET");
+        app.add_flag("-V,--verbose", verbose, "Output more log messages on stderr");
+        app.add_option("--distances", requested_distances,
+                       "Measures (colon-separated for score; one for other commands)")->type_name("MEASURES");
 
-        string analysis = args["analysis"].as<string>();
-        const auto alphabet_name = get_alphabet_name(args);
-        const auto skip = args["skip"].as<unsigned>();
-        const auto maxalignments = args["max"].as<int>();
+        auto* score = app.add_subcommand("score", "Score sample alignments against a reference")->fallthrough();
+        auto* axa = app.add_subcommand("AxA", "Compute a matrix of distances between alignments")->fallthrough();
+        auto* nxn = app.add_subcommand("NxN", "Compute averaged sequence-pair disagreement scores")->fallthrough();
+        auto* compare = app.add_subcommand("compare", "Compare within-group and between-group distances")->fallthrough();
+        auto* median = app.add_subcommand("median", "Find the alignment with smallest mean outgoing distance")->fallthrough();
+        auto* summary = app.add_subcommand("distances", "Summarize pairwise distances and outgoing means")->fallthrough();
 
-	//--------------- filenames ---------------//
-	vector<string> files;
-	if (args.count("files"))
-	    files = args["files"].as<vector<string> >();
+        for (auto* command: {score, nxn})
+            command->add_option("REFERENCE", reference_file, "File containing one reference alignment ('-' reads stdin)")
+                ->required()->type_name("");
+        for (auto* command: {score, axa})
+            command->add_option("SAMPLE", sample_files, "Alignment sample files ('-' reads stdin)")
+                ->required()->type_name("");
+        for (auto* command: {nxn, median, summary})
+            command->add_option("SAMPLE", sample_file, "Alignment sample file ('-' reads stdin)")
+                ->required()->type_name("");
+        compare->add_option("SAMPLE1", sample_file, "First alignment sample file ('-' reads stdin)")
+            ->required()->type_name("");
+        compare->add_option("SAMPLE2", second_sample_file, "Second alignment sample file ('-' reads stdin)")
+            ->required()->type_name("");
+        for (auto* command: {compare, summary})
+        {
+            command->add_option("--CI", interval_probability, "Central interval probability")
+                ->type_name("P")->capture_default_str();
+            command->add_flag("--mean", show_mean, "Show mean and standard deviation");
+            command->add_flag("--median", show_median, "Show median and central interval (default report)");
+            command->add_flag("--minmax", show_minmax, "Show minimum and maximum distances");
+        }
 
-        const bool summary = analysis == "median" or analysis == "compare" or analysis == "distances";
-        if (analysis != "score" and analysis != "AxA" and analysis != "NxN" and not summary)
-            throw myexception()<<"Analysis '"<<analysis<<"' not recognized.";
-        const int nfiles = analysis == "score" or analysis == "NxN" or analysis == "compare" ? 2 : 1;
-        check_supplied_filenames(nfiles, files, false);
-        if (analysis != "score" and analysis != "AxA" and files.size() != nfiles)
-            throw myexception()<<analysis<<" requires exactly "<<nfiles<<" input file(s).";
+        // Keep the measure descriptions and examples on separate lines in command help.
+        app.get_formatter()->enable_footer_formatting(false);
+        app.footer("Use alignment-distances COMMAND --help for arguments, measures, and examples.");
+        score->footer("Measures: splits, splits2, pairwise, recall, accuracy, nonrecall, inaccuracy.\n"
+                      "Default: splits:splits2:nonrecall:inaccuracy.\n"
+                      "--skip and --max apply to samples, not the reference.\n\n"
+                      "Example: alignment-distances score true.fasta As.fasta");
+        axa->footer("Measures: splits, splits2, pairwise, recall, accuracy, nonrecall, inaccuracy.\n"
+                    "Default: splits.\n\n"
+                    "Example: alignment-distances AxA sample1.fastas sample2.fastas");
+        nxn->footer("Measures: pairwise, nonrecall, inaccuracy. Default: pairwise.\n"
+                    "--skip and --max apply to the sample, not the reference.\n\n"
+                    "Example: alignment-distances NxN true.fasta As.fasta");
+        compare->footer("Measures: splits, splits2, pairwise, recall, accuracy, nonrecall, inaccuracy.\n"
+                        "Default: splits.\n\n"
+                        "Example: alignment-distances compare --mean sample1.fastas sample2.fastas");
+        median->footer("Measures: splits, splits2, pairwise, nonrecall, inaccuracy. Default: splits.\n"
+                       "Minimizes distance: use nonrecall/inaccuracy rather than recall/accuracy.\n\n"
+                       "Example: alignment-distances median As.fasta > A.fasta");
+        summary->footer("Measures: splits, splits2, pairwise, recall, accuracy, nonrecall, inaccuracy.\n"
+                        "Default: splits.\n\n"
+                        "Example: alignment-distances distances As.fasta");
+        // CLI11 2.6 omits inherited options from subcommand help; direct readers to the full list.
+        for (auto* command: {score, axa, nxn, compare, median, summary})
+            command->footer(command->get_footer() + "\n\nSee alignment-distances --help for shared options.");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            // Let CLI11 print help or diagnostics, retaining the tool's 0/1 exit statuses.
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        if (verbose) log_verbose = 1;
+        const string analysis = app.get_subcommands().front()->get_name();
 
 	if (analysis == "NxN") 
 	{
 
             string distance_names = "pairwise";
-            if (args.count("distances"))
-                distance_names = args["distances"].as<string>();
+            if (app.count("--distances"))
+                distance_names = requested_distances;
             auto distances = split(distance_names,":");
 
             pairwise_alignment_distance_t distance_fn = nullptr;
@@ -454,11 +432,11 @@ int main(int argc,char* argv[])
             else
                 throw myexception()<<"alignment-distances NxN: distance '"<<distances[0]<<"' not recognized!\n  Allowed values: pairwise, nonrecall, inaccuracy";
 
-	    alignment_sample A(files[0], alphabet_name, 0, -1);
+	    alignment_sample A(reference_file, alphabet_name, 0, -1);
 
 	    if (A.size() != 1) throw myexception()<<"The first file should only contain one alignment!";
 
-	    alignment_sample As(files[1], A.get_alphabet().name, skip, maxalignments, &A[0]);
+	    alignment_sample As(sample_file, A.get_alphabet().name, skip, maxalignments, &A[0]);
 
 	    std::cerr<<"Averaging over "<<As.size()<<" sampled alignments.\n";
 
@@ -482,8 +460,8 @@ int main(int argc,char* argv[])
 	}
 
 	string distance_names = analysis == "score" ? "splits:splits2:nonrecall:inaccuracy" : "splits";
-        if (args.count("distances"))
-            distance_names = args["distances"].as<string>();
+        if (app.count("--distances"))
+            distance_names = requested_distances;
 
 	//--------- Determine distance functions -------- //
 	vector<distance_fn> distance_fns;
@@ -506,7 +484,7 @@ int main(int argc,char* argv[])
 
 	    alignment_sample As;
 
-	    for(auto& file: files)
+	    for(auto& file: sample_files)
 	    {
 		// FIXME: handline std::cin like trees-distances.
 		As.load(file, alphabet_name, skip, maxalignments);
@@ -529,15 +507,14 @@ int main(int argc,char* argv[])
 
 	    // Load the true alignment to compare against
 	    alignment_sample As1;
-	    As1.load(files.front(), alphabet_name, 0, -1);
-	    files.erase(files.begin());
+	    As1.load(reference_file, alphabet_name, 0, -1);
 	    if (As1.size() != 1) throw myexception()<<"The first file should only contain one alignment!";
 
             vector<string> names;
 
 	    // Load the alignments to score
 	    alignment_sample As2;
-	    for(auto& file: files)
+	    for(auto& file: sample_files)
             {
 		int delta = As2.load(file, As1.get_alphabet().name, skip, maxalignments, &As1[0]);
                 if (delta == 0) std::cerr<<"WARNING: file '"<<file<<"' contained 0 alignments.\n";
@@ -562,20 +539,19 @@ int main(int argc,char* argv[])
 	else if (analysis == "compare")
 	{
 
-	    alignment_sample both(files[0], alphabet_name, skip, maxalignments);
+	    alignment_sample both(sample_file, alphabet_name, skip, maxalignments);
 	    int N1 = both.size();
-	    both.load(files[1], alphabet_name, skip, maxalignments);
+	    both.load(second_sample_file, alphabet_name, skip, maxalignments);
 	    int N2 = both.size() - N1;
 
 	    matrix<double> D  = distances(both,distance_fns[0],true);
 
-	    report_compare(D, N1, N2,
-                   args["CI"].as<double>(), args.count("mean"), args.count("median"), args.count("minmax"), directed);
+	    report_compare(D, N1, N2, interval_probability, show_mean, show_median, show_minmax, directed);
 	}
 	else if (analysis == "median") 
 	{
 
-	    alignment_sample As(files[0], alphabet_name, skip, maxalignments);
+	    alignment_sample As(sample_file, alphabet_name, skip, maxalignments);
 
             if (As.size() == 1)
             {
@@ -627,7 +603,7 @@ int main(int argc,char* argv[])
 	else if (analysis == "distances")
 	{
 
-	    alignment_sample As(files[0], alphabet_name, skip, maxalignments);
+	    alignment_sample As(sample_file, alphabet_name, skip, maxalignments);
 
 	    matrix<double> D = distances(As, distance_fns[0],true);
 
@@ -636,10 +612,8 @@ int main(int argc,char* argv[])
 	    // computes distribution of distances from A[i] to A[j]
 
 	    // We probably shouldn't call this a diameter
-	    diameter(D,"1", args["CI"].as<double>(), args.count("mean"), args.count("median"), args.count("minmax"), directed);
+	    diameter(D,"1", interval_probability, show_mean, show_median, show_minmax, directed);
 	}
-	else
-	    throw myexception()<<"Analysis '"<<analysis<<"' not recognized.";
     }
     catch (exception& e) {
 	cerr<<"alignment-distances: Error! "<<e.what()<<endl;

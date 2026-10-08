@@ -8,7 +8,17 @@
 
 # SYNOPSIS
 
-**alignment-distances** \[OPTIONS\] _analysis_ _alignment-file1_ [_alignment-file2_ ...]
+**alignment-distances** \[OPTIONS\] **score** _REFERENCE_ _SAMPLE_...
+
+**alignment-distances** \[OPTIONS\] **AxA** _SAMPLE_...
+
+**alignment-distances** \[OPTIONS\] **NxN** _REFERENCE_ _SAMPLE_
+
+**alignment-distances** \[OPTIONS\] **compare** \[REPORT-OPTIONS\] _SAMPLE1_ _SAMPLE2_
+
+**alignment-distances** \[OPTIONS\] **median** _SAMPLE_
+
+**alignment-distances** \[OPTIONS\] **distances** \[REPORT-OPTIONS\] _SAMPLE_
 
 # DESCRIPTION
 
@@ -16,7 +26,12 @@ Compute distances between alignments. Sample files contain FASTA alignments sepa
 lines; `-` reads standard input. Internal-node placeholders are removed before matching sequences
 by name. Names must be unique and ungapped lengths must agree; row order may differ.
 
-Analysis modes and inputs:
+Exactly one command is required. Reference and sample filenames are positional arguments.
+Shared options may appear before or after the command. Reporting options apply only to
+`compare` and `distances` and must follow the command. Use `alignment-distances COMMAND --help`
+for command-specific help.
+
+Commands and inputs:
 
 - **score**: one reference alignment followed by one or more sample files; report each requested measure.
 - **AxA**: one or more sample files; report a matrix over all retained alignments using one measure.
@@ -51,7 +66,7 @@ normalized by the two sequence lengths; the whole-alignment `pairwise` measure i
 count. A singleton sample is a valid median, but has no pairwise summary. Median diagnostics use
 zero-based ranks and report the mean pairwise distance, not the maximum distance.
 
-# INPUT OPTIONS:
+# SHARED OPTIONS:
 **-h**, **`--help`**
 : Produce help message
 
@@ -69,13 +84,13 @@ zero-based ranks and report the mean pairwise distance, not the maximum distance
 : Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.
 
 
-# ANALYSIS OPTIONS:
 **`--distances`** _arg_
 : Colon-separated measures for `score`; exactly one measure for other modes. Defaults to
   `splits:splits2:nonrecall:inaccuracy` for `score`, `pairwise` for `NxN`, and `splits` otherwise.
 
-**`--analysis`** _arg_
-: Analysis: score, AxA, NxN, compare, median, distances
+# REPORTING OPTIONS:
+
+These options follow `compare` or `distances` and are unavailable for other commands.
 
 **`--CI`** _arg_ (=0.95)
 : Central interval probability for `compare` and `distances`. This describes the distance
