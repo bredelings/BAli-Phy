@@ -3,6 +3,7 @@
 
 import argparse
 import html
+import itertools
 import json
 import posixpath
 import re
@@ -43,7 +44,16 @@ def prose(text):
     # Odd-numbered pieces are code spans, whose contents Pandoc already treats literally.
     for i in range(0, len(pieces), 2):
         pieces[i] = re.sub(r'(?<=[\w)\]])\*(?=[\w(])', '&#42;', pieces[i])
-    return ''.join(pieces).replace('\n', '  \n')
+    blocks = []
+    # Consecutive indented source lines form explanatory blocks, not code listings.
+    # Keep their explicit line breaks while letting the surrounding prose wrap normally.
+    for indented, lines in itertools.groupby(''.join(pieces).splitlines(),
+                                             key=lambda line: bool(line.strip()) and line[:1].isspace()):
+        block = '  \n'.join(line.lstrip() if indented else line for line in lines)
+        if indented:
+            block = '<div class="prose-indent">\n\n' + block + '\n\n</div>'
+        blocks.append(block)
+    return '\n\n'.join(blocks)
 
 
 def relative_url(current, target):
@@ -128,14 +138,15 @@ def navigation(slug):
 def binding_page(slug, entry, lookup, warnings):
     args = entry['args']
     names = [arg['name'] for arg in args]
-    parts = ['::: {.reference-entry}', navigation(slug), '# ' + code(entry['name'])]
+    parts = ['::: {.reference-entry}', navigation(slug), '<header class="reference-header">',
+             '# ' + code(entry['name'])]
     if entry.get('title'):
-        parts.append(html.escape(entry['title']))
+        parts.append('<p class="reference-subtitle">' + html.escape(entry['title']) + '</p>')
     signature = entry['name'] + '(' + ', '.join(names) + ')'
     if 'fixity' in entry and len(names) == 2:
         signature = f'{names[0]} {entry["name"]} {names[1]}'
-    parts += ['<div class="reference-signature">', code(signature),
-              '**Returns:** ' + code(entry['result_type']), '</div>']
+    parts += ['<div class="reference-signature">', code(signature) + ' → '
+              + '<span class="argument-type">' + code(entry['result_type']) + '</span>', '</div>']
     metadata = []
     if entry.get('constraints'):
         metadata.append('**Type constraints:** ' + ', '.join(map(code, entry['constraints'])))
@@ -147,9 +158,7 @@ def binding_page(slug, entry, lookup, warnings):
         metadata.append('**Aliases:** ' + ', '.join(map(code, entry['synonyms'])))
     if metadata:
         parts += ['<div class="reference-metadata">', *metadata, '</div>']
-    if entry.get('description'):
-        parts.append(prose(entry['description']))
-    parts.append('## Arguments')
+    parts += ['</header>', '## Arguments']
     if not args:
         parts.append('This entry has no arguments.')
     notes = []
@@ -170,7 +179,7 @@ def binding_page(slug, entry, lookup, warnings):
             parts.append(prose(arg['description']))
         default = arg.get('default_value')
         rendered = default_text(default, names, warnings) if default is not None else 'No default specified.'
-        parts += ['**Default:** ' + rendered, '</dd>']
+        parts += ['<strong class="default-label">Default:</strong> ' + rendered, '</dd>']
         if default is not None and rendered != code(default):
             originals.append(f'<dt>{code(arg["name"])}</dt><dd><pre>{code(default)}</pre></dd>')
     if args:
@@ -178,6 +187,9 @@ def binding_page(slug, entry, lookup, warnings):
     if originals:
         parts += ['<details class="original-defaults"><summary>Original default expressions</summary>',
                   '<dl>' + '\n'.join(originals) + '</dl>', '</details>']
+    if entry.get('description'):
+        parts += ['## Description', '<div class="reference-description">',
+                  prose(entry['description']), '</div>']
     if entry.get('examples'):
         parts.append('## Examples')
         parts.extend('<pre>' + code(example) + '</pre>' for example in entry['examples'])
