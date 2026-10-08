@@ -158,11 +158,17 @@ def signature_html(entry):
 def binding_page(slug, entry, lookup, warnings):
     args = entry['args']
     names = [arg['name'] for arg in args]
-    parts = ['::: {.reference-entry}', navigation(slug), '<header class="reference-header">',
-             '# ' + code(entry['name'])]
+    # Preserve Pandoc's name-only heading IDs when the subtitle joins the heading.
+    identifier = re.sub(r'[^A-Za-z0-9_.-]', '', entry['name'])
+    identifier = re.sub(r'^[^A-Za-z]*', '', identifier).lower() or 'section'
+    heading = code(entry['name'])
     if entry.get('title'):
-        parts.append('<p class="reference-subtitle">' + html.escape(entry['title']) + '</p>')
-    parts.append(signature_html(entry))
+        heading = ('<span class="reference-name">' + heading
+                   + '<span class="reference-separator"> —</span></span> '
+                   + '<span class="reference-subtitle">' + html.escape(entry['title']) + '</span>')
+    parts = ['::: {.reference-entry}', navigation(slug), '<header class="reference-header">',
+             '# ' + heading + ' {#' + identifier + '}', '</header>',
+             '## Usage', '<div class="reference-section">', signature_html(entry)]
     metadata = []
     if entry.get('constraints'):
         metadata.append('**Type constraints:** ' + ', '.join(map(code, entry['constraints'])))
@@ -174,7 +180,7 @@ def binding_page(slug, entry, lookup, warnings):
         metadata.append('**Aliases:** ' + ', '.join(map(code, entry['synonyms'])))
     if metadata:
         parts += ['<div class="reference-metadata">', *metadata, '</div>']
-    parts += ['</header>', '## Arguments']
+    parts += ['</div>', '## Arguments', '<div class="reference-section">']
     if not args:
         parts.append('This entry has no arguments.')
     notes = []
@@ -210,14 +216,16 @@ def binding_page(slug, entry, lookup, warnings):
     if originals:
         parts += ['<details class="original-defaults"><summary>Original default expressions</summary>',
                   '<dl>' + '\n'.join(originals) + '</dl>', '</details>']
+    parts.append('</div>')
     if entry.get('description'):
-        parts += ['## Description', '<div class="reference-description">',
+        parts += ['## Description', '<div class="reference-section reference-description">',
                   prose(entry['description']), '</div>']
     if entry.get('examples'):
-        parts.append('## Examples')
+        parts += ['## Examples', '<div class="reference-section">']
         parts.extend('<pre>' + code(example) + '</pre>' for example in entry['examples'])
+        parts.append('</div>')
     if entry.get('citation'):
-        parts += ['## Citation', citation_text(entry['citation'])]
+        parts += ['## Citation', '<div class="reference-section">', citation_text(entry['citation']), '</div>']
     related = []
     for name in dict.fromkeys(entry.get('see', [])):
         if name in lookup:
@@ -226,8 +234,8 @@ def binding_page(slug, entry, lookup, warnings):
             warnings.append(f'Unknown related entry: {name}')
             related.append(code(name))
     if related:
-        parts += ['## See also', ', '.join(related)]
-    parts.append('<footer class="reference-footer">')
+        parts += ['## See also', '<div class="reference-section">', ', '.join(related), '</div>']
+    parts.append('<footer class="reference-footer reference-section">')
     parts += ['Terminal help: ' + code('bali-phy help ' + shlex.quote(entry['name'])) + ' · '
               + link('Binding source', SOURCE_URL + quote(str(slug) + '.json', safe='/')),
               '</footer>', ':::']
