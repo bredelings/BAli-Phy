@@ -68,7 +68,7 @@ def load_bindings(root):
 
 
 # Render argument references as links without interpreting the expression itself.
-# Keep a literal copy whenever display text changes, so users can recover the exact syntax.
+# The caller collects changed expressions into a single disclosure with their original syntax.
 def default_text(value, names, warnings):
     state = re.fullmatch(r'get_state\((\w+)\)', value)
     if state and state[1] in STATE_DEFAULTS:
@@ -88,9 +88,6 @@ def default_text(value, names, warnings):
             end = match.end()
         parts.append(html.escape(value[end:]))
         rendered = '<code>' + ''.join(parts) + '</code>'
-    if rendered != code(value):
-        rendered += ('\n\n<details class="source-expression"><summary>Source expression</summary>\n'
-                     f'<pre>{code(value)}</pre>\n</details>')
     return rendered
 
 
@@ -127,40 +124,56 @@ def navigation(slug):
 def binding_page(slug, entry, lookup, warnings):
     args = entry['args']
     names = [arg['name'] for arg in args]
-    parts = [navigation(slug), '# ' + code(entry['name'])]
+    parts = ['::: {.reference-entry}', navigation(slug), '# ' + code(entry['name'])]
     if entry.get('title'):
         parts.append(html.escape(entry['title']))
     signature = entry['name'] + '(' + ', '.join(names) + ')'
     if 'fixity' in entry and len(names) == 2:
         signature = f'{names[0]} {entry["name"]} {names[1]}'
-    parts += ['## Usage', code(signature), '**Returns:** ' + code(entry['result_type'])]
+    parts += ['<div class="reference-signature">', code(signature),
+              '**Returns:** ' + code(entry['result_type']), '</div>']
+    metadata = []
     if entry.get('constraints'):
-        parts.append('**Type constraints:** ' + ', '.join(map(code, entry['constraints'])))
+        metadata.append('**Type constraints:** ' + ', '.join(map(code, entry['constraints'])))
     if 'fixity' in entry:
         fixity = entry['fixity']
-        parts.append(f'**Operator:** precedence {fixity["precedence"]}; '
+        metadata.append(f'**Operator:** precedence {fixity["precedence"]}; '
                      f'associativity: {html.escape(fixity["associativity"])}.')
-    for field, label in [('synonyms', 'Aliases'), ('deprecated-synonyms', 'Deprecated aliases')]:
-        if entry.get(field):
-            parts.append(f'**{label}:** ' + ', '.join(map(code, entry[field])))
+    if entry.get('synonyms'):
+        metadata.append('**Aliases:** ' + ', '.join(map(code, entry['synonyms'])))
+    if metadata:
+        parts += ['<div class="reference-metadata">', *metadata, '</div>']
     if entry.get('description'):
-        parts += ['## Description', prose(entry['description'])]
+        parts.append(prose(entry['description']))
     parts.append('## Arguments')
     if not args:
         parts.append('This entry has no arguments.')
+    notes = []
     if any(match[1] in names for arg in args
            for match in DEFAULT_TOKEN.finditer(arg.get('default_value', ''))):
-        parts.append('Underlined names in default expressions refer to other arguments.')
+        notes.append('Underlined names in default expressions refer to other arguments.')
     if any(arg.get('default_value', '').startswith('~') for arg in args):
-        parts.append('A default beginning with `~` specifies a prior distribution.')
+        notes.append('A default beginning with `~` specifies a prior distribution.')
+    if notes:
+        parts += ['<div class="argument-note">', ' '.join(notes), '</div>']
+    originals = []
+    if args:
+        parts.append('<dl class="arguments">')
     for arg in args:
-        parts += [f'### {code(arg["name"])} {{#arg-{quote(arg["name"])}}}',
-                  '**Type:** ' + code(arg['type'])]
+        parts += [f'<dt id="arg-{quote(arg["name"])}">{code(arg["name"])} '
+                  f'<span class="argument-type">{code(arg["type"])}</span></dt>', '<dd>']
         if arg.get('description'):
             parts.append(prose(arg['description']))
         default = arg.get('default_value')
-        parts.append('**Default:** ' + (default_text(default, names, warnings) if default is not None
-                                       else 'No default specified.'))
+        rendered = default_text(default, names, warnings) if default is not None else 'No default specified.'
+        parts += ['**Default:** ' + rendered, '</dd>']
+        if default is not None and rendered != code(default):
+            originals.append(f'<dt>{code(arg["name"])}</dt><dd><pre>{code(default)}</pre></dd>')
+    if args:
+        parts.append('</dl>')
+    if originals:
+        parts += ['<details class="original-defaults"><summary>Original default expressions</summary>',
+                  '<dl>' + '\n'.join(originals) + '</dl>', '</details>']
     if entry.get('examples'):
         parts.append('## Examples')
         parts.extend('<pre>' + code(example) + '</pre>' for example in entry['examples'])
@@ -175,9 +188,12 @@ def binding_page(slug, entry, lookup, warnings):
             related.append(code(name))
     if related:
         parts += ['## See also', ', '.join(related)]
-    parts += ['## Further information',
-              'Terminal help: ' + code('bali-phy help ' + shlex.quote(entry['name'])),
-              link('Binding source', SOURCE_URL + quote(str(slug) + '.json', safe='/'))]
+    parts.append('<footer class="reference-footer">')
+    if entry.get('deprecated-synonyms'):
+        parts.append('**Deprecated aliases:** ' + ', '.join(map(code, entry['deprecated-synonyms'])))
+    parts += ['Terminal help: ' + code('bali-phy help ' + shlex.quote(entry['name'])) + ' · '
+              + link('Binding source', SOURCE_URL + quote(str(slug) + '.json', safe='/')),
+              '</footer>', ':::']
     return '\n\n'.join(parts)
 
 
