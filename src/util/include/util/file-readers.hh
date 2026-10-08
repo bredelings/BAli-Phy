@@ -226,7 +226,7 @@ bool thin_down_to(std::list<T>& Ts,int max)
     std::reverse(kill.begin(),kill.end());
 
     int i=0;
-    for(auto loc = Ts.begin();loc!=Ts.end();i++) {
+    for(auto loc = Ts.begin();loc!=Ts.end() and not kill.empty();i++) {
 	if (i == kill.back()) {
 	    kill.pop_back();
 	    auto j = loc++;
