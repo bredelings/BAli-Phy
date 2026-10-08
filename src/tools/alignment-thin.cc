@@ -646,7 +646,9 @@ int main(int argc,char* argv[])
 	    if (args.count("cutoff"))
 		cutoff = args["cutoff"].as<unsigned>();
 
-	    int down_to = A.n_sequences();
+            // Count survivors of earlier filters as well as removals and restorations below.
+            int n_retained = n_positive(keep);
+            int down_to = n_retained;
 	    if (args.count("down-to"))
 		down_to = args["down-to"].as<int>();
 
@@ -661,10 +663,17 @@ int main(int argc,char* argv[])
 		std::pair<int,int> p = argmin(D,keep);
 		int p1 = p.first;
 		int p2 = p.second;
+                if (p1 == -1)
+                {
+                    if (args.count("down-to") and n_retained > down_to)
+                        cerr<<"Cannot thin to "<<down_to<<" sequences: no removable pair remains ("
+                            <<n_retained<<" retained).\n";
+                    break;
+                }
 		int MD = D(p1,p2);
 	
-		// exit if this distance is larger than the cutoff.
-		if (MD >= cutoff and (A.n_sequences() - removed.size() <= down_to)) break;
+		// Stop when the distance reaches the cutoff and the retained count meets the target.
+		if (MD >= cutoff and n_retained <= down_to) break;
 	
 		// remove the sequence with the shorter comment, if they are the same
 		if (D(p1,p2) == D(p2,p1) and keep[p2]< 2 and A.seq(p1).comment.size() > A.seq(p2).comment.size())
@@ -673,6 +682,7 @@ int main(int argc,char* argv[])
 		// mark as removed
 		keep[p1] = 0;
 		removed.push_back(p1);
+                n_retained--;
 	    }
 
 	    // compute distances to those that remain
@@ -688,8 +698,11 @@ int main(int argc,char* argv[])
 		distance[i] = D(removed[i],closest[i]);
 
 		// put item back if too far from remaining items
-		if (cutoff != -1 and distance[i] >= cutoff and (A.n_sequences() - i - 1 - n_removed) < down_to)
+		if (cutoff != -1 and distance[i] >= cutoff and n_retained < down_to)
+                {
 		    keep[removed[i]] = 1;
+                    n_retained++;
+                }
 		else
 		    n_removed++;
 	    }
