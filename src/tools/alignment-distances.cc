@@ -312,10 +312,10 @@ struct alignment_sample
     vector<matrix<int> > Ms;
     vector< vector< vector<int> > >  column_indices;
 
-    int load(list<alignment>& As);
+    int load(list<alignment>& As, const alignment* reference);
 
     int load(const string& filename, const string& alphabet_name, unsigned skip, int maxalignments,
-             const vector<string>& seq_names = {});
+             const alignment* reference = nullptr);
 
     unsigned size() const {return alignments.size();}
 
@@ -329,21 +329,31 @@ struct alignment_sample
 
     // Load a sample with explicit thinning settings, or an unthinned reference.
     alignment_sample(const string& filename, const string& alphabet_name, unsigned skip, int maxalignments,
-                     const vector<string>& seq_names = {})
+                     const alignment* reference = nullptr)
     {
-        load(filename, alphabet_name, skip, maxalignments, seq_names);
+        load(filename, alphabet_name, skip, maxalignments, reference);
         if (alignments.empty())
             throw myexception()<<"Alignment sample is empty.";
     }
 
 };
 
-int alignment_sample::load(list<alignment>& As)
+// Normalize retained alignments before building residue indices or comparing their names.
+int alignment_sample::load(list<alignment>& As, const alignment* reference)
 {
     for(auto& a: As)
     {
 	// Chop off internal node sequences, if any
 	a = chop_internal(a);
+        check_names_unique(a);
+        if (not reference) reference = &a;
+        if (a.n_sequences() != reference->n_sequences())
+            throw myexception()<<"Expected "<<reference->n_sequences()<<" sequences, got "<<a.n_sequences()<<".";
+        if (::sequence_names(a) != ::sequence_names(*reference))
+            a = reorder_sequences(a, ::sequence_names(*reference));
+        vector<int> lengths(reference->n_sequences());
+        for(int i=0;i<lengths.size();i++) lengths[i] = reference->seqlength(i);
+        check_same_sequence_lengths(lengths, a);
 	Ms.push_back(M(a));
 	column_indices.push_back( column_lookup(a) );
     }
@@ -352,23 +362,18 @@ int alignment_sample::load(list<alignment>& As)
     return As.size();
 }
 
-// Append a file, matching an existing sample or explicitly supplied reference names.
+// Load each file independently so internal-node removal precedes matching to the reference.
 int alignment_sample::load(const string& filename, const string& alphabet_name, unsigned skip, int maxalignments,
-                           const vector<string>& seq_names)
+                           const alignment* reference)
 {
     if (log_verbose) cerr<<"alignment-distances: Loading alignments...";
     istream_or_ifstream input(cin,"-",filename,"alignment file");
 
-    list<alignment> As;
-    if (not seq_names.empty())
-        As = load_alignments(input, seq_names, alphabet_name, skip, maxalignments);
-    else if (alignments.empty())
-        As = load_alignments(input, alphabet_name, skip, maxalignments);
-    else
-        As = load_alignments(input, sequence_names(), get_alphabet(), skip, maxalignments);
+    if (not reference and not alignments.empty()) reference = &alignments[0];
+    auto As = load_alignments(input, reference ? reference->get_alphabet().name : alphabet_name, skip, maxalignments);
 
     if (log_verbose) cerr<<"done. ("<<As.size()<<" alignments)"<<endl;
-    return load(As);
+    return load(As, reference);
 }
 
 
@@ -439,7 +444,7 @@ int main(int argc,char* argv[])
 
 	    if (A.size() != 1) throw myexception()<<"The first file should only contain one alignment!";
 
-	    alignment_sample As(files[1], A.get_alphabet().name, skip, maxalignments, A.sequence_names());
+	    alignment_sample As(files[1], A.get_alphabet().name, skip, maxalignments, &A[0]);
 
 	    std::cerr<<"Averaging over "<<As.size()<<" sampled alignments.\n";
 
@@ -515,7 +520,7 @@ int main(int argc,char* argv[])
 	    alignment_sample As2;
 	    for(auto& file: files)
             {
-		int delta = As2.load(file, As1.get_alphabet().name, skip, maxalignments, As1.sequence_names());
+		int delta = As2.load(file, As1.get_alphabet().name, skip, maxalignments, &As1[0]);
                 if (delta == 0) std::cerr<<"WARNING: file '"<<file<<"' contained 0 alignments.\n";
                 for(int i=0;i<delta;i++)
                     names.push_back(file);
