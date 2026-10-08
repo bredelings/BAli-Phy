@@ -235,9 +235,9 @@ def binding_page(slug, entry, lookup, warnings):
             related.append(code(name))
     if related:
         parts += ['## See also', '<div class="reference-section">', ', '.join(related), '</div>']
-    parts.append('<footer class="reference-footer reference-section">')
-    parts += ['Terminal help: ' + code('bali-phy help ' + shlex.quote(entry['name'])) + ' · '
-              + link('Binding source', SOURCE_URL + quote(str(slug) + '.json', safe='/')),
+    parts.append('<footer class="reference-footer">')
+    parts += ['Terminal help: ' + code('bali-phy help ' + shlex.quote(entry['name'])),
+              link('Binding source', SOURCE_URL + quote(str(slug) + '.json', safe='/')),
               '</footer>', ':::']
     return '\n\n'.join(parts)
 
