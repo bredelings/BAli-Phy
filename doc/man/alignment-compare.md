@@ -24,8 +24,9 @@ FASTA alignments separated by empty lines. The third file contains the target al
 `-` in that position to read it from standard input. Sample filenames do not interpret `-`
 as standard input.
 
-Use samples and a target for the same sequences. Sequence names and ungapped lengths must
-match; row order may differ. Residues are identified by sequence name and ungapped position,
+Use samples and a target for the same sequences. Sequence names must be unique within each
+alignment, and names and ungapped lengths must match; row order may differ.
+Residues are identified by sequence name and ungapped position,
 not by comparing their letters. BAli-Phy internal-node placeholder sequences are removed
 before comparison.
 

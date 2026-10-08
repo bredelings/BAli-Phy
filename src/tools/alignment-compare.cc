@@ -299,6 +299,11 @@ int main(int argc,char* argv[])
           throw myexception()<<"Sequence '"<<A.seq(i).name<<"': length "<<A.seqlength(i)
                              <<" differs from expected length "<<L[pi[i]];
     }
+    catch (const bad_mapping<string>& e)
+    {
+      throw myexception()<<"Target alignment '"<<target_file<<"': "
+                         <<(e.from == 0 ? "Unexpected sequence '" : "Missing sequence '")<<e.missing<<"'.";
+    }
     catch (std::exception& e)
     {
       throw myexception()<<"Target alignment '"<<target_file<<"': "<<e.what();
