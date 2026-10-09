@@ -3528,8 +3528,10 @@ By default each partition has a separate scale, but you can force groups of part
       xlink:href="https://doi.org/10.1038/s41559-018-0584-5">Venkat et al. 2018</link>).</para>
 
       <para><code language="bali-phy-model">MNM</code>, already included in the examples, estimates rates of
-      double and triple mutations as part of the background model, with little added computational
-      cost. It allows these events within codons, not across codon boundaries. Replace it with
+      double and triple mutations as part of the background model. Likelihood evaluation has the
+      same computational cost as for single-nucleotide mutations; estimating the two additional
+      parameters may increase the total computation required for inference.
+      It allows these events within codons, not across codon boundaries. Replace it with
       <code language="bali-phy-model">x3</code> to restrict mutations to single-nucleotide events, as in
       <xref linkend="selection-codeml"/>.</para>
     </section>
