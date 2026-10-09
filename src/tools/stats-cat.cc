@@ -1,7 +1,7 @@
 #include <vector>
 #include <fstream>
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
 #include "mcon/mcon.hh"
 #include "util/io.hh"
@@ -11,101 +11,53 @@
 
 using namespace std;
 
-namespace po = boost::program_options;
-using po::variables_map;
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-        ("filenames", value<vector<string> >()->composing(),"Filenames to analyze (empty for STDIN)")
-        ;
-
-    options_description visible("All options");
-    visible.add_options()
-        ("help,h", "Produce help message.")
-        ("skip,s",value<int>(),"Number of initial lines to skip.")
-        ("subsample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
-	("until,u",value<int>(),"Read up to this iteration.")
-
-	("ignore,I", value<vector<string> >()->composing(),"Do not analyze these fields.")
-	("select,S", value<vector<string> >()->composing(),"Analyze only these fields.")
-        ("output,O", value<string>(), "Output format: json, tsv")
-	("unnest", "Unnest JSON file.");
-
-    options_description all("All options");
-    all.add(invisible).add(visible);
-
-    // positional options
-    positional_options_description p;
-    p.add("filenames", -1);
-
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-          options(all).positional(p).run(), args);
-    notify(args);
-
-    if (args.count("help")) {
-        cout<<"Append tab-delimited files with the same field names.\n\n";
-        cout<<"Usage: stats-cat [OPTIONS] file1 [file2 file3 ... ] \n\n";
-        cout<<visible<<"\n";
-        exit(0);
-    }
-
-    return args;
-}
-
-
 int main(int argc,char* argv[]) 
 { 
     try 
     {
-        variables_map args = parse_cmd_line(argc,argv);
-
-        vector<string> filenames = args["filenames"].as< vector<string> >();
-
-        int skip = 0;
-        if (args.count("skip"))
-            skip = args["skip"].as<int>();
-
-        int subsample = 1;
-        if (args.count("subsample"))
-            subsample = args["subsample"].as<int>();
-
-        int last = -1;
-        if (args.count("until"))
-            last = args["until"].as<int>();
-
-	vector<string> ignore;
-	if (args.count("ignore"))
-	    ignore = args["ignore"].as<vector<string> >();
-
-	vector<string> select;
-	if (args.count("select"))
-	    select = args["select"].as<vector<string> >();
-
-        if (not args.count("filenames"))
-            throw myexception()<<"No filenames specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
-
+        CLI::App app{"Concatenate statistics tables or transform one MCON log.", "stats-cat"};
+        app.usage("Usage: stats-cat [OPTIONS] FILE [FILE ...]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        vector<string> filenames, ignore, select;
+        int skip = 0, subsample = 1, last = -1;
         string out_format = "tsv";
-        if (args.count("output"))
+        bool do_unnest = false;
+        auto* skip_option = app.add_option("-s,--skip", skip, "Number of initial data rows to skip")
+            ->type_name("N");
+        auto* subsample_option = app.add_option("-x,--subsample", subsample, "Keep every Nth data row")
+            ->type_name("N")->capture_default_str();
+        auto* until_option = app.add_option("-u,--until", last, "Read up to this data row")
+            ->type_name("N");
+        app.add_option("-I,--ignore", ignore, "Exclude fields")
+            ->type_name("FIELD")->type_size(1)->expected(1)->allow_extra_args(false)->take_all();
+        app.add_option("-S,--select", select, "Include only these fields")
+            ->type_name("FIELD")->type_size(1)->expected(1)->allow_extra_args(false)->take_all();
+        auto* output_option = app.add_option("-O,--output", out_format, "Output format: json or tsv")
+            ->type_name("FORMAT")->capture_default_str();
+        app.add_flag("--unnest", do_unnest, "Unnest MCON fields (implies JSON output)");
+        app.add_option("FILE", filenames, "Input statistics files ('-' reads stdin)")
+            ->required()->type_name("");
+        try
         {
-            out_format = args["output"].as<string>();
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+
+        if (output_option->count())
+        {
             for(auto& c: out_format)
                 c = std::tolower(c);
             if (out_format != "tsv" and out_format != "json")
                 throw myexception()<<"I don't understand output format '"<<out_format<<"'";
         }
-        else
-        {
-            if (args.count("unnest"))
-                out_format = "json";
-        }
+        else if (do_unnest)
+            out_format = "json";
 
-        if (out_format == "tsv" and args.count("unnest"))
+        if (out_format == "tsv" and do_unnest)
             throw myexception()<<"--unnest cannot be combined with --output tsv.";
 
         // it looks like currently we do not allow converting tsv to json, just json to tsv.
@@ -113,8 +65,7 @@ int main(int argc,char* argv[])
         {
             if (filenames.size() != 1)
                 throw myexception()<<"JSON output requires exactly one input file.";
-            if (args.count("skip") or args.count("until") or
-                (args.count("subsample") and not args.at("subsample").defaulted()))
+            if (skip_option->count() or until_option->count() or subsample_option->count())
                 throw myexception()<<"--skip, --subsample, and --until are not supported with JSON output.";
 
             auto file = shared_ptr<istream>(new istream_or_ifstream(std::cin, "-", filenames[0], "statistics file"));
@@ -125,7 +76,6 @@ int main(int argc,char* argv[])
 
 	    std::cout<<json::serialize_options({.allow_infinity_and_nan=true});
 
-            bool do_unnest = args.count("unnest");
             string line;
             if (portable_getline(*file,line))
             {
