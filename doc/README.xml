@@ -2249,7 +2249,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
         counts as two or three substitutions, respectively.</para>
       </section>
 
-      <section>
+      <section xml:id="codon-model-construction">
 	  <info><title>Constructing and tweaking codon models</title></info>
 
           <para>Sometimes the researcher wants to use an existing codon model, but with a slight tweak.
@@ -2257,6 +2257,20 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
           This section provides building blocks to construct codon models from nucleotide models.
           This allows you to change the underlying nucleotide model or add other modifications.
           </para>
+
+          <para>The mutation-selection models FMutSel and FMutSel0
+          (<link xmlns:xlink="http://www.w3.org/1999/xlink"
+          xlink:href="https://doi.org/10.1093/molbev/msm284">Yang and Nielsen, 2008</link>)
+          assign fitnesses to codons and amino acids, respectively. FMutSel0 gives synonymous
+          codons the same fitness. In &baliphy;, these names denote complete models.
+          <link xmlns:xlink="http://www.w3.org/1999/xlink"
+          xlink:href="https://bali-phy.org/reference/models/MutSel/">MutSel</link> and
+          <link xmlns:xlink="http://www.w3.org/1999/xlink"
+          xlink:href="https://bali-phy.org/reference/models/MutSelAA/">MutSelAA</link> instead
+          denote modifiers: components applied to an input rate matrix to incorporate those
+          fitnesses. Their default full-model constructions appear below. Exposing the components
+          lets you change the nucleotide model or replace <code language="bali-phy-model">x3</code>
+          with <code language="bali-phy-model">MNM</code> to extend the model to multinucleotide mutations.</para>
 
           <para>Unconstrained \(\omega\) parameters default to <code language="bali-phy-model">LogNormal(0,1)</code>,
           giving equal prior probability below and above one. To restrict \(\omega\) below one,
@@ -2269,8 +2283,8 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	    <listitem><code language="bali-phy-model">MG94</code> is equivalent to <code language="bali-phy-model">F81 +> x3 +> dNdS</code>.</listitem>
 	    <listitem><code language="bali-phy-model">MG94K</code> is equivalent to <code language="bali-phy-model">HKY85 +> x3 +> dNdS</code>.</listitem>
 	    <listitem><code language="bali-phy-model">GY94</code> is equivalent to <code language="bali-phy-model">HKY85_sym +> x3_sym +> F +> dNdS</code>.</listitem>
-	    <listitem><code language="bali-phy-model">FMutSel</code> is equivalent to <code language="bali-phy-model">GTR +> x3 +> dNdS +> MutSel</code>.</listitem>
-	    <listitem><code language="bali-phy-model">FMutSel0</code> is equivalent to <code language="bali-phy-model">GTR +> x3 +> dNdS +> MutSelAA</code>.</listitem>
+	    <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://bali-phy.org/reference/models/FMutSel/">FMutSel</link> with default arguments is equivalent to <code language="bali-phy-model">GTR +> x3 +> MutSel +> dNdS</code>.</listitem>
+	    <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://bali-phy.org/reference/models/FMutSel0/">FMutSel0</link> with default arguments is equivalent to <code language="bali-phy-model">GTR +> x3 +> MutSelAA +> dNdS</code>.</listitem>
             <listitem><code language="bali-phy-model">M3</code> is equivalent to <code language="bali-phy-model">|w: GY94(w)| +> M3</code>.</listitem>
             <listitem><code language="bali-phy-model">M3_test</code> is equivalent to <code language="bali-phy-model">|w: GY94(w)| +> M3_test</code>.</listitem>
 	    <listitem><code language="bali-phy-model">BUSTED</code> is equivalent to <code language="bali-phy-model">|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture</code>.</listitem>
