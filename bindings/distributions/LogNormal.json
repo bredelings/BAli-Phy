@@ -8,15 +8,15 @@
         {
             "name": "lmu",
             "type": "Double",
-	    "description": "The mean parameter (log scale)"
+	    "description": "Mean of log(X)"
         },
         {
             "name": "lsigma",
             "type": "Double",
-	    "description": "The standard deviation parameter (log scale)"
+	    "description": "Standard deviation of log(X)"
         }
     ],
     "title": "The log-normal distribution",
     "examples": ["~LogNormal(0,1)","~IID(10, LogNormal(0,1))"],
-    "description": "A variable X is log-normal if log(X) is normal."
+    "description": "For X drawn from LogNormal(lmu,lsigma), log(X) is normally distributed with mean lmu and standard deviation lsigma. Thus X > 0 and its median is exp(lmu)."
 }

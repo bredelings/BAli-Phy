@@ -1,4 +1,7 @@
 {
+    "see": ["Gamma", "LogNormal"],
+    "description": "For X drawn from LogGamma(a,b), log(X) has a Gamma distribution with shape a and scale b (not rate). Thus X > 1; the mean and variance of log(X) are a*b and a*b^2.",
+    "title": "The exponential of a gamma-distributed variable",
     "name": "LogGamma",
     "deprecated-synonyms": ["logGamma"],
     "result_type": "Distribution<Double>",
@@ -7,11 +10,13 @@
     "args": [
         {
             "name": "a",
-            "type": "Double"
+            "type": "Double",
+            "description": "Shape parameter of the distribution of log(X)"
         },
         {
             "name": "b",
-            "type": "Double"
+            "type": "Double",
+            "description": "Scale parameter of the distribution of log(X)"
         }
     ]
 }
