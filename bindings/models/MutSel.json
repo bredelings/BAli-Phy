@@ -4,8 +4,8 @@
     "result_type": "CTMC<a>",
     "call": "mut_sel'(@ss,@submodel)",
     "import": ["SModel","Bio.Alphabet"],
-    "title": "Mutation-selection model with fitness values for codons",
-    "description": "Stationary inputs produce stationary models, whether reversible or not.\n\nNon-equilibrium inputs retain their root frequencies.",
+    "title": "Fitness modifier with state-specific fitnesses",
+    "description": "Modify an input mutation rate matrix using a fitness for each state (each codon for a codon alphabet). This is a model component, not a complete codon model. The construction GTR +> x3 +> MutSel +> dNdS gives FMutSel with default arguments. Replacing x3 with MNM extends the mutation model to include multinucleotide changes.\n\nStationary inputs produce stationary models, whether reversible or not.\n\nNon-equilibrium inputs retain their root frequencies.",
     "args": [
         {
             "name": "submodel",
@@ -28,7 +28,7 @@
     ],
     "examples": ["GTR +> x3 +> MutSel +> dNdS","GTR +> x2 +> MutSel"],
     "extract": "all",
-    "see": ["MutSelAA","FMutSel0"],
+    "see": ["MutSelAA", "FMutSel"],
     "citation":{"type": "article",
 		"title": "Mutation-Selection Models of Codon Substitution and Their Use to Estimate Selective Strengths on Codon Usage",
 		"year": "2008",
