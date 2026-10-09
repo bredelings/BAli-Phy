@@ -54,7 +54,7 @@
             "value": "(1/@v - 1)*(1-@mu)"
         }
     ],
-    "description": "M8 combines an M7 component of weight 1-posP with an additional category of weight posP and dN/dS=posW. The default prior restricts posW to values greater than 1 (positive selection).\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. There are n+1 categories in total.\n\nThe Beta-component mean mu and normalized variance v have independent Uniform(0,1) default priors.",
+    "description": "M8 combines an M7 component of weight 1-posP with an additional category of weight posP and dN/dS=posW. The default prior restricts posW to values greater than 1 (positive selection).\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. There are n+1 categories in total.",
     "citation": {"type": "article",
 		 "title": "Codon-Substitution Models for Heterogeneous Selection Pressure at Amino Acid Sites",
 		 "year": "2000",

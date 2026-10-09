@@ -47,7 +47,7 @@
             "value": "(1/@v - 1)*(1-@mu)"
         }
     ],
-    "description": "M8a combines an M7 component of weight 1-posP with an additional neutral category of weight posP and dN/dS=1. M8a is equivalent to M8(posW=1) and serves as the null model in M8a_test.\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. There are n+1 categories in total.\n\nThe Beta-component mean mu and normalized variance v have independent Uniform(0,1) default priors.",
+    "description": "M8a combines an M7 component of weight 1-posP with an additional neutral category of weight posP and dN/dS=1. M8a is equivalent to M8(posW=1) and serves as the null model in M8a_test.\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. There are n+1 categories in total.",
     "see": ["M7","M8","M8a_test"],
     "citation":{"type": "article",
 		"title": "Pervasive Adaptive Evolution in Mammalian Fertilization Proteins",
