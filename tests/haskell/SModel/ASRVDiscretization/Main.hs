@@ -5,6 +5,7 @@ import Compiler.Classes
 import Compiler.Enum
 import Compiler.Floating
 import Compiler.Fractional
+import Compiler.Integral (fromIntegral)
 import Compiler.Num
 import Compiler.RealFloat (isInfinite, isNaN)
 import Data.Bool
@@ -139,7 +140,14 @@ main = do
         extremeMean = sum $ map (\pair -> fst pair * snd pair) extremeAlphaPairs
         unrepresentableLogNormalPairs = unpackDiscrete $ logNormalRatesQuadrature (-1.0 / 0.0) 0.0 2
         genericPairs = unpackDiscrete $ gammaRates 1.0 2
-    print (betaChecks && near meanWeights 1.0
+    -- Check polynomial exactness beyond the two-node example and the exact one-node mean.
+    -- These protect eigenvalue/weight pairing and scaling, which MCMC smoke tests cannot resolve.
+    print (all (\a -> samePairs 1e-12 (unpackDiscrete $ gammaRatesQuadrature a 1) [(1,1)])
+               [1e-300,0.1,1,1e308]
+        && all (\a -> all (\n -> all (\k -> relative 1e-10
+               (rawMoment k (unpackDiscrete $ gammaRatesQuadrature a n))
+               (product $ map (\j -> 1+fromIntegral j/a) [0..k-1])) [0..2*n-1]) [4,10]) [1,10]
+        && betaChecks && near meanWeights 1.0
         && near meanRate 1.0
         && near (meanRates !! 0) (1.0 - log 2.0)
         && near (meanRates !! 1) (1.0 + log 2.0)
