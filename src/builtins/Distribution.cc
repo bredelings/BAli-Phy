@@ -25,6 +25,7 @@
 #include <cmath>
 #include <cassert>
 #include <algorithm>
+#include <array>
 #include <limits>
 #include <optional>
 #include <stdexcept>
@@ -108,6 +109,25 @@ std::pair<DenseVector<double>, DenseVector<double>> quadrature_from_tridiagonal(
         throw myexception()<<"quadrature: eigensolver returned a non-finite rule";
 
     return {std::move(nodes), std::move(weights)};
+}
+
+// Standard-normal rules depend only on count. Cache common sizes per thread (at most 33 KB
+// of coefficients) and return copies so transforming log-normal nodes cannot mutate a cached rule.
+std::pair<DenseVector<double>, DenseVector<double>> standard_normal_quadrature(int count)
+{
+    assert(count > 0);
+    constexpr int cache_limit = 64;
+    thread_local std::array<std::pair<DenseVector<double>, DenseVector<double>>, cache_limit + 1> cache;
+    if (count <= cache_limit && cache[count].first.size() != 0)
+        return cache[count];
+
+    DenseVector<double> diagonal = DenseVector<double>::Zero(count), off_diagonal(count - 1);
+    for (int k = 1; k < count; k++)
+        off_diagonal[k - 1] = std::sqrt(double(k));
+    auto rule = quadrature_from_tridiagonal(diagonal, off_diagonal);
+    if (count <= cache_limit)
+        cache[count] = rule;
+    return rule;
 }
 
 // For Gamma(alpha, scale=1), factor*factor^T is the generalized-Laguerre Jacobi matrix. Its
@@ -691,10 +711,7 @@ extern "C" closure builtin_function_logNormalQuadratureNative(OperationArgs& Arg
         // Keep numerical rule failure distinct from resource failures and unrelated exceptions.
         auto failure = numerical_rule_failure([&]
         {
-            DenseVector<double> diagonal = DenseVector<double>::Zero(count), off_diagonal(count - 1);
-            for (int k = 1; k < count; k++)
-                off_diagonal[k - 1] = std::sqrt(double(k));
-            std::tie(nodes, weights) = quadrature_from_tridiagonal(diagonal, off_diagonal);
+            std::tie(nodes, weights) = standard_normal_quadrature(count);
             nodes.array() = (log_mean + log_sigma * nodes.array()).exp();
         });
         if (failure)

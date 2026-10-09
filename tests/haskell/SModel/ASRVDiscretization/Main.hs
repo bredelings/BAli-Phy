@@ -101,6 +101,22 @@ betaChecks =
         && samePairs 1e-7 (reverse $ betaPairs 1 a 4)
                (map (\pair -> (1-fst pair,snd pair)) (betaPairs a 1 4))
 
+-- Check normal log moments across parameter changes, repeated sizes, and failed transforms.
+-- Unlike single-rule/MCMC tests, this catches cached-node mutation; replace these checks if
+-- log-normal discretization stops using transformed normal quadrature.
+logNormalChecks =
+    all (\pair -> isNaN (fst pair)) (pairs 1000 1 7)
+    && samePairs 1e-12 (pairs 2 3 1) [(exp 2,1)]
+    && all (\n -> all (\mu -> all (\sigma ->
+           let ps = pairs mu sigma n
+           in all validQuadraturePair ps && ordered (map fst ps)
+              && near (sum $ map snd ps) 1
+              && near (weighted (\x -> log x) ps) mu
+              && near (weighted (\x -> (log x-mu)*(log x-mu)) ps) (sigma*sigma))
+           [0,0.2,1]) [-2,0,3]) [2,7,10,64,65,10,7,2]
+  where
+    pairs mu sigma n = unpackDiscrete $ logNormalRatesQuadrature mu sigma n
+
 -- Check analytic and published rules, genuine point-mass limits, and NaN propagation for unavailable
 -- rules; the last case guards against silently substituting a different rate model.
 main = do
@@ -142,12 +158,13 @@ main = do
         genericPairs = unpackDiscrete $ gammaRates 1.0 2
     -- Check polynomial exactness beyond the two-node example and the exact one-node mean.
     -- These protect eigenvalue/weight pairing and scaling, which MCMC smoke tests cannot resolve.
+    -- Replace these checks if gammaRatesQuadrature stops using Gaussian quadrature.
     print (all (\a -> samePairs 1e-12 (unpackDiscrete $ gammaRatesQuadrature a 1) [(1,1)])
                [1e-300,0.1,1,1e308]
         && all (\a -> all (\n -> all (\k -> relative 1e-10
                (rawMoment k (unpackDiscrete $ gammaRatesQuadrature a n))
                (product $ map (\j -> 1+fromIntegral j/a) [0..k-1])) [0..2*n-1]) [4,10]) [1,10]
-        && betaChecks && near meanWeights 1.0
+        && betaChecks && logNormalChecks && near meanWeights 1.0
         && near meanRate 1.0
         && near (meanRates !! 0) (1.0 - log 2.0)
         && near (meanRates !! 1) (1.0 + log 2.0)
