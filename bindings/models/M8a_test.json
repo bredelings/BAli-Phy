@@ -10,8 +10,8 @@
         {
             "name": "submodel",
             "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:GY94(omega=w)|",
-	    "description": "The model, as a function of dN/dS"
+            "default_value": "|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|",
+	    "description": "Codon model as a function of omega"
         },
         {
             "name": "n",
@@ -41,7 +41,7 @@
             "name": "posW",
             "type": "Double",
             "default_value": "~LogGamma(4,0.25)",
-            "description": "dN/dS of the additional category when posSelection=1"
+            "description": "omega of the additional category when posSelection=1"
         },
         {
             "name": "posSelection",
@@ -64,8 +64,8 @@
             "context": "object"
         }
     ],
-    "description": "A Bayesian version of the M8a likelihood-ratio test for positive selection, comparing:\n\n   H0: M8a (posSelection=0), no positive selection\n   H1: M8 (posSelection=1), some positive selection\n\nThe additional category has dN/dS=1 under H0, where posW is ignored, and dN/dS=posW under H1. The Beta component is present under both hypotheses. The default prior restricts posW to values greater than 1.\n\nThe default prior gives each hypothesis probability 0.5. With these equal prior odds, the Bayes factor for H1 against H0 equals the posterior odds Pr(H1 | data)/Pr(H0 | data).\n\nPrPosSelection records the conditional probability of H1 given the data and other parameters. Its posterior mean estimates Pr(H1 | data), often more accurately than the mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. Do not average LogOddsPosSelection directly.\n\nIncluding an explicit neutral category in the null model reduces the risk of mistaking a mixture of conserved and neutral sites for positive selection.\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. There are n+1 categories in total.",
-    "see": ["M7", "M8", "M8a"],
+    "description": "A Bayesian version of the M8a likelihood-ratio test for positive selection, comparing:\n\n   H0: M8a (posSelection=0), no positive selection\n   H1: M8 (posSelection=1), some positive selection\n\nThe additional category has omega=1 under H0, where posW is ignored, and omega=posW under H1. The Beta component is present under both hypotheses. The default prior restricts posW to values greater than 1.\n\nThe default background uses GTR, MNM, and MutSelAA. Here omega scales nonsynonymous rates after accounting for amino-acid fitnesses. Thus omega=1 retains these fitness effects; neutrality and positive selection are assessed relative to this background.\n\nThe default prior gives each hypothesis probability 0.5. With these equal prior odds, the Bayes factor for H1 against H0 equals the posterior odds Pr(H1 | data)/Pr(H0 | data).\n\nPrPosSelection records the conditional probability of H1 given the data and other parameters. Its posterior mean estimates Pr(H1 | data), often more accurately than the mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. Do not average LogOddsPosSelection directly.\n\nIncluding an explicit neutral category in the null model reduces the risk of mistaking a mixture of conserved and neutral sites for positive selection.\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. There are n+1 categories in total.",
+    "see": ["M7", "M8", "M8a", "GTR", "MNM", "MutSelAA", "dNdS"],
     "citation":{"type": "article",
 		"title": "Pervasive Adaptive Evolution in Mammalian Fertilization Proteins",
 		"year": "2003",

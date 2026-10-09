@@ -1,4 +1,5 @@
 {
+    "see": ["GTR", "MNM", "MutSelAA", "dNdS"],
     "name": "BranchModel",
     "deprecated-synonyms": ["branch_model"],
     "title": "Multiple-omega branch model",
@@ -9,8 +10,8 @@
         {
             "name": "submodel",
             "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:GY94(omega=w)|",
-            "description": "The codon model constructed for each omega."
+            "default_value": "|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|",
+            "description": "Codon model as a function of omega"
         },
         {
             "name": "omegas",
@@ -26,7 +27,7 @@
         }
     ],
     "extract": "all",
-    "description": "Use a separately unit-normalized codon model for each numbered branch category. The first omega applies to category #0, the second to category #1, and so on. A branch without a foreground annotation belongs to category #0, while [&foreground=i] selects category #i. When omegas is omitted, categories must be numbered consecutively from zero and each receives an independent omega. The models constructed for different omegas must share equilibrium frequencies, and the topology must be fixed when categories are read from tree annotations. No category-usage metadata is needed for this model.",
+    "description": "Use a separately unit-normalized codon model for each numbered branch category. The first omega applies to category #0, the second to category #1, and so on. A branch without a foreground annotation belongs to category #0, while [&foreground=i] selects category #i. When omegas is omitted, categories must be numbered consecutively from zero and each receives an independent omega. The models constructed for different omegas must share equilibrium frequencies, and the topology must be fixed when categories are read from tree annotations. No category-usage metadata is needed for this model.\n\nThe default background uses GTR, MNM, and MutSelAA. Here omega scales nonsynonymous rates after accounting for amino-acid fitnesses. Thus omega=1 retains these fitness effects; neutrality and positive selection are assessed relative to this background.",
     "examples": [
         "BranchModel",
         "BranchModel(omegas=[0.2,1.0,2.0])"

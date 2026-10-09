@@ -1,7 +1,7 @@
 {
     "name": "M8a",
     "deprecated-synonyms": ["m8a"],
-    "title": "Beta-distributed dN/dS with an additional neutral category",
+    "title": "Beta-distributed omega with an additional neutral category",
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "call": "SModel.m8a(@mu,@v,@n,@posP,@submodel)",
     "import": ["SModel"],
@@ -9,8 +9,8 @@
         {
             "name": "submodel",
             "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:GY94(omega=w)|",
-	    "description": "The model as a function of dN/dS"
+            "default_value": "|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|",
+	    "description": "Codon model as a function of omega"
         },
         {
             "name": "n",
@@ -47,8 +47,8 @@
             "value": "(1/@v - 1)*(1-@mu)"
         }
     ],
-    "description": "M8a combines an M7 component of weight 1-posP with an additional neutral category of weight posP and dN/dS=1. M8a is equivalent to M8(posW=1) and serves as the null model in M8a_test.\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. There are n+1 categories in total.",
-    "see": ["M7","M8","M8a_test"],
+    "description": "M8a combines an M7 component of weight 1-posP with an additional neutral category of weight posP and omega=1. M8a is equivalent to M8(posW=1) and serves as the null model in M8a_test.\n\nThe default background uses GTR, MNM, and MutSelAA. Here omega scales nonsynonymous rates after accounting for amino-acid fitnesses. Thus omega=1 retains these fitness effects; neutrality and positive selection are assessed relative to this background.\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. There are n+1 categories in total.",
+    "see": ["M7", "M8", "M8a_test", "GTR", "MNM", "MutSelAA", "dNdS"],
     "citation":{"type": "article",
 		"title": "Pervasive Adaptive Evolution in Mammalian Fertilization Proteins",
 		"year": "2003",

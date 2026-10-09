@@ -9,14 +9,14 @@
         {
             "name": "submodel",
             "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:GY94(omega=w)|",
-	    "description": "The model as a function of dN/dS"
+            "default_value": "|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|",
+	    "description": "Codon model as a function of omega"
         },
         {
             "name": "omegaDist",
             "type": "DiscreteDist<Double>",
             "default_value": "~DirichletMixture(Uniform(0,1), 2, @n)",
-	    "description": "The conserved omega (i.e. dN/dS) values"
+	    "description": "The conserved omega values"
         },
         {
             "name": "posP",
@@ -27,7 +27,7 @@
         {
             "name": "posW",
             "type": "Double",
-            "description": "The dN\/dS value for positively selected sites",
+            "description": "The omega value for positively selected sites",
             "default_value": "~LogGamma(4,0.25)"
         },
         {
@@ -49,7 +49,7 @@
             "context": "object"
         }
     ],
-    "description":"This model performs a Bayesian test of positive selection using a modified M3 model. The M3 model is extended with an extra category of sites that is either neutral (posSelection=0) or positively-selected (posSelection=1). The posterior probability that posSelection=1 is the posterior probability of positive selection.\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of this probability than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)",
+    "description": "This model performs a Bayesian test of positive selection using a modified M3 model. The M3 model is extended with an extra category of sites that is either neutral (posSelection=0) or positively-selected (posSelection=1). The posterior probability that posSelection=1 is the posterior probability of positive selection.\n\nThe default background uses GTR, MNM, and MutSelAA. Here omega scales nonsynonymous rates after accounting for amino-acid fitnesses. Thus omega=1 retains these fitness effects; neutrality and positive selection are assessed relative to this background.\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of this probability than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)",
     "extract": "all",
-    "see": ["M3"]
+    "see": ["M3", "GTR", "MNM", "MutSelAA", "dNdS"]
 }

@@ -9,14 +9,14 @@
         {
             "name": "submodel",
             "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:GY94(omega=w)|",
-	    "description": "The model as a function of dN/dS"
+            "default_value": "|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|",
+	    "description": "Codon model as a function of omega"
         },
         {
             "name": "omega0",
             "type": "Double",
             "default_value": "~Uniform(0,1)",
-	    "description": "The dN/dS value for conserved sites"
+	    "description": "The omega value for conserved sites"
         },
         {
             "name": "p0",
@@ -34,7 +34,7 @@
             "name": "posW",
             "type": "Double",
             "default_value": "~LogGamma(4,0.25)",
-            "description": "The dN\/dS value for positively selected sites"
+            "description": "The omega value for positively selected sites"
         },
         {
             "name": "posSelection",
@@ -49,7 +49,7 @@
             "context": "object"
         }
     ],
-    "description":"This model performs a Bayesian version of the test of M2a against M1a. The posterior probability that posSelection=1 is the posterior probability of positive selection.\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of this probability than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)",
+    "description": "This model performs a Bayesian version of the test of M2a against M1a. The posterior probability that posSelection=1 is the posterior probability of positive selection.\n\nThe default background uses GTR, MNM, and MutSelAA. Here omega scales nonsynonymous rates after accounting for amino-acid fitnesses. Thus omega=1 retains these fitness effects; neutrality and positive selection are assessed relative to this background.\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of this probability than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)",
     "citation":{"type": "article",
 		"title": "Accuracy and Power of Statistical Methods for Detecting Adaptive Evolution in Protein Coding Sequences and for Identifying Positively Selected Sites",
 		"year": "2004",
@@ -65,6 +65,6 @@
 				"id":"10.1534/genetics.104.031153 "}]
 	       },
     "examples": ["|w:GY94(omega=w,pi=F1x4)| +> M2a_test","|w:MG94(omega=w)| +> M2a_test","|w:FMutSel0(omega=w)| +> M2a_test"],
-    "see": ["M1a","M2a"],
+    "see": ["M1a", "M2a", "GTR", "MNM", "MutSelAA", "dNdS"],
     "extract": "all"
 }
