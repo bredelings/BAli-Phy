@@ -1,7 +1,8 @@
 {
+    "see": ["BranchModel", "BranchModel_test"],
     "name": "BranchSite",
     "deprecated-synonyms": ["branch_site"],
-    "title": "The branch-site test for positive selection from Zhang et al. (2005)",
+    "title": "Bayesian branch-site test for positive selection",
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "citation": {
 	"type": "article",
@@ -24,36 +25,37 @@
             "name": "fs",
             "type": "List<Double>",
             "default_value": "~SymmetricDirichlet(2,1)",
-	    "description":"Class frequencies in the background model."
+	    "description": "Background category proportions; one entry for each omega plus the final neutral category"
         },
         {
             "name": "omegas",
             "type": "List<Double>",
             "default_value": "~IID(1,Uniform(0,1))",
-	    "description":"dN/dS ratios for the first n-1 classes in the background model."
+	    "description": "Background dN/dS values, excluding the final value fixed at 1; length(fs)-1 entries"
         },
         {
             "name": "posP",
             "type": "Double",
             "default_value": "~Beta(1,10)",
-	    "description": "The fraction of sites switching to positive selection on the foreground branches."
+	    "description": "Fraction of sites switching to the foreground dN/dS value"
         },
         {
             "name": "posW",
             "type": "Double",
             "default_value": "~LogGamma(4,0.25)",
-	    "description": "The dN/dS ratio for positively selected sites on the foreground branches."
+	    "description": "Foreground dN/dS for switching sites when posSelection=1; ignored when posSelection=0"
         },
         {
             "name": "posSelection",
             "type": "Int",
             "default_value": "~Bernoulli(0.5)",
-	    "description": "The model indicator: if 0, the sites only switch to neutrality on the foreground branches.\n If 1 then sites may switch to dN/dS=posW."
+	    "description": "Model indicator: 0 for a switch to neutrality, 1 for a switch to dN/dS=posW"
         },
         {
             "name": "branchCats",
             "type": "IntMap<Int>",
-            "default_value": "get_state(branch_categories)"
+            "default_value": "get_state(branch_categories)",
+            "description": "Branch categories: 0 for background, 1 for foreground. By default, read from tree annotations such as [&foreground=1]; unlabelled branches use 0"
         }
     ],
     "computed": [
@@ -62,6 +64,6 @@
             "context": "object"
         }
     ],
-    "description": "The posterior probability that posSelection=1 is the posterior probability that some sites undergo positive selection on the foreground branches.\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of this probability than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)",
+    "description": "A Bayesian comparison based on branch-site model A. Background branches have, by default, a conserved category with 0 < dN/dS < 1 and a neutral category with dN/dS=1. A fraction posP of sites switches on foreground branches to dN/dS=1 under the null (posSelection=0), or to dN/dS=posW under the alternative (posSelection=1). The default prior places posW above 1 and gives each hypothesis probability 0.5.\n\nThe posterior probability that posSelection=1 is the posterior probability that some sites undergo positive selection on the foreground branches.\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of this probability than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)",
     "extract": "all"
 }

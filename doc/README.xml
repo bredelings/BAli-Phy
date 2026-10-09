@@ -2474,7 +2474,7 @@ If the genetic code is not specified, then the standard code is used:
 <prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S GY94 -A "Codons(,mt-vert)"</screen>
 </para>
       </section>
-      <section>
+      <section xml:id="codon-site-models">
 	<info><title>Heterogeneous dN/dS and tests for positive selection</title></info>
 	<para>For concepts, commands, and interpretation of the reports, see
 	<xref linkend="positive-selection"/>.</para>
@@ -3269,10 +3269,12 @@ By default each partition has a separate scale, but you can force groups of part
       <literal>Model-averaged</literal> and
       <literal>Conditional on positiveSelectionInModel</literal>, respectively.</para>
 
-      <para>When the alignment is uncertain, codons in the same displayed column can have
-      different probabilities. The site table represents each column by the codon with the
+      <para>When the alignment is uncertain, codons in the same displayed column can occupy
+      different columns in sampled alignments, and therefore have different selection probabilities.
+      The site table represents each column by the codon with the
       highest conditional probability, or the highest overall probability if conditional
-      estimates are unavailable. Its sequence name and ungapped position identify the codon.</para>
+      estimates are unavailable. Its sequence name and ungapped position identify the observed
+      codon; the displayed letter is not an inferred ancestral or consensus codon.</para>
 
       <para>The table shows up to 20 columns that pass the display threshold.
       <literal>All rows (TSV)</literal> exports every column, regardless of the threshold.
@@ -3593,6 +3595,14 @@ By default each partition has a separate scale, but you can force groups of part
       and <xref linkend="selection-model-support"/> for Bayes factors and their interpretation.
       Bayes factors are neither likelihood-ratio statistics nor p-values.</para>
 
+      <para>The shared-ω versus foreground/background comparison in
+      <xref linkend="selection-branches"/> corresponds to CODEML's M0
+      (<literal>model=0, NSsites=0</literal>) versus a labelled branch model
+      (<literal>model=2, NSsites=0</literal>). The default <code language="bali-phy-model">BranchSite</code>
+      compares branch-site model A (<literal>model=2, NSsites=2, fix_omega=0</literal>)
+      with its null model fixing ω₂ to one (<literal>fix_omega=1, omega=1</literal>).
+      These identify the hypotheses; BAli-Phy compares them using Bayesian model support.</para>
+
       <para>The model families above correspond to analyses available in PAML's CODEML program,
       but the background choices differ. Many earlier analyses used GY94-type models. To compare
       with these, use <code language="bali-phy-model">GY94</code> and match their codon-frequency specification. For example,
@@ -3603,24 +3613,38 @@ By default each partition has a separate scale, but you can force groups of part
 
       <para>The <link xmlns:xlink="http://www.w3.org/1999/xlink"
       xlink:href="https://doi.org/10.1093/molbev/msad041">Álvarez-Carretero et al. (2023)</link>
-      tutorial instead uses FMutSel (<literal>CodonFreq=7</literal>). The corresponding base
-      model replaces GTR with HKY85, MNM with x3, and MutSelAA with MutSel:</para>
+      tutorial instead uses FMutSel (<literal>CodonFreq=7</literal>) with observed codon frequencies
+      (<literal>estFreq=0</literal>). The command below uses the same mutation-selection construction,
+      but infers fitness preferences rather than fixing observed frequencies. It replaces GTR with
+      HKY85, MNM with x3, and MutSelAA with MutSel:</para>
 <screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons -I none --fix topology=<replaceable>tree</replaceable>.tree \
   -S 'HKY85 +> x3 +> MutSel +> dNdS'</screen>
-      <para>Using <code language="bali-phy-model">MutSelAA</code> instead corresponds to the FMutSel0 preference
-      model (<literal>CodonFreq=6</literal>). CODEML also supports GTR mutation rates through
-      <literal>hkyREV=1</literal>, but its codon models restrict instantaneous changes to a single
-      nucleotide; they do not include the MNM extension.</para>
+      <para>Using <code language="bali-phy-model">MutSelAA</code> instead gives the FMutSel0 fitness structure
+      (<literal>CodonFreq=6</literal>); see <xref linkend="codon-model-construction"/> for the full-model
+      names and their components. For these CODEML models, <literal>estFreq=1</literal> estimates
+      frequencies by maximum likelihood instead of using observed frequencies. This still differs
+      from Bayesian inference of preferences under priors.</para>
+      <para>CODEML's <literal>hkyREV=0</literal> selects HKY-like mutation rates and
+      <literal>hkyREV=1</literal> selects GTR-like rates. Its codon models restrict instantaneous
+      changes to a single nucleotide; they do not include the MNM extension. See the
+      <link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="https://github.com/abacus-gene/paml/blob/master/doc/pamlDOC.pdf">PAML manual</link>
+      for CODEML settings.</para>
 
       <para>Use the same alignment, topology, genetic code, foreground branches, and retained
       sites in both programs. Omit ASRV if the CODEML analysis did not include it. Matching the
       model family does not make the analyses identical.</para>
 
-      <para>The tutorial uses observed codon frequencies (<literal>estFreq=0</literal>),
-      whereas the examples here infer preferences.
-      BAli-Phy also uses priors, and the programs approximate beta mixtures differently.
-      BAli-Phy reports posterior estimates and Bayesian model support, not CODEML's
-      maximum-likelihood estimates, likelihood-ratio tests, or empirical-Bayes site probabilities.</para>
+      <para>Specify the Beta category count explicitly with
+      <code language="bali-phy-model">M8a_test(n=10)</code> (the current default).
+      The extra category is not included in <code language="bali-phy-model">n</code>.
+      BAli-Phy uses generally unequal quadrature weights, so matching category counts does not
+      make the approximations identical; see <xref linkend="codon-site-models"/>.</para>
+
+      <para>For the non-clock codon analyses compared here, CODEML reports branch lengths in
+      expected nucleotide substitutions per codon; BAli-Phy uses expected nucleotide substitutions
+      per nucleotide site. Divide CODEML lengths by three to compare units. For partitioned
+      BAli-Phy analyses, use lengths scaled for the codon partition.</para>
 
       <para>A CODEML result with p &lt; 0.05 does not imply a posterior probability of positive
       selection above 95%. A p-value measures how unusual the test statistic would be under the
@@ -3629,6 +3653,11 @@ By default each partition has a separate scale, but you can force groups of part
       Thus, CODEML can give a significant result when BAli-Phy reports posterior support below 95%,
       even with the same likelihood function. These are different criteria for assessing evidence,
       not equivalent thresholds.</para>
+
+      <para>For comparison with CODEML's site probabilities under the selection model, use
+      <literal>Posterior with selection</literal>, not <literal>Overall posterior</literal>
+      (<xref linkend="selection-locations"/>). Both the BEB result and this conditional summary
+      assume the selection model, rather than averaging over selection and no-selection models.</para>
 
       <para>For some models, CODEML uses Bayes empirical Bayes (BEB) to account for uncertainty
       in the parameters describing variation in ω among sites when calculating site probabilities
