@@ -31,63 +31,30 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "statistics.hh"
 #include "util/io.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
 using namespace std;
-
-namespace po = boost::program_options;
-using po::variables_map;
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-  using namespace po;
-
-  // named options
-  options_description invisible("Invisible options");
-  invisible.add_options()
-    ("filenames", value<vector<string> >(),"files to merge")
-    ;
-
-  options_description visible("All options");
-  visible.add_options()
-    ("help,h", "Produce help message")
-    ;
-
-  options_description all("All options");
-  all.add(invisible).add(visible);
-
-  // positional options
-  positional_options_description p;
-  p.add("filenames", -1);
-
-  variables_map args;     
-  store(command_line_parser(argc, argv).
-	    options(all).positional(p).run(), args);
-  notify(args);    
-
-  if (args.count("help")) {
-    cout<<"Combine columns from different Tracer-format data files.\n\n";
-    cout<<"Usage: stats-merge <file1> [<file2> ... ]\n\n";
-    cout<<visible<<"\n";
-    exit(0);
-  }
-
-  return args;
-}
 
 // If the files share a field (such as iter) then we should MERGE and CHECK
 int main(int argc,char* argv[]) 
 { 
   try {
-    //----------- Parse command line  -----------//
-    variables_map args = parse_cmd_line(argc,argv);
+    CLI::App app{"Combine columns from different Tracer-format data files.", "stats-merge"};
+    app.usage("Usage: stats-merge FILE [FILE ...]");
+    app.get_formatter()->long_option_alignment_ratio(0.2f);
+    vector<string> filenames;
+    app.add_option("FILE", filenames, "Input statistics files")->required()->type_name("");
+    try
+    {
+      app.parse(argc, argv);
+    }
+    catch (const CLI::ParseError& error)
+    {
+      app.exit(error);
+      return error.get_exit_code() == 0 ? 0 : 1;
+    }
 
     //-------------- Open Files  ----------------//
-    if (not args.count("filenames"))
-      throw myexception()<<"No filenames provided.";
-
-    vector<string> filenames = args["filenames"].as<vector<string> >();
-
     vector<unique_ptr<checked_ifstream>> filestreams(filenames.size());
     for(int i=0;i<filenames.size();i++) 
       filestreams[i] = make_unique<checked_ifstream>(filenames[i],"statistics file");
