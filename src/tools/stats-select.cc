@@ -53,7 +53,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("no-header","Suppress the line of column names.")
 	("select,s",value<vector<string> >()->composing(),"Select on key=value pairs")
 	("remove,r","Remove selected columns, instead of keeping them.")
-	("add,a",value<vector<string> >()->composing(),"Remove selected columns, instead of keeping them.")
 	;
 
     options_description all("All options");
@@ -142,9 +141,10 @@ int main(int argc,char* argv[])
 	if (not args.count("columns") or args.count("remove"))
 	    std::swap(remove,keep);
 
-        // FIXME: hhis requires reading the whole table before writing anything.
-        //        But we only want to read the whole table at once when we are computing statistics on it.
-	TableReader table(std::cin,0,1,-1,remove,keep);
+	// Evaluate row conditions against the input table, including columns omitted
+	// from the output.
+	TableReader table(std::cin,0,1,-1,{},{});
+	auto output_indices = get_indices_for_names(table.names(), remove, keep);
 
 
 	//----------- Parse conditions ------------//
@@ -161,11 +161,7 @@ int main(int argc,char* argv[])
 	//------------ Print  column names ----------//
 	if (not args.count("no-header"))
 	{
-	    vector<string> headers;
-	    for(int i=0;i<table.n_columns();i++)
-		headers.push_back(table.names()[i]);
-
-	    write_header(std::cout, headers);
+	    write_header(std::cout, apply_indices(table.names(), output_indices));
 	}
 
 	//------------ Write new table ---------------//
@@ -178,7 +174,7 @@ int main(int argc,char* argv[])
 		    ok = false;
 	    if (not ok) continue;
 
-            join(std::cout, *row,'\t')<<"\n";
+	    join(std::cout, apply_indices(*row, output_indices),'\t')<<"\n";
 	}
     }
     catch (std::exception& e) {

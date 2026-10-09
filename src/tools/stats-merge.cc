@@ -25,8 +25,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <valarray>
 #include <cmath>
 #include <fstream>
+#include <memory>
 
-#include "util/string/split.hh"
 #include "util/string/join.hh"
 #include "statistics.hh"
 #include "util/io.hh"
@@ -75,21 +75,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
-vector<string> parse_header(const string& line)
-{
-  vector<string> headers = split(line,'\t');
-
-  if (headers.size() == 0)
-    throw myexception()<<"No column names provided!";
-
-  for(int i=0;i<headers.size();i++)
-    if (headers[i].size() == 0)
-      throw myexception()<<"The "<<i<<"th column name is blank!";
-
-  return headers;
-}
-
-
 // If the files share a field (such as iter) then we should MERGE and CHECK
 int main(int argc,char* argv[]) 
 { 
@@ -103,9 +88,9 @@ int main(int argc,char* argv[])
 
     vector<string> filenames = args["filenames"].as<vector<string> >();
 
-    vector<istream*> filestreams(filenames.size(),NULL);
+    vector<unique_ptr<checked_ifstream>> filestreams(filenames.size());
     for(int i=0;i<filenames.size();i++) 
-      filestreams[i] = new checked_ifstream(filenames[i],"statistics file");
+      filestreams[i] = make_unique<checked_ifstream>(filenames[i],"statistics file");
 
 
     //------------- Parse Headers ---------------//

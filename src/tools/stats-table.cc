@@ -74,7 +74,7 @@ void write_header(std::ostream& o, const vector<string>& headers)
 {
     for(int i=0;i<headers.size();i++) 
     {
-	std::cout<<headers[i];
+	o<<headers[i];
       
 	if (i == headers.size()-1)
 	    o<<"\n";
@@ -158,7 +158,7 @@ bool read_entries(const string& line, const vector<int>& indices, char delim, ve
     while (k<indices.size())
     {
 	// Locate the character after the end of the current field
-	int i2 = line.find(delim,i+1);
+	int i2 = line.find(delim,i);
 	if (i2 == -1)
 	    i2 = line.size();
 

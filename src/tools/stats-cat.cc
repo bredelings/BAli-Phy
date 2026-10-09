@@ -2,13 +2,11 @@
 #include <fstream>
 
 #include <boost/program_options.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #include "mcon/mcon.hh"
 #include "util/io.hh"
 #include "stats-table.hh"
 #include "util/myexception.hh"
-#include "util/owned-ptr.hh"
 #include "util/string/join.hh"
 
 using namespace std;
@@ -29,8 +27,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description visible("All options");
     visible.add_options()
         ("help,h", "Produce help message.")
-	("verbose,V","Output more log messages on stderr.")
-
         ("skip,s",value<int>(),"Number of initial lines to skip.")
         ("subsample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
 	("until,u",value<int>(),"Read up to this iteration.")
@@ -56,7 +52,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
         cout<<"Append tab-delimited files with the same field names.\n\n";
         cout<<"Usage: stats-cat [OPTIONS] file1 [file2 file3 ... ] \n\n";
         cout<<visible<<"\n";
-        cout<<"Default: Report the median and 95% credible interval for each column.\n\n";
         exit(0);
     }
 
@@ -110,11 +105,17 @@ int main(int argc,char* argv[])
                 out_format = "json";
         }
 
+        if (out_format == "tsv" and args.count("unnest"))
+            throw myexception()<<"--unnest cannot be combined with --output tsv.";
+
         // it looks like currently we do not allow converting tsv to json, just json to tsv.
         if (out_format == "json")
         {
-            if (not filenames.size())
-                throw myexception()<<"--unnest: at least one file required.";
+            if (filenames.size() != 1)
+                throw myexception()<<"JSON output requires exactly one input file.";
+            if (args.count("skip") or args.count("until") or
+                (args.count("subsample") and not args.at("subsample").defaulted()))
+                throw myexception()<<"--skip, --subsample, and --until are not supported with JSON output.";
 
             auto file = shared_ptr<istream>(new istream_or_ifstream(std::cin, "-", filenames[0], "statistics file"));
 
@@ -124,17 +125,18 @@ int main(int argc,char* argv[])
 
 	    std::cout<<json::serialize_options({.allow_infinity_and_nan=true});
 
+            bool do_unnest = args.count("unnest");
             string line;
             if (portable_getline(*file,line))
             {
                 auto h = json::parse(line, {},{.allow_infinity_and_nan=true}).as_object();
                 if (not h.count("version"))
                     throw myexception()<<"JSON log file does not have a valid header line: no \"version\" field.";
-                h["nested"] = false;
+                if (do_unnest)
+                    h["nested"] = false;
                 std::cout<<h<<"\n";
             }
 
-            bool do_unnest = args.count("unnest");
             while(portable_getline(*file,line))
             {
                 auto j = json::parse(line, {}, {.allow_infinity_and_nan=true}).as_object();
@@ -162,7 +164,6 @@ int main(int argc,char* argv[])
         }
 
         // Check that all files have the same field names
-        vector<string> field_names;
         vector<shared_ptr<istream> > files(filenames.size());
         vector<TableReader> readers;
 
@@ -181,7 +182,7 @@ int main(int argc,char* argv[])
 
         // Write all the files to cout, in the specified order, but with only one header
         write_header(std::cout,readers[0].names());
-        for(auto reader: readers)
+        for(auto& reader: readers)
             while(auto row = reader.get_row())
                 join(std::cout, *row,'\t')<<"\n";
     }
