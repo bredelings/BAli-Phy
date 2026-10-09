@@ -23,6 +23,7 @@
 #include <Eigen/SVD>
 
 #include <cmath>
+#include <cassert>
 #include <algorithm>
 #include <limits>
 #include <optional>
@@ -80,17 +81,28 @@ vector<log_double_t> read_boxed_log_probabilities(OperationArgs& Args, int slot)
     return probabilities;
 }
 
-// Derive Gaussian quadrature nodes and weights from a symmetric Jacobi matrix.
-std::pair<DenseVector<double>, DenseVector<double>> quadrature_from_jacobi(const DenseMatrix<double>& jacobi)
+// Derive Gaussian nodes and weights from the two diagonals of a symmetric Jacobi matrix.
+// Positive scaling preserves eigenvectors; sorted eigenvalues retain their matching weights.
+std::pair<DenseVector<double>, DenseVector<double>> quadrature_from_tridiagonal(
+    const DenseVector<double>& diagonal, const DenseVector<double>& off_diagonal)
 {
-    if (!jacobi.allFinite())
+    assert(diagonal.size() > 0 && off_diagonal.size() == diagonal.size() - 1);
+    if (!diagonal.allFinite() || !off_diagonal.allFinite())
         throw myexception()<<"quadrature: Jacobi matrix contains a non-finite value";
 
-    Eigen::SelfAdjointEigenSolver<DenseMatrix<double>> solver(jacobi);
+    if (diagonal.size() == 1)
+        return {diagonal, DenseVector<double>::Ones(1)};
+
+    // Unlike Eigen's dense entry point, computeFromTridiagonal does not scale its input.
+    // Retain that protection against overflow and underflow, then restore the node scale.
+    double scale = std::max(diagonal.cwiseAbs().maxCoeff(), off_diagonal.cwiseAbs().maxCoeff());
+    if (scale == 0) scale = 1;
+    Eigen::SelfAdjointEigenSolver<DenseMatrix<double>> solver;
+    solver.computeFromTridiagonal(diagonal / scale, off_diagonal / scale);
     if (solver.info() != Eigen::Success)
         throw myexception()<<"quadrature: eigensolver failed";
 
-    DenseVector<double> nodes = solver.eigenvalues();
+    DenseVector<double> nodes = scale * solver.eigenvalues();
     DenseVector<double> weights = solver.eigenvectors().row(0).array().square().transpose();
     if (!nodes.allFinite() || !weights.allFinite())
         throw myexception()<<"quadrature: eigensolver returned a non-finite rule";
@@ -149,12 +161,12 @@ std::pair<DenseVector<double>, DenseVector<double>> small_alpha_gamma_quadrature
     }
 
     int escaping_count = count - 1;
-    DenseMatrix<double> jacobi = DenseMatrix<double>::Zero(escaping_count, escaping_count);
+    DenseVector<double> diagonal(escaping_count), off_diagonal(escaping_count - 1);
     for (int k = 0; k < escaping_count; k++)
-        jacobi(k, k) = 2.0 + 2.0 * k;
+        diagonal[k] = 2.0 + 2.0 * k;
     for (int k = 1; k < escaping_count; k++)
-        jacobi(k - 1, k) = jacobi(k, k - 1) = std::sqrt(double(k) * (k + 1));
-    auto [gamma_two_nodes, gamma_two_weights] = quadrature_from_jacobi(jacobi);
+        off_diagonal[k - 1] = std::sqrt(double(k) * (k + 1));
+    auto [gamma_two_nodes, gamma_two_weights] = quadrature_from_tridiagonal(diagonal, off_diagonal);
 
     double escaping_weight = 0.0;
     double escaping_mean = 0.0;
@@ -194,25 +206,26 @@ std::pair<DenseVector<double>, DenseVector<double>> beta_quadrature(double a, do
 
     double scale = std::max(m, 1.0), A = a / scale, B = b / scale, h = 1.0 / scale;
     double n = count;
-    // K is the shifted beta Jacobi matrix minus mu*I. Subtracting the mean algebraically
+    // These diagonals represent the shifted beta Jacobi matrix minus mu*I. Algebraic centering
     // preserves its small spread for large shapes. Ratios avoid overflowing a+b or products;
     // the separate first entries cancel removable singularities in the general recurrence.
-    DenseMatrix<double> K = DenseMatrix<double>::Zero(count, count);
-    K(1, 0) = K(0, 1) = std::sqrt(mu) * std::sqrt(q) * std::sqrt(h / (A + B + h));
-    K(1, 1) = 2 * (q - mu) * h / (A + B + 2 * h);
+    DenseVector<double> diagonal = DenseVector<double>::Zero(count), off_diagonal(count - 1);
+    off_diagonal[0] = std::sqrt(mu) * std::sqrt(q) * std::sqrt(h / (A + B + h));
+    diagonal[1] = 2 * (q - mu) * h / (A + B + 2 * h);
     for (int i = 2; i < count; ++i)
     {
         double k = i, t = A + B + (2 * k - 2) * h;
-        K(i, i) = (q - mu) * (2 * k * h / t) * ((A + B + (k - 1) * h) / (t + 2 * h));
-        K(i, i - 1) = K(i - 1, i) = std::sqrt(k * h / t) * std::sqrt((A + (k - 1) * h) / t)
+        diagonal[i] = (q - mu) * (2 * k * h / t) * ((A + B + (k - 1) * h) / (t + 2 * h));
+        off_diagonal[i - 1] = std::sqrt(k * h / t) * std::sqrt((A + (k - 1) * h) / t)
             * std::sqrt((B + (k - 1) * h) / (t + h)) * std::sqrt((A + B + (k - 2) * h) / (t - h));
     }
-    if (!K.allFinite())
+    if (!diagonal.allFinite() || !off_diagonal.allFinite())
         throw myexception()<<"betaQuadrature: non-finite centered recurrence";
-    double r = K.cwiseAbs().maxCoeff();
+    double r = std::max(diagonal.cwiseAbs().maxCoeff(), off_diagonal.cwiseAbs().maxCoeff());
     if (!(r > 0) || !std::isfinite(r))
         throw myexception()<<"betaQuadrature: unavailable centered scale";
-    Eigen::SelfAdjointEigenSolver<DenseMatrix<double>> solver(K / r, Eigen::EigenvaluesOnly);
+    Eigen::SelfAdjointEigenSolver<DenseMatrix<double>> solver;
+    solver.computeFromTridiagonal(diagonal / r, off_diagonal / r, Eigen::EigenvaluesOnly);
     if (solver.info() != Eigen::Success || !solver.eigenvalues().allFinite())
         throw myexception()<<"betaQuadrature: eigensolver failed";
     DenseVector<double> z = solver.eigenvalues();
@@ -463,6 +476,11 @@ extern "C" closure builtin_function_gammaQuadratureNative(OperationArgs& Args)
     {
         std::tie(nodes, weights) = unavailable_quadrature(count);
     }
+    else if (count == 1)
+    {
+        // A one-node Gaussian rule places all its mass at the distribution's mean.
+        std::tie(nodes, weights) = unit_rate_quadrature(count);
+    }
     else
     {
         // Eigensolver or floating-point failures make this rule unavailable, not the parameter structurally invalid.
@@ -478,15 +496,12 @@ extern "C" closure builtin_function_gammaQuadratureNative(OperationArgs& Args)
             {
                 // For alpha >= 1 the normalized Jacobi matrix is sufficiently well scaled for a direct
                 // symmetric eigensolve.
-                DenseMatrix<double> jacobi = DenseMatrix<double>::Zero(count, count);
+                DenseVector<double> diagonal(count), off_diagonal(count - 1);
                 for (int k = 0; k < count; k++)
-                    jacobi(k, k) = 1.0 + 2.0 * k / alpha;
+                    diagonal[k] = 1.0 + 2.0 * k / alpha;
                 for (int k = 1; k < count; k++)
-                {
-                    double off_diagonal = std::sqrt(k / alpha) * std::sqrt(1.0 + (k - 1.0) / alpha);
-                    jacobi(k - 1, k) = jacobi(k, k - 1) = off_diagonal;
-                }
-                std::tie(nodes, weights) = quadrature_from_jacobi(jacobi);
+                    off_diagonal[k - 1] = std::sqrt(k / alpha) * std::sqrt(1.0 + (k - 1.0) / alpha);
+                std::tie(nodes, weights) = quadrature_from_tridiagonal(diagonal, off_diagonal);
             }
         });
         if (failure)
@@ -676,13 +691,10 @@ extern "C" closure builtin_function_logNormalQuadratureNative(OperationArgs& Arg
         // Keep numerical rule failure distinct from resource failures and unrelated exceptions.
         auto failure = numerical_rule_failure([&]
         {
-            DenseMatrix<double> jacobi = DenseMatrix<double>::Zero(count, count);
+            DenseVector<double> diagonal = DenseVector<double>::Zero(count), off_diagonal(count - 1);
             for (int k = 1; k < count; k++)
-            {
-                double off_diagonal = std::sqrt(double(k));
-                jacobi(k - 1, k) = jacobi(k, k - 1) = off_diagonal;
-            }
-            std::tie(nodes, weights) = quadrature_from_jacobi(jacobi);
+                off_diagonal[k - 1] = std::sqrt(double(k));
+            std::tie(nodes, weights) = quadrature_from_tridiagonal(diagonal, off_diagonal);
             nodes.array() = (log_mean + log_sigma * nodes.array()).exp();
         });
         if (failure)
