@@ -8,14 +8,14 @@
         {
             "name": "submodel",
             "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:GY94(omega=w)|",
-	    "description": "The model as a function of dN/dS"
+            "default_value": "|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|",
+	    "description": "Codon model as a function of omega"
         },
         {
             "name": "omega0",
             "type": "Double",
             "default_value": "~Uniform(0,1)",
-	    "description": "The dN/dS value for conserved sites"
+	    "description": "The omega value for conserved sites"
         },
         {
             "name": "p0",
@@ -24,7 +24,7 @@
 	    "description": "The fraction of conserved sites"
         }
     ],
-    "description":"A mixture of conserved and neutral sites.  The conserved sites have frequency p0 and dN/dS=omega0.\n\nThe M1a model modifies the M1 model to avoid forcing the conserved dN/dS to 0.",
+    "description": "A mixture of conserved and neutral sites.  The conserved sites have frequency p0 and omega=omega0.\n\nThe default background uses GTR, MNM, and MutSelAA. Here omega scales nonsynonymous rates after accounting for amino-acid fitnesses. Thus omega=1 retains these fitness effects; neutrality and positive selection are assessed relative to this background.\n\nThe M1a model modifies the M1 model to avoid forcing the conserved omega to 0.",
     "citation":{"type": "article",
 		"title": "Accuracy and Power of Statistical Methods for Detecting Adaptive Evolution in Protein Coding Sequences and for Identifying Positively Selected Sites",
 		"year": "2004",
@@ -41,5 +41,5 @@
 	       },
     "examples": ["|w:GY94(omega=w,pi=F1x4)| +> M1a","|w:MG94(omega=w)| +> M1a","|w:FMutSel0(omega=w)| +> M1a"],
     "extract": "all",
-    "see": ["M2a","M2a_test"]
+    "see": ["M2a", "M2a_test", "GTR", "MNM", "MutSelAA", "dNdS"]
 }

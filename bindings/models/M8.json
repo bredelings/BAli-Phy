@@ -1,7 +1,7 @@
 {
     "name": "M8",
     "deprecated-synonyms": ["m8"],
-    "title": "Beta-distributed dN/dS with an additional positively selected category",
+    "title": "Beta-distributed omega with an additional positively selected category",
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "call": "SModel.m8(@mu,@v,@n,@posP,@posW,@submodel)",
     "import": ["SModel"],
@@ -9,8 +9,8 @@
         {
             "name": "submodel",
 	    "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:GY94(omega=w)|",
-	    "description": "The model, as a function of dN/dS"
+            "default_value": "|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|",
+	    "description": "Codon model as a function of omega"
         },
         {
             "name": "n",
@@ -40,10 +40,10 @@
             "name": "posW",
             "type": "Double",
             "default_value": "~LogGamma(4,0.25)",
-            "description": "The dN\/dS value for positively selected sites"
+            "description": "The omega value for positively selected sites"
         }
     ],
-    "see": ["M7", "M8a","M8a_test"],
+    "see": ["M7", "M8a", "M8a_test", "GTR", "MNM", "MutSelAA", "dNdS"],
     "computed": [
         {
             "name": "a",
@@ -54,7 +54,7 @@
             "value": "(1/@v - 1)*(1-@mu)"
         }
     ],
-    "description": "M8 combines an M7 component of weight 1-posP with an additional category of weight posP and dN/dS=posW. The default prior restricts posW to values greater than 1 (positive selection).\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. There are n+1 categories in total.",
+    "description": "M8 combines an M7 component of weight 1-posP with an additional category of weight posP and omega=posW. The default prior restricts posW to values greater than 1 (positive selection).\n\nThe default background uses GTR, MNM, and MutSelAA. Here omega scales nonsynonymous rates after accounting for amino-acid fitnesses. Thus omega=1 retains these fitness effects; neutrality and positive selection are assessed relative to this background.\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. There are n+1 categories in total.",
     "citation": {"type": "article",
 		 "title": "Codon-Substitution Models for Heterogeneous Selection Pressure at Amino Acid Sites",
 		 "year": "2000",

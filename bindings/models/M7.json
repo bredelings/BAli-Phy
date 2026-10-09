@@ -1,7 +1,7 @@
 {
     "name": "M7",
     "deprecated-synonyms": ["m7"],
-    "title": "Beta-distributed dN/dS across sites",
+    "title": "Beta-distributed omega across sites",
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "call": "SModel.m7(@mu,@v,@n,@submodel)",
     "import": ["SModel"],
@@ -9,8 +9,8 @@
         {
             "name": "submodel",
             "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:GY94(omega=w)|",
-	    "description": "The model as a function of dN/dS"
+            "default_value": "|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|",
+	    "description": "Codon model as a function of omega"
         },
         {
             "name": "n",
@@ -41,8 +41,8 @@
             "value": "(1/@v - 1)*(1-@mu)"
         }
     ],
-    "description": "M7 approximates a Beta distribution of dN/dS across sites using n categories, all with 0 < dN/dS < 1 (purifying selection).\n\nThe Beta shape parameters are:\n\n  concentration = 1/v - 1\n  a = concentration*mu\n  b = concentration*(1-mu)\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights.",
-    "see": ["M8", "M8a", "M8a_test"],
+    "description": "M7 approximates a Beta distribution of omega across sites using n categories, all with 0 < omega < 1.\n\nThe default background uses GTR, MNM, and MutSelAA. Here omega scales nonsynonymous rates after accounting for amino-acid fitnesses. Thus omega=1 retains these fitness effects; neutrality and positive selection are assessed relative to this background.\n\nThe Beta shape parameters are:\n\n  concentration = 1/v - 1\n  a = concentration*mu\n  b = concentration*(1-mu)\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights.",
+    "see": ["M8", "M8a", "M8a_test", "GTR", "MNM", "MutSelAA", "dNdS"],
     "citation": {"type": "article",
 		 "title": "Codon-Substitution Models for Heterogeneous Selection Pressure at Amino Acid Sites",
 		 "year": "2000",

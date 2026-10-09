@@ -1,5 +1,5 @@
 {
-    "see": ["BranchModel", "BranchModel_test"],
+    "see": ["BranchModel", "BranchModel_test", "GTR", "MNM", "MutSelAA", "dNdS"],
     "name": "BranchSite",
     "deprecated-synonyms": ["branch_site"],
     "title": "Bayesian branch-site test for positive selection",
@@ -18,8 +18,8 @@
         {
             "name": "submodel",
             "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:GY94(omega=w)|",
-	    "description": "The model, as a function of dN/dS"
+            "default_value": "|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|",
+	    "description": "Codon model as a function of omega"
         },
         {
             "name": "fs",
@@ -31,25 +31,25 @@
             "name": "omegas",
             "type": "List<Double>",
             "default_value": "~IID(1,Uniform(0,1))",
-	    "description": "Background dN/dS values, excluding the final value fixed at 1; length(fs)-1 entries"
+	    "description": "Background omega values, excluding the final value fixed at 1; length(fs)-1 entries"
         },
         {
             "name": "posP",
             "type": "Double",
             "default_value": "~Beta(1,10)",
-	    "description": "Fraction of sites switching to the foreground dN/dS value"
+	    "description": "Fraction of sites switching to the foreground omega value"
         },
         {
             "name": "posW",
             "type": "Double",
             "default_value": "~LogGamma(4,0.25)",
-	    "description": "Foreground dN/dS for switching sites when posSelection=1; ignored when posSelection=0"
+	    "description": "Foreground omega for switching sites when posSelection=1; ignored when posSelection=0"
         },
         {
             "name": "posSelection",
             "type": "Int",
             "default_value": "~Bernoulli(0.5)",
-	    "description": "Model indicator: 0 for a switch to neutrality, 1 for a switch to dN/dS=posW"
+	    "description": "Model indicator: 0 for a switch to neutrality, 1 for a switch to omega=posW"
         },
         {
             "name": "branchCats",
@@ -64,6 +64,6 @@
             "context": "object"
         }
     ],
-    "description": "A Bayesian comparison based on branch-site model A. Background branches have, by default, a conserved category with 0 < dN/dS < 1 and a neutral category with dN/dS=1. A fraction posP of sites switches on foreground branches to dN/dS=1 under the null (posSelection=0), or to dN/dS=posW under the alternative (posSelection=1). The default prior places posW above 1 and gives each hypothesis probability 0.5.\n\nThe posterior probability that posSelection=1 is the posterior probability that some sites undergo positive selection on the foreground branches.\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of this probability than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)",
+    "description": "A Bayesian comparison based on branch-site model A. Background branches have, by default, a conserved category with 0 < omega < 1 and a neutral category with omega=1. A fraction posP of sites switches on foreground branches to omega=1 under the null (posSelection=0), or to omega=posW under the alternative (posSelection=1). The default prior places posW above 1 and gives each hypothesis probability 0.5.\n\nThe default background uses GTR, MNM, and MutSelAA. Here omega scales nonsynonymous rates after accounting for amino-acid fitnesses. Thus omega=1 retains these fitness effects; neutrality and positive selection are assessed relative to this background.\n\nThe posterior probability that posSelection=1 is the posterior probability that some sites undergo positive selection on the foreground branches.\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of this probability than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)",
     "extract": "all"
 }
