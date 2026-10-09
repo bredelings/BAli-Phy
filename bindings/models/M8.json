@@ -1,6 +1,7 @@
 {
     "name": "M8",
     "deprecated-synonyms": ["m8"],
+    "title": "Beta-distributed dN/dS with an additional positively selected category",
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "call": "SModel.m8(@mu,@v,@n,@posP,@posW,@submodel)",
     "import": ["SModel"],
@@ -15,7 +16,7 @@
             "name": "n",
             "type": "Int",
             "default_value": "10",
-	    "description": "The number of Gauss-Jacobi quadrature categories for the Beta component"
+	    "description": "Number of categories approximating the Beta distribution"
         },
         {
             "name": "mu",
@@ -53,11 +54,11 @@
             "value": "(1/@v - 1)*(1-@mu)"
         }
     ],
-    "description": "The M8 model is an M7 model with an additional category of positively-selected sites.  The additional category of sites has proportion=posP and dN/dS=posW.\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. The parameter n counts Beta categories, excluding any additional M8-family category.\n\nThe Beta-component mean mu and normalized variance v have independent Uniform(0,1) default priors.",
+    "description": "M8 combines an M7 component of weight 1-posP with an additional category of weight posP and dN/dS=posW. The default prior restricts posW to values greater than 1 (positive selection).\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. There are n+1 categories in total.\n\nThe Beta-component mean mu and normalized variance v have independent Uniform(0,1) default priors.",
     "citation": {"type": "article",
 		 "title": "Codon-Substitution Models for Heterogeneous Selection Pressure at Amino Acid Sites",
 		 "year": "2000",
-		 "author": [{"name": "Yang, Ziheng"}, {"name": "Nielsen, Rasmus"}, {"name": "Goldman, Nick"},{"name": "Pederson, Anne-Mette Krabbe"}],
+		 "author": [{"name": "Yang, Ziheng"}, {"name": "Nielsen, Rasmus"}, {"name": "Goldman, Nick"},{"name": "Pedersen, Anne-Mette Krabbe"}],
 		 "journal": {"name": "Genetics", "volume": "155", "number": "1", "pages": "431--449"},
 		 "link": [{"url":"http://www.genetics.org/content/155/1/431.full"}]
 		},

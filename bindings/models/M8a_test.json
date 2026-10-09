@@ -17,7 +17,7 @@
             "name": "n",
             "type": "Int",
             "default_value": "10",
-	    "description": "The number of Gauss-Jacobi quadrature categories for the Beta component"
+	    "description": "Number of categories approximating the Beta distribution"
         },
         {
             "name": "mu",
@@ -35,19 +35,19 @@
             "name": "posP",
             "type": "Double",
             "default_value": "~Beta(1,10)",
-            "description": "The fraction of positively-selected or neutral sites"
+            "description": "Fraction of sites in the additional neutral or positively selected category"
         },
         {
             "name": "posW",
             "type": "Double",
             "default_value": "~LogGamma(4,0.25)",
-            "description": "The dN\/dS value for positively-selected or neutral sites"
+            "description": "dN/dS of the additional category when posSelection=1"
         },
         {
             "name": "posSelection",
             "type": "Int",
             "default_value": "~Bernoulli(0.5)",
-            "description": "The model indicator -- H0 or H1"
+            "description": "Model indicator: 0 for M8a, 1 for M8"
         }
     ],
     "computed": [
@@ -64,8 +64,8 @@
             "context": "object"
         }
     ],
-    "description": "This is a Bayesian version of the M8a test for positive selection. The original M8a test is a likelihood-ratio test. The Bayesian version of the test chooses a prior with 50% mass on the null hypothesis H0 and 50% on the alternative hypothesis H1:\n\n   H0: no positive selection\n   H1: some positive selection.\n\nWhen posSelection = 0, the value of posW is ignored and dN/dS=1. When posSelection = 1, the value of posW is used and dN/dS=posW. The Bayes Factor is given by Pr(posSelection=1)/Pr(posSelection=0).\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of the posterior probability of H1 than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)\n\nThe M8a test (Swanson et al, 2003) has null and alternative hypotheses given by:\n\n   H0: M8(posW=1) = M8a\n   H1: M8\n\nThis is an improvement over the test originally proposed by Yang (2000):\n\n   H0: M8(posP=1) = M7\n   H1: M8\n\nIn the originally proposed likelihood-ratio test, a mixture of conserved and neutral sites would not fit the null hypothesis (M7), leading to the erroneous inference of positive selection. In the M8a test, the null hypothesis (M8a) has been improved to handle both neutral and conserved sites, so that positive selection is not incorrectly inferred.\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. The parameter n counts Beta categories, excluding any additional M8-family category.\n\nThe Beta-component mean mu and normalized variance v have independent Uniform(0,1) default priors.",
-    "see": ["M7","M8a"],
+    "description": "A Bayesian version of the M8a likelihood-ratio test for positive selection, comparing:\n\n   H0: M8a (posSelection=0), no positive selection\n   H1: M8 (posSelection=1), some positive selection\n\nThe additional category has dN/dS=1 under H0, where posW is ignored, and dN/dS=posW under H1. The Beta component is present under both hypotheses. The default prior restricts posW to values greater than 1.\n\nThe default prior gives each hypothesis probability 0.5. With these equal prior odds, the Bayes factor for H1 against H0 equals the posterior odds Pr(H1 | data)/Pr(H0 | data).\n\nPrPosSelection records the conditional probability of H1 given the data and other parameters. Its posterior mean estimates Pr(H1 | data), often more accurately than the mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. Do not average LogOddsPosSelection directly.\n\nIncluding an explicit neutral category in the null model reduces the risk of mistaking a mixture of conserved and neutral sites for positive selection.\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. There are n+1 categories in total.\n\nThe Beta-component mean mu and normalized variance v have independent Uniform(0,1) default priors.",
+    "see": ["M7", "M8", "M8a"],
     "citation":{"type": "article",
 		"title": "Pervasive Adaptive Evolution in Mammalian Fertilization Proteins",
 		"year": "2003",
