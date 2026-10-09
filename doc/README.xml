@@ -2285,8 +2285,8 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	    <listitem><code language="bali-phy-model">GY94</code> is equivalent to <code language="bali-phy-model">HKY85_sym +> x3_sym +> F +> dNdS</code>.</listitem>
 	    <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://bali-phy.org/reference/models/FMutSel/">FMutSel</link> with default arguments is equivalent to <code language="bali-phy-model">GTR +> x3 +> MutSel +> dNdS</code>.</listitem>
 	    <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://bali-phy.org/reference/models/FMutSel0/">FMutSel0</link> with default arguments is equivalent to <code language="bali-phy-model">GTR +> x3 +> MutSelAA +> dNdS</code>.</listitem>
-            <listitem><code language="bali-phy-model">M3</code> is equivalent to <code language="bali-phy-model">|w: GY94(w)| +> M3</code>.</listitem>
-            <listitem><code language="bali-phy-model">M3_test</code> is equivalent to <code language="bali-phy-model">|w: GY94(w)| +> M3_test</code>.</listitem>
+            <listitem><code language="bali-phy-model">M3</code> is equivalent to <code language="bali-phy-model">|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M3</code>.</listitem>
+            <listitem><code language="bali-phy-model">M3_test</code> is equivalent to <code language="bali-phy-model">|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M3_test</code>.</listitem>
 	    <listitem><code language="bali-phy-model">BUSTED</code> is equivalent to <code language="bali-phy-model">|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture</code>.</listitem>
 	    <listitem><code language="bali-phy-model">BUSTED_S</code> is equivalent to <code language="bali-phy-model">|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture +> ASRV.Gamma(n=3)</code>.</listitem>
 	  </itemizedlist>
@@ -2476,6 +2476,12 @@ If the genetic code is not specified, then the standard code is used:
       </section>
       <section xml:id="codon-site-models">
 	<info><title>Heterogeneous dN/dS and tests for positive selection</title></info>
+        <para>The M1a, M2a, M3, M7, M8, and M8a families, including their test variants,
+        use <code language="bali-phy-model">GTR +> MNM +> MutSelAA</code> as the default background.
+        Their category structures act on an ω multiplier of nonsynonymous rates after accounting
+        for amino-acid fitnesses. Thus a category called neutral (ω=1) retains those fitness effects.
+        These names identify category structures; the background is supplied by the
+        <code language="bali-phy-model">submodel</code> argument.</para>
 	<para>For concepts, commands, and interpretation of the reports, see
 	<xref linkend="positive-selection"/>.</para>
 	<informaltable>
@@ -3171,6 +3177,14 @@ By default each partition has a separate scale, but you can force groups of part
       records which hypothesis is currently active. Its posterior distribution tells us how
       much probability the analysis assigns to each hypothesis, given the data and priors.</para>
 
+      <para>The site models, <code language="bali-phy-model">BranchModel</code>,
+      <code language="bali-phy-model">BranchModel_test</code>, and <code language="bali-phy-model">BranchSite</code>
+      share the default background <code language="bali-phy-model">GTR +> MNM +> MutSelAA</code>.
+      Their ω values scale nonsynonymous rates relative to that background. A category called
+      neutral (ω=1) retains amino-acid fitness effects; positive selection refers to excess
+      nonsynonymous change beyond that background. The mutation and fitness parameters are
+      shared across categories, branch groups, and competing hypotheses.</para>
+
       <para>Site and branch-site tests compare a hypothesis that allows positive selection with
       one that does not. Branch tests compare hypotheses about how ω varies among branches;
       a difference in ω need not involve positive selection. Unlike CODEML's likelihood-ratio
@@ -3234,14 +3248,13 @@ By default each partition has a separate scale, but you can force groups of part
       <code language="bali-phy-model">M8a_test</code> to compare M8a with M8. In each comparison, the selection
       hypothesis includes a category with ω above one; the null hypothesis does not.
       Each command allows the chain to move between the two hypotheses:</para>
-<screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons \
-  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M2a_test'
-<prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons \
-  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M8a_test'</screen>
+<screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons -S M2a_test
+<prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons -S M8a_test</screen>
+      <para>For example, <code language="bali-phy-model">M8a_test</code> expands to:</para>
+<programlisting role="expression" language="bali-phy-model">|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M8a_test</programlisting>
       <para>The expression <code language="bali-phy-model">|w:...|</code> builds the codon model for a supplied
       ω value. The site model supplies these values and their priors, rather than using the
-      single-ω default prior. The nucleotide and amino-acid preference parameters are shared
-      across categories. To include positive selection throughout the analysis without comparing
+      single-ω default prior. To include positive selection throughout the analysis without comparing
       hypotheses, replace <code language="bali-phy-model">M2a_test</code> with <code language="bali-phy-model">M2a</code>, or
       <code language="bali-phy-model">M8a_test</code> with <code language="bali-phy-model">M8</code>.</para>
 
@@ -3604,6 +3617,11 @@ By default each partition has a separate scale, but you can force groups of part
       compares branch-site model A (<literal>model=2, NSsites=2, fix_omega=0</literal>)
       with its null model fixing ω₂ to one (<literal>fix_omega=1, omega=1</literal>).
       These identify the hypotheses; BAli-Phy compares them using Bayesian model support.</para>
+
+      <para>To request the traditional GY94 background explicitly, override
+      <code language="bali-phy-model">submodel</code>:</para>
+<screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons -I none --fix topology=<replaceable>tree</replaceable>.tree \
+  -S 'M8a_test(submodel=(|w:GY94(omega=w)|))'</screen>
 
       <para>The model families above correspond to analyses available in PAML's CODEML program,
       but the background choices differ. Many earlier analyses used GY94-type models. To compare
