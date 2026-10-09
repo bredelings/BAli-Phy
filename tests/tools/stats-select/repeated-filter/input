@@ -1,0 +1,4 @@
+iter	status	X
+1	ok	a
+2	bad	b
+2	ok	c

@@ -29,54 +29,10 @@
 #include "stats-table.hh"
 #include "util/string/split.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 #include "util/owned-ptr.hh"
 
 using namespace std;
-
-namespace po = boost::program_options;
-using po::variables_map;
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-	("columns", value<vector<string> >(),"columns to keep")
-	;
-
-    options_description visible("All options");
-    visible.add_options()
-	("help,h", "Produce help message")
-	("no-header","Suppress the line of column names.")
-	("select,s",value<vector<string> >()->composing(),"Select on key=value pairs")
-	("remove,r","Remove selected columns, instead of keeping them.")
-	;
-
-    options_description all("All options");
-    all.add(invisible).add(visible);
-
-    // positional options
-    positional_options_description p;
-    p.add("columns", -1);
-
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Select columns from a Tracer-format data file.\n\n";
-	cout<<"Usage: stats-select [OPTIONS] column-name [column-name ...] < data-file \n";
-	cout<<visible<<"\n";
-	exit(0);
-    }
-
-    return args;
-}
 
 template <typename T>
 struct table_row_function
@@ -129,16 +85,31 @@ int main(int argc,char* argv[])
 { 
     std::cout.precision(15);
     try {
-	//----------- Parse command line  -----------//
-	variables_map args = parse_cmd_line(argc,argv);
+	CLI::App app{"Select columns and rows from a statistics table on stdin.", "stats-select"};
+	app.usage("Usage: stats-select [OPTIONS] [COLUMN ...] < data-file");
+	app.get_formatter()->long_option_alignment_ratio(0.2f);
+	vector<string> columns, selections;
+	bool no_header = false, remove_columns = false;
+	app.add_flag("--no-header", no_header, "Suppress the line of column names");
+	app.add_option("-s,--select", selections, "Keep rows matching KEY=VALUE")
+	    ->type_name("KEY=VALUE")->type_size(1)->expected(1)->allow_extra_args(false)->take_all();
+	app.add_flag("-r,--remove", remove_columns, "Remove listed columns instead of keeping them");
+	app.add_option("COLUMN", columns, "Input column names or numeric ranges")->type_name("");
+	try
+	{
+	    app.parse(argc, argv);
+	}
+	catch (const CLI::ParseError& error)
+	{
+	    app.exit(error);
+	    return error.get_exit_code() == 0 ? 0 : 1;
+	}
 
 	//---------------- Read Data ----------------//
-	vector<string> keep;
-	if (args.count("columns"))
-	    keep = args["columns"].as<vector<string> >();
+	vector<string> keep = columns;
 
 	vector<string> remove;
-	if (not args.count("columns") or args.count("remove"))
+	if (columns.empty() or remove_columns)
 	    std::swap(remove,keep);
 
 	// Evaluate row conditions against the input table, including columns omitted
@@ -150,16 +121,11 @@ int main(int argc,char* argv[])
 	//----------- Parse conditions ------------//
 	vector< owned_ptr<table_row_function<bool> > > conditions;
 
-	if (args.count("select"))
-	{
-	    vector<string> selections = args["select"].as<vector<string> >();
-
-	    for(const auto& selection: selections)
-		conditions.push_back(key_value_condition(table, selection));
-	}
+	for(const auto& selection: selections)
+	    conditions.push_back(key_value_condition(table, selection));
     
 	//------------ Print  column names ----------//
-	if (not args.count("no-header"))
+	if (not no_header)
 	{
 	    write_header(std::cout, apply_indices(table.names(), output_indices));
 	}
