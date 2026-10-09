@@ -1,50 +1,92 @@
 % stats-cat(1)
 % Benjamin Redelings
-% Feb 2018
+% October 2026
 
 # NAME
 
-**stats-cat** - Append tab-delimited files with the same field names.
+**stats-cat** - Concatenate statistics tables or transform one MCON log.
 
 # SYNOPSIS
 
-**stats-cat** [OPTIONS] file1 [file2 file3 ... ]
+**stats-cat** \[OPTIONS\] _file_ [_file_ ...]
 
 # DESCRIPTION
 
-Append tab-delimited files with the same field names.
+By default, read one or more tab-separated statistics tables or MCON logs and
+write one tab-separated table to standard output. The selected output column
+names must agree across input files. Data rows are appended in file order, with
+one output header. Use `-` as a filename to read standard input.
 
-# ALL OPTIONS:
-**-h**, **--help**
-: Produce help message.
+With **`--output json`**, transform one MCON log and write MCON: a JSON header
+followed by one JSON object per sample. **`--unnest`** selects this mode when no
+output format is specified. It replaces fields stored under MCON nesting keys
+with their flat logical field names and updates the header's `nested` value.
+Without **`--unnest`**, the nesting and its header value are retained.
 
-**-V**, **--verbose**
-: Output more log messages on stderr.
+In TSV output, **`--ignore`** and **`--select`** take column names or one-based
+inclusive ranges such as `2:4`. In JSON output, they act on top-level JSON
+field names after any unnesting. Each option may be repeated.
 
-**-s** _arg_, **--skip** _arg_
-: Number of initial lines to skip.
+JSON output accepts exactly one input file. **`--skip`**, **`--subsample`**, and
+**`--until`** apply only to TSV output; supplying them for JSON output is an
+error. **`--unnest`** cannot be combined with **`--output tsv`**.
 
-**-x** _arg_ (=1), **--subsample** _arg_ (=1)
-: Factor by which to sub-sample.
+# OPTIONS
 
-**-u** _arg_, **--until** _arg_
-: Read up to this iteration.
+**-h**, **`--help`**
+: Print usage information and exit.
 
-**-I** _arg_, **--ignore** _arg_
-: Do not analyze these fields.
+**-s** _n_, **`--skip`** _n_
+: Skip the first _n_ data rows of each input when writing TSV.
 
-**-S** _arg_, **--select** _arg_
-: Analyze only these fields.
+**-x** _n_, **`--subsample`** _n_
+: Keep every _n_th data row after skipping when writing TSV. Default: 1.
 
-**-O** _arg_, **--output** _arg_
-: Output format: json, tsv
+**-u** _n_, **`--until`** _n_
+: Consider at most the first _n_ data rows of each input when writing TSV.
 
-**--unnest**
-: Unnest JSON file.
+**-I** _field_, **`--ignore`** _field_
+: Exclude the named column or field. May be repeated.
 
+**-S** _field_, **`--select`** _field_
+: Include only the named columns or fields. May be repeated.
 
-# REPORTING BUGS:
- BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
+**-O** _format_, **`--output`** _format_
+: Write `tsv` (the default) or `json` (MCON).
+
+**`--unnest`**
+: Flatten MCON nesting keys in JSON output. Implies **`--output json`**.
+
+# EXAMPLES
+
+Append two statistics tables:
+
+```sh
+stats-cat chain1.tsv chain2.tsv > combined.tsv
+```
+
+Convert one MCON log to TSV, keeping every tenth row:
+
+```sh
+stats-cat --subsample 10 chain.log.json > chain.tsv
+```
+
+Unnest one MCON log while retaining MCON output:
+
+```sh
+stats-cat --unnest chain.log.json > flat.log.json
+```
+
+# EXIT STATUS
+
+Returns 0 on success and 1 on an error.
+
+# SEE ALSO
+
+**stats-select**(1), **stats-merge**(1), **mcon-tool**(1)
+
+# REPORTING BUGS
+
+BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 
 Please send bug reports to <bali-phy-users@googlegroups.com>.
-
