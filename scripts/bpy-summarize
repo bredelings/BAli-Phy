@@ -1600,20 +1600,22 @@ class Analysis(object):
             raise Exception("The topology count is missing from the trees-consensus report.")
         return int(topology_count)
 
-        # This routine computes mean branch lengths WITH NODE CIRCLES (*.ltree)
+    # Compute stale node-annotated consensus trees together, reading the samples only once.
     def compute_mean_branch_lengths(self):
         print("\nComputing mean branch lengths: ",end='')
+        sample_files = self.get_trees_files()
+        queries = []
         for level in self.tree_consensus_levels:
             value = int(level*100)
             prefix = self.outdir / f"c{value}"
             tree = prefix.with_suffix(".tree")
             outfile = prefix.with_suffix(".ltree")
-            if more_recent_than_all_of(outfile, self.get_trees_files()):
+            if more_recent_than_all_of(outfile, sample_files):
                 continue
+            queries += ['--trees', tree, outfile]
 
-            cmd = ['tree-mean-lengths','--tree',tree,'--safe','--show-node-lengths']
-            cmd += self.get_trees_files()
-
+        if queries:
+            cmd = ['tree-mean-lengths', '--safe', '--show-node-lengths'] + queries + sample_files
             if self.prune is not None:
                 cmd.append("--ignore={}".format(self.prune))
             if self.subsample is not None and self.subsample != 1:
@@ -1623,7 +1625,7 @@ class Analysis(object):
             if self.until is not None:
                 cmd.append("--until={}".format(self.until))
 
-            self.exec_show(cmd,outfile=outfile)
+            self.exec_show(cmd)
         print(" done.")
 
 

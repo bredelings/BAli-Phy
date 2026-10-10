@@ -145,35 +145,47 @@ class BPYSummarizeRunTests(unittest.TestCase):
             self.assertEqual(run.get_log_file(), prefix.with_suffix(".log"))
             self.assertEqual(run.n_iterations(), 1)
 
-    # Mean-length outputs belong to the selected report directory, and one cached level must not
-    # hide a later missing level. Remove this if one command generates all consensus levels.
-    def test_updates_each_stale_mean_branch_length_in_the_output_directory(self):
+    # Batch only stale consensus outputs and preserve sample filters; tool tests cannot verify
+    # report freshness or command construction. Retain while the report invokes this estimator.
+    def test_batches_stale_node_length_outputs(self):
         with tempfile.TemporaryDirectory() as directory:
             directory = Path(directory)
-            trees = directory / "chain.trees"
-            trees.write_text("(a,b);\n", encoding="utf-8")
-            current = directory / "c50.ltree"
-            current.write_text("(a,b);\n", encoding="utf-8")
-            current_time = trees.stat().st_mtime + 10
-            os.utime(current, (current_time, current_time))
-
-            calls = []
+            samples = [directory / "run 1.trees", directory / "run2.trees"]
+            for sample in samples:
+                sample.write_text("sample\n", encoding="utf-8")
+                os.utime(sample, (2000, 2000))
             analysis = Analysis.__new__(Analysis)
             analysis.outdir = directory
-            analysis.tree_consensus_levels = [0.5, 0.66]
-            analysis.prune = None
-            analysis.subsample = 1
-            analysis.burnin = 0
-            analysis.until = None
-            analysis.get_trees_files = lambda: [trees]
-            analysis.exec_show = lambda command, **kwargs: calls.append((command, kwargs))
-
+            analysis.tree_consensus_levels = [0.5, 0.8, 0.95]
+            analysis.get_trees_files = lambda: samples
+            analysis.prune = "X,Y"
+            analysis.subsample = 3
+            analysis.burnin = 10
+            analysis.until = 100
+            commands = []
+            analysis.exec_show = lambda cmd: commands.append(cmd)
+            # c50 is stale, c80 is missing, and c95 is current.
+            for name, timestamp in [("c50.ltree", 1000), ("c95.ltree", 3000)]:
+                output = directory / name
+                output.write_text("existing\n", encoding="utf-8")
+                os.utime(output, (timestamp, timestamp))
             with redirect_stdout(io.StringIO()):
                 analysis.compute_mean_branch_lengths()
-
-        self.assertEqual(len(calls), 1)
-        self.assertIn(directory / "c66.tree", calls[0][0])
-        self.assertEqual(calls[0][1]["outfile"], directory / "c66.ltree")
+            self.assertEqual(commands, [[
+                "tree-mean-lengths", "--safe", "--show-node-lengths",
+                "--trees", directory / "c50.tree", directory / "c50.ltree",
+                "--trees", directory / "c80.tree", directory / "c80.ltree",
+                *samples, "--ignore=X,Y", "--subsample=3", "--skip=10", "--until=100",
+            ]])
+            # Once all outputs are current, invoking the estimator would only repeat work.
+            for name in ["c50.ltree", "c80.ltree"]:
+                output = directory / name
+                output.write_text("updated\n", encoding="utf-8")
+                os.utime(output, (3000, 3000))
+            commands.clear()
+            with redirect_stdout(io.StringIO()):
+                analysis.compute_mean_branch_lengths()
+            self.assertEqual(commands, [])
 
     # A reusable decoding intermediate must not suppress reconstruction of its ordered report file;
     # end-to-end tests normally create both together. Remove this if the intermediate is eliminated.
