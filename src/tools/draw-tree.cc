@@ -734,13 +734,21 @@ int find_directed_branch(const Tree& T,const partition& p)
     return -1;
 }
 
-int node_max_depth(const Tree& T,int node) 
+// Traverse each edge once to obtain topological (not branch-length) distances from a node.
+vector<int> edge_distances(const Tree& T, int start)
 {
-    int depth = T.edges_distance(node,0);
-    for(int i=1;i<T.n_leaves();i++) 
-	depth = std::max(depth, T.edges_distance(node,i) );
-
-    return depth;
+    vector<int> distances(T.n_nodes(), -1);
+    vector<int> pending{start};
+    distances[start] = 0;
+    for(size_t i=0;i<pending.size();i++)
+        for(auto branch = T.node(pending[i]).branches_out(); branch; branch++)
+        {
+            int target = (*branch).target();
+            if (distances[target] != -1) continue;
+            distances[target] = distances[pending[i]] + 1;
+            pending.push_back(target);
+        }
+    return distances;
 }
 
 int n_children(const Tree& T,int b)
@@ -844,13 +852,19 @@ tree_layout equal_angle_layout(SequenceTree MF,vector<double> node_radius)
 	MF.branch(b).set_length(L);
     }
 
-    // place the root
+    // In a tree, a farthest node from any start is a diameter endpoint. For diameter
+    // endpoints a,b, max(d(n,a),d(n,b)) is the maximum distance from n to any node (and
+    // hence to any tip). Minimizing this gives the same center as the old exhaustive
+    // tip-distance search. Strict improvement in index order retains its lowest-index tie.
+    auto distances = edge_distances(MF,0);
+    int a = std::max_element(distances.begin(), distances.end()) - distances.begin();
+    auto from_a = edge_distances(MF,a);
+    int b = std::max_element(from_a.begin(), from_a.end()) - from_a.begin();
+    auto from_b = edge_distances(MF,b);
     int root = 0;
-    for(int n=0;n<MF.n_nodes();n++)
-	if (node_max_depth(MF,n) < node_max_depth(MF,root))
-	    root = n;
-  
-    // cerr<<"root = "<<root<<endl;
+    for(int n=1;n<MF.n_nodes();n++)
+        if (std::max(from_a[n],from_b[n]) < std::max(from_a[root],from_b[root]))
+            root = n;
 
     tree_layout L(MF);
     L.node_radius = node_radius;
