@@ -99,6 +99,9 @@ jobs:
 
           - name: windows
             os: ubuntu-26.04
+            # Debian supplies a newer MinGW GCC than Ubuntu's cross-compiler package.
+            # It must also be recent enough to compile with the MSYS2 C++ headers below.
+            image: debian:sid
             compiler: mingw
             version: "N/A"
             arch: "win64"
@@ -113,8 +116,22 @@ jobs:
     container:
       image: ${{ matrix.image || '' }}
     steps:
+    - name: Install Debian cross-build dependencies
+      if: matrix.name == 'windows'
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        # Install Git before checkout, and use Debian's Python/Meson without a separate pip setup.
+        apt-get update
+        apt-get install -y ca-certificates git build-essential cmake curl wget pkgconf \
+          python3 meson ninja-build xz-utils zstd pandoc dos2unix fakeroot \
+          g++-mingw-w64-x86-64-posix binutils-mingw-w64-x86-64 pacman-package-manager wine wine64
+        x86_64-w64-mingw32-g++-posix -v
+        dpkg-query -W g++-mingw-w64-x86-64-posix gcc-mingw-w64-x86-64-posix-runtime wine64
+
     - uses: actions/checkout@v6
     - uses: actions/setup-python@v6
+      if: matrix.name != 'windows'
       with:
         python-version: 3.12
 
@@ -122,7 +139,7 @@ jobs:
     # The total size for all caches in a repository is 5Gb.
 
     - name: Use a faster apt mirror
-      if: runner.os == 'Linux'
+      if: runner.os == 'Linux' && matrix.name != 'windows'
       run: |
         # Use a faster, more reliable mirror
         if [ -n "${{ matrix.image }}" ]  ; then
@@ -164,18 +181,6 @@ jobs:
 
         sudo rm -rf /usr/local/share/boost
         sudo apt-get install -y libboost-all-dev
-
-    - name: Install (Linux -> Windows [cross])
-      if: matrix.name == 'windows'
-      run: |
-        # If we're running in a docker image, we are already root
-        if [ -n "${{ matrix.image }}" ]  ; then
-          apt-get update && apt-get install -y sudo build-essential git cmake wget pkgconf
-          echo HOME=/root >> "$GITHUB_ENV"
-        fi
-        sudo apt-get update
-        sudo apt-get install -y pandoc
-        sudo apt-get install -y dos2unix fakeroot g++-mingw-w64 pacman-package-manager wine64
 
     - name: Install (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'
@@ -316,7 +321,7 @@ jobs:
       run: ccache --set-config=compiler_check=content
 
     - name: Install meson
-      if: matrix.name != 'windows-native-mingw'
+      if: matrix.name != 'windows-native-mingw' && matrix.name != 'windows'
       run: |
         python3 -mpip install meson ninja
 
@@ -337,8 +342,12 @@ jobs:
       # This command also generates the cross file
       run: |
         ${GITHUB_WORKSPACE}/scripts/make_winroot.sh
+        pacman --config "$HOME/win_root/pacman-cross.conf" --root "$HOME/win_root" \
+          -Q mingw-w64-x86_64-gcc mingw-w64-x86_64-crt mingw-w64-x86_64-libgcc mingw-w64-x86_64-libstdc++
         # The cross build produces only 64-bit programs, so do not probe for missing 32-bit Wine support.
         echo "WINEARCH=win64" >> "$GITHUB_ENV"
+        # Meson's compiler checks run before installation; use the same runtime there too.
+        echo "WINEPATH=$(WINEARCH=win64 WINEDEBUG=-all winepath -w "$HOME/win_root/mingw64/bin")" >> "$GITHUB_ENV"
 
     - name: Choose test seed
       shell: bash
@@ -370,8 +379,13 @@ jobs:
            ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
         fi
         echo "SDKROOT = $SDKROOT"
-        echo meson setup build --prefix=$HOME/local --buildtype=release -Dtest_seed="$seed" -Dcpp_args="$CPPARGS" ${ARGS}
-        meson setup build --prefix=$HOME/local --buildtype=release -Dtest_seed="$seed" -Dcpp_args="$CPPARGS" ${ARGS}
+        # An empty command-line cpp_args would override the cross-file's header settings.
+        cpp_options=()
+        if [ -n "$CPPARGS" ]; then
+           cpp_options=("-Dcpp_args=$CPPARGS")
+        fi
+        echo meson setup build --prefix=$HOME/local --buildtype=release -Dtest_seed="$seed" "${cpp_options[@]}" ${ARGS}
+        meson setup build --prefix=$HOME/local --buildtype=release -Dtest_seed="$seed" "${cpp_options[@]}" ${ARGS}
 
     - name: Upload meson log if configure failed
       uses: actions/upload-artifact@v4

@@ -28,51 +28,15 @@ echo "1. Writing sysroot dir ${SYSROOT}"
 mkdir -p "${SYSROOT}"
 mkdir -p "${SYSROOT}/bin"
 
-# 2. Generate cross file
-CROSSNAME=win64-cross.txt
-echo
-echo "2. Writing cross file to '${CROSSNAME}'"
-
-cat > "${CROSSNAME}" <<EOF
-[binaries]
-c = ['ccache','x86_64-w64-mingw32-gcc-posix']
-cpp = ['ccache','x86_64-w64-mingw32-g++-posix']
-ar = 'x86_64-w64-mingw32-ar'
-strip = 'x86_64-w64-mingw32-strip'
-dlltool = 'x86_64-w64-mingw32-dlltool'
-pkg-config = 'pkg-config'
-exe_wrapper = 'wine' # A command used to run generated executables.
-
-# why do we still need these? shouldn't they get added automatically if we find boost?
-[built-in options]
-c_args = ['-I${SYSROOT}/mingw64/include']
-c_link_args = ['-L${SYSROOT}/mingw64/lib']
-
-cpp_args = ['-I${SYSROOT}/mingw64/include']
-cpp_link_args = ['-L${SYSROOT}/mingw64/lib']
-
-[properties]
-sys_root = '${SYSROOT}'
-pkg_config_libdir = '${SYSROOT}/mingw64/lib/pkgconfig'
-boost_root='${SYSROOT}/mingw64'
-mingw_prefix='${SYSROOT}/mingw64'
-
-[host_machine]
-system = 'windows'
-cpu_family = 'x86_64'
-cpu = 'x86_64'
-endian = 'little'
-EOF
-
-# 3. Download packages
+# 2. Download packages
 if [ "$download" = "false" ] ; then
     echo
-    echo "(3.) Skipping installation of packages to ${SYSROOT}."
+    echo "(2.) Skipping installation of packages to ${SYSROOT}."
     echo
 else
 
     echo
-    echo "3. Installing packages to ${SYSROOT}"
+    echo "2. Installing packages to ${SYSROOT}"
     echo
 PACMAN_DB="${SYSROOT}/var/lib/pacman"
 if [ -d "${SYSROOT}/mingw64" ] && [ ! -d "${PACMAN_DB}/local" ] ; then
@@ -102,6 +66,7 @@ if ! "${PACMAN[@]}" -Sy ; then
     exit 1
 fi
 if ! "${PACMAN[@]}" -S --needed \
+        mingw-w64-x86_64-gcc \
         mingw-w64-x86_64-boost \
         mingw-w64-x86_64-cairo \
         mingw-w64-x86_64-cli11 \
@@ -111,6 +76,56 @@ if ! "${PACMAN[@]}" -S --needed \
     exit 1
 fi
 fi
+
+# 3. Generate cross file
+CROSSNAME=win64-cross.txt
+echo
+echo "3. Writing cross file to '${CROSSNAME}'"
+
+# The GCC package supplies development files as well as Windows compiler executables.
+# We use its development files with the Linux compiler, never its Windows executables.
+CXX_HEADERS=("${SYSROOT}"/mingw64/include/c++/*)
+if [ "${#CXX_HEADERS[@]}" -ne 1 ] || [ ! -f "${CXX_HEADERS[0]}/vector" ]; then
+    echo "Expected one MSYS2 C++ header directory; rerun with -download true." >&2
+    exit 1
+fi
+
+cat > "${CROSSNAME}" <<EOF
+[binaries]
+c = ['ccache','x86_64-w64-mingw32-gcc-posix']
+cpp = ['ccache','x86_64-w64-mingw32-g++-posix']
+ar = 'x86_64-w64-mingw32-ar'
+strip = 'x86_64-w64-mingw32-strip'
+dlltool = 'x86_64-w64-mingw32-dlltool'
+pkg-config = 'pkg-config'
+exe_wrapper = 'wine' # A command used to run generated executables.
+
+# Use one MSYS2 set of headers, startup objects, import libraries, and runtime DLLs.
+# In particular, its __cxa_thread_atexit lives in the static MinGW support library,
+# whereas Debian's import library expects that symbol in libstdc++-6.dll.
+[built-in options]
+c_args = ['-isystem', '${SYSROOT}/mingw64/include']
+c_link_args = ['-B${SYSROOT}/mingw64/lib/', '-L${SYSROOT}/mingw64/lib']
+
+cpp_args = ['-nostdinc++',
+            '-isystem', '${CXX_HEADERS[0]}',
+            '-isystem', '${CXX_HEADERS[0]}/x86_64-w64-mingw32',
+            '-isystem', '${CXX_HEADERS[0]}/backward',
+            '-isystem', '${SYSROOT}/mingw64/include']
+cpp_link_args = ['-B${SYSROOT}/mingw64/lib/', '-L${SYSROOT}/mingw64/lib']
+
+[properties]
+sys_root = '${SYSROOT}'
+pkg_config_libdir = '${SYSROOT}/mingw64/lib/pkgconfig'
+boost_root='${SYSROOT}/mingw64'
+mingw_prefix='${SYSROOT}/mingw64'
+
+[host_machine]
+system = 'windows'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'
+EOF
 
 echo
 echo "Done."
