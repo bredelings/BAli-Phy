@@ -2535,7 +2535,7 @@ struct cloud
 
     int depth;
 
-    int color;
+    int color = -1;
 
     vector<int> neighbors;
 
@@ -2544,7 +2544,7 @@ struct cloud
     int size() const {return child_branches.size();}
 
     cloud():depth(0) {}
-    cloud(const vector<int>& v): child_branches(v),depth(0),color(-1) {}
+    cloud(const vector<int>& v): child_branches(v),depth(0) {}
     cloud(const vector<int>& v,int p): child_branches(v),parent_branches(1,p),depth(0) {}
 };
 
