@@ -164,6 +164,10 @@ class BPYSummarizeRunTests(unittest.TestCase):
             analysis.until = 100
             commands = []
             analysis.exec_show = lambda cmd: commands.append(cmd)
+            for name in ["c50.tree", "c80.tree", "c95.tree"]:
+                query = directory / name
+                query.write_text("query\n", encoding="utf-8")
+                os.utime(query, (1500, 1500))
             # c50 is stale, c80 is missing, and c95 is current.
             for name, timestamp in [("c50.ltree", 1000), ("c95.ltree", 3000)]:
                 output = directory / name
@@ -186,6 +190,70 @@ class BPYSummarizeRunTests(unittest.TestCase):
             with redirect_stdout(io.StringIO()):
                 analysis.compute_mean_branch_lengths()
             self.assertEqual(commands, [])
+
+            # A regenerated query invalidates its lengths even when samples are unchanged.
+            os.utime(directory / "c95.tree", (4000, 4000))
+            with redirect_stdout(io.StringIO()):
+                analysis.compute_mean_branch_lengths()
+            self.assertEqual(commands[0][3:6],
+                             ["--trees", directory / "c95.tree", directory / "c95.ltree"])
+
+    # Drawing reuse depends on both its selected input and completed display mode; tool tests
+    # cannot cover report caching. Retain while consensus drawings are cached across runs.
+    def test_consensus_drawing_modes_and_retries(self):
+        with tempfile.TemporaryDirectory() as directory, redirect_stdout(io.StringIO()):
+            analysis = Analysis.__new__(Analysis)
+            analysis.outdir = Path(directory)
+            analysis.draw_tree_exe = "draw-tree"
+            analysis.speed = 2
+            analysis.tree_consensus_levels = [0.5]
+            analysis.node_bubbles = True
+            for name in ["c50.tree", "c50.ltree", "c50-tree.pdf", "c50-tree.svg"]:
+                filename = analysis.outdir / name
+                filename.write_text("existing\n")
+                os.utime(filename, (1000, 1000) if name.endswith("tree") else (2000, 2000))
+            commands = []
+
+            # Simulate successful drawings with deterministic timestamps for freshness checks.
+            def draw(cmd, **kwargs):
+                commands.append(cmd)
+                self.assertNotIn("--collapse", cmd)
+                ext = "svg" if "--output=svg" in cmd else "pdf"
+                os.utime(analysis.outdir / f"c50-tree.{ext}", (5000, 5000))
+
+            analysis.exec_show = draw
+            analysis.draw_trees()  # No recorded mode: replace even apparently current drawings.
+            self.assertEqual([cmd[1] for cmd in commands], ["c50.ltree"] * 2)
+            commands.clear()
+            analysis.draw_trees()
+            self.assertEqual(commands, [])
+            os.utime(analysis.outdir / "c50.ltree", (6000, 6000))
+            analysis.draw_trees()
+            self.assertEqual(len(commands), 2)
+            os.utime(analysis.outdir / "c50.ltree", (1000, 1000))
+            commands.clear()
+            analysis.node_bubbles = False
+            analysis.draw_trees()
+            self.assertEqual([cmd[1] for cmd in commands], ["c50.tree"] * 2)
+
+            # Fail after one output changes mode, then switch back before retrying.
+            def fail_second(cmd, **kwargs):
+                draw(cmd, **kwargs)
+                if len(commands) == 2:
+                    raise SystemExit(1)
+
+            commands.clear()
+            analysis.node_bubbles = True
+            analysis.exec_show = fail_second
+            with self.assertRaises(SystemExit):
+                analysis.draw_trees()
+            self.assertNotIn("consensus_tree_node_bubbles", analysis.load_analysis_properties())
+            commands.clear()
+            analysis.node_bubbles = False
+            analysis.exec_show = draw
+            analysis.draw_trees()
+            self.assertEqual([cmd[1] for cmd in commands], ["c50.tree"] * 2)
+            self.assertIs(analysis.read_analysis_property("consensus_tree_node_bubbles"), False)
 
     # A reusable decoding intermediate must not suppress reconstruction of its ordered report file;
     # end-to-end tests normally create both together. Remove this if the intermediate is eliminated.

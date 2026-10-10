@@ -64,9 +64,10 @@ Discard the first 1000 iterations from each run as burn-in:
 **`--sub-partitions`**
 : Include partial splits and extended consensus trees in the tree summaries.
 
-**`--node-bubbles`**
-: Draw consensus trees with node bubbles representing branch length associated with
-  unresolved relationships.
+**`--no-node-bubbles`**
+: Draw the original consensus trees without node bubbles or redistribution of node lengths.
+  By default, bubbles represent branch length associated with unresolved relationships.
+  Annotated consensus length files are generated in either mode and reused when current.
 
 # SPECIALIZED SUMMARIES
 

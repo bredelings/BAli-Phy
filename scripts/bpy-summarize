@@ -896,8 +896,7 @@ class Analysis(object):
             self.summarize_branch_models()
         if self.has_trees():
             self.sampled_topology_count = self.summarize_topology_distribution()
-            if self.node_bubbles:
-                self.compute_mean_branch_lengths()
+            self.compute_mean_branch_lengths()
             self.draw_trees()
             self.compute_tree_mixing_diagnostics()
             self.compute_srq_plots()
@@ -1610,7 +1609,7 @@ class Analysis(object):
             prefix = self.outdir / f"c{value}"
             tree = prefix.with_suffix(".tree")
             outfile = prefix.with_suffix(".ltree")
-            if more_recent_than_all_of(outfile, sample_files):
+            if more_recent_than_all_of(outfile, [tree, *sample_files]):
                 continue
             queries += ['--trees', tree, outfile]
 
@@ -1670,15 +1669,21 @@ class Analysis(object):
 
         return features
 
+    # Draw consensus trees using the selected length representation, reusing current drawings.
     def draw_trees(self):
         if not self.draw_tree_exe:
             return
+        properties = self.load_analysis_properties()
+        mode_changed = properties.get("consensus_tree_node_bubbles") != self.node_bubbles
+        # Clear the completed setting before any drawing: a failure can leave mixed modes,
+        # and the next run must redraw even if the user switches back to the previous mode.
+        properties.pop("consensus_tree_node_bubbles", None)
+        self.save_analysis_properties(properties)
         print("Drawing trees: ",end='')
         for level in self.tree_consensus_levels:
             value = int(level*100)
             tree = f"c{value}"
 
-            filename1 = self.outdir / f"{tree}.tree"
             filename2 = self.outdir / f"{tree}.mtree"
 
             if self.speed < 2 and path.exists(filename2):
@@ -1689,13 +1694,15 @@ class Analysis(object):
                     self.exec_show(cmd + ['--output=pdf'])
 
             treefile = tree + (".ltree" if self.node_bubbles else ".tree")
-            if not more_recent_than(self.outdir / f"{tree}-tree.pdf", filename1):
+            if mode_changed or not more_recent_than(self.outdir / f"{tree}-tree.pdf", self.outdir / treefile):
                 cmd = ['draw-tree', treefile, '--layout=equal-daylight']
                 self.exec_show(cmd,cwd=self.outdir)
-            if not more_recent_than(self.outdir / f"{tree}-tree.svg", filename1):
+            if mode_changed or not more_recent_than(self.outdir / f"{tree}-tree.svg", self.outdir / treefile):
                 cmd = ['draw-tree', treefile, '--layout=equal-daylight', '--output=svg']
                 self.exec_show(cmd,cwd=self.outdir)
             print(tree+' ',end='',flush=True)
+
+        self.write_analysis_property("consensus_tree_node_bubbles", self.node_bubbles)
 
         for tree in ['greedy','MAP']:
             filename = self.outdir / f"{tree}.tree"
@@ -3604,7 +3611,8 @@ if __name__ == '__main__':
 #    parser.add_argument("--probcons")
 #    parser.add_argument("--mafft")
     parser.add_argument("--sub-partitions",default=False,action='store_true')
-    parser.add_argument("--node-bubbles",default=False,action='store_true')
+    parser.add_argument("--no-node-bubbles", dest="node_bubbles", default=True, action='store_false',
+                        help="Draw consensus trees without node bubbles")
     args = parser.parse_args()
 
     if args.verbose:
