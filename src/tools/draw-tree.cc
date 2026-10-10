@@ -1800,13 +1800,6 @@ double graph_energy_function::node_node_attraction(const graph_layout& GL, vecto
     return E;
 }
 
-double trunc(double t,double D)
-{
-    if (t <= 0 or t >= 1)
-	D = 0;
-    return D;
-}
-
 double distance_to_line_segment(const graph_layout& GL,int n1,int n2,int n3)
 {
     return distance_to_line_segment(GL.node_positions[n1],
@@ -1816,95 +1809,29 @@ double distance_to_line_segment(const graph_layout& GL,int n1,int n2,int n3)
 
 
 
-// E = C*D(y1,y2)^2
-// y1 = x1
-// y2 = x2 + t*(x3-x2)
-//  t = ...
-
-//FIXME - add target distance (currently assumed to be 0)?
-
-double graph_energy_function::node_edge_attraction(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2,int n3, double C) const
+// For noncoincident endpoints a,b, project p onto their segment with t clamped to [0,1].
+// With r = p-((1-t)a+tb), E=C|r|². Terms differentiating t vanish: in the interior r is
+// perpendicular to b-a; outside, t is constant. At t=0 or 1 these gradients agree with
+// the endpoint limits. Unlike differentiating |r| first, this is defined when r is zero.
+// TODO: Specify energy/endpoint-gradient handling when a and b coincide (still unsupported).
+double graph_energy_function::node_edge_attraction(const graph_layout& GL, vector<point_position>& DEL,
+                                                  int n1, int n2, int n3, double C) const
 {
-    const point_position& p1 = GL.node_positions[n1];
-    const point_position& p2 = GL.node_positions[n2];
-    const point_position& p3 = GL.node_positions[n3];
-
-    double x11 = p1.x;
-    double x12 = p1.y;
-
-    double x21 = p2.x;
-    double x22 = p2.y;
-
-    double x31 = p3.x;
-    double x32 = p3.y;
-
-    double t_high = ((x11 - x21)*(x31 - x21) + (x12 - x22)*(x32 - x22));
-    double t_low  = ((x31 - x21)*(x31 - x21) + (x32 - x22)*(x32 - x22));
-
-    double t = t_high/t_low;
-
-    if (t < 0) t = 0;
-    if (t > 1) t = 1;
-
-    double y11 = x11;
-    double y12 = x12;
-
-    double y21 = x21 + t*(x31 - x21);
-    double y22 = x22 + t*(x32 - x22);
-
-    double D =  sqrt((y11-y21)*(y11-y21) + (y12-y22)*(y12-y22));
-
-    double E = C*D*D;
-
-    double dE_dD = C*2.0*D;
-
-    double dD_dy11 = (y11 - y21)/D;
-    double dD_dy12 = (y12 - y22)/D;
-
-    double dD_dy21 = - dD_dy11;
-    double dD_dy22 = - dD_dy12;
-
-    //  cerr<<" D = "<<D<<" D2 = "<<distance_to_line_segment(GL,n1,n2,n3)<<" E = "<<E<<"  t = "<<t<<"   dE_dD = "<<dE_dD<<endl;
-
-    double dt_dx11 = trunc(t, (x31-x21) / t_low );
-    double dt_dx12 = trunc(t, (x32-x22) / t_low );
-
-    double dt_dx21 = trunc(t, (t_low * (2.0*x21 - x11 - x31) - t_high * 2.0* (x21-x31))/(t_low*t_low) );
-    double dt_dx22 = trunc(t, (t_low * (2.0*x22 - x12 - x32) - t_high * 2.0* (x22-x32))/(t_low*t_low) );
-
-    double dt_dx31 = trunc(t, (t_low * (x11 - x21)           - t_high * 2.0* (x31-x21))/(t_low*t_low) );
-    double dt_dx32 = trunc(t, (t_low * (x12 - x22)           - t_high * 2.0* (x32-x22))/(t_low*t_low) );
-
-
-
-    double dy21_dx11 =         (x31-x21)*dt_dx11;
-    double dy21_dx12 =         (x31-x21)*dt_dx12;
-
-    double dy22_dx11 =         (x32-x22)*dt_dx11;
-    double dy22_dx12 =         (x32-x22)*dt_dx12;
-
-    DEL[n1].x += dE_dD*(dD_dy11 + dD_dy21*dy21_dx11 + dD_dy22*dy22_dx11);
-    DEL[n1].y += dE_dD*(dD_dy12 + dD_dy21*dy21_dx12 + dD_dy22*dy22_dx12);
-
-    double dy21_dx21 = 1.0 - t + (x31-x21)*dt_dx21;
-    double dy21_dx22 =           (x31-x21)*dt_dx22;
-
-    double dy22_dx21 =           (x32-x22)*dt_dx21;
-    double dy22_dx22 = 1.0 - t + (x32-x22)*dt_dx22;
-
-    DEL[n2].x += dE_dD*(          dD_dy21*dy21_dx21 + dD_dy22*dy22_dx21);
-    DEL[n2].y += dE_dD*(          dD_dy21*dy21_dx22 + dD_dy22*dy22_dx22);
-
-    double dy21_dx31 =       t + (x31-x21)*dt_dx31;
-    double dy21_dx32 =           (x31-x21)*dt_dx32;
-
-    double dy22_dx31 =           (x32-x22)*dt_dx31;
-    double dy22_dx32 =       t + (x32-x22)*dt_dx32;
-
-    DEL[n3].x += dE_dD*(          dD_dy21*dy21_dx31 + dD_dy22*dy22_dx31);
-    DEL[n3].y += dE_dD*(          dD_dy21*dy21_dx32 + dD_dy22*dy22_dx32);
-
-    return E;
+    const auto& p = GL.node_positions[n1];
+    const auto& a = GL.node_positions[n2];
+    const auto& b = GL.node_positions[n3];
+    double vx = b.x-a.x, vy = b.y-a.y;
+    double t = ((p.x-a.x)*vx + (p.y-a.y)*vy)/(vx*vx + vy*vy);
+    t = std::clamp(t, 0.0, 1.0);
+    double rx = p.x-(a.x+t*vx), ry = p.y-(a.y+t*vy);
+    double gx = 2*C*rx, gy = 2*C*ry;
+    DEL[n1].x += gx;
+    DEL[n1].y += gy;
+    DEL[n2].x -= (1-t)*gx;
+    DEL[n2].y -= (1-t)*gy;
+    DEL[n3].x -= t*gx;
+    DEL[n3].y -= t*gy;
+    return C*(rx*rx + ry*ry);
 }
 
 
