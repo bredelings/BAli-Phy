@@ -1,0 +1,3 @@
+# Protect zero-gradient nodes during energy layout; other tool tests do not exercise this path.
+# Retire if equivalent stationary-node coverage replaces this command-level check.
+star.tree --tree-layout-initial --seed 1 --output svg --out results/star

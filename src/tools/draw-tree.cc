@@ -2621,6 +2621,8 @@ void energy_layout(graph_layout& GL, const graph_energy_function& E,int n=1000)
 	for(int i=0;i<DD.size();i++) 
 	{
 	    double v = sqrt(DD[i].x*DD[i].x + DD[i].y*DD[i].y);
+	    // A stationary node has zero displacement while other nodes can continue moving.
+	    if (v == 0) continue;
 	    DD[i].x /= v;
 	    DD[i].y /= v;
 	}
