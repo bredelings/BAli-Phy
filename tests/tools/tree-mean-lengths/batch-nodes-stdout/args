@@ -1,0 +1,4 @@
+# A stdout destination must coexist with named files and preserve separate node lengths.
+# Single-output cases cannot check routing between queries; retain while batches are supported.
+--trees ../query.tree results/files/binary.tree --trees '../query, star.tree' - --show-node-lengths
+../mean-samples.trees

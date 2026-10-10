@@ -1,0 +1,4 @@
+# Filters restart for each sample file; equivalence to another invocation cannot prove selection.
+# Rows 2,4,6,8 of each file give (2+4+6+8+20+40+60+80)/8=27.5. Retain while filtering is per file.
+--trees ../query.tree results/files/binary.tree --trees '../query, star.tree' 'results/files/star, output.tree'
+--simple --skip=1 --subsample=2 ../filter-one.trees ../filter-two.trees

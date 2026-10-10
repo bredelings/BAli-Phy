@@ -1,0 +1,5 @@
+# A failed destination must not suppress a later successful output.
+# Estimate failures exercise a different stage; retain while batch output continues after write
+# errors.
+--trees ../query.tree results/files/absent/out --trees '../query, star.tree' 'results/files/star, output.tree'
+--show-node-lengths ../mean-samples.trees

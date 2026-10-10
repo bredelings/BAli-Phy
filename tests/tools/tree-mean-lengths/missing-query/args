@@ -1,0 +1,4 @@
+# Sample arguments alone cannot supply a query tree.
+# CLI11 required-sample checks do not enforce this application rule; retain while queries are
+# mandatory.
+../mean-samples.trees

@@ -304,15 +304,6 @@ foreach tool: tools + prefixed_tools
     endforeach
   endif
 
-  # Batch tests inspect independent output files and error isolation, beyond stdout-only cases.
-  # Retain while tree-mean-lengths accepts multiple query/output pairs.
-  if tool == 'tree-mean-lengths'
-    test('tree-mean-lengths batch', python,
-         args: [files('../tests/tools/tree-mean-lengths/batch.py')] + python_tool_wrapper_args + [tool_exe],
-         depends: tool_exe,
-         suite: 'tools')
-  endif
-
   if tool == 'alignment-draw'
     node = find_program('node', required: false)
     if node.found()

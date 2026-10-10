@@ -1,1 +1,1 @@
---tree=../query.tree --no-node-lengths --simple ../first-sample.trees ../second-sample.trees
+--tree=../query.tree --no-node-lengths --simple ../first-sample.trees --files ../second-sample.trees

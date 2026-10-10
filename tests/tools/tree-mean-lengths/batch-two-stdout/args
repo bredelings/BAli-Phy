@@ -1,0 +1,3 @@
+# Multiple stdout destinations cannot identify which result belongs to which query.
+# File-alias checks do not cover stdout; retain while only one query may use it.
+--trees ../query.tree - --trees ../query.tree - ../mean-samples.trees

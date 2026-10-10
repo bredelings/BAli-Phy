@@ -31,6 +31,25 @@ def text_diff(name, expected, obtained):
     )
 
 
+# Compare declared text files, including preserved inputs, with their disposable working copies.
+# Extra files are allowed so tests need only declare the outputs they want to check.
+def check_files(expected_directory, obtained_directory):
+    failures = []
+    for expected in sorted(expected_directory.rglob("*")):
+        if not expected.is_file():
+            continue
+        name = expected.relative_to(expected_directory)
+        obtained = obtained_directory / name
+        if not obtained.is_file():
+            failures.append(f"missing expected file: {obtained}\n")
+            continue
+        expected_text = expected.read_text(encoding="utf-8")
+        obtained_text = obtained.read_text(encoding="utf-8")
+        if expected_text != obtained_text:
+            failures.append(text_diff(str(name), expected_text, obtained_text))
+    return failures
+
+
 # Run one directory-defined test, retaining its captured results until the checks finish.
 def run_test(directory, command):
     arguments = shlex.split(read_file(directory, "args", ""), comments=True)
@@ -44,6 +63,13 @@ def run_test(directory, command):
     if results.exists():
         shutil.rmtree(results)
     results.mkdir()
+
+    # Optional files/ seeds results/files/; expected-files/ describes its final text contents.
+    # Commands name results/files/... explicitly, keeping relative input paths and cwd unchanged.
+    if (directory / "files").is_dir():
+        shutil.copytree(directory / "files", results / "files")
+    elif (directory / "expected-files").is_dir():
+        (results / "files").mkdir()
 
     # BAli-Phy command output is UTF-8. Decode it explicitly so Windows' locale
     # cannot turn multibyte output into different Unicode characters.
@@ -76,6 +102,7 @@ def run_test(directory, command):
         failures.append(text_diff("error", expected_error, result.stderr))
     if result.returncode != expected_exit:
         failures.append(f"expected exit {expected_exit}, obtained {result.returncode}\n")
+    failures.extend(check_files(directory / "expected-files", results / "files"))
     return failures, results
 
 

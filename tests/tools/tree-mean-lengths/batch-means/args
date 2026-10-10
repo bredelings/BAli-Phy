@@ -1,0 +1,4 @@
+# Batched queries must keep independent estimates and tip order, including stdin and quoted paths.
+# Single-query cases cannot detect cross-query contamination; retain while batches are supported.
+# Means are A=2, B=3, C=5, D=6, internal=4; the star adds 4/4 to each tip.
+--trees ../query.tree results/files/binary.tree --trees '../query, star.tree' 'results/files/star, output.tree' -

@@ -1,0 +1,4 @@
+# Aliased destinations must be rejected before truncation, regardless of path spelling.
+# Distinct-output tests cannot detect aliasing; retain while batch destinations must be distinct.
+--trees ../query.tree results/files/binary.tree --trees ../query.tree results/files/./binary.tree
+../mean-samples.trees

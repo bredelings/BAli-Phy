@@ -1,0 +1,4 @@
+# Safe fallback must be limited to the failed query, leaving later estimates intact.
+# Single-query fallback cases cannot check isolation; retain while batches are supported.
+--trees ../query.tree results/files/binary.tree --trees '../query, star.tree' 'results/files/star, output.tree'
+--safe --show-node-lengths ../batch-conflict.trees

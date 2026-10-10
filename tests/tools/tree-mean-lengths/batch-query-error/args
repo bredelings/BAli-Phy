@@ -1,0 +1,4 @@
+# All query trees must be validated before opening any destination.
+# Sample-error cases do not exercise query setup; retain while query errors invalidate the batch.
+--trees ../query.tree results/files/binary.tree --trees ../different-query.tree results/files/other.tree
+../mean-samples.trees

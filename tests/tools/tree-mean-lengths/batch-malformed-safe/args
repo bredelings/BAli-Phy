@@ -1,0 +1,5 @@
+# A late read error must prevent every output, even with safe fallback enabled.
+# Missing-estimate tests do not exercise partial reads; retain while sample errors invalidate the
+# batch.
+--trees ../query.tree results/files/binary.tree --trees '../query, star.tree' 'results/files/star, output.tree'
+--safe ../batch-broken.trees

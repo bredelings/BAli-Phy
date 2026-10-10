@@ -1,0 +1,3 @@
+# Single-query and batch query options must remain mutually exclusive.
+# Valid invocations do not exercise this application check; retain while both forms exist.
+--tree ../query.tree --trees ../query.tree results/files/out ../mean-samples.trees

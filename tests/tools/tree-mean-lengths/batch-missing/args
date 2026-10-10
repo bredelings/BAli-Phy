@@ -1,0 +1,4 @@
+# An unavailable estimate must preserve its old output while later queries still succeed.
+# Single-query missing-estimate cases cannot check isolation; retain while batches are supported.
+--trees ../query.tree results/files/binary.tree --trees '../query, star.tree' 'results/files/star, output.tree'
+--show-node-lengths ../batch-conflict.trees

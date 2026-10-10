@@ -1,0 +1,4 @@
+# Each batch option must supply a query and destination rather than a partial pair.
+# Ordinary positional parsing does not check paired options; retain while --trees takes two
+# arguments.
+--trees ../query.tree

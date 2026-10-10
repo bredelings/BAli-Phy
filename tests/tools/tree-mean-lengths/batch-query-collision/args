@@ -1,0 +1,3 @@
+# Output must never overwrite a query input. Use a disposable copy to detect accidental writes.
+# Distinct-destination checks do not cover inputs; retain while destinations cannot alias queries.
+--trees results/files/query.tree results/files/query.tree ../mean-samples.trees
