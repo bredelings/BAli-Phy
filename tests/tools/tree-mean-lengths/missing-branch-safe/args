@@ -1,0 +1,3 @@
+# Safe mode must emit only the topology on unavailable estimates, without partial lengths.
+# Successful-output cases cannot exercise this fallback; retain while --safe exists.
+--tree=../query.tree --simple --safe ../missing-branch.trees

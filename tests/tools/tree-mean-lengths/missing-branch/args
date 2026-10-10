@@ -1,0 +1,3 @@
+# An unavailable branch must not become a measured zero. Existing mean tests have all splits.
+# Retain while missing requested estimates are errors.
+--tree=../query.tree --simple ../missing-branch.trees

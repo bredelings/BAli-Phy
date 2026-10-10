@@ -1,0 +1,3 @@
+# Branch estimates must use their own matching samples, including conflicts elsewhere.
+# Existing file-handling cases have identical topologies; retain while estimates are conditional.
+--tree=../local-query.tree --simple ../local-samples.trees

@@ -38,7 +38,10 @@ Internal labels do not select rooted comparisons.
 : Comma-separated taxa to remove
 
 **--simple**
-: Ignore all branches not in the query tree
+: Compute each branch mean from samples containing its exact split, regardless
+  of conflicts elsewhere. Missing branch estimates are errors; with **--safe**,
+  print the query topology without lengths instead. This mode uses Day's
+  linear-time split-matching algorithm and does not estimate node lengths.
 
 **-x** _arg_ (=1), **--subsample** _arg_ (=1)
 : factor by which to sub-sample
