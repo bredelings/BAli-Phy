@@ -14,6 +14,10 @@
 
 Compute the mean lengths for branches in the given topology.
 
+Trees are interpreted as unrooted. An artificial degree-two Newick root is
+suppressed in both the query and sampled trees; its two branches form one edge.
+Internal labels do not select rooted comparisons.
+
 # ALLOWED OPTIONS:
 **-h**, **--help**
 : produce help message

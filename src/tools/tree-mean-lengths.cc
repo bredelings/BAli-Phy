@@ -360,7 +360,12 @@ int main(int argc,char* argv[])
 	    files = args["files"].as<vector<string>>();
 
 	//----------- Read the topology -----------//
-	SequenceTree Q = load_T(args);
+	RootedSequenceTree query = load_T(args);
+	// Match the sample reader's unrooted interpretation: the two edges at an
+	// artificial degree-two root represent one split, not two independent branches.
+	if (query.root().degree() == 2)
+	    query.remove_node_from_branch(query.root());
+	SequenceTree Q = query;
 	standardize(Q);
 	const int B = Q.n_branches();
 	const int N = Q.n_nodes();

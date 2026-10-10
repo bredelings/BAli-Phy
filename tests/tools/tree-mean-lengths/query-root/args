@@ -1,0 +1,3 @@
+# Root placement must not duplicate a split. Existing tests only use degree-three
+# query roots; this case is needed while Newick permits an artificial degree-two root.
+--tree=query.tree --no-node-lengths ../mean-samples.trees
