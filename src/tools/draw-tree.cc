@@ -53,6 +53,7 @@ extern "C" {
 }
 #endif
 
+#include "util/assert.hh"
 #include "util/myexception.hh"
 #include "tree/sequencetree.hh"
 #include "mctree.hh"
@@ -120,7 +121,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("angle_iterations",value<int>()->default_value(0),"Number of iterations for layout algorithm with small-angle penalties")
 	("labels",value<string>()->default_value("horizontal"),"Are the names horizontal or angled?")
 	("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
-	("layout",value<string>()->default_value("graph"),"Layout method: graph, equal-angle, equal-daylight, etc.")
+	("layout",value<string>()->default_value("graph"),"Layout method: graph, equal-angle, equal-daylight")
 	("greedy","For equal-daylight layout: take as much daylight as possible?")
 	("tree-layout-initial","Start an energy layout with positions from the equal-angle layout - only for multifurcating trees")
 	("no-shade","For equal-daylight layout: reject rotations that shade other groups?")
@@ -381,10 +382,8 @@ struct point_position
 {
     double x;
     double y;
-    double z;
-    point_position():x(0),y(0),z(0) {}
-    point_position(double x, double y):x(x),y(y),z(0) {}
-    point_position(double x, double y, double z):x(x),y(y),z(z) {}
+    point_position():x(0),y(0) {}
+    point_position(double x, double y):x(x),y(y) {}
 };
 
 bool lines_cross(const point_position& m1,
@@ -441,10 +440,6 @@ bool segments_cross(const point_position& m1,
 
     bool cross = ((0 <= s) and (s <= 1) and (0 <= t) and (t <= 1));
 
-    if (cross) {
-	//    cerr<<"t = "<<t<<endl;
-	//    cerr<<"s = "<<s<<endl;
-    }
     return cross;
 }
 
@@ -462,10 +457,6 @@ bool segments_cross_with_margin(const point_position& m1,
 
     bool cross = ((-a <= s) and (s <= 1+b) and (-c <= t) and (t <= 1+d));
 
-    if (cross) {
-	//    cerr<<"t = "<<t<<endl;
-	//    cerr<<"s = "<<s<<endl;
-    }
     return cross;
 }
 
@@ -479,10 +470,6 @@ bool ray_points_to_segment(const point_position& m1,
 
     bool cross = ((0 <= s) and (s <= 1) and (0 <= t));
 
-    if (cross) {
-	//    cerr<<"t = "<<t<<endl;
-	//    cerr<<"s = "<<s<<endl;
-    }
     return cross;
 }
 
@@ -1275,9 +1262,6 @@ void equalize_daylight_greedy(tree_layout& L,int n)
     vector<const_branchview> branches;
     for(const_out_edges_iterator i = T.node(n).branches_out();i;i++) {
 	branches.push_back(*i);
-	if ((*i).is_leaf_branch()) {
-	    cout<<"";
-	}
     }
   
 
@@ -2248,7 +2232,6 @@ void inc(vector<point_position>& x1,double lambda,const vector<point_position>& 
     for(int i=0;i<x1.size();i++) {
 	x1[i].x += lambda * v[i].x;
 	x1[i].y += lambda * v[i].y;
-	x1[i].z += lambda * v[i].z;
     }
 }
 
@@ -2300,134 +2283,128 @@ vector<point_position> energy_derivative_2D(const graph_layout& GL1, const graph
     return D;
 }
 
-double max_delta(const vector<point_position>& p)
-{
-    double m = std::max(std::abs(p[0].x),std::abs(p[0].y));
-    for(int i=1;i<p.size();i++) {
-	m = std::max(m,std::abs(p[i].x));
-	m = std::max(m,std::abs(p[i].y));
-    }
-    return m;
-}
-
-#include <boost/graph/graph_traits.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/topological_sort.hpp>
-#include <boost/graph/kamada_kawai_spring_layout.hpp>
-#include <boost/graph/fruchterman_reingold.hpp>
-#include "util/assert.hh"
-
-typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS> Graph; 
-typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
-typedef boost::graph_traits<Graph>::edge_descriptor Edge_t;
-
-
-graph_layout kamada_kawai_layout(graph_layout GL)
-{
-    const MC_tree& MC = GL.MC;
-    Graph g(MC.n_nodes());
-
-    //------------ Construct the Graph --------------//
-    for(int i=0;i<MC.edges.size();i++) {
-	const mc_tree_edge& e = MC.edges[i];
-	add_edge(e.from, e.to, g);
-    }
-
-    //--------- Package position as property ---------//
-    typedef vector<point_position> PositionVec;
-    typedef boost::iterator_property_map<PositionVec::iterator,
-                                         boost::property_map<Graph, boost::vertex_index_t>::type>
-	PositionMap;
-
-    PositionMap position(GL.node_positions.begin(), get(boost::vertex_index, g));
-
-    //--------- Package weights as property ---------//
-    vector<double> weights(num_edges(g));
-
-    //  typedef vector<double> WeightVec;
-    //  typedef iterator_property_map<WeightVec::iterator, 
-    //    property_map<Graph, edge_index_t>::type>
-    //    WeightMap;
-
-    //  WeightMap weight(weights.begin(), get(edge_index,g));
-
-    // kamada_kawai_spring_layout(g, position, weight, boost::side_length(1.0) );
-
-    return GL;
-}
-
-struct my_square_distance_attractive_force {
-    template<typename Graph, typename T>
-    T
-    operator()(typename boost::graph_traits<Graph>::edge_descriptor,
-	       T k,
-	       T d,
-	       const Graph&) const
-	{
-	    k /= 10;
-	    d -= k;
-	    double temp = 100.0*d * d / k;
-	    if (d < k) temp *= -1;
-	    return temp;
-	}
-};
-
-
-#include <boost/graph/random_layout.hpp>
-#include <boost/random/linear_congruential.hpp>
-
-graph_layout fruchterman_reingold_layout(graph_layout GL, double /* width */, double /* height */)
-{
-    /*
-      const MC_tree& MC = GL.MC;
-      Graph g(MC.n_nodes());
-
-      //------------ Construct the Graph --------------//
-      for(int i=0;i<MC.edges.size();i++) {
-      const mc_tree_edge& e = MC.edges[i];
-      add_edge(e.from, e.to, g);
-      }
-
-      //--------- Package position as property ---------//
-      typedef vector<point_position> PositionVec;
-      typedef iterator_property_map<PositionVec::iterator,
-      property_map<Graph, vertex_index_t>::type>
-      PositionMap;
-
-      PositionMap position(GL.node_positions.begin(), get(vertex_index, g));
-
-      cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
-
-      //------------ Initial random layout ------------//
-      minstd_rand gen;
-      gen.seed(rng::get_random_seed());
-      rectangle_topology<> R(-width/2, width/2, -height/2, height/2);
-      random_graph_layout(g, position, R);
-      cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
-
-      //------------ Final force-directed layout ------------//
-      //  width *= MC.n_branches()*100;
-      //  height *= MC.n_branches()*100;
-      width *= 100;
-      height *= 100;
-
-      PositionVec Displacements(num_vertices(g));
-      PositionMap displacements(Displacements.begin(), get(vertex_index, g));
-
-      fruchterman_reingold_force_directed_layout(g, 
-      position, 
-      R,
-      my_square_distance_attractive_force(),
-      square_distance_repulsive_force(),
-      make_grid_force_pairs(R,position,g),
-      linear_cooling<double>(1000),
-      displacements
-      );
-
-      cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
-    */
-    return GL;
-}
+// Unfinished alternative layouts, retained as integration sketches for future comparisons.
+// Kamada-Kawai still needs an edge-weight property map and an enabled layout invocation.
+// The Fruchterman-Reingold experiment below includes its initialization and custom force;
+// neither experiment currently supplies a working layout option.
+// #include <boost/graph/graph_traits.hpp>
+// #include <boost/graph/adjacency_list.hpp>
+// #include <boost/graph/topological_sort.hpp>
+// #include <boost/graph/kamada_kawai_spring_layout.hpp>
+// #include <boost/graph/fruchterman_reingold.hpp>
+// 
+// typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS> Graph; 
+// typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
+// typedef boost::graph_traits<Graph>::edge_descriptor Edge_t;
+// 
+// 
+// graph_layout kamada_kawai_layout(graph_layout GL)
+// {
+//     const MC_tree& MC = GL.MC;
+//     Graph g(MC.n_nodes());
+// 
+//     //------------ Construct the Graph --------------//
+//     for(int i=0;i<MC.edges.size();i++) {
+// 	const mc_tree_edge& e = MC.edges[i];
+// 	add_edge(e.from, e.to, g);
+//     }
+// 
+//     //--------- Package position as property ---------//
+//     typedef vector<point_position> PositionVec;
+//     typedef boost::iterator_property_map<PositionVec::iterator,
+//                                          boost::property_map<Graph, boost::vertex_index_t>::type>
+// 	PositionMap;
+// 
+//     PositionMap position(GL.node_positions.begin(), get(boost::vertex_index, g));
+// 
+//     //--------- Package weights as property ---------//
+//     vector<double> weights(num_edges(g));
+// 
+//     //  typedef vector<double> WeightVec;
+//     //  typedef iterator_property_map<WeightVec::iterator, 
+//     //    property_map<Graph, edge_index_t>::type>
+//     //    WeightMap;
+// 
+//     //  WeightMap weight(weights.begin(), get(edge_index,g));
+// 
+//     // kamada_kawai_spring_layout(g, position, weight, boost::side_length(1.0) );
+// 
+//     return GL;
+// }
+// 
+// struct my_square_distance_attractive_force {
+//     template<typename Graph, typename T>
+//     T
+//     operator()(typename boost::graph_traits<Graph>::edge_descriptor,
+// 	       T k,
+// 	       T d,
+// 	       const Graph&) const
+// 	{
+// 	    k /= 10;
+// 	    d -= k;
+// 	    double temp = 100.0*d * d / k;
+// 	    if (d < k) temp *= -1;
+// 	    return temp;
+// 	}
+// };
+// 
+// 
+// #include <boost/graph/random_layout.hpp>
+// #include <boost/random/linear_congruential.hpp>
+// 
+// graph_layout fruchterman_reingold_layout(graph_layout GL, double /* width */, double /* height */)
+// {
+//     /*
+//       const MC_tree& MC = GL.MC;
+//       Graph g(MC.n_nodes());
+// 
+//       //------------ Construct the Graph --------------//
+//       for(int i=0;i<MC.edges.size();i++) {
+//       const mc_tree_edge& e = MC.edges[i];
+//       add_edge(e.from, e.to, g);
+//       }
+// 
+//       //--------- Package position as property ---------//
+//       typedef vector<point_position> PositionVec;
+//       typedef iterator_property_map<PositionVec::iterator,
+//       property_map<Graph, vertex_index_t>::type>
+//       PositionMap;
+// 
+//       PositionMap position(GL.node_positions.begin(), get(vertex_index, g));
+// 
+//       cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
+// 
+//       //------------ Initial random layout ------------//
+//       minstd_rand gen;
+//       gen.seed(rng::get_random_seed());
+//       rectangle_topology<> R(-width/2, width/2, -height/2, height/2);
+//       random_graph_layout(g, position, R);
+//       cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
+// 
+//       //------------ Final force-directed layout ------------//
+//       //  width *= MC.n_branches()*100;
+//       //  height *= MC.n_branches()*100;
+//       width *= 100;
+//       height *= 100;
+// 
+//       PositionVec Displacements(num_vertices(g));
+//       PositionMap displacements(Displacements.begin(), get(vertex_index, g));
+// 
+//       fruchterman_reingold_force_directed_layout(g, 
+//       position, 
+//       R,
+//       my_square_distance_attractive_force(),
+//       square_distance_repulsive_force(),
+//       make_grid_force_pairs(R,position,g),
+//       linear_cooling<double>(1000),
+//       displacements
+//       );
+// 
+//       cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
+//     */
+//     return GL;
+// }
+// 
 
 void energy_layout(graph_layout& GL, const graph_energy_function& E,int n=1000)
 {
@@ -2491,12 +2468,9 @@ void energy_layout(graph_layout& GL, const graph_energy_function& E,int n=1000)
 		successes=0;
 	    }
 
-	    // actually, we need an estimate of the CURVATURE to know when to stop!
-	    if (max_delta(GL.node_positions)/std::min(GL.x_width(),GL.y_width()) < 0.00001)
-		return;
-
-	    // (how to go from 'energy near bottom' to 'position near position at lowest energy',
-	    //  which is what really matters?
+            // TODO: Add a convergence rule that distinguishes a settled layout from a tiny
+            // step caused by repeated rejection. Absolute positions are not displacements;
+            // retain the iteration limit until a suitable criterion has been specified.
 
 	}
     }
@@ -2787,7 +2761,8 @@ void cairo_add_branch_bounds_as_path(cairo_t* cr, double x1, double y1, double x
 
 void graph_plotter::operator()(cairo_t* cr)
 {
-    vector<bool> e_cross_v = edge_crossing_vector(L);
+    // Optional crossing diagnostic: compute edge_crossing_vector(L) and use its entries
+    // to color crossed edges in the drawing loop below. O(E²); disabled in normal rendering.
 
     //  matrix<int> n_cross = crossed_nodes_matrix(L);
 
@@ -2801,7 +2776,8 @@ void graph_plotter::operator()(cairo_t* cr)
     const double dashes[] = {3.0*line_width, 3.0*line_width};
     cairo_set_line_width(cr, line_width);
 
-    vector<cloud> clouds = get_clouds(L.MC);
+    vector<cloud> clouds;
+    if (draw_clouds) clouds = get_clouds(L.MC);
     if (draw_clouds)
     {
 	if (log_verbose) cerr<<"draw-tree: Got "<<clouds.size()<<" clouds.\n";
@@ -2889,51 +2865,29 @@ void graph_plotter::operator()(cairo_t* cr)
 		else
 		    cairo_set_source_rgb (cr, 0.3, 1.0 ,0.3);
 
-		// pointing the other way
-		int b2 = L.MC.reverse(b);
-
-		int c1 = find_cloud(clouds,b);
-		int c2 = find_cloud(clouds,b2);
-
-		//	cairo_reset_clip(cr);
-
-		/// Only clip if we are not drawing type 2 edges
-		if ((c1 != -1 or c2 != -1) and draw_clouds and not draw_type_2_edges) 
-		{
-		    /*
-		      cairo_save(cr);
-		      cairo_make_cloud_path(cr, clouds[c1], line_width,L);
-
-		      cairo_set_source_rgb (cr, 0 , 0, 1);
-		      cairo_set_line_width(cr, line_width*2);
-		      //	  cairo_set_dash (cr, dashes, 2, 0.0);
-		      cairo_stroke(cr);
-		      cairo_restore(cr);
-		    */
-
-		    // so this must be clockwise, in order to work?
-		    cairo_add_branch_bounds_as_path(cr, x1, y1, x2, y2);
-
-		    if (c1 != -1)
-			cairo_make_cloud_path(cr, clouds[c1], line_width,L);
-
-		    if (c2 != -1)
-			cairo_make_cloud_path(cr, clouds[c2], line_width,L);
-
-		    cairo_clip(cr);
-		}
-	
-		// Um, but BOTH ends might wander!
-		// clip to all the ONE cloud that we wander over
-	    }
+                // Only cloud-only rendering needs to find attachment clouds and clip branches.
+                if (draw_clouds and not draw_type_2_edges)
+                {
+                    int c1 = find_cloud(clouds,b);
+                    int c2 = find_cloud(clouds,L.MC.reverse(b));
+                    if (c1 != -1 or c2 != -1)
+                    {
+                        // Retain the existing outer-rectangle/cloud winding convention.
+                        // To inspect a cloud outline, stroke cairo_make_cloud_path separately.
+                        cairo_add_branch_bounds_as_path(cr, x1, y1, x2, y2);
+                        if (c1 != -1) cairo_make_cloud_path(cr, clouds[c1], line_width,L);
+                        if (c2 != -1) cairo_make_cloud_path(cr, clouds[c2], line_width,L);
+                        cairo_clip(cr);
+                    }
+                }
+            }
 	    else //(t == 2)
 	    {
 		cairo_set_line_width(cr, line_width/2.0);
 		cairo_set_dash (cr, dashes, 2, 0.0);
 	    }
 
-	    if (false) // if (e_cross_v[e])
-		cairo_set_source_rgb (cr, 1 , 0, 0);
+	    // For crossing diagnostics: if (e_cross_v[e]) cairo_set_source_rgb(cr, 1, 0, 0);
       
 	    cairo_move_to (cr, x1, y1);
 	    cairo_line_to (cr, x2, y2);
@@ -3363,19 +3317,8 @@ int main(int argc,char* argv[])
 	    draw(filename,output,tp,width,height);	
 	    exit(0);
 	}
-	else if (args["layout"].as<string>() == "fr")
-	{
-	    graph_layout L = layout_on_circle(MC,2);
-	    L = fruchterman_reingold_layout(L,xw,yw);
-
-	    string filename = name+"-mctree";
-	    if (args.count("out"))
-		filename = args["out"].as<string>();
-
-	    graph_plotter gp(L, xw, yw, font_size);
-	    draw(filename,output,gp,width,height);
-	    exit(0);
-	}
+        else if (args["layout"].as<string>() == "fr")
+            throw myexception()<<"Layout 'fr' is not implemented; use graph, equal-angle, or equal-daylight.";
     
     
 	// lay out as a graph

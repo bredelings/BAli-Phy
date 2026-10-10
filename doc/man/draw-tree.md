@@ -61,7 +61,7 @@ Page fitting prevents clipping; it does not prevent labels from overlapping each
 : Give node lengths evenly to neighboring branches and zero the node lengths.
 
 **--layout** _arg_ (=graph)
-: Layout method: graph, equal-angle, equal-daylight, etc.
+: Layout method: graph, equal-angle, equal-daylight. The former `fr` placeholder is not implemented.
 
 **--greedy**
 : For equal-daylight layout: take as much daylight as possible?
