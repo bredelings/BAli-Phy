@@ -1233,21 +1233,20 @@ void equalize_daylight(tree_layout& L,int n)
 
     for(int b=0;b<branches.size();b++)
     {
-	vector<double> daylight_before(branches.size(), 2.0*M_PI);
-	vector<double> daylight_after(branches.size(), 2.0*M_PI);
+        // Only component b moves in this step. Its two minima are the same entries formerly
+        // obtained from all pairs; recompute them after each rotation to retain update order.
+        double daylight_before = 2*M_PI;
+        double daylight_after = 2*M_PI;
+        for(int j=0;j<branches.size();j++)
+            if (j != b)
+            {
+                daylight_after = std::min(daylight_after, angles[j] - angles[b]);
+                daylight_before = std::min(daylight_before, angles[b] - angles[j]);
+            }
 
-	for(int i=0;i<branches.size();i++) {
-	    for(int j=0;j<branches.size();j++) 
-		if (i!=j) {
-		    double delta = angles[j] - angles[i];
-		    daylight_after[i] = std::min(daylight_after[i],delta);
-		    daylight_before[j] = std::min(daylight_before[j],delta);
-		}
-	}
-
-	if (daylight_after[b] > 0 and daylight_before[b] > 0)
-	{
-	    double delta = (daylight_after[b] - daylight_before[b])/2.0;
+        if (daylight_after > 0 and daylight_before > 0)
+        {
+            double delta = (daylight_after - daylight_before)/2.0;
 	    angles[b].shift(delta);
 	    L.rotate_subtree(branches[b],delta);
 	}
@@ -1328,57 +1327,32 @@ vector<int> node_order(const Tree& T)
     return nodes;
 }
 
-void equalize_daylight(tree_layout& L, bool greedy, bool no_shade)
+// Try each pivot in the topology-dependent order. Only positions change, so rejected moves
+// need a coordinate snapshot, not a copy of the tree and all its cached partitions.
+void equalize_daylight(tree_layout& L, const vector<int>& nodes, bool greedy, bool no_shade)
 {
-    const Tree& T = L.T;
-    vector<int> nodes = node_order(T);
-
-    for(int i=0;i<nodes.size();i++) {
-	tree_layout L2 = L;
-	if (greedy)
-	    equalize_daylight_greedy(L2,nodes[i]);
-	else
-	    equalize_daylight(L2,nodes[i]);
-	if (not no_shade or not shades(L2))
-	    L = L2;
-    }
-}
-
-tree_layout equal_daylight_layout(SequenceTree MF, const vector<double>& node_radius,
-				  bool greedy, bool no_shade)
-{
-    tree_layout L = equal_angle_layout(MF,node_radius);
-
-    for(int i=0;i<3;i++)
-	equalize_daylight(L, greedy, no_shade);
-
-    return L;
-}
-
-tree_layout equal_daylight_layout(const MC_tree_with_lengths& MC,  bool greedy=false, bool no_shade=false)
-{
-    SequenceTree MF = MC.T;
-
-    // determine node lengths
-    vector<double> node_radius(MF.n_nodes(),0);
-
-    for(int n=0;n<MC.n_nodes();n++)
+    for(int node: nodes)
     {
-	int b = MC.branch_to_node(n);
-	if (not MC.partitions[b].full())
-	    throw myexception()<<"Hey!  This procedure only works for full partitions!";
-
-	int mf_n = MF.directed_branch(b).target();
-	int d = MF.node(mf_n).degree();
-	node_radius[mf_n] = 0;
-
-	// The degree could be zero is this node is at the end of a branch that
-	// directly wanders over another branch.
-	if (d > 0)
-	    node_radius[mf_n] = node_diameter(MC.node_length(n), d)/2.0;
+        vector<point_position> previous_positions;
+        if (no_shade) previous_positions = L.node_positions;
+        if (greedy)
+            equalize_daylight_greedy(L,node);
+        else
+            equalize_daylight(L,node);
+        if (no_shade and shades(L))
+            L.node_positions = std::move(previous_positions);
     }
+}
 
-    return equal_daylight_layout(MF,node_radius,greedy,no_shade);
+// Equal-angle initialization converts biological lengths to center distances exactly once.
+// The pivot order depends only on topology and is shared by all three daylight sweeps.
+tree_layout equal_daylight_layout(const MC_tree_with_lengths& MC, bool greedy=false, bool no_shade=false)
+{
+    tree_layout L = equal_angle_layout(MC);
+    const auto nodes = node_order(L.T);
+    for(int i=0;i<3;i++)
+        equalize_daylight(L, nodes, greedy, no_shade);
+    return L;
 }
 
 vector<int> walk_tree(const tree_layout& TL, const vector<int>& edges)
