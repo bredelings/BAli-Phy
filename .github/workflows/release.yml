@@ -5,6 +5,10 @@ on:
     tags:
       - "*"
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build_singularity_and_upload:
     runs-on: ubuntu-latest
@@ -50,7 +54,7 @@ jobs:
                ubuntu-gcc-15-26.04-arm,
                macos15-xcode16-intel,
                macos16-xcode26-arm,
-               windows
+               windows-native-mingw
                ]
 
         include:
@@ -93,8 +97,8 @@ jobs:
             version: "26"
             arch: "mac-arm64"
 
-          - name: windows
-            os: ubuntu-26.04
+          - name: windows-native-mingw
+            os: windows-latest
             compiler: mingw
             version: "N/A"
             arch: "win64"
@@ -126,7 +130,7 @@ jobs:
         fi
 
     - name: Install (Linux)
-      if: runner.os == 'Linux' && matrix.name != 'windows'
+      if: runner.os == 'Linux'
       run: |
         # If we're running in a docker image, we are already root
         if [ -n "${{ matrix.image }}" ]  ; then
@@ -155,17 +159,64 @@ jobs:
         sudo rm -rf /usr/local/share/boost
         sudo apt-get install -y libboost-all-dev
 
-    - name: Install (Linux -> Windows [cross])
-      if: matrix.name == 'windows'
+    - name: Install (Windows native MinGW)
+      if: matrix.name == 'windows-native-mingw'
+      id: msys2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+        path-type: inherit
+        # MSYS2 Git materializes the test-data links below. The Perl packages it pulls in are
+        # transitive CI dependencies; installed BAli-Phy does not require Perl.
+        install: >-
+          git
+          mingw-w64-x86_64-boost
+          mingw-w64-x86_64-cairo
+          mingw-w64-x86_64-ccache
+          mingw-w64-x86_64-cereal
+          mingw-w64-x86_64-cli11
+          mingw-w64-x86_64-eigen3
+          mingw-w64-x86_64-fmt
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-meson
+          mingw-w64-x86_64-ninja
+          mingw-w64-x86_64-pkgconf
+          mingw-w64-x86_64-range-v3
+          mingw-w64-x86_64-zstd
+
+    - name: Materialize test-data links (Windows native MinGW)
+      if: matrix.name == 'windows-native-mingw'
+      shell: msys2 {0}
       run: |
-        # If we're running in a docker image, we are already root
-        if [ -n "${{ matrix.image }}" ]  ; then
-          apt-get update && apt-get install -y sudo build-essential git cmake wget pkgconf
-          echo HOME=/root >> "$GITHUB_ENV"
-        fi
-        sudo apt-get update
-        sudo apt-get install -y pandoc
-        sudo apt-get install -y dos2unix fakeroot g++-mingw-w64 pacman-package-manager wine64
+        # GitHub's Windows checkout materializes repository symlinks as ordinary files.
+        # MSYS2 replaces each link with a copy that native Windows programs can read.
+        git config --local core.symlinks true
+        git checkout-index --force --all
+        git ls-files -s tests | awk '$1 == "120000" {print $4}' |
+          while IFS= read -r link; do
+            target=$(git show ":$link")
+            cmp -- "$link" "$(dirname "$link")/$target"
+            # The copies differ from their symlink blobs but do not change the built sources.
+            git update-index --assume-unchanged -- "$link"
+          done
+
+    - name: Configure native Windows environment
+      if: matrix.name == 'windows-native-mingw'
+      shell: pwsh
+      run: |
+        $mingwPrefix = Join-Path "${{ steps.msys2.outputs.msys2-location }}" "mingw64"
+        $mingwBin = Join-Path $mingwPrefix "bin"
+        if (-not (Test-Path (Join-Path $mingwBin "gcc.exe") -PathType Leaf)) {
+          throw "MSYS2 GCC was not found in $mingwBin"
+        }
+        Add-Content -Path $env:GITHUB_PATH -Value $mingwBin
+        Add-Content -Path $env:GITHUB_ENV -Value "BOOST_ROOT=$mingwPrefix"
+        Add-Content -Path $env:GITHUB_ENV -Value "MINGW_PREFIX=$mingwPrefix"
+
+        # GitHub sets ErrorActionPreference; extend fail-fast behavior to native commands.
+        New-Item -ItemType Directory -Force (Split-Path $PROFILE.CurrentUserAllHosts) | Out-Null
+        Add-Content $PROFILE.CurrentUserAllHosts '$PSNativeCommandUseErrorActionPreference = $true'
 
     - name: Select XCode version (macOS)
       if: runner.os == 'macOS' && matrix.compiler == 'xcode'
@@ -216,6 +267,11 @@ jobs:
           )
           echo "BOOST_ROOT=${BOOST_ROOT}"
 
+    - name: Install Pandoc (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: choco install pandoc --no-progress -y
+
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1.2.23
       with:
@@ -264,19 +320,10 @@ jobs:
         timeout_minutes: 5
         max_attempts: 3
         command: |
-          cd
-          git clone https://gitlab.com/testiphy/testiphy.git
+          git clone https://gitlab.com/testiphy/testiphy.git "${{ runner.temp }}/testiphy"
 
     - name: Mark installs complete
       run: echo "INSTALLS_COMPLETE=true" >> $GITHUB_ENV
-
-    - name: Make windows sysroot and generate cross file
-      if: matrix.name == 'windows'
-      # This command also generates the cross file
-      run: |
-        ${GITHUB_WORKSPACE}/scripts/make_winroot.sh
-        # The cross build produces only 64-bit programs, so do not probe for missing 32-bit Wine support.
-        echo "WINEARCH=win64" >> "$GITHUB_ENV"
 
     - name: Choose test seed
       shell: bash
@@ -300,10 +347,7 @@ jobs:
            # Exercise optimized code with assertions, without retaining full debug information.
            ARGS="${ARGS} -Db_ndebug=false"
         fi
-        if [ "${{ matrix.name }}" = "windows" ] && [ "${{ matrix.arch }}" = "win64" ]; then
-           ARGS="${ARGS} --cross-file=win64-cross.txt"
-        fi
-        if [ "${{ runner.os }}" = "Linux" ] && [ "${{ matrix.name }}" != "windows" ] && [ "${{ matrix.sanitize }}" != "" ] ; then
+        if [ "${{ runner.os }}" = "Linux" ] && [ "${{ matrix.sanitize }}" != "" ] ; then
            # Address sanitizer can't find its dylibs on OS X?
            ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
         fi
@@ -332,10 +376,43 @@ jobs:
         meson install -C build --skip-subprojects
         ccache -s
 
+    - name: Configure (Windows native MinGW)
+      if: matrix.name == 'windows-native-mingw'
+      shell: pwsh
+      run: |
+        $installPrefix = Join-Path $PWD "local"
+        $env:CC = "ccache gcc"
+        $env:CXX = "ccache g++"
+
+        $tools = @("gcc.exe", "g++.exe", "meson.exe", "ninja.exe", "pkgconf.exe", "ccache.exe")
+        Get-Command $tools -ErrorAction Stop | Select-Object Name, Source
+
+        meson setup build "--prefix=$installPrefix" `
+          "--buildtype=release" "-Dtest_seed=$env:seed"
+
+    - name: Build (Windows native MinGW)
+      if: matrix.name == 'windows-native-mingw'
+      shell: pwsh
+      run: |
+        ccache -p
+        ccache -s
+        ninja -C build -j2
+        meson install -C build --skip-subprojects
+
+        # Catch a missing Cairo dependency even if Meson otherwise completes successfully.
+        if (-not (Test-Path "build/src/draw-tree.exe" -PathType Leaf)) {
+          throw "The build did not produce draw-tree.exe"
+        }
+        if (-not (Test-Path "local/bin/draw-tree.exe" -PathType Leaf)) {
+          throw "The install did not include draw-tree.exe"
+        }
+
+        ccache -s
+
     - name: Get version
       id: get_version
       run: |
-        echo "version=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+        echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
 
     - name: Copy shared libs (Linux)
       if: matrix.arch == 'linux64'
@@ -386,19 +463,9 @@ jobs:
         if [ -n "${BOOST_ROOT}" ] && [ "${{ runner.os }}" != "macOS" ] ; then
           export LD_LIBRARY_PATH="${BOOST_ROOT}/lib"
         fi
-        if [ "${{ matrix.name }}" = "windows" ] ; then
-          # Start the server explicitly so the first Wine client inherits the persistence timeout.
-          wine_server=$(dpkg-query -L wine64 | awk '/\/wineserver(64)?$/ { print; exit }')
-          test -x "$wine_server"
-          "$wine_server" -p60
-          export WINEPATH="$(WINEDEBUG=-all winepath -w "$HOME/local/bin")"
-          BALIPHY="wine bali-phy"
-          STATREPORT="wine statreport"
-        else
-          export PATH=$HOME/local/bin:$PATH
-          BALIPHY=bali-phy
-          STATREPORT=statreport
-        fi
+        export PATH=$HOME/local/bin:$PATH
+        BALIPHY=bali-phy
+        STATREPORT=statreport
         echo "Running installed-program tests with seed=$seed"
 
         echo ::group::Basic tests
@@ -408,9 +475,7 @@ jobs:
         ${BALIPHY} --seed=$seed 5d-muscle.fasta --iterations=50
         ${BALIPHY} --seed=$(($seed+1)) 5d-muscle.fasta --iterations=50
         ${STATREPORT} 5d-muscle-1/C1.log
-        if [ "${{ matrix.name }}" != "windows" ] ; then
-            bpy-summarize 5d-muscle-1 5d-muscle-2
-        fi
+        bpy-summarize 5d-muscle-1 5d-muscle-2
         rm -f token0.dot
         ${BALIPHY} --seed=$seed -V4 run tests/prob_prog/demos/airline/Model.hs --test
         test -s token0.dot
@@ -436,8 +501,7 @@ jobs:
         fi
 
         if [ "$skip" != "most" ] ; then
-           cd
-           cd testiphy
+           cd "$RUNNER_TEMP/testiphy"
            rm -rf tests/likelihood/one-sequence
 
            echo ::group::testiphy variable A
@@ -448,6 +512,80 @@ jobs:
              ./testiphy ${BALIPHY} --seed=$seed -Inone
              echo ::endgroup::
         fi
+
+    - name: Test (Windows native MinGW)
+      if: matrix.name == 'windows-native-mingw'
+      shell: pwsh
+      run: |
+        $installedBin = (Resolve-Path local/bin).Path
+        $baliPhy = Join-Path $installedBin "bali-phy.exe"
+        $env:PATH = "$installedBin;$env:PATH"
+
+        & $baliPhy help
+        & $baliPhy --version
+        & $baliPhy "$env:GITHUB_WORKSPACE/examples/5S-rRNA/5d-muscle.fasta" --test
+        & $baliPhy "--seed=$env:seed" -V4 run tests/prob_prog/demos/airline/Model.hs --test
+        if (-not (Test-Path token0.dot -PathType Leaf)) { throw "Missing token0.dot" }
+        if (-not (Test-Path local/share/man/man1/bali-phy.1 -PathType Leaf)) {
+          throw "Generated manual pages were not installed"
+        }
+
+        # PowerShell passes native slash options without MSYS2 interpreting them as Unix paths.
+        & $baliPhy "/version"
+
+        meson test -C build --print-errorlogs --num-processes 2
+
+    - name: Test bpy-summarize without R (Windows native)
+      if: matrix.name == 'windows-native-mingw'
+      shell: pwsh
+      run: |
+        $pythonDirectory = Split-Path (Get-Command python).Source
+        $installedBin = (Resolve-Path local/bin).Path
+        $env:PATH = "$installedBin;$pythonDirectory;$env:SystemRoot\System32"
+
+        if (Get-Command R.exe -CommandType Application -ErrorAction SilentlyContinue) {
+          throw "R unexpectedly remains available on the restricted PATH"
+        }
+        bpy-summarize --help
+        cmd /c "bpy-summarize --help"
+        bali-phy-pkg --help
+        cmd /c "bali-phy-pkg --help"
+        # Verify the installed runtime closure can load draw-tree without /mingw64/bin.
+        draw-tree --help
+
+        New-Item -ItemType Directory bpy-summarize-smoke | Out-Null
+        Push-Location bpy-summarize-smoke
+        bali-phy "$env:GITHUB_WORKSPACE\examples\5S-rRNA\5d-muscle.fasta" `
+          "--seed=$env:seed" --iterations=50 --name=analysis-run
+
+        $analysisOutput = bpy-summarize analysis-run-1 --outdir Results 2>&1 | Out-String
+        $analysisOutput
+        if ($analysisOutput -notmatch "Program 'R' not found") {
+          throw "bpy-summarize did not report that R was unavailable"
+        }
+        if (-not (Test-Path Results/index.html)) {
+          throw "bpy-summarize did not generate Results/index.html"
+        }
+        # Verify bpy-summarize can render through the packaged Cairo and fontconfig runtime.
+        if (-not (Test-Path Results/greedy-tree.svg)) {
+          throw "bpy-summarize did not generate Results/greedy-tree.svg"
+        }
+        if (-not (Select-String -Path Results/index.html -Pattern "Not generated: can't find R" -SimpleMatch -Quiet)) {
+          throw "The report did not explain that its R-dependent figure was omitted"
+        }
+        Pop-Location
+
+    - name: Testiphy (Windows native MinGW)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $env:PATH = "$(Resolve-Path local/bin);$env:PATH"
+        # testiphy is Python and launches native executables directly; use the same suites as Unix.
+        Push-Location (Join-Path $env:RUNNER_TEMP "testiphy")
+        Remove-Item -Recurse -Force tests/likelihood/one-sequence
+        python testiphy bali-phy "--seed=$env:seed"
+        python testiphy bali-phy "--seed=$env:seed" -Inone
+        Pop-Location
 
     - name: Upload tests if they failed
       uses: actions/upload-artifact@v4
@@ -460,6 +598,7 @@ jobs:
       id: create_tarball
       run: |
         OUTPUT=$HOME/local
+        if [ "$RUNNER_OS" = Windows ]; then OUTPUT="$GITHUB_WORKSPACE/local"; fi
         PACKAGE=bali-phy-${{ steps.get_version.outputs.version }}
         ARCH=${{ matrix.arch }}
         if [ "$ARCH" = linux64 ] ; then ARCH=${{ matrix.os }} ; fi
