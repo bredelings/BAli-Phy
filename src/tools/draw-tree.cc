@@ -2950,23 +2950,19 @@ void cairo_make_cloud_path(cairo_t* cr,const cloud& C,const double line_width, c
 
 }
 
-void cairo_add_clip_extents_as_path(cairo_t* cr)
+// Bound the stroked branch locally so cloud exclusion does not depend on the page or surface.
+// The padding keeps the outer clip edge away from the stroke, including on recording surfaces.
+void cairo_add_branch_bounds_as_path(cairo_t* cr, double x1, double y1, double x2, double y2)
 {
-    double x1;
-    double y1;
-    double x2;
-    double y2;
-
-    cairo_clip_extents (cr, &x1, &y1, &x2, &y2);
-
-    //  cerr<<"clip extents ("<<x1<<","<<y1<<") - ("<<x2<<","<<y2<<")\n";
-
-    cairo_move_to(cr,x1,y1);
-    cairo_line_to(cr,x2,y1);
-    cairo_line_to(cr,x2,y2);
-    cairo_line_to(cr,x1,y2);
-    cairo_close_path(cr);
+    cairo_move_to(cr, x1, y1);
+    cairo_line_to(cr, x2, y2);
+    double left, top, right, bottom;
+    cairo_stroke_extents(cr, &left, &top, &right, &bottom);
+    double padding = cairo_get_line_width(cr);
+    cairo_new_path(cr);
+    cairo_rectangle(cr, left-padding, top-padding, right-left+2*padding, bottom-top+2*padding);
 }
+
 
 void graph_plotter::operator()(cairo_t* cr)
 {
@@ -3113,7 +3109,7 @@ void graph_plotter::operator()(cairo_t* cr)
 		    */
 
 		    // so this must be clockwise, in order to work?
-		    cairo_add_clip_extents_as_path(cr);
+		    cairo_add_branch_bounds_as_path(cr, x1, y1, x2, y2);
 
 		    if (c1 != -1)
 			cairo_make_cloud_path(cr, clouds[c1], line_width,L);
