@@ -1412,24 +1412,47 @@ vector<int> walk_tree(const tree_layout& TL)
 
 
 
-double get_text_length(cairo_t* cr, const string& s)
+// Draw node bubbles after branches, using tree-unit radii and point-scaled dashed outlines.
+void draw_node_circles(cairo_t* cr, const common_layout& layout, double line_width)
 {
-    cairo_text_extents_t extents;
-    cairo_text_extents (cr, s.c_str(), &extents);
-    return extents.width;
+    cairo_save(cr);
+    const double dashes[] = {3*line_width, 3*line_width};
+    cairo_set_dash(cr, dashes, 2, 0);
+    cairo_set_line_width(cr, line_width/2);
+    for(int n=0;n<layout.node_radius.size();n++)
+        if (layout.node_radius[n] > 0)
+        {
+            const auto& p = layout.node_positions[n];
+            const auto& color = layout.node_color[n];
+            cairo_arc(cr, p.x, p.y, layout.node_radius[n], 0, 2*M_PI);
+            cairo_set_source_rgb(cr, color.R, color.G, color.B);
+            cairo_fill_preserve(cr);
+            cairo_set_source_rgb(cr, 0, 0, 0);
+            cairo_stroke(cr);
+        }
+    cairo_restore(cr);
 }
 
-double get_text_height(cairo_t* cr, const string& s)
+// Place a horizontal tip label using the existing branch-direction offsets and alignment.
+void draw_horizontal_label(cairo_t* cr, const string& name, const point_position& tip,
+                           const point_position& neighbor, double line_width)
 {
+    double a = atan2(tip.y-neighbor.y, tip.x-neighbor.x);
     cairo_text_extents_t extents;
-    cairo_text_extents (cr, s.c_str(), &extents);
-    return extents.height;
+    cairo_text_extents(cr, name.c_str(), &extents);
+    double x = tip.x + cos(a)*(line_width+extents.height/8);
+    double y = tip.y + sin(a)*(line_width+extents.height/2);
+    y += 0.5*extents.height;
+    if (cos(a) < 0) x -= extents.width;
+    cairo_move_to(cr, x, y);
+    cairo_show_text(cr, name.c_str());
 }
 
 struct tree_plotter: public cairo_plotter
 {
     bool horizontal_names;
-    tree_layout L;
+    // Drawing is synchronous; the caller owns the layout for the plotter's lifetime.
+    const tree_layout& L;
     void operator()(cairo_t*);
     tree_plotter(const tree_layout& tl,double xw, double yw,double fs)
         :cairo_plotter(0.8*std::min(xw*inch/tl.x_width(), yw*inch/tl.y_width()), fs),
@@ -1445,7 +1468,6 @@ void tree_plotter::operator()(cairo_t* cr)
 
     const double pt = 1.0/scale;
     const double line_width = 2.0*pt;
-    const double dashes[] = {3.0*line_width, 3.0*line_width};
     cairo_set_line_width(cr, line_width);
 
     // draw the branches
@@ -1466,29 +1488,7 @@ void tree_plotter::operator()(cairo_t* cr)
 	cairo_stroke (cr);
     }
 
-    cairo_set_dash (cr, dashes, 2, 0.0);
-
-    // draw the circles
-    for(int n=0;n<L.node_radius.size();n++) 
-    {
-	double x = L.node_positions[n].x;
-	double y = L.node_positions[n].y;
-
-	if (L.node_radius[n] > 0) {
-	    cairo_save(cr);
-	    RGB& color = L.node_color[n];
-	    // cerr<<"node n="<<n<<"  radius = "<<L.node_radius[n]<<endl;
-	    cairo_arc(cr, x, y, L.node_radius[n], 0.0, 2.0 * M_PI);
-
-	    cairo_set_source_rgb (cr, color.R , color.G, color.B);
-	    cairo_fill_preserve (cr);
-
-	    cairo_set_source_rgb (cr, 0 , 0, 0);
-	    cairo_set_line_width(cr, line_width/2.0);
-	    cairo_stroke(cr);
-	    cairo_restore(cr);
-	}
-    }
+    draw_node_circles(cr, L, line_width);
 
     cairo_select_font_face (cr, "Sans", 
 			    CAIRO_FONT_SLANT_NORMAL,
@@ -1496,31 +1496,12 @@ void tree_plotter::operator()(cairo_t* cr)
     cairo_set_font_size (cr, font_size()/scale);
   
     if (horizontal_names)
-	for(int l=0;l<L.T.n_leaves();l++)
-	{ 
-	    double x1 = L.node_positions[l].x;
-	    double y1 = L.node_positions[l].y;
-
-	    int p = L.T.directed_branch(l).target();
-      
-	    double x2 = L.node_positions[p].x;
-	    double y2 = L.node_positions[p].y;
-      
-	    double a = atan2(y1-y2,x1-x2);
-      
-	    double W = get_text_length(cr, L.T.get_label(l));
-	    double H = get_text_height(cr, L.T.get_label(l));
-      
-	    x1 += cos(a)*(line_width+H/8);
-	    y1 += sin(a)*(line_width+H/2);
-      
-	    y1 += 0.5*H;
-      
-	    if (cos(a) < 0) x1 -= W;
-      
-	    cairo_move_to (cr, x1, y1);
-	    cairo_show_text (cr, L.T.get_label(l).c_str());
-	}
+        for(int l=0;l<L.T.n_leaves();l++)
+        {
+            int parent = L.T.directed_branch(l).target();
+            draw_horizontal_label(cr, L.T.get_label(l), L.node_positions[l],
+                                  L.node_positions[parent], line_width);
+        }
     else
 	for(int l=0;l<L.T.n_leaves();l++)
 	{  
@@ -1537,8 +1518,10 @@ void tree_plotter::operator()(cairo_t* cr)
 
 	    double a = atan2(dy,dx);
 
-	    double W = get_text_length(cr, L.T.get_label(l));
-	    double H = get_text_height(cr, L.T.get_label(l));
+	    cairo_text_extents_t extents;
+            cairo_text_extents(cr, L.T.get_label(l).c_str(), &extents);
+            double W = extents.width;
+            double H = extents.height;
 
 	    //    cout<<L.T.get_label(l).c_str()<<"   dx = "<<dx<<"  dy = "<<dy<<"   a = "<<a<<endl;
 
@@ -2701,7 +2684,8 @@ int find_cloud(const vector<cloud>& clouds,int b)
 
 struct graph_plotter: public cairo_plotter
 {
-    graph_layout L;
+    // Drawing is synchronous; the caller owns the layout for the plotter's lifetime.
+    const graph_layout& L;
     void operator()(cairo_t*);
 
     bool draw_clouds = false;
@@ -2959,44 +2943,7 @@ void graph_plotter::operator()(cairo_t* cr)
 	cairo_restore(cr);
     }
 
-    cairo_set_dash (cr, dashes, 2, 0.0);
-
-    // draw the circles
-    for(int n=0;n<L.node_radius.size();n++) 
-    {
-	double x = L.node_positions[n].x;
-	double y = L.node_positions[n].y;
-
-	if (L.node_radius[n] > 0) {
-	    cairo_save(cr);
-	    RGB& color = L.node_color[n];
-	    //cerr<<"node n="<<n<<"  radius = "<<L.node_radius[n]<<endl;
-	    cairo_arc(cr, x, y, L.node_radius[n], 0.0, 2.0 * M_PI);
-
-	    cairo_set_source_rgb (cr, color.R , color.G, color.B);
-	    cairo_fill_preserve (cr);
-
-	    cairo_set_source_rgb (cr, 0 , 0, 0);
-	    cairo_set_line_width(cr, line_width/2.0);
-	    cairo_stroke(cr);
-	    cairo_restore(cr);
-	}
-
-	cairo_save(cr);
-	if (false) { // if (n_cross_v[n])
-	    //      cerr<<"n_cross: "<<n<<endl;
-	    double R = 0.001;
-	    cairo_arc(cr, x, y, R, 0.0, 2.0 * M_PI);
-
-	    cairo_set_source_rgb (cr, 0 , 0, 1);
-	    cairo_fill (cr);
-
-	    //      cairo_set_source_rgb (cr, 0 , 0, 0);
-	    //      cairo_set_line_width(cr, line_width/2.0);
-	    //      cairo_stroke(cr);
-	}
-	cairo_restore(cr);
-    }
+    draw_node_circles(cr, L, line_width);
 
     cairo_select_font_face (cr, "Sans", 
 			    CAIRO_FONT_SLANT_NORMAL,
@@ -3004,38 +2951,15 @@ void graph_plotter::operator()(cairo_t* cr)
     cairo_set_font_size (cr, font_size()/scale);
 
     for(int l=0;l<L.MC.n_leaves();l++)
-    {  
-	int n = L.MC.leaf(l);
-	string name = L.MC.names()[l];
-	int b = L.MC.branch_to_node(n);
-	int n1 = L.MC.mapping[b];
-	int n2 = L.MC.mapping[L.MC.reverse(b)];
-
-	double x1 = L.node_positions[n1].x;
-	double y1 = L.node_positions[n1].y;
-
-	double x2 = L.node_positions[n2].x;
-	double y2 = L.node_positions[n2].y;
-
-	double a = atan2(y1-y2,x1-x2);
-
-	double W = get_text_length(cr, name);
-	double H = get_text_height(cr, name);
-
-	x1 += cos(a)*(line_width+H/8);
-	y1 += sin(a)*(line_width+H/2);
-
-	y1 += 0.5*H;
-
-	if (cos(a) < 0) x1 -= W;
-
-	cairo_move_to (cr, x1, y1);
-	cairo_show_text (cr, name.c_str());
+    {
+        int node = L.MC.leaf(l);
+        int branch = L.MC.branch_to_node(node);
+        int neighbor = L.MC.mapping[L.MC.reverse(branch)];
+        draw_horizontal_label(cr, L.MC.names()[l], L.node_positions[node],
+                              L.node_positions[neighbor], line_width);
     }
-
-    
- 
 }
+
 
 void draw_graph(const MC_tree_with_lengths& T,const string& name)
 {
@@ -3456,7 +3380,7 @@ int main(int argc,char* argv[])
     
 	// lay out as a graph
 	MC.scale(1.0/MC.total_length());
-	graph_layout L2 = layout_on_circle(MC,2);
+	graph_layout layout = layout_on_circle(MC,2);
     
 	if (args.count("tree-layout-initial"))
 	{
@@ -3465,10 +3389,8 @@ int main(int argc,char* argv[])
 	    // *Transfer tree layout to graph layout* -- this only works when the graph IS a tree
 	    // otherwise, multiple graph nodes would end up at the same position
 	    for(int i=0;i<MC.C;i++)
-		L2.node_positions[i] = LA.node_positions[MC.graph_node_to_tree_node(i)];
+		layout.node_positions[i] = LA.node_positions[MC.graph_node_to_tree_node(i)];
 	}
-
-	graph_layout L3 = L2;
 
 
 	double length_weight = 10000000;
@@ -3477,7 +3399,7 @@ int main(int argc,char* argv[])
 	/*
 	  for(int i=0;i<10;i++) {
 	  double w = length_weight/100*double(i)/10;
-	  L3 = energy_layout(L3,energy2(1,w,1,0),1000);
+	  layout = energy_layout(layout,energy2(1,w,1,0),1000);
 	  }
 	*/
 
@@ -3490,18 +3412,18 @@ int main(int argc,char* argv[])
 
 	// FIXME - the repulsion should actually depend on the number of nodes!
 	if (not args.count("tree-layout-initial")) {
-	    energy_layout(L3,energy2(1,1000,stretchy_weight,0),400);
-	    energy_layout(L3,energy2(1,10000,stretchy_weight,0),400);
-	    energy_layout(L3,energy2(1,100000,stretchy_weight,0),400);
-	    energy_layout(L3,energy2(1,1000000,stretchy_weight,0),800);
+	    energy_layout(layout,energy2(1,1000,stretchy_weight,0),400);
+	    energy_layout(layout,energy2(1,10000,stretchy_weight,0),400);
+	    energy_layout(layout,energy2(1,100000,stretchy_weight,0),400);
+	    energy_layout(layout,energy2(1,1000000,stretchy_weight,0),800);
 	}
 
 	for(int i=0;i<n_iterations;i++) 
 	{
-	    energy_layout(L3,energy2(1,length_weight,stretchy_weight,0));
-	    L3.rotate_for_aspect_ratio(xw,yw);
+	    energy_layout(layout,energy2(1,length_weight,stretchy_weight,0));
+	    layout.rotate_for_aspect_ratio(xw,yw);
 
-	    graph_plotter gp(L3, xw, yw, font_size);
+	    graph_plotter gp(layout, xw, yw, font_size);
 
 	    if (args.count("draw-clouds")) {
 		gp.draw_clouds = true;
@@ -3519,9 +3441,9 @@ int main(int argc,char* argv[])
 	// improve angular resolution
 	int a_iterations = args["angle_iterations"].as<int>();
 	for(int i=0;i<a_iterations;i++) {
-	    energy_layout(L3,energy2(1,10000000,0.01,50));
-	    L3.rotate_for_aspect_ratio(xw,yw);
-	    graph_plotter gp(L3, xw, yw, font_size);
+	    energy_layout(layout,energy2(1,10000000,0.01,50));
+	    layout.rotate_for_aspect_ratio(xw,yw);
+	    graph_plotter gp(layout, xw, yw, font_size);
 
 	    if (args.count("draw-clouds")) {
 		gp.draw_clouds = true;
