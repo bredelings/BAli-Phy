@@ -1,6 +1,7 @@
 name: Upload release artifacts
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "*"
@@ -11,6 +12,7 @@ defaults:
 
 jobs:
   build_singularity_and_upload:
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -47,61 +49,19 @@ jobs:
   build_and_upload:
     strategy:
       matrix:
-        name: [
-               ubuntu-gcc-14-24.04,
-               ubuntu-gcc-14-24.04-arm,
-               ubuntu-gcc-15-26.04,
-               ubuntu-gcc-15-26.04-arm,
-               macos15-xcode16-intel,
-               macos16-xcode26-arm,
-               windows-native-mingw
-               ]
-
-        include:
-          - name: ubuntu-gcc-14-24.04
-            os: ubuntu-24.04
-            compiler: gcc
-            version: "14"
-            cxxflags: "-march=x86-64-v3"
-            arch: "linux64"
-
-          - name: ubuntu-gcc-14-24.04-arm
-            os: ubuntu-24.04-arm
-            compiler: gcc
-            version: "14"
-            arch: "linux64"
-
-          - name: ubuntu-gcc-15-26.04
-            os: ubuntu-26.04
-            compiler: gcc
-            version: "15"
-            cxxflags: "-march=x86-64-v3"
-            arch: "linux64"
-
-          - name: ubuntu-gcc-15-26.04-arm
-            os: ubuntu-26.04-arm
-            compiler: gcc
-            version: "15"
-            arch: "linux64"
-
-          - name: macos15-xcode16-intel
-            os: macos-15-intel
-            compiler: xcode
-            version: "16"
-            cxxflags: "-march=x86-64-v3"
-            arch: "mac-intel64"
-
-          - name: macos16-xcode26-arm
-            os: macos-latest
-            compiler: xcode
-            version: "26"
-            arch: "mac-arm64"
-
-          - name: windows-native-mingw
-            os: windows-latest
-            compiler: mingw
-            version: "N/A"
-            arch: "win64"
+        # Manual runs validate only Windows and never publish release assets.
+        include: >-
+          ${{ fromJSON(github.event_name == 'workflow_dispatch' &&
+            '[{"name": "windows-native-mingw", "os": "windows-latest", "compiler": "mingw", "version": "N/A", "arch": "win64"}]' ||
+            '[
+              {"name": "ubuntu-gcc-14-24.04", "os": "ubuntu-24.04", "compiler": "gcc", "version": "14", "cxxflags": "-march=x86-64-v3", "arch": "linux64"},
+              {"name": "ubuntu-gcc-14-24.04-arm", "os": "ubuntu-24.04-arm", "compiler": "gcc", "version": "14", "arch": "linux64"},
+              {"name": "ubuntu-gcc-15-26.04", "os": "ubuntu-26.04", "compiler": "gcc", "version": "15", "cxxflags": "-march=x86-64-v3", "arch": "linux64"},
+              {"name": "ubuntu-gcc-15-26.04-arm", "os": "ubuntu-26.04-arm", "compiler": "gcc", "version": "15", "arch": "linux64"},
+              {"name": "macos15-xcode16-intel", "os": "macos-15-intel", "compiler": "xcode", "version": "16", "cxxflags": "-march=x86-64-v3", "arch": "mac-intel64"},
+              {"name": "macos16-xcode26-arm", "os": "macos-latest", "compiler": "xcode", "version": "26", "arch": "mac-arm64"},
+              {"name": "windows-native-mingw", "os": "windows-latest", "compiler": "mingw", "version": "N/A", "arch": "win64"}
+            ]') }}
 
     runs-on: ${{ matrix.os }}
     container:
@@ -412,7 +372,9 @@ jobs:
     - name: Get version
       id: get_version
       run: |
-        echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+        version=$GITHUB_REF_NAME
+        if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then version="validation-$GITHUB_RUN_ID"; fi
+        echo "version=$version" >> "$GITHUB_OUTPUT"
 
     - name: Copy shared libs (Linux)
       if: matrix.arch == 'linux64'
@@ -603,11 +565,56 @@ jobs:
         ARCH=${{ matrix.arch }}
         if [ "$ARCH" = linux64 ] ; then ARCH=${{ matrix.os }} ; fi
         TAR=${PACKAGE}-${ARCH}.tar.gz
-        cp -a $OUTPUT $PACKAGE
-        tar -zcf $TAR ${PACKAGE}
+        cp -a "$OUTPUT" "$PACKAGE"
+        tar -zcf "$TAR" "$PACKAGE"
         echo "archive=${TAR}" >> $GITHUB_OUTPUT
 
+    - name: Test extracted Windows archive
+      if: runner.os == 'Windows'
+      shell: pwsh
+      env:
+        ARCHIVE: ${{ steps.create_tarball.outputs.archive }}
+        PACKAGE_VERSION: ${{ steps.get_version.outputs.version }}
+      run: |
+        # Test relocation and bundled dependencies, without the source or MSYS2 on PATH.
+        $archive = Join-Path $PWD $env:ARCHIVE
+        $pythonDirectory = Split-Path (Get-Command python).Source
+        $unpack = Join-Path $env:RUNNER_TEMP "release archive check"
+        New-Item -ItemType Directory $unpack | Out-Null
+        tar -xzf $archive -C $unpack
+        $package = Join-Path $unpack "bali-phy-$env:PACKAGE_VERSION"
+        $env:PATH = "$package/bin;$pythonDirectory;$env:SystemRoot\System32"
+        if (Get-Command R.exe -CommandType Application -ErrorAction SilentlyContinue) {
+          throw "R unexpectedly remains available on the restricted PATH"
+        }
+        Push-Location $unpack
+        bali-phy --version
+        bali-phy help M8a_test
+        draw-tree --help
+        cmd /c "bpy-summarize --help"
+        cmd /c "bali-phy-pkg --help"
+        bali-phy "$package/share/doc/bali-phy/examples/5S-rRNA/5d-muscle.fasta" `
+          "--seed=$env:seed" --iterations=50 --name=archive-run
+        statreport archive-run-1/C1.log
+        bpy-summarize archive-run-1 --outdir Results
+        foreach ($file in @("Results/index.html", "Results/greedy-tree.svg")) {
+          if (-not (Test-Path $file -PathType Leaf)) { throw "Missing $file" }
+        }
+        if (-not (Select-String -Path Results/index.html -Pattern "Not generated: can't find R" -SimpleMatch -Quiet)) {
+          throw "The report did not explain that its R-dependent figure was omitted"
+        }
+        Pop-Location
+
+    - name: Upload validation archive
+      if: github.event_name == 'workflow_dispatch'
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-release-validation
+        path: ${{ steps.create_tarball.outputs.archive }}
+        if-no-files-found: error
+
     - name: Upload Release Asset
+      if: github.event_name != 'workflow_dispatch'
       uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -618,7 +625,7 @@ jobs:
         prerelease: false
 
     - name: Get committer email
-      if: failure() && env.INSTALLS_COMPLETE == 'true'
+      if: failure() && env.INSTALLS_COMPLETE == 'true' && github.event_name != 'workflow_dispatch'
       id: get_email
       uses: actions/github-script@v7
       with:
@@ -632,7 +639,7 @@ jobs:
         result-encoding: string
 
     - name: Email notification for upterm session
-      if: failure() && env.INSTALLS_COMPLETE == 'true'
+      if: failure() && env.INSTALLS_COMPLETE == 'true' && github.event_name != 'workflow_dispatch'
       uses: dawidd6/action-send-mail@v3
       with:
         server_address: smtp.gmail.com
@@ -654,7 +661,7 @@ jobs:
 
 
     - name: Setup upterm session on failure
-      if: failure() && env.INSTALLS_COMPLETE == 'true'
+      if: failure() && env.INSTALLS_COMPLETE == 'true' && github.event_name != 'workflow_dispatch'
       uses: owenthereal/action-upterm@v1
       with:
         limit-access-to-actor: true
