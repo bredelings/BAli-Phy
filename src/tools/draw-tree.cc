@@ -1376,9 +1376,10 @@ vector<int> node_order(const Tree& T)
     for(int i=T.n_leaves();i<T.n_nodes();i++) 
 	nodes.push_back(i);
 
-    vector<int> S;
-    for(int i=0;i<T.n_nodes();i++) 
-	S.push_back(node_size(T,nodes.back()));
+    // The comparator indexes scores by node number; only internal nodes have a node_size.
+    vector<int> S(T.n_nodes(),0);
+    for(int n: nodes)
+	S[n] = node_size(T,n);
 
     std::sort(nodes.begin(), nodes.end(), sequence_order<int>(S));
     std::reverse(nodes.begin(), nodes.end());
