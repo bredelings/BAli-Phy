@@ -4,15 +4,32 @@
 
 # NAME
 
-**tree-mean-lengths** - Compute the mean lengths for branches in the given topology.
+**tree-mean-lengths** - Compute conditional branch and node lengths for query trees.
 
 # SYNOPSIS
 
 **tree-mean-lengths** **--tree** _tree_ [OPTIONS] _file1_ [_file2_ ...]
 
+**tree-mean-lengths** **--trees** _query_ _output_ [**--trees** _query_ _output_ ...]
+[OPTIONS] _file1_ [_file2_ ...]
+
 # DESCRIPTION
 
-Compute the mean lengths for branches in the given topology.
+Compute conditional branch and node lengths for query trees.
+
+Use **--tree** for one query with output on stdout, or repeat **--trees** to
+specify query/output filename pairs. Each **--trees** takes exactly two arguments;
+remaining positional arguments are sample files. Filenames are literal: commas
+and colons are not separators. The two query options are mutually exclusive.
+
+Each query file supplies its first tree, using the existing Newick/NEXUS loader.
+All queries must have the same leaf-label set, but need not be nested or compatible.
+The sample files are read once, applying **--skip**, **--subsample**, and **--until**
+independently to each file. **--ignore** prunes samples; query trees must already
+contain the resulting leaf set. All output-mode options apply to every query.
+
+An output filename of **-** means stdout. At most one query may use stdout. Output
+filenames must be distinct and must not refer to any query or sample input file.
 
 Trees are interpreted as unrooted. An artificial degree-two Newick root is
 suppressed in both the query and sampled trees; its two branches form one edge.
@@ -31,21 +48,34 @@ By default, each node mean is divided equally among its incident query branches
 and added to their branch means. Use **--show-node-lengths** to keep the two kinds
 of estimates separate, or **--no-node-lengths** for branch means alone.
 
-A requested branch or node with no qualifying samples is an error. **--safe**
-prints a diagnostic and the query topology without lengths, returning success.
+A requested branch or node with no qualifying samples makes that query unavailable.
+Without **--safe**, report it, leave its output untouched, write the available queries,
+and return failure after attempting all outputs. With **--safe**, write that query's
+topology without lengths instead; unavailable estimates then do not cause failure.
 A missing node estimate does not prevent branch-only output modes from succeeding.
+
+Invalid queries or destinations fail before processing samples. Sample input or
+parsing errors abort estimation before opening outputs, even with **--safe**;
+partial estimates are not written. Output opening/writing errors are reported and
+other outputs are still attempted, with failure returned at the end. Output writes
+are independent, so a write failure may leave its own file incomplete.
 
 Day's interval algorithm matches splits in linear time without constructing
 bitsets. Conceptually cutting the matched edges identifies the components whose
 lengths contribute to eligible query nodes. Both operations take linear time and
-memory per sample, excluding tree input. The query index is constructed once.
+memory per sample per query, excluding tree input. Each query index is constructed
+once. Batching shares sample parsing and construction while retaining independent
+matching and observation counts for every query; sampled trees are not retained.
 
 # ALLOWED OPTIONS:
 **-h**, **--help**
 : produce help message
 
 **-T** _arg_, **--tree** _arg_
-: unrooted query tree
+: One unrooted query tree; write its result to stdout. Cannot be combined with **--trees**.
+
+**--trees** _input_ _output_
+: Query and output filenames. Repeat for multiple queries; **-** as output means stdout.
 
 **--files** _arg_
 : tree samples to examine
@@ -62,7 +92,7 @@ memory per sample, excluding tree input. The query index is constructed once.
 **--simple**
 : Compute each branch mean from samples containing its exact split, regardless
   of conflicts elsewhere. Missing branch estimates are errors; with **--safe**,
-  print the query topology without lengths instead. Overrides the other output
+  print that query's topology without lengths instead. Overrides the other output
   modes and does not estimate node lengths.
 
 **-x** _arg_ (=1), **--subsample** _arg_ (=1)
@@ -76,8 +106,8 @@ memory per sample, excluding tree input. The query index is constructed once.
 : Report conditional branch means without distributing node lengths.
 
 **--safe**
-: On an input or unavailable-estimate error during sample processing, report the
-  error and print the query topology without lengths, returning success.
+: For each query with unavailable estimates, report the condition and write its
+  topology without lengths. Input, parsing, and output errors still cause failure.
 
 **--show-node-lengths**
 : Report branch means, followed by positive node means and their identifying
@@ -87,6 +117,18 @@ memory per sample, excluding tree input. The query index is constructed once.
 **-V**, **--verbose**
 : Report the number of samples and the contribution count for each requested estimate.
 
+
+# EXAMPLES
+
+Compute separate branch and node means for several consensus trees in one pass:
+
+    tree-mean-lengths --trees c50.tree c50.ltree --trees c80.tree c80.ltree \
+      --show-node-lengths --safe run1.trees run2.trees
+
+Write one result to stdout and another to a named file:
+
+    tree-mean-lengths --trees c50.tree - --trees c80.tree c80.ltree \
+      --show-node-lengths samples.trees > c50.ltree
 
 # REPORTING BUGS:
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.

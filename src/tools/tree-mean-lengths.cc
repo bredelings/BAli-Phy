@@ -21,6 +21,8 @@
 #include <cmath>
 #include <limits>
 #include <iostream>
+#include <filesystem>
+#include <memory>
 #include "tree/tree.hh"
 #include "tree/sequencetree.hh"
 #include "tree/tree-util.hh"
@@ -43,6 +45,18 @@ using std::vector;
 
 using std::optional;
 
+namespace {
+
+// Exactly two tokens leave subsequent positional arguments available as sample files.
+// Composing appends each repeated --trees pair without interpreting filename characters.
+struct query_pair_value: po::typed_value<vector<string>>
+{
+    query_pair_value(): po::typed_value<vector<string>>(nullptr) { composing(); }
+    unsigned min_tokens() const override { return 2; }
+    unsigned max_tokens() const override { return 2; }
+    string name() const override { return "INPUT OUTPUT"; }
+};
+
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
     using namespace po;
@@ -51,7 +65,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description all("Allowed options");
     all.add_options()
 	("help,h", "produce help message")
-	("tree,T", value<string>(),"unrooted query tree")
+	("tree,T", value<string>(),"unrooted query tree; write to stdout")
+	("trees", new query_pair_value(),"query and output filenames (repeatable; - outputs to stdout)")
 	("files",value<vector<string> >()->composing(),"tree samples to examine")
 	("skip,s",value<int>()->default_value(0),"number of tree samples to skip")
 	("until,u",value<int>(),"Read until this number of trees.")
@@ -77,14 +92,19 @@ variables_map parse_cmd_line(int argc,char* argv[])
     if (args.count("help")) {
 	cout<<"Compute the mean lengths for branches in the given topology.\n\n";
 	cout<<"Usage: tree-mean-lengths --tree <tree> [OPTIONS] <file1> [<file2> ...]\n\n";
+	cout<<"       tree-mean-lengths --trees <query> <output> [--trees <query> <output> ...]\n";
+	cout<<"                         [OPTIONS] <file1> [<file2> ...]\n\n";
 	cout<<all<<"\n";
 	exit(0);
     }
 
     if (args.count("verbose")) log_verbose = 1;
 
-    if (not args.count("tree"))
+    if (not args.count("tree") and not args.count("trees"))
 	throw myexception()<<"No tree topology specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
+
+    if (args.count("tree") and args.count("trees"))
+        throw myexception()<<"Use either --tree or --trees, not both.";
 
     if (not args.count("files") or args["files"].as<vector<string>>().empty())
 	throw myexception()<<"No filenames for trees specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
@@ -92,8 +112,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     return args;
 }
 
-
-namespace {
 
 // A subtree is summarized by the extremes and number of its ranked descendant tips.
 // The empty summary is also used for the reference tip, which lies outside every clade.
@@ -336,8 +354,110 @@ struct length_accumulator: public accumulator<SequenceTree>
     }
 };
 
-} // namespace
+// Load one unrooted query, using the same leaf ordering for every estimator in a batch.
+SequenceTree load_query(const string& filename)
+{
+    auto tree = load_tree_from_file(filename);
+    // The two edges at an artificial degree-two root represent one unrooted split.
+    if (tree.root().degree() == 2) tree.remove_node_from_branch(tree.root());
+    SequenceTree query = tree;
+    standardize(query);
+    return query;
+}
 
+// A query owns the tree referenced by its accumulator. Keep records at stable addresses
+// with unique_ptr; copying a record would leave the accumulator referring to the old tree.
+struct query_record
+{
+    string input, output;
+    SequenceTree tree;
+    length_accumulator lengths;
+    optional<string> error;
+
+    query_record(const string& in, const string& out, bool include_nodes)
+        : input(in), output(out), tree(load_query(in)), lengths(tree, include_nodes) {}
+    query_record(const query_record&) = delete;
+    query_record& operator=(const query_record&) = delete;
+};
+
+// Parse/normalize each sample once. Each query still has its own Day index and conditional
+// counts; no nesting or compatibility between queries is assumed, and no samples are retained.
+struct batch_accumulator: accumulator<SequenceTree>
+{
+    vector<std::unique_ptr<query_record>> queries;
+
+    void operator()(const SequenceTree& sample) override
+    {
+        for (auto& query: queries) query->lengths(sample);
+    }
+};
+
+// Compare canonical paths and existing file identities, including symlinks and hard links.
+// Nonexistent output paths can still alias each other through '.', '..', or a symlinked parent.
+bool same_file(const string& a, const string& b)
+{
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    if (fs::equivalent(a, b, ec)) return true;
+    auto path_a = fs::weakly_canonical(fs::absolute(a), ec);
+    if (ec) path_a = fs::absolute(a).lexically_normal();
+    auto path_b = fs::weakly_canonical(fs::absolute(b), ec);
+    if (ec) path_b = fs::absolute(b).lexically_normal();
+    // Defer access errors to that query's output attempt, so other outputs can still succeed.
+    return path_a == path_b;
+}
+
+// Validate all destinations before reading samples or opening any output for truncation.
+void check_destinations(const vector<string>& pairs, const vector<string>& samples)
+{
+    bool stdout_used = false;
+    for (size_t i = 0; i < pairs.size(); i += 2)
+    {
+        const auto& output = pairs[i+1];
+        if (output == "-")
+        {
+            if (stdout_used) throw myexception()<<"Only one query may write to stdout.";
+            stdout_used = true;
+            continue;
+        }
+        for (size_t j = 0; j < i; j += 2)
+            if (pairs[j+1] != "-" and same_file(output, pairs[j+1]))
+                throw myexception()<<"Duplicate output destination '"<<output<<"'.";
+        for (size_t j = 0; j < pairs.size(); j += 2)
+            if (same_file(output, pairs[j]))
+                throw myexception()<<"Output '"<<output<<"' would overwrite query '"<<pairs[j]<<"'.";
+        for (const auto& sample: samples)
+            if (sample != "-" and same_file(output, sample))
+                throw myexception()<<"Output '"<<output<<"' would overwrite sample file '"<<sample<<"'.";
+    }
+}
+
+// Render one validated query using the existing branch and node output conventions.
+// Only lengths change; the tree topology referenced by the Day index remains intact.
+void write_estimates(std::ostream& out, SequenceTree& Q, const length_accumulator& A,
+                     bool deviation, bool show_nodes)
+{
+    for (int b = 0; b < Q.n_branches(); ++b)
+        Q.branch(b).set_length(deviation ? A.branch_sd(b) : A.branch_mean(b));
+    if (not show_nodes)
+        for (int n: A.multifurcations)
+        {
+            double share = A.node_mean(n) / Q.node(n).degree();
+            for (auto b = Q.node(n).branches_out(); b; ++b)
+                (*b).set_length((*b).length() + share);
+        }
+    out<<Q<<'\n';
+    if (show_nodes)
+        for (int n: A.multifurcations)
+            if (A.node_mean(n) > 0)
+            {
+                out<<"node "<<A.node_mean(n)<<'\n';
+                int b = (*Q.node(n).branches_in()).name();
+                out<<partition_from_branch(Q, b)<<'\n';
+            }
+}
+
+} // namespace
 
 
 int main(int argc, char* argv[])
@@ -351,14 +471,9 @@ int main(int argc, char* argv[])
         int subsample = args["subsample"].as<int>();
         vector<string> prune = get_string_list(args, "ignore");
         const auto files = args["files"].as<vector<string>>();
-
-        RootedSequenceTree query = load_T(args);
-        // Match the sample reader's unrooted interpretation: the two edges at an
-        // artificial degree-two root represent one split, not two independent branches.
-        if (query.root().degree() == 2)
-            query.remove_node_from_branch(query.root());
-        SequenceTree Q = query;
-        standardize(Q);
+        const auto pairs = args.count("trees") ? args["trees"].as<vector<string>>()
+                                              : vector<string>{args["tree"].as<string>(), "-"};
+        check_destinations(pairs, files);
 
         // Preserve output precedence: simple means first, then SDs, then separate node
         // lengths, then branch-only means or the default redistribution of node lengths.
@@ -367,60 +482,80 @@ int main(int argc, char* argv[])
         const bool show_nodes = not simple and not deviation and args.count("show-node-lengths");
         const bool include_nodes = not simple and not deviation
                                    and (show_nodes or not args.count("no-node-lengths"));
-        length_accumulator A(Q, include_nodes);
-        try
+        const bool safe = args.count("safe");
+        batch_accumulator batch;
+        for (size_t i = 0; i < pairs.size(); i += 2)
         {
-            for (const auto& file: files)
+            try
             {
-                istream_or_ifstream f(std::cin, "-", file);
-                scan_trees(f, skip, last, subsample, prune, Q.get_leaf_labels(), A);
+                auto query = std::make_unique<query_record>(pairs[i], pairs[i+1], include_nodes);
+                if (not batch.queries.empty() and
+                    query->tree.get_leaf_labels() != batch.queries.front()->tree.get_leaf_labels())
+                    throw myexception()<<"Leaf labels differ from query '"<<batch.queries.front()->input<<"'.";
+                batch.queries.push_back(std::move(query));
             }
-            A.check_estimates();
+            catch (std::exception& e)
+            {
+                throw myexception()<<"Query '"<<pairs[i]<<"': "<<e.what();
+            }
         }
-        catch (std::exception& e)
+
+        for (const auto& file: files)
         {
-            if (not args.count("safe")) throw;
-            std::cerr<<"tree-mean-lengths: Error! "<<e.what()<<endl;
-            cout<<Q.write(false)<<endl;
-            return 0;
+            istream_or_ifstream f(std::cin, "-", file);
+            scan_trees(f, skip, last, subsample, prune, batch.queries.front()->tree.get_leaf_labels(), batch);
+            // The legacy reader reports parse errors and sets badbit instead of throwing.
+            // Do not mistake that early stop for EOF and output estimates from a partial sample.
+            if (f.bad()) throw myexception()<<"Failed to read sample file '"<<file<<"'.";
         }
 
         if (log_verbose)
+            cerr<<"Read "<<batch.queries.front()->lengths.n_samples<<" sampled trees."<<endl;
+        bool failed = false;
+        for (auto& query: batch.queries)
         {
-            cerr<<"Read "<<A.n_samples<<" sampled trees."<<endl;
-            for (int b = 0; b < Q.n_branches(); ++b)
-                cerr<<"Query branch "<<b<<": "<<A.branch_count[b]<<" contributing samples."<<endl;
-            for (int n: A.multifurcations)
-                cerr<<"Query node "<<n<<": "<<A.node_count[n]<<" contributing samples."<<endl;
+            try { query->lengths.check_estimates(); }
+            catch (std::exception& e)
+            {
+                query->error = e.what();
+                cerr<<"tree-mean-lengths: Query '"<<query->input<<"': "<<e.what()<<endl;
+                if (not safe) failed = true;
+            }
+            if (log_verbose)
+            {
+                const auto& A = query->lengths;
+                cerr<<"Query '"<<query->input<<"':"<<endl;
+                for (int b = 0; b < query->tree.n_branches(); ++b)
+                    cerr<<"  Branch "<<b<<": "<<A.branch_count[b]<<" contributing samples."<<endl;
+                for (int n: A.multifurcations)
+                    cerr<<"  Node "<<n<<": "<<A.node_count[n]<<" contributing samples."<<endl;
+            }
         }
 
-        // Each estimate has its own denominator; do not condition on whole-tree agreement.
-        // Q remains unchanged until every requested estimate has passed validation.
-        for (int b = 0; b < Q.n_branches(); ++b)
-            Q.branch(b).set_length(deviation ? A.branch_sd(b) : A.branch_mean(b));
-
-        if (include_nodes and not show_nodes)
-            for (int n: A.multifurcations)
+        // All queries have been checked, but one unavailable estimate must not suppress
+        // other results. Failed destinations remain untouched unless --safe requests fallback.
+        for (auto& query: batch.queries)
+        {
+            if (query->error and not safe) continue;
+            try
             {
-                double share = A.node_mean(n) / Q.node(n).degree();
-                for (auto b = Q.node(n).branches_out(); b; ++b)
-                    (*b).set_length((*b).length() + share);
+                ostream_or_ofstream out(cout, "-", query->output, "annotated query tree");
+                if (query->error) out<<query->tree.write(false)<<'\n';
+                else write_estimates(out, query->tree, query->lengths, deviation, show_nodes);
+                out.flush();
+                if (not out) throw myexception()<<"Failed to write output '"<<query->output<<"'.";
             }
-
-        cout<<Q<<endl;
-        if (show_nodes)
-            for (int n: A.multifurcations)
-                if (A.node_mean(n) > 0)
-                {
-                    cout<<"node "<<A.node_mean(n)<<endl;
-                    int b = (*Q.node(n).branches_in()).name();
-                    cout<<partition_from_branch(Q, b)<<endl;
-                }
+            catch (std::exception& e)
+            {
+                cerr<<"tree-mean-lengths: Query '"<<query->input<<"': "<<e.what()<<endl;
+                failed = true;
+            }
+        }
+        return failed ? 1 : 0;
     }
     catch (std::exception& e)
     {
-        std::cerr<<"tree-mean-lengths: Error! "<<e.what()<<endl;
+        cerr<<"tree-mean-lengths: Error! "<<e.what()<<endl;
         return 1;
     }
-    return 0;
 }
