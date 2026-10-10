@@ -1,0 +1,3 @@
+# Zero-length and unresolved samples still qualify; missing-data cases cannot check this.
+# Retain while zero node estimates are valid observations omitted from separate node output.
+--tree=../zero-node.tree --show-node-lengths ../zero-node.trees

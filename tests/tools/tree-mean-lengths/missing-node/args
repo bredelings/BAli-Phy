@@ -1,0 +1,3 @@
+# Incident splits must co-occur in one sample; branch-only estimates remain available.
+# Missing-branch tests cannot detect pooling across samples; retain while node conditioning is local.
+--tree=../missing-node.tree  ../missing-node.trees

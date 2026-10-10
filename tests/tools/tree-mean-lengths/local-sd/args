@@ -1,0 +1,3 @@
+# Local estimates must tolerate conflicts elsewhere and use separate denominators.
+# Identical-topology cases cannot detect whole-tree filtering; retain while conditioning is local.
+--tree=../local-query.tree --var ../local-samples.trees
