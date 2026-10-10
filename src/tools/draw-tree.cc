@@ -22,6 +22,8 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <memory>
+#include <optional>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -84,81 +86,20 @@ using std::abs;
 extern "C"
 const char* __asan_default_options() { return "detect_leaks=0"; }
 
+// Plotters draw in tree units with a common scale to points. Final page sizing happens after
+// recording, so neither labels nor cloud clipping need to know an output surface's boundaries.
 class cairo_plotter
 {
-    double page_x_width_;
-    double page_y_width_;
+    double scale_;
     double font_size_;
 public:
     virtual void operator()(cairo_t*) = 0;
-
-    double page_x_width() const {return page_x_width_;}
-    double page_y_width() const {return page_y_width_;}
-
+    double scale() const {return scale_;}
     double font_size() const {return font_size_;}
 
-    cairo_plotter(double xw, double yw)
-	:page_x_width_(xw),
-	 page_y_width_(yw),
-	 font_size_(10)
-	{}
-
-    cairo_plotter(double xw, double yw, double fs)
-	:page_x_width_(xw),
-	 page_y_width_(yw),
-	 font_size_(fs)
-	{}
-    virtual ~cairo_plotter() {}
+    cairo_plotter(double scale, double fs): scale_(scale), font_size_(fs) {}
+    virtual ~cairo_plotter() = default;
 };
-
-struct fn_plotter: public cairo_plotter
-{
-    void (*f)(cairo_t*);
-    void operator()(cairo_t* cr) {f(cr);}
-    fn_plotter(void (*f1)(cairo_t*),double xw, double yw)
-	:cairo_plotter(xw,yw),
-	 f(f1)
-	{}
-
-};
-
-void draw_to_page(cairo_surface_t* surface, cairo_plotter& draw)
-{
-    cairo_t *cr = cairo_create(surface);
-
-    draw(cr);
-    cairo_show_page(cr);
-
-    cairo_surface_destroy(surface);
-    cairo_destroy(cr);
-}
-
-void draw_to_ps(const string& filename, cairo_plotter& draw)
-{
-    cairo_surface_t *surface = cairo_ps_surface_create(filename.c_str(),
-						       draw.page_x_width()*inch, 
-						       draw.page_y_width()*inch);
-
-    draw_to_page(surface,draw);
-}
-
-void draw_to_pdf(const string& filename, cairo_plotter& draw)
-{
-    cairo_surface_t *surface = cairo_pdf_surface_create(filename.c_str(),
-							draw.page_x_width()*inch,
-							draw.page_y_width()*inch);
-
-    draw_to_page(surface,draw);
-}
-
-void draw_to_svg(const string& filename, cairo_plotter& draw)
-{
-    cairo_surface_t *surface = cairo_svg_surface_create(filename.c_str(),
-							draw.page_x_width()*inch,
-							draw.page_y_width()*inch);
-
-    draw_to_page(surface,draw);
-}
 
 variables_map parse_cmd_line(int argc,char* argv[])
 { 
@@ -168,14 +109,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description input("Input options");
     input.add_options()
 	("help,h", "Produce help message")
-	("width,W",value<double>()->default_value(8.5),"Page width in inches")
-	("height,H",value<double>()->default_value(11),"Page height in inches")
+	("width,W",value<double>(),"Output width in inches; otherwise fit the drawing")
+	("height,H",value<double>(),"Output height in inches; otherwise fit the drawing")
 	("file",value<string>(),"predicates to examine")
 	("output",value<string>()->default_value("pdf"),"Type of output to write: tree, topology, mtree, lengths, dot, ps, pdf, svg")
 	("out",value<string>(),"Output filename (without extension)")
 	("full","Consider only full splits by collapsing any partial splits.")
 	("iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm")
-	("font-size",value<double>()->default_value(10),"Font size for taxon names")
+	("font-size",value<double>()->default_value(10),"Font size in points before explicit output resizing")
 	("angle_iterations",value<int>()->default_value(0),"Number of iterations for layout algorithm with small-angle penalties")
 	("labels",value<string>()->default_value("horizontal"),"Are the names horizontal or angled?")
 	("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
@@ -1502,36 +1443,17 @@ struct tree_plotter: public cairo_plotter
     bool horizontal_names;
     tree_layout L;
     void operator()(cairo_t*);
-    tree_plotter(const tree_layout& tl,double xw, double yw)
-	:cairo_plotter(xw,yw),
-	 horizontal_names(true),
-	 L(tl) 
-	{}
     tree_plotter(const tree_layout& tl,double xw, double yw,double fs)
-	:cairo_plotter(xw,yw,fs),
-	 horizontal_names(true),
-	 L(tl) 
-	{}
+        :cairo_plotter(0.8*std::min(xw*inch/tl.x_width(), yw*inch/tl.y_width()), fs),
+         horizontal_names(true), L(tl)
+        {}
+
 };
 
 void tree_plotter::operator()(cairo_t* cr)
 {
-    double xc = 0.5*(L.xmin() + L.xmax());
-    double yc = 0.5*(L.ymin() + L.ymax());
-    double xw = L.x_width();
-    double yw = L.y_width();
-
-    // move to center and flip up 
-    cairo_translate(cr, page_x_width()*inch/2.0, page_y_width()*inch/2.0);
-
-    // find scaling factor
-    const double edge = 0.10;
-    const double factor = 1.0-edge*2;
-
-    double scale = std::min(page_x_width()*inch/xw,page_y_width()*inch/yw);
-    scale *= factor;
+    const double scale = this->scale();
     cairo_scale(cr, scale, scale);
-    cairo_translate(cr, -xc, -yc);
 
     const double pt = 1.0/scale;
     const double line_width = 2.0*pt;
@@ -2872,7 +2794,7 @@ struct graph_plotter: public cairo_plotter
     bool draw_type_2_edges = true;
 
     graph_plotter(const graph_layout& gl,double xw,double yw, double fs)
-	:cairo_plotter(xw,yw,fs),
+	:cairo_plotter(0.8*std::min(xw*inch/gl.x_width(), yw*inch/gl.y_width()), fs),
 	 L(gl)
 	{}
 };
@@ -2972,27 +2894,9 @@ void graph_plotter::operator()(cairo_t* cr)
 
     //  vector<bool> n_cross_v = crossed_nodes_vector(L);
 
-    double xc = 0.5*(L.xmin() + L.xmax());
-    double yc = 0.5*(L.ymin() + L.ymax());
-    double xw = L.x_width();
-    double yw = L.y_width();
-
-    //  cout<<"x = ["<<L.xmin()<<", "<<L.xmax()<<"]"<<endl;
-    //  cout<<"y = ["<<L.ymin()<<", "<<L.ymax()<<"]"<<endl;
-    //  cout<<endl;
-
-    // move to center
-    cairo_translate(cr, page_x_width()*inch/2.0, page_y_width()*inch/2.0);
-
-    // find scaling factor
-    const double edge = 0.10;
-    const double factor = 1.0-edge*2;
-
-    double scale = std::min(page_x_width()*inch/xw,page_y_width()*inch/yw);
-    scale *= factor;
+    const double scale = this->scale();
     cairo_scale(cr, scale, scale);
-    cairo_translate(cr, -xc, -yc);
-  
+
     const double pt = 1.0/scale;
     const double line_width = 2.0*pt;
     const double dashes[] = {3.0*line_width, 3.0*line_width};
@@ -3396,23 +3300,66 @@ MC_tree_with_lengths collapse_MC_tree(const MC_tree_with_lengths& MC1)
     return MC2;
 }
 
-void draw(string filename,const string& type,cairo_plotter& cp)
+// Report Cairo failures before discarding the context or finishing the output surface.
+void check_cairo(cairo_status_t status)
 {
-    if (type == "pdf")
-	filename = filename + ".pdf";
-    else if (type == "ps")
-	filename = filename + ".ps";
-    else if (type == "svg") 
-	filename = filename + ".svg";
-    else
-	throw myexception()<<"I don't recognize output type '"<<type<<" - type \'ps\', \'pdf\', or \'svg\'";
+    if (status != CAIRO_STATUS_SUCCESS)
+        throw myexception()<<"Cairo: "<<cairo_status_to_string(status);
+}
 
+// Record once in points, then fit the padded ink bounds to any explicitly requested dimensions.
+// With no dimensions, translation alone preserves physical font/stroke sizes. One dimension
+// fixes a uniform scale and derives the other; two dimensions use the smaller scale and center
+// the result. Thus the complete padded drawing fits without stretching or clipping its content.
+void draw(const string& filename, const string& type, cairo_plotter& plot,
+          std::optional<double> width, std::optional<double> height)
+{
+    if (type != "pdf" and type != "ps" and type != "svg")
+        throw myexception()<<"Unrecognized output type '"<<type<<"'; use ps, pdf, or svg.";
+
+    auto recording = std::unique_ptr<cairo_surface_t, decltype(&cairo_surface_destroy)>(
+        cairo_recording_surface_create(CAIRO_CONTENT_COLOR_ALPHA, nullptr), cairo_surface_destroy);
+    auto cr = std::unique_ptr<cairo_t, decltype(&cairo_destroy)>(cairo_create(recording.get()), cairo_destroy);
+    plot(cr.get());
+    check_cairo(cairo_status(cr.get()));
+    check_cairo(cairo_surface_status(recording.get()));
+
+    double x, y, ink_width, ink_height;
+    cairo_recording_surface_ink_extents(recording.get(), &x, &y, &ink_width, &ink_height);
+    const double margin = 6; // Points of breathing room; scales with explicitly resized output.
+    const double natural_width = ink_width + 2*margin;
+    const double natural_height = ink_height + 2*margin;
+    double scale = 1;
+    if (width and height)
+        scale = std::min(*width*inch/natural_width, *height*inch/natural_height);
+    else if (width)
+        scale = *width*inch/natural_width;
+    else if (height)
+        scale = *height*inch/natural_height;
+    const double page_width = width ? *width*inch : scale*natural_width;
+    const double page_height = height ? *height*inch : scale*natural_height;
+
+    const string path = filename + "." + type;
+    cairo_surface_t* raw_surface = nullptr;
     if (type == "pdf")
-	draw_to_pdf(filename,cp);
+        raw_surface = cairo_pdf_surface_create(path.c_str(), page_width, page_height);
     else if (type == "ps")
-	draw_to_ps(filename,cp);
-    else if (type == "svg")
-	draw_to_svg(filename,cp);
+        raw_surface = cairo_ps_surface_create(path.c_str(), page_width, page_height);
+    else
+        raw_surface = cairo_svg_surface_create(path.c_str(), page_width, page_height);
+    auto surface = std::unique_ptr<cairo_surface_t, decltype(&cairo_surface_destroy)>(
+        raw_surface, cairo_surface_destroy);
+    check_cairo(cairo_surface_status(surface.get()));
+    auto output = std::unique_ptr<cairo_t, decltype(&cairo_destroy)>(cairo_create(surface.get()), cairo_destroy);
+    cairo_translate(output.get(), (page_width-scale*natural_width)/2 + scale*(margin-x),
+                    (page_height-scale*natural_height)/2 + scale*(margin-y));
+    cairo_scale(output.get(), scale, scale);
+    cairo_set_source_surface(output.get(), recording.get(), 0, 0);
+    cairo_paint(output.get());
+    cairo_show_page(output.get());
+    check_cairo(cairo_status(output.get()));
+    cairo_surface_finish(surface.get());
+    check_cairo(cairo_surface_status(surface.get()));
 }
 
 MC_tree_with_lengths collapse_nodes(const MC_tree_with_lengths& MC1)
@@ -3463,8 +3410,17 @@ int main(int argc,char* argv[])
 	else
 	    seed = myrand_init();
     
-	double xw = args["width"].as<double>();
-	double yw = args["height"].as<double>();
+	std::optional<double> width, height;
+        if (args.count("width")) width = args["width"].as<double>();
+        if (args.count("height")) height = args["height"].as<double>();
+        if ((width and (not std::isfinite(*width) or *width <= 0)) or
+            (height and (not std::isfinite(*height) or *height <= 0)))
+            throw myexception()<<"Output dimensions must be finite and positive.";
+
+        // Letter dimensions remain an initial geometry reference, not page boundaries.
+        // A single requested dimension affects only final scaling, preserving the natural aspect.
+        double xw = width and height ? *width : 8.5;
+        double yw = width and height ? *height : 11;
 	double font_size = args["font-size"].as<double>();
 
 	string output = args["output"].as<string>();
@@ -3548,7 +3504,7 @@ int main(int argc,char* argv[])
 	    if (args.count("out"))
 		filename = args["out"].as<string>();
 
-	    draw(filename,output,tp);
+	    draw(filename,output,tp,width,height);
 	    exit(0);
 	}
 	else if (args["layout"].as<string>() == "equal-daylight")
@@ -3565,7 +3521,7 @@ int main(int argc,char* argv[])
 	    if (args.count("out"))
 		filename = args["out"].as<string>();
 
-	    draw(filename,output,tp);	
+	    draw(filename,output,tp,width,height);	
 	    exit(0);
 	}
 	else if (args["layout"].as<string>() == "fr")
@@ -3578,7 +3534,7 @@ int main(int argc,char* argv[])
 		filename = args["out"].as<string>();
 
 	    graph_plotter gp(L, xw, yw, font_size);
-	    draw(filename,output,gp);
+	    draw(filename,output,gp,width,height);
 	    exit(0);
 	}
     
@@ -3642,7 +3598,7 @@ int main(int argc,char* argv[])
 	    if (args.count("out"))
 		filename = args["out"].as<string>();
       
-	    draw(filename,output,gp);
+	    draw(filename,output,gp,width,height);
 	}
 
 	// improve angular resolution
@@ -3663,7 +3619,7 @@ int main(int argc,char* argv[])
 	    if (args.count("out"))
 		filename = args["out"].as<string>();
 
-	    draw(filename,output,gp);
+	    draw(filename,output,gp,width,height);
 	}
     }
     catch (std::exception& e) {
