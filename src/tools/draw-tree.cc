@@ -1795,8 +1795,6 @@ struct graph_energy_function
 
 double graph_energy_function::node_node_repulsion(const graph_layout& GL, vector<point_position>& DEL, int n1, int n2, double C) const
 {
-    const int p=1;
-
     assert(n1 != n2);
 
     // don't repel the ends of the branch that I'm attached to
@@ -1820,13 +1818,39 @@ double graph_energy_function::node_node_repulsion(const graph_layout& GL, vector
 
     double D = sqrt(dx*dx + dy*dy);
 
-    double dL = abs(D - GL.node_radius[n1] - GL.node_radius[n2]);
-
-    if (dL < 1.0e-15) dL=1.0e-15;
-    double E = C/pow(dL,p);
+    // Let g be the signed gap between circle boundaries, and h = 0.001 times their combined
+    // radius. Use E = C/(g+h) outside and its quadratic continuation at contact inside:
+    // E = C/h - C*g/h² + C*g²/h³. The value, slope, and curvature match at g=0, so either
+    // branch gives the same contact energy and derivative. Energy decreases as separation
+    // increases, including during overlap. Compute that radial derivative before distributing
+    // it to the two centers. Point-point pairs retain their existing inverse-distance repulsion.
+    double R = GL.node_radius[n1] + GL.node_radius[n2];
+    double E, dE_dD;
+    if (R == 0)
+    {
+	double dL = std::max(D,1.0e-15);
+	E = C/dL;
+	dE_dD = -C/(dL*dL);
+    }
+    else
+    {
+	double g = D - R;
+	double h = 0.001*R;
+	if (g >= 0)
+	{
+	    E = C/(g+h);
+	    dE_dD = -C/((g+h)*(g+h));
+	}
+	else
+	{
+	    double u = g/h;
+	    E = C/h*(1-u+u*u);
+	    dE_dD = -C/(h*h)*(1-2*u);
+	}
+    }
 
     if (D < 1.0e-15) D=1.0e-15;
-    double temp = C/(pow(dL,p+1)*D);
+    double temp = -dE_dD/D;
 
     DEL[n1].x += dx*temp;
     DEL[n1].y += dy*temp;
