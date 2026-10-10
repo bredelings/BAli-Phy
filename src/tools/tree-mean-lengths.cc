@@ -30,12 +30,9 @@
 #include "util/myexception.hh"
 #include "util/cmdline.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
 extern int log_verbose;
-
-namespace po = boost::program_options;
-using po::variables_map;
 
 using std::cout;
 using std::cerr;
@@ -46,72 +43,6 @@ using std::vector;
 using std::optional;
 
 namespace {
-
-// Exactly two tokens leave subsequent positional arguments available as sample files.
-// Composing appends each repeated --trees pair without interpreting filename characters.
-struct query_pair_value: po::typed_value<vector<string>>
-{
-    query_pair_value(): po::typed_value<vector<string>>(nullptr) { composing(); }
-    unsigned min_tokens() const override { return 2; }
-    unsigned max_tokens() const override { return 2; }
-    string name() const override { return "INPUT OUTPUT"; }
-};
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description all("Allowed options");
-    all.add_options()
-	("help,h", "produce help message")
-	("tree,T", value<string>(),"unrooted query tree; write to stdout")
-	("trees", new query_pair_value(),"query and output filenames (repeatable; - outputs to stdout)")
-	("files",value<vector<string> >()->composing(),"tree samples to examine")
-	("skip,s",value<int>()->default_value(0),"number of tree samples to skip")
-	("until,u",value<int>(),"Read until this number of trees.")
-	("ignore",value<string>(),"Comma-separated taxa to remove")
-	("simple","Report conditional branch means only (overrides other output modes)")
-	("subsample,x",value<int>()->default_value(1),"factor by which to sub-sample")
-	("var","report standard deviation of branch lengths instead of mean")
-	("no-node-lengths","Do not distribute node lengths onto branches")
-	("safe","Print topology without lengths if requested estimates are unavailable")
-	("show-node-lengths","Report conditional branch and node means separately for draw-tree")
-	("verbose,V","Output more log messages on stderr.")
-	;
-
-    // positional options
-    positional_options_description p;
-    p.add("files", -1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    notify(args);
-
-    if (args.count("help")) {
-	cout<<"Compute the mean lengths for branches in the given topology.\n\n";
-	cout<<"Usage: tree-mean-lengths --tree <tree> [OPTIONS] <file1> [<file2> ...]\n\n";
-	cout<<"       tree-mean-lengths --trees <query> <output> [--trees <query> <output> ...]\n";
-	cout<<"                         [OPTIONS] <file1> [<file2> ...]\n\n";
-	cout<<all<<"\n";
-	exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = 1;
-
-    if (not args.count("tree") and not args.count("trees"))
-	throw myexception()<<"No tree topology specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
-
-    if (args.count("tree") and args.count("trees"))
-        throw myexception()<<"Use either --tree or --trees, not both.";
-
-    if (not args.count("files") or args["files"].as<vector<string>>().empty())
-	throw myexception()<<"No filenames for trees specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
-
-    return args;
-}
-
 
 // A subtree is summarized by the extremes and number of its ranked descendant tips.
 // The empty summary is also used for the reference tip, which lies outside every clade.
@@ -464,25 +395,57 @@ int main(int argc, char* argv[])
 {
     try
     {
-        variables_map args = parse_cmd_line(argc, argv);
-        int skip = args["skip"].as<int>();
+        CLI::App app{"Compute conditional branch and node lengths for query trees.", "tree-mean-lengths"};
+        app.usage("Usage: tree-mean-lengths --tree QUERY [OPTIONS] FILE [FILE ...]\n"
+                  "       tree-mean-lengths --trees QUERY OUTPUT [--trees QUERY OUTPUT ...]\n"
+                  "                         [OPTIONS] FILE [FILE ...]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string tree, ignore;
+        vector<string> pairs, files;
+        int skip = 0, subsample = 1;
         optional<int> last;
-        if (args.count("until")) last = args["until"].as<int>();
-        int subsample = args["subsample"].as<int>();
-        vector<string> prune = get_string_list(args, "ignore");
-        const auto files = args["files"].as<vector<string>>();
-        const auto pairs = args.count("trees") ? args["trees"].as<vector<string>>()
-                                              : vector<string>{args["tree"].as<string>(), "-"};
+        bool simple = false, var = false, no_node_lengths = false, show_node_lengths = false;
+        bool safe = false, verbose = false;
+        app.add_option("-T,--tree", tree, "Unrooted query tree; write to stdout");
+        // Each occurrence consumes one two-filename group; take_all retains repeated groups
+        // while disabling extra arguments leaves subsequent sample filenames positional.
+        app.add_option("--trees", pairs, "Query and output filenames (repeatable; - outputs to stdout)")
+            ->type_name("INPUT OUTPUT")->type_size(2)->expected(1)->allow_extra_args(false)->take_all();
+        app.add_option("--files,FILE", files, "Tree samples to examine")->required()->type_name("");
+        app.add_option("-s,--skip", skip, "Number of tree samples to skip")->capture_default_str();
+        app.add_option("-u,--until", last, "Read until this number of trees");
+        app.add_option("--ignore", ignore, "Taxa to remove (comma-separated list or @filename)");
+        app.add_flag("--simple", simple, "Report conditional branch means only (overrides other output modes)");
+        app.add_option("-x,--subsample", subsample, "Factor by which to sub-sample")->capture_default_str();
+        app.add_flag("--var", var, "Report standard deviation of branch lengths instead of mean");
+        app.add_flag("--no-node-lengths", no_node_lengths, "Do not distribute node lengths onto branches");
+        app.add_flag("--safe", safe, "Print topology without lengths if requested estimates are unavailable");
+        app.add_flag("--show-node-lengths", show_node_lengths,
+                     "Report conditional branch and node means separately for draw-tree");
+        app.add_flag("-V,--verbose", verbose, "Output more log messages on stderr");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        if (verbose) log_verbose = 1;
+        if (not app.count("--tree") and not app.count("--trees"))
+            throw myexception()<<"No tree topology specified.";
+        if (app.count("--tree") and app.count("--trees"))
+            throw myexception()<<"Use either --tree or --trees, not both.";
+        if (app.count("--tree")) pairs = {tree, "-"};
+        vector<string> prune = get_string_list(ignore);
         check_destinations(pairs, files);
 
         // Preserve output precedence: simple means first, then SDs, then separate node
         // lengths, then branch-only means or the default redistribution of node lengths.
-        const bool simple = args.count("simple");
-        const bool deviation = not simple and args.count("var");
-        const bool show_nodes = not simple and not deviation and args.count("show-node-lengths");
-        const bool include_nodes = not simple and not deviation
-                                   and (show_nodes or not args.count("no-node-lengths"));
-        const bool safe = args.count("safe");
+        const bool deviation = not simple and var;
+        const bool show_nodes = not simple and not deviation and show_node_lengths;
+        const bool include_nodes = not simple and not deviation and (show_nodes or not no_node_lengths);
         batch_accumulator batch;
         for (size_t i = 0; i < pairs.size(); i += 2)
         {

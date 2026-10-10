@@ -87,7 +87,8 @@ matching and observation counts for every query; sampled trees are not retained.
 : Read until this number of trees.
 
 **--ignore** _arg_
-: Comma-separated taxa to remove
+: Taxa to remove, as a comma-separated list or **@filename**. Files may separate names
+  with commas or newlines. Escape an initial literal **@** with a backslash.
 
 **--simple**
 : Compute each branch mean from samples containing its exact split, regardless

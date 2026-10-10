@@ -31,6 +31,15 @@ def check_batch(command, wrappers):
     assert run(command, *pairs[:-1], "-", "--show-node-lengths", "samples.trees")[0] == run(
         command, "--tree", "query, star.tree", "--show-node-lengths", "samples.trees")[0]
 
+    # Named/positional inputs and required arguments protect the CLI contract beyond output
+    # equivalence; keep these checks while both input forms and required queries are supported.
+    expected = run(command, "--tree", "query.tree", "samples.trees", "samples.trees")[0]
+    assert run(command, "--tree", "query.tree", "--files", "samples.trees", "samples.trees")[0] == expected
+    assert run(command, "samples.trees", "--tree", "query.tree", "--files", "samples.trees")[0] == expected
+    assert "--trees" in run(command, "--help")[0]
+    for args in [[], ["samples.trees"], ["--tree", "query.tree"]]:
+        assert run(command, *args, code=1)[0] == ""
+
     # Batch filtering must match separate invocations, including restarting filters for each file.
     lines = samples.splitlines(keepends=True)
     for name in ["one.trees", "two.trees"]:
