@@ -2038,7 +2038,8 @@ double get_angle_derivative(double x11, double x12,
     //----------------------------------------------------//
 
     // FIXME: we can get SIGFPE when D==1
-    if (std::abs(D-1) < 1-0e-8) D=1.0-1.0e-8;
+    // Restrict this approximation to near-zero angles; other angles need their actual cosine.
+    if (std::abs(D-1) < 1.0e-8) D=1.0-1.0e-8;
 
     da_dx11 = -1.0/sqrt(1-D*D) * (L*dH_dx11 - H*dL_dx11)/M;
     da_dx12 = -1.0/sqrt(1-D*D) * (L*dH_dx12 - H*dL_dx12)/M;
