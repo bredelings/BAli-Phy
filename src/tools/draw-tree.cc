@@ -29,10 +29,8 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-// FIXME - Add a command-line option to turn on clouds.
-//       - Actually draw arrows on type 2 edges.
+// FIXME - Actually draw arrows on type 2 edges.
 //       - Figure out how to use boost's Kamada-Kawai layout.
-//       - Change the coloring algorithm to find conflicts based on shared NODES.
 
 // FIXME - the energy_layout2 changes are still not incorporated.
 
@@ -160,6 +158,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
 
 /// FIXME - name collision!
+// Biological lengths: branch_lengths stores both directed orientations, while T stores the
+// corresponding full-tree lengths. Loading, scaling, and collapsing must keep these copies in
+// sync. Node lengths describe unresolved length; converting them to drawing radii is separate.
 class MC_tree_with_lengths: public MC_tree
 {
     vector<double> branch_lengths;
@@ -443,6 +444,7 @@ bool segments_cross(const point_position& m1,
     return cross;
 }
 
+// Unused geometric primitive: test intersection with extended segment-parameter intervals.
 bool segments_cross_with_margin(const point_position& m1,
 				const point_position& m2,
 				const point_position& n1,
@@ -460,6 +462,7 @@ bool segments_cross_with_margin(const point_position& m1,
     return cross;
 }
 
+// Unused geometric primitive: test the forward ray m1→m2 against segment n1→n2.
 bool ray_points_to_segment(const point_position& m1,
 			   const point_position& m2,
 			   const point_position& n1,
@@ -511,6 +514,8 @@ struct RGB
     RGB(double r, double g, double b):R(r),G(g),B(b) { }
 };
 
+// Positions and radii use tree units. Renderers convert these to points; page arguments are
+// inches. Fonts and strokes start at fixed point sizes, before any final output resizing.
 struct common_layout
 {
     vector<double> node_radius;
@@ -625,6 +630,8 @@ void common_layout::rotate_for_aspect_ratio(double xw,double yw)
 
 struct tree_layout: public common_layout
 {
+    // A layout copy: branch lengths include both endpoint radii (center-to-center distances),
+    // unlike the biological lengths in MC_tree_with_lengths::T. Node indices belong to this T.
     SequenceTree T;
 
     void rotate_subtree(int b, double alpha);
@@ -699,6 +706,7 @@ bool tree_layout::edges_cross() const
 }
 
 
+// Retained diagnostic: compare every pair of edges in two directed subtrees.
 bool tree_layout::subtree_edges_cross(int b1, int b2) const
 {
     vector<const_branchview> branches1 = branches_after_inclusive(T, b1);
@@ -738,7 +746,7 @@ vector<int> edge_distances(const Tree& T, int start)
     return distances;
 }
 
-int n_children(const Tree& T,int b)
+int descendant_tip_count(const Tree& T,int b)
 {
     return branch_partition(T,b).count();
 }
@@ -753,7 +761,7 @@ void equal_angle_layout(tree_layout& L,int parent,double min_a,double max_a)
     double a1 = min_a;
     for(out_edges_iterator b = T.directed_branch(parent).branches_after();b;b++) 
     {
-	double a2 = a1 + (max_a - min_a) * n_children(T,*b)/n_children(T,parent);
+	double a2 = a1 + (max_a - min_a) * descendant_tip_count(T,*b)/descendant_tip_count(T,parent);
 	double a = (a1+a2)/2.0;
 
 	int n1 = (*b).source();
@@ -795,6 +803,8 @@ double node_diameter(double lengths,int degree)
 
 tree_layout equal_angle_layout(SequenceTree MF,vector<double> node_radius)
 {
+    // Subdivision experiment: insert intermediate nodes on branches while conserving length,
+    // then remap the original radii. Retained as code to document the required index remapping.
     /*
 
       vector<nodeview> nodes;
@@ -859,10 +869,10 @@ tree_layout equal_angle_layout(SequenceTree MF,vector<double> node_radius)
     double a1 = 0;
     for(out_edges_iterator b = MF.node(root).branches_out();b;b++) 
     {
-	double a2 = a1 + 2.0 * M_PI * n_children(MF,*b)/MF.n_leaves();
+	double a2 = a1 + 2.0 * M_PI * descendant_tip_count(MF,*b)/MF.n_leaves();
 	double a = (a1+a2)/2.0;
     
-	// cerr<<"branch "<<(*b).name()<<"  n_children = "<<n_children(MF,*b)<<endl;
+	// cerr<<"branch "<<(*b).name()<<"  descendant_tip_count = "<<descendant_tip_count(MF,*b)<<endl;
 
 	int n1 = (*b).source();
 	int n2 = (*b).target();
@@ -967,8 +977,10 @@ double circular_minus(double x, double y)
 	return (2.0*M_PI - (y-x));
 }
 
-// A (clockwise) circular range structure
-// All entries should be between 0 and 2 PI... unless we are a full circle range
+// A connected arc in increasing atan2 angle (clockwise with Cairo's downward y axis).
+// Endpoints wrap into [0,2π); min/max denote start/end, not numerical extrema. Equal endpoints
+// describe a point, while full_circle represents the entire circle. A default range is unset
+// until initialized or made full. Extension forms one covering arc, not a disjoint set union.
 class circular_range 
 {
     double min_;
@@ -1016,7 +1028,7 @@ public:
 	    max(d2);
 	}
 
-    double measure() 
+    double measure() const
 	{
 	    if (full_circle)
 		return 2*M_PI;
@@ -1046,9 +1058,9 @@ public:
 		return ((d <= max()) or (min() <= d));
 	}
 
-    const circular_range& operator+=(circular_range& r);
+    const circular_range& extend_to_cover(const circular_range& r);
   
-    double operator-(const circular_range& r) const;
+    double gap_from(const circular_range& preceding) const;
 };
 
 ostream& operator<<(ostream& o, const circular_range& R)
@@ -1060,11 +1072,11 @@ ostream& operator<<(ostream& o, const circular_range& R)
     return o;
 }
 
-bool overlaps(const circular_range& r1, circular_range& r2)
+bool overlaps(const circular_range& r1, const circular_range& r2)
 {
     if (r1.is_full_circle() or r2.is_full_circle()) return true;
     if (r1.contains(r2.min()) or r1.contains(r2.max())) return true;
-    if (r2.contains(r1.max()) or r2.contains(r1.max())) return true;
+    if (r2.contains(r1.max())) return true;
     return false;
 }
 
@@ -1075,7 +1087,8 @@ circular_range full_circle_range()
     return R;
 }
 
-double circular_range::operator-(const circular_range& r) const
+// Directed gap from the preceding arc's end to this arc's start; covered ends give zero.
+double circular_range::gap_from(const circular_range& r) const
 {
     if (is_full_circle() or r.is_full_circle() or contains(r.max())) return 0.0;
 
@@ -1109,7 +1122,9 @@ circular_range circular_range_from_line_segment(double x1, double y1, double x2,
 	return R2;
 }
 
-const circular_range& circular_range::operator+=(circular_range& r)
+// Extend the current arc to cover r. Disjoint arcs use the shorter extension; an exact tie
+// extends the start toward r. Preserve these sequential choices when accumulating many arcs.
+const circular_range& circular_range::extend_to_cover(const circular_range& r)
 {
     // first handle the case where we have a full circle
     if (r.is_full_circle())
@@ -1151,7 +1166,7 @@ const circular_range& circular_range::operator+=(circular_range& r)
     assert( M2 >= M);
 #endif
   
-    return *this;;
+    return *this;
 }
 
   
@@ -1177,9 +1192,8 @@ circular_range get_angles(const tree_layout& L,int b,int n)
 
 	circular_range A2 = circular_range_from_line_segment(s.x - c.x, s.y - c.y, t.x - c.x, t.y - c.y);
 
-	// FIXME - we should really determine the angle range of the line,
-	//         instead of just the angle of the endpoint.
-	R += A2;
+        // Include the complete line segment's angular extent, not only its endpoints.
+        R.extend_to_cover(A2);
     }
 
     return R;
@@ -1241,8 +1255,8 @@ void equalize_daylight(tree_layout& L,int n)
         for(int j=0;j<branches.size();j++)
             if (j != b)
             {
-                daylight_after = std::min(daylight_after, angles[j] - angles[b]);
-                daylight_before = std::min(daylight_before, angles[b] - angles[j]);
+                daylight_after = std::min(daylight_after, angles[j].gap_from(angles[b]));
+                daylight_before = std::min(daylight_before, angles[b].gap_from(angles[j]));
             }
 
         if (daylight_after > 0 and daylight_before > 0)
@@ -1301,7 +1315,7 @@ int node_size(const Tree& T,int n)
 
     vector<int> S;
     for(const_out_edges_iterator i = T.node(n).branches_out();i;i++)
-	S.push_back(n_children(T,*i));
+	S.push_back(descendant_tip_count(T,*i));
 
     std::sort(S.begin(),S.end());
 
@@ -1353,6 +1367,7 @@ tree_layout equal_daylight_layout(const MC_tree_with_lengths& MC, bool greedy=fa
     return L;
 }
 
+// Retained geometric traversal experiment: follow the next outgoing direction around the drawing.
 vector<int> walk_tree(const tree_layout& TL, const vector<int>& edges)
 {
     vector<int> edges_order;
@@ -1532,6 +1547,9 @@ void tree_plotter::operator()(cairo_t* cr)
 	}
 }
 
+// Coordinates use MC condensed-node indices, not the node indices of MC.T. Graph edges index
+// MC.edges; their partition fields identify directed branches. Type 1 edges carry biological
+// length, while type 2 edges represent possible wandering attachments.
 struct graph_layout: public common_layout
 {
     MC_tree_with_lengths MC;
@@ -1655,6 +1673,7 @@ double distance(const graph_layout& GL,int n1,int n2)
     return sqrt(distance2(GL,n1,n2));
 }
 
+// Energy terms accumulate gradients, not forces; the optimizer moves in the opposite direction.
 struct graph_energy_function
 {
     virtual double operator()(const graph_layout& GL) const=0;
@@ -2002,6 +2021,7 @@ vector<bool> edge_crossing_vector(const graph_layout& GL)
     return e_cross_v;  
 }
 
+// Retained crossing-penalty experiment: associate crossing edges with nodes in their subgraphs.
 matrix<int> crossed_nodes_matrix(const graph_layout& GL)
 {
     matrix<int> e_cross = edge_crossing_matrix(GL);
@@ -2069,7 +2089,7 @@ vector<bool> crossed_nodes_vector(const graph_layout& GL)
 
        
 
-struct energy2: public graph_energy_function
+struct layout_energy: public graph_energy_function
 {
     double repulsion_weight;
     double length_weight;
@@ -2216,7 +2236,7 @@ struct energy2: public graph_energy_function
 	    return E;
 	}
 
-    energy2(double W1, double W2,double W3,double W4)
+    layout_energy(double W1, double W2,double W3,double W4)
 	:repulsion_weight(W1),
 	 length_weight(W2),
 	 down_weight_stretchy(W3),
@@ -2253,6 +2273,7 @@ double dot(const vector<point_position>& v1,const vector<point_position>& v2)
 }
 
 
+// Independent finite-difference checker for energy gradients; unused in ordinary optimization.
 vector<point_position> energy_derivative_2D(const graph_layout& GL1, const graph_energy_function& E)
 {
     double DELTA = 0.000001;
@@ -2411,14 +2432,14 @@ void energy_layout(graph_layout& GL, const graph_energy_function& E,int n=1000)
     double T = 0;
     int successes=0;
 
-    vector<point_position> D;
-    //  double E = E(GL,D);
+    vector<point_position> gradient;
+    //  double E = E(GL,gradient);
 
-    double dt = 1;//E(GL,D)/dot(D,D);
+    double dt = 1;//E(GL,gradient)/dot(gradient,gradient);
 
     for(int i=0;i<n;i++) 
     {
-	double E1 = E(GL,D);
+	double E1 = E(GL,gradient);
 	assert(E1 >= 0);
 	if (log_verbose) 
 	    cerr<<"iter = "<<i<<" E = "<<E1<<"   T = "<<T<<"   dt = "<<dt<<"   edge_length_error = "<<GL.edge_length_error()<<endl;
@@ -2427,11 +2448,11 @@ void energy_layout(graph_layout& GL, const graph_energy_function& E,int n=1000)
 	    cerr<<"  x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
 
 	/*
-	// check D versus D2
+	// check gradient versus D2
 	vector<point_position> D2 = energy_derivative_2D(GL,E);
-	cerr<<"      derivative error = "<<sqrt(dot(D,D)/dot(D2,D2))
-	<<"      angle = "<<dot(D2,D)/sqrt(dot(D2,D2)*dot(D,D))<<"\n";
-	//    D = D2;
+	cerr<<"      derivative error = "<<sqrt(dot(gradient,gradient)/dot(D2,D2))
+	<<"      angle = "<<dot(D2,gradient)/sqrt(dot(D2,D2)*dot(gradient,gradient))<<"\n";
+	//    gradient = D2;
 	*/
 
 
@@ -2439,23 +2460,23 @@ void energy_layout(graph_layout& GL, const graph_energy_function& E,int n=1000)
 
 
 	// Make a scaled version
-	vector<point_position> DD = D;
-	for(int i=0;i<DD.size();i++) 
+	vector<point_position> direction = gradient;
+	for(int i=0;i<direction.size();i++) 
 	{
-	    double v = sqrt(DD[i].x*DD[i].x + DD[i].y*DD[i].y);
+	    double v = sqrt(direction[i].x*direction[i].x + direction[i].y*direction[i].y);
 	    // A stationary node has zero displacement while other nodes can continue moving.
 	    if (v == 0) continue;
-	    DD[i].x /= v;
-	    DD[i].y /= v;
+	    direction[i].x /= v;
+	    direction[i].y /= v;
 	}
 
-	vector<point_position> temp = GL.node_positions;
-	inc(GL.node_positions,-dt,DD);
+	vector<point_position> previous_positions = GL.node_positions;
+	inc(GL.node_positions,-dt,direction);
 
 	double E2 = E(GL);
 	if (E2 > E1) {
 	    if (log_verbose) cerr<<"draw-tree:    rejecting  E = "<<E2<<endl;
-	    GL.node_positions = temp;
+	    GL.node_positions = previous_positions;
 	    dt /= 2.0;
 	    successes=0;
 	} 
@@ -2476,17 +2497,15 @@ void energy_layout(graph_layout& GL, const graph_energy_function& E,int n=1000)
     }
 }
 
-// FIXME: construct child_nodes
-// FIXME: construct color so that no clouds with overlapping child nodes have the same color.
-//        Algorithm: Welsh and Powell
-//                   1. Sort clouds by number of neighbors
-//                   2. Color with smallest color that is unused by neighbors.
-
+// Cloud colors use the Welsh-Powell heuristic: join clouds sharing nodes, visit them by
+// decreasing neighbor count, and select the smallest color unused by already colored neighbors.
 struct cloud 
 {
-    vector<int> child_nodes;     // FIXME - compute child nodes!
+    vector<int> child_nodes;     // Condensed MC-node indices covered by this cloud.
 
-    vector<int> child_branches;  // These UNDIRECTED branches are wandered over.
+    // Graph-edge indices: MC constructs its type-1 edges in branch_order order. Thus the
+    // index i into branch_order is also the edge index; branch_order[i] is a directed branch.
+    vector<int> child_edges;
 
     vector<int> parent_branches; // These DIRECTED branches wander DIRECTLY over this cloud;
 
@@ -2498,11 +2517,11 @@ struct cloud
 
     int degree() const { return neighbors.size();}
 
-    int size() const {return child_branches.size();}
+    int size() const {return child_edges.size();}
 
     cloud():depth(0) {}
-    cloud(const vector<int>& v): child_branches(v),depth(0) {}
-    cloud(const vector<int>& v,int p): child_branches(v),parent_branches(1,p),depth(0) {}
+    cloud(const vector<int>& v): child_edges(v),depth(0) {}
+    cloud(const vector<int>& v,int p): child_edges(v),parent_branches(1,p),depth(0) {}
 };
 
 bool overlap(const vector<int>& v1, const vector<int>& v2)
@@ -2516,7 +2535,7 @@ bool overlap(const vector<int>& v1, const vector<int>& v2)
 
 bool overlap(const cloud& c1, const cloud& c2)
 {
-    return overlap(c1.child_branches, c2.child_branches);
+    return overlap(c1.child_edges, c2.child_edges);
 }
 
 
@@ -2537,30 +2556,30 @@ vector< cloud > get_clouds(const MC_tree& MC)
     // Consider each (ordered) branch...
     for(int b=0;b<MC.partitions.size();b++)
     {
-	vector<int> child_branches;
+	vector<int> child_edges;
 
 	// ... to see what (unordered) branches it wanders over.
 	for(int i=0;i<MC.branch_order.size();i++)
 	{
 	    int b2 = MC.branch_order[i];
 	    if (MC.directly_wanders_over(b,b2))
-		child_branches.push_back(i);
+		child_edges.push_back(i);
 	}
 
-	if (not child_branches.size()) continue;
+	if (not child_edges.size()) continue;
 
 	//How many branches does this branch wander over?
-	//cerr<<"size = "<<child_branches.size()<<endl;
+	//cerr<<"size = "<<child_edges.size()<<endl;
 
 	// Search the clouds found so far... which should be in order of increasing size
 	int which = -1;
 	int larger = -1;
 	for(int i=0;i<clouds.size();i++) {
-	    if (clouds[i].child_branches == child_branches)
+	    if (clouds[i].child_edges == child_edges)
 		which = i;
 
 	    // select the FIRST (and therefore SMALLEST) cloud that is larger than this one.
-	    if (clouds[i].size() > child_branches.size() and larger == -1)
+	    if (clouds[i].size() > child_edges.size() and larger == -1)
 		larger = i;
 	}
 
@@ -2571,7 +2590,7 @@ vector< cloud > get_clouds(const MC_tree& MC)
 	// NOTE: clouds should be sorted by size.
 	if (which == -1)
 	{ 
-	    cloud C(child_branches,b);
+	    cloud C(child_edges,b);
 
 	    if (larger == -1)  	// add new cloud at end
 		clouds.push_back(C);
@@ -2592,9 +2611,9 @@ vector< cloud > get_clouds(const MC_tree& MC)
     // Find child nodes
     for(int i=0;i<clouds.size();i++)
     {
-	for(int j=0;j<clouds[i].child_branches.size();j++)
+	for(int j=0;j<clouds[i].child_edges.size();j++)
 	{
-	    int b = clouds[i].child_branches[j];
+	    int b = clouds[i].child_edges[j];
 
 	    int n1 = MC.edges[b].from;
 	    int n2 = MC.edges[b].to;
@@ -2723,9 +2742,9 @@ void cairo_make_cloud_path(cairo_t* cr,const cloud& C,const double line_width, c
 
     vector<int> nodes_visited(L.node_positions.size(),0);
 
-    for(int i=0;i<C.child_branches.size();i++) 
+    for(int i=0;i<C.child_edges.size();i++) 
     {
-	int b = C.child_branches[i];
+	int b = C.child_edges[i];
 	cairo_make_cloud_branch_path(cr,b,W,L,nodes_visited);
     }
 
@@ -2790,7 +2809,7 @@ void graph_plotter::operator()(cairo_t* cr)
 	    if (log_verbose) {
 		cerr<<"draw-tree:  degree : "<<clouds[c].degree()<<endl;
 		cerr<<"draw-tree:  color  : "<<clouds[c].color<<endl;
-		cerr<<"draw-tree:     #b : "<<clouds[c].child_branches.size()<<endl;
+		cerr<<"draw-tree:     #b : "<<clouds[c].child_edges.size()<<endl;
 		cerr<<"draw-tree:     #n : "<<clouds[c].child_nodes.size()<<endl;
 
 		for(int i=0;i<clouds[c].child_nodes.size();i++)
@@ -2798,7 +2817,7 @@ void graph_plotter::operator()(cairo_t* cr)
 	    }
 	    for(int i=0;i<clouds[c].size();i++)
 	    {
-		int e = clouds[c].child_branches[i];
+		int e = clouds[c].child_edges[i];
 		if (log_verbose) cerr<<"draw-tree:   edge : "<<e<<"\n";
 	
 		int n1 = L.MC.edges[e].from;
@@ -3342,7 +3361,7 @@ int main(int argc,char* argv[])
 	/*
 	  for(int i=0;i<10;i++) {
 	  double w = length_weight/100*double(i)/10;
-	  layout = energy_layout(layout,energy2(1,w,1,0),1000);
+	  layout = energy_layout(layout,layout_energy(1,w,1,0),1000);
 	  }
 	*/
 
@@ -3355,15 +3374,15 @@ int main(int argc,char* argv[])
 
 	// FIXME - the repulsion should actually depend on the number of nodes!
 	if (not args.count("tree-layout-initial")) {
-	    energy_layout(layout,energy2(1,1000,stretchy_weight,0),400);
-	    energy_layout(layout,energy2(1,10000,stretchy_weight,0),400);
-	    energy_layout(layout,energy2(1,100000,stretchy_weight,0),400);
-	    energy_layout(layout,energy2(1,1000000,stretchy_weight,0),800);
+	    energy_layout(layout,layout_energy(1,1000,stretchy_weight,0),400);
+	    energy_layout(layout,layout_energy(1,10000,stretchy_weight,0),400);
+	    energy_layout(layout,layout_energy(1,100000,stretchy_weight,0),400);
+	    energy_layout(layout,layout_energy(1,1000000,stretchy_weight,0),800);
 	}
 
 	for(int i=0;i<n_iterations;i++) 
 	{
-	    energy_layout(layout,energy2(1,length_weight,stretchy_weight,0));
+	    energy_layout(layout,layout_energy(1,length_weight,stretchy_weight,0));
 	    layout.rotate_for_aspect_ratio(xw,yw);
 
 	    graph_plotter gp(layout, xw, yw, font_size);
@@ -3384,7 +3403,7 @@ int main(int argc,char* argv[])
 	// improve angular resolution
 	int a_iterations = args["angle_iterations"].as<int>();
 	for(int i=0;i<a_iterations;i++) {
-	    energy_layout(layout,energy2(1,10000000,0.01,50));
+	    energy_layout(layout,layout_energy(1,10000000,0.01,50));
 	    layout.rotate_for_aspect_ratio(xw,yw);
 	    graph_plotter gp(layout, xw, yw, font_size);
 
