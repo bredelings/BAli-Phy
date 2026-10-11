@@ -2,11 +2,31 @@
 
 ## Breaking changes
 
-- Remove `alignment-convert` in favor of `alignment-cat -o <format>`.
+ - Remove `alignment-convert` in favor of `alignment-cat -o <format>`.
+
+## Features
+
+ - Depict length of branches inside consensus polytomies by default.
 
 ## Fixes
 
- - Better error messages when different data partitions have different sequence names.
+ - Fix crash in windows executables.
+ - Fix character attributes for fixed alignments.
+ - Don't crash summarizing MCMC runs if the tree has foreground attributes.
+ - Clear error messages when different data partitions have different sequence names.
+ - Labels for tree nodes don't run off the edge of the page in figures.
+ - Make estimation of branch lengths and "node lengths" faster and more robust.
+
+# Documentation
+ 
+ - Update and fill out man pages.
+ - Add function help to the website.
+ 
+# Internal
+
+ - Remove unused program `alignment-indices`.
+ - Switch from Boost.Program_options -> CLI11 for command line parsing.
+ 
 
 # 4.3 (Sep 12, 2026)
 
@@ -131,6 +151,7 @@
 
 ## Documentation
 - Add documentation for nonRev and nonEq CTMC models.
+
 
 # 4.1 (Jun 9, 2025)
 
