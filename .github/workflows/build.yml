@@ -121,6 +121,9 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
+        # The container runs as root, but GitHub's mounted HOME belongs to the runner user.
+        # Wine requires an owned home directory when creating its default prefix.
+        echo "HOME=/root" >> "$GITHUB_ENV"
         # Install Git before checkout, and use Debian's Python/Meson without a separate pip setup.
         apt-get update
         apt-get install -y ca-certificates git build-essential cmake curl wget pkgconf \
