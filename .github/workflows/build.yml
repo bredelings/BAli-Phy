@@ -27,7 +27,7 @@ jobs:
                macos-xcode16-arm-sanitize,
                macos-xcode26-arm-assertions,
                macos-homebrew-llvm-libcxx,
-               windows,
+               windows-cross,
                windows-native-mingw
                ]
 
@@ -97,7 +97,7 @@ jobs:
             version: "N/A"
             arch: "mac-arm64"
 
-          - name: windows
+          - name: windows-cross
             os: ubuntu-26.04
             # Debian supplies a newer MinGW GCC than Ubuntu's cross-compiler package.
             # It must also be recent enough to compile with the MSYS2 C++ headers below.
@@ -117,7 +117,7 @@ jobs:
       image: ${{ matrix.image || '' }}
     steps:
     - name: Install Debian cross-build dependencies
-      if: matrix.name == 'windows'
+      if: matrix.name == 'windows-cross'
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
@@ -131,7 +131,7 @@ jobs:
 
     - uses: actions/checkout@v6
     - uses: actions/setup-python@v6
-      if: matrix.name != 'windows'
+      if: matrix.name != 'windows-cross'
       with:
         python-version: 3.12
 
@@ -139,7 +139,7 @@ jobs:
     # The total size for all caches in a repository is 5Gb.
 
     - name: Use a faster apt mirror
-      if: runner.os == 'Linux' && matrix.name != 'windows'
+      if: runner.os == 'Linux' && matrix.name != 'windows-cross'
       run: |
         # Use a faster, more reliable mirror
         if [ -n "${{ matrix.image }}" ]  ; then
@@ -153,7 +153,7 @@ jobs:
         fi
 
     - name: Install (Linux)
-      if: runner.os == 'Linux' && matrix.name != 'windows'
+      if: runner.os == 'Linux' && matrix.name != 'windows-cross'
       run: |
         # If we're running in a docker image, we are already root
         if [ -n "${{ matrix.image }}" ]  ; then
@@ -321,7 +321,7 @@ jobs:
       run: ccache --set-config=compiler_check=content
 
     - name: Install meson
-      if: matrix.name != 'windows-native-mingw' && matrix.name != 'windows'
+      if: matrix.name != 'windows-native-mingw' && matrix.name != 'windows-cross'
       run: |
         python3 -mpip install meson ninja
 
@@ -338,7 +338,7 @@ jobs:
       run: echo "INSTALLS_COMPLETE=true" >> $GITHUB_ENV
 
     - name: Make windows sysroot and generate cross file
-      if: matrix.name == 'windows'
+      if: matrix.name == 'windows-cross'
       # This command also generates the cross file
       run: |
         ${GITHUB_WORKSPACE}/scripts/make_winroot.sh
@@ -371,10 +371,10 @@ jobs:
            # Exercise optimized code with assertions, without retaining full debug information.
            ARGS="${ARGS} -Db_ndebug=false"
         fi
-        if [ "${{ matrix.name }}" = "windows" ] && [ "${{ matrix.arch }}" = "win64" ]; then
+        if [ "${{ matrix.name }}" = "windows-cross" ] && [ "${{ matrix.arch }}" = "win64" ]; then
            ARGS="${ARGS} --cross-file=win64-cross.txt"
         fi
-        if [ "${{ runner.os }}" = "Linux" ] && [ "${{ matrix.name }}" != "windows" ] && [ "${{ matrix.sanitize }}" != "" ] ; then
+        if [ "${{ runner.os }}" = "Linux" ] && [ "${{ matrix.name }}" != "windows-cross" ] && [ "${{ matrix.sanitize }}" != "" ] ; then
            # Address sanitizer can't find its dylibs on OS X?
            ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
         fi
@@ -545,7 +545,7 @@ jobs:
         if [ -n "${BOOST_ROOT}" ] && [ "${{ runner.os }}" != "macOS" ] ; then
           export LD_LIBRARY_PATH="${BOOST_ROOT}/lib"
         fi
-        if [ "${{ matrix.name }}" = "windows" ] ; then
+        if [ "${{ matrix.name }}" = "windows-cross" ] ; then
           # Start the server explicitly so the first Wine client inherits the persistence timeout.
           wine_server=$(dpkg-query -L wine64 | awk '/\/wineserver(64)?$/ { print; exit }')
           test -x "$wine_server"
@@ -567,7 +567,7 @@ jobs:
         ${BALIPHY} --seed=$seed 5d-muscle.fasta --iterations=50
         ${BALIPHY} --seed=$(($seed+1)) 5d-muscle.fasta --iterations=50
         ${STATREPORT} 5d-muscle-1/C1.log
-        if [ "${{ matrix.name }}" != "windows" ] ; then
+        if [ "${{ matrix.name }}" != "windows-cross" ] ; then
             bpy-summarize 5d-muscle-1 5d-muscle-2
         fi
         rm -f token0.dot
