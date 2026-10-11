@@ -126,7 +126,8 @@ jobs:
         echo "HOME=/root" >> "$GITHUB_ENV"
         # Install Git before checkout, and use Debian's Python/Meson without a separate pip setup.
         apt-get update
-        apt-get install -y ca-certificates git build-essential cmake curl wget pkgconf \
+        # The upterm failure-debugging action invokes sudo even inside a root container.
+        apt-get install -y sudo ca-certificates git build-essential cmake curl wget pkgconf \
           python3 meson ninja-build xz-utils zstd pandoc dos2unix fakeroot \
           g++-mingw-w64-x86-64-posix binutils-mingw-w64-x86-64 pacman-package-manager wine wine64
         x86_64-w64-mingw32-g++-posix -v
