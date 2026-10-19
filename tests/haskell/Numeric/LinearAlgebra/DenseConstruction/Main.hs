@@ -74,8 +74,12 @@ main = do
     print (toList (sinh floating), toList (tanh floating), toList (cosh floating))
     print (toList (asinh floating), toList (atanh floating),
            toList (acosh (fromList [1.25,2] :: Vector Double)))
+    -- Check dense log1mexp dispatch without requiring identical final digits across math libraries.
+    -- Remove this check if equivalent numeric coverage replaces it.
+    let expectedLog1mexp = fromList [-1.508691549446032, -0.9327521295671886] :: Vector Double
     print (toList (log1p floating), toList (expm1 floating),
-           toList (log1pexp floating), toList (log1mexp (negate floating)))
+           toList (log1pexp floating),
+           maxElement (abs (log1mexp (negate floating) - expectedLog1mexp)) < 1.0e-14)
     let floatingMatrix = (2 >< 2) [1,4,9,16] :: Matrix Double
     print (toLists (floatingMatrix / 2), toLists (2 / floatingMatrix))
     print (toLists (sqrt floatingMatrix), toLists (floatingMatrix ** 2))
