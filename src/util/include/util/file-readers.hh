@@ -1,6 +1,7 @@
 #ifndef FILE_READERS_H
 #define FILE_READERS_H
 
+#include <cassert>
 #include <vector>
 #include <optional>
 #include <string>

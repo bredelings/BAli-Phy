@@ -1,6 +1,7 @@
 #include "message.hh"
 #include "util/utf8.hh"
 #include <algorithm>
+#include <cassert>
 #include <sstream>
 #include <string_view>
 #include "util/text.hh"
