@@ -605,6 +605,32 @@ jobs:
         }
         Pop-Location
 
+    # Protect extensionless Bash invocation and paths with spaces, beyond the PowerShell/cmd tests.
+    # This check is obsolete if the installed shell launchers are removed.
+    - name: Test extracted Windows archive in Git Bash
+      if: runner.os == 'Windows'
+      shell: bash
+      env:
+        PACKAGE_VERSION: ${{ steps.get_version.outputs.version }}
+      run: |
+        unpack="$(cygpath -u "$RUNNER_TEMP")/release archive check"
+        installed_bin="$unpack/bali-phy-$PACKAGE_VERSION/bin"
+        export PATH="$installed_bin:$PATH"
+        command -v py
+        py -3 -c 'import sys; print(sys.executable); print(sys.version)'
+        test "$(command -v bali-phy-pkg)" = "$installed_bin/bali-phy-pkg"
+        test "$(command -v bpy-summarize)" = "$installed_bin/bpy-summarize"
+
+        bali-phy --version
+        draw-tree --help
+        bali-phy-pkg --help
+        bpy-summarize --help
+
+        cd "$unpack"
+        bpy-summarize archive-run-1 --outdir "Git Bash Results"
+        test -s "Git Bash Results/index.html"
+        test -s "Git Bash Results/greedy-tree.svg"
+
     - name: Upload validation archive
       if: github.event_name == 'workflow_dispatch'
       uses: actions/upload-artifact@v4
