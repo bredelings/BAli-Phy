@@ -569,6 +569,7 @@ jobs:
       if: matrix.name != 'windows-native-mingw'
       run: |
         export UBSAN_OPTIONS=halt_on_error=1
+        test_wrapper=()
         # Installed macOS binaries locate packaged libraries through their rpath. A prefix-wide
         # DYLD_LIBRARY_PATH also changes libraries loaded by unrelated Homebrew programs such as R.
         if [ -n "${BOOST_ROOT}" ] && [ "${{ runner.os }}" != "macOS" ] ; then
@@ -580,6 +581,9 @@ jobs:
           test -x "$wine_server"
           "$wine_server" -p60
           export WINEPATH="$(WINEDEBUG=-all winepath -w "$HOME/local/bin")"
+          # Meson prepends compiler runtime paths for executable tests. Restore the packaged
+          # runtime after that adjustment so Debian DLLs cannot shadow the MSYS2 copies.
+          test_wrapper=(--wrapper "env 'WINEPATH=$WINEPATH'")
           BALIPHY="wine bali-phy"
           STATREPORT="wine statreport"
         else
@@ -612,7 +616,7 @@ jobs:
 
         if [ "$skip" = "none" ] ; then
             echo ::group::Test suite
-            meson test -C build --no-rebuild --print-errorlogs --num-processes 2
+            meson test -C build --no-rebuild --print-errorlogs --num-processes 2 "${test_wrapper[@]}"
             echo ::endgroup::
         else
             echo ::group::Reduced test suite
