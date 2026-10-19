@@ -129,9 +129,9 @@ jobs:
         # The upterm failure-debugging action invokes sudo even inside a root container.
         apt-get install -y sudo ca-certificates git build-essential cmake curl wget pkgconf \
           python3 meson ninja-build xz-utils zstd pandoc dos2unix fakeroot \
-          g++-mingw-w64-x86-64-posix binutils-mingw-w64-x86-64 pacman-package-manager wine wine64
-        x86_64-w64-mingw32-g++-posix -v
-        dpkg-query -W g++-mingw-w64-x86-64-posix gcc-mingw-w64-x86-64-posix-runtime wine64
+          g++-mingw-w64-ucrt64 binutils-mingw-w64-x86-64-ucrt pacman-package-manager wine wine64
+        x86_64-w64-mingw32ucrt-g++ -v
+        dpkg-query -W g++-mingw-w64-ucrt64 gcc-mingw-w64-ucrt64-runtime wine64
 
     - uses: actions/checkout@v6
     - uses: actions/setup-python@v6
@@ -191,26 +191,26 @@ jobs:
       id: msys2
       uses: msys2/setup-msys2@v2
       with:
-        msystem: MINGW64
+        msystem: UCRT64
         update: true
         path-type: inherit
         # MSYS2 Git materializes the test-data links below. The Perl packages it pulls in are
         # transitive CI dependencies; installed BAli-Phy does not require Perl.
         install: >-
           git
-          mingw-w64-x86_64-boost
-          mingw-w64-x86_64-cairo
-          mingw-w64-x86_64-ccache
-          mingw-w64-x86_64-cereal
-          mingw-w64-x86_64-cli11
-          mingw-w64-x86_64-eigen3
-          mingw-w64-x86_64-fmt
-          mingw-w64-x86_64-gcc
-          mingw-w64-x86_64-meson
-          mingw-w64-x86_64-ninja
-          mingw-w64-x86_64-pkgconf
-          mingw-w64-x86_64-range-v3
-          mingw-w64-x86_64-zstd
+          mingw-w64-ucrt-x86_64-boost
+          mingw-w64-ucrt-x86_64-cairo
+          mingw-w64-ucrt-x86_64-ccache
+          mingw-w64-ucrt-x86_64-cereal
+          mingw-w64-ucrt-x86_64-cli11
+          mingw-w64-ucrt-x86_64-eigen3
+          mingw-w64-ucrt-x86_64-fmt
+          mingw-w64-ucrt-x86_64-gcc
+          mingw-w64-ucrt-x86_64-meson
+          mingw-w64-ucrt-x86_64-ninja
+          mingw-w64-ucrt-x86_64-pkgconf
+          mingw-w64-ucrt-x86_64-range-v3
+          mingw-w64-ucrt-x86_64-zstd
 
     - name: Materialize test-data links (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'
@@ -232,7 +232,7 @@ jobs:
       if: matrix.name == 'windows-native-mingw'
       shell: pwsh
       run: |
-        $mingwPrefix = Join-Path "${{ steps.msys2.outputs.msys2-location }}" "mingw64"
+        $mingwPrefix = Join-Path "${{ steps.msys2.outputs.msys2-location }}" "ucrt64"
         $mingwBin = Join-Path $mingwPrefix "bin"
         if (-not (Test-Path (Join-Path $mingwBin "gcc.exe") -PathType Leaf)) {
           throw "MSYS2 GCC was not found in $mingwBin"
@@ -294,10 +294,11 @@ jobs:
          max-size: ${{ matrix.name == 'ubuntu-gcc-14-sanitize' && '1G' || '500M' }}
          # GitHub caches are immutable.  Timestamped SHA keys make each save unique, while
          # these prefixes restore the newest same-commit or preceding accessible cache.
-         key: ${{ matrix.name }}-${{ github.sha }}
+         # Keep UCRT caches separate without changing the MinGW job names.
+         key: ${{ matrix.name }}${{ matrix.compiler == 'mingw' && '-ucrt' || '' }}-${{ github.sha }}
          restore-keys: |
-           ${{ matrix.name }}-${{ github.sha }}
-           ${{ matrix.name }}
+           ${{ matrix.name }}${{ matrix.compiler == 'mingw' && '-ucrt' || '' }}-${{ github.sha }}
+           ${{ matrix.name }}${{ matrix.compiler == 'mingw' && '-ucrt' || '' }}
          verbose: 2
 
     - name: Require ccache 4.10 or newer
@@ -346,12 +347,12 @@ jobs:
       # This command also generates the cross file
       run: |
         ${GITHUB_WORKSPACE}/scripts/make_winroot.sh
-        pacman --config "$HOME/win_root/pacman-cross.conf" --root "$HOME/win_root" \
-          -Q mingw-w64-x86_64-gcc mingw-w64-x86_64-crt mingw-w64-x86_64-libgcc mingw-w64-x86_64-libstdc++
+        pacman --config "$HOME/win_root_ucrt64/pacman-cross.conf" --root "$HOME/win_root_ucrt64" \
+          -Q mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-crt mingw-w64-ucrt-x86_64-libgcc mingw-w64-ucrt-x86_64-libstdc++
         # The cross build produces only 64-bit programs, so do not probe for missing 32-bit Wine support.
         echo "WINEARCH=win64" >> "$GITHUB_ENV"
         # Meson's compiler checks run before installation; use the same runtime there too.
-        echo "WINEPATH=$(WINEARCH=win64 WINEDEBUG=-all winepath -w "$HOME/win_root/mingw64/bin")" >> "$GITHUB_ENV"
+        echo "WINEPATH=$(WINEARCH=win64 WINEDEBUG=-all winepath -w "$HOME/win_root_ucrt64/ucrt64/bin")" >> "$GITHUB_ENV"
 
     - name: Choose test seed
       shell: bash
@@ -470,7 +471,7 @@ jobs:
         cmd /c "bpy-summarize --help"
         bali-phy-pkg --help
         cmd /c "bali-phy-pkg --help"
-        # Verify the installed runtime closure can load draw-tree without /mingw64/bin.
+        # Verify the installed runtime closure can load draw-tree without /ucrt64/bin.
         draw-tree --help
 
         New-Item -ItemType Directory bpy-summarize-smoke | Out-Null
