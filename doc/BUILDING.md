@@ -170,7 +170,8 @@ differ, use xslTNG's built-in panelsets:
 
 ```xml
 <variablelist role="panelset">
-  <varlistentry><term>Unix shell / Command Prompt</term><listitem>
+  <varlistentry><term><phrase role="shell-label">Unix shell
+    <phrase role="shell-detail">including Git Bash and MSYS2 Bash</phrase></phrase> / Command Prompt</term><listitem>
     <screen><userinput>bpy-subsample 10 &lt; C1.trees &gt; C1.10.trees</userinput></screen>
   </listitem></varlistentry>
   <varlistentry><term>PowerShell</term><listitem>
@@ -180,10 +181,14 @@ differ, use xslTNG's built-in panelsets:
 ```
 
 Use consistent shell labels and combine alternatives when the complete instructions are identical.
-“Unix shell” includes Linux, macOS, and WSL. Native HTML controls select one panel in HTML
-without JavaScript; the PDF prints every label and its content in source order. Keep
-version-specific explanations beside the affected commands rather than repeating them in the
-common workflow.
+“Unix shell” includes Linux, macOS, WSL, Git Bash, and MSYS2 Bash. Keep the Windows Bash
+clarification inside each Unix-shell label, as above; the stylesheet displays it in smaller
+text below “Unix shell”. Windows-only selectors use “Git Bash / MSYS2 Bash”. Keep archive
+choices and other operating-system requirements in the installation sections.
+
+Native HTML controls select one panel without JavaScript; the PDF prints every label and its
+content in source order. Keep version-specific explanations beside the affected commands rather
+than repeating them in the common workflow.
 
 HTML uses compact selectors with a blue underline and bold text for the selected shell. Each
 label retains its underline when selectors wrap; panel content has no enclosing box. Print uses

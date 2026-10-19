@@ -33,31 +33,40 @@
   </info>
 
   <section xml:id="intro"><info><title>Introduction</title></info>
-    <para><application>BAli-Phy</application> is a command-line program for Windows, macOS,
-      and Linux.  It is not a GUI program, so you must run it in a terminal such as
-      a Unix shell inside WSL on Windows, a Unix shell on macOS or Linux, or PowerShell for
-      a native Windows installation. If command-line programs
-      are unfamiliar, see the introductions to
+    <para><application>BAli-Phy</application> runs on Windows, macOS, and Linux. It is a
+      command-line program: you type commands in a terminal to analyze data and summarize
+      results, rather than using menus and buttons. The arguments and options in a command
+      specify the input data and the evolutionary model to use.</para>
+
+    <para>An analysis has two phases. First, <command>bali-phy</command> generates
+      <emphasis>posterior samples</emphasis> of trees, alignments, and model parameters and
+      saves them in files. Then <command>bpy-summarize</command> summarizes these samples
+      into trees, alignments, and parameter estimates, checks for signs of a lack of
+      convergence, and creates a report you can view in a web browser. The
+      <link linkend="running_s1">Quick Start</link> walks through both phases.</para>
+
+    <para>The program that reads and interprets commands in a terminal is called a
+      <emphasis>shell</emphasis>. Unix shells such as Bash and Zsh are used on Linux and
+      macOS, and inside WSL on Windows. Git Bash and MSYS2 provide Bash for native Windows;
+      Windows also provides PowerShell and Command Prompt (<command>cmd.exe</command>).
+      If command-line programs are unfamiliar, see the introductions to
       <link xmlns:xlink="http://www.w3.org/1999/xlink"
             xlink:href="https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/01-getting-started">PowerShell</link>
       or the
       <link xmlns:xlink="http://www.w3.org/1999/xlink"
-            xlink:href="https://documentation.ubuntu.com/desktop/en/latest/tutorial/the-linux-command-line-for-beginners/">Linux command line</link>.
-    </para>
-    <para>Commands apply to all shells unless labelled otherwise. In this guide,
-      “Unix shell” includes Linux, macOS, and WSL. Where instructions differ, choose the
-      panel for your shell; printed copies show all alternatives. PowerShell examples for
-      installation and the Quick Start work in both Windows PowerShell 5.1 and PowerShell 7.
-      Later examples note any additional requirements. Prompt markers such as
+            xlink:href="https://documentation.ubuntu.com/desktop/en/latest/tutorial/the-linux-command-line-for-beginners/">Linux command line</link>.</para>
+
+    <para>Commands in this guide apply to all these shells unless labelled otherwise.
+      Where instructions differ, choose the panel for your shell; “Unix shell” includes
+      Git Bash and MSYS2 Bash. Printed copies show all alternatives. Prompt markers such as
       <prompt>%</prompt> and <prompt>PS&gt;</prompt> show where to type; do not copy them.
-      Examples shared by several shells show just one prompt, but the command works in each
-      shell named.</para>
+      A shared example shows just one prompt but works in each shell named. PowerShell
+      examples for installation and the Quick Start work in both Windows PowerShell 5.1
+      and PowerShell 7; later examples note any additional requirements.</para>
 
-    <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bpy-summarize</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
-  </para>
-
-  <para>In addition to the main <command>bali-phy</command> executable, <application>BAli-Phy</application> comes with a collection of small command-line utilities such as <command>alignment-cat</command>, <command>trees-consensus</command>, etc.  These utilities can be used to process alignments, assemble data sets, and summarize the results of MCMC.
-    </para>
+    <para><application>BAli-Phy</application> also includes small command-line utilities
+      such as <command>alignment-cat</command> and <command>trees-consensus</command> for
+      processing alignments, assembling data sets, and summarizing MCMC results.</para>
   </section>
 
   <section xml:id="installation"><info><title>Installation</title></info>
@@ -162,10 +171,10 @@
   </section>
 
   <section xml:id="install-windows"><info><title>Install on Windows</title></info>
-    <para>The preferred way to run BAli-Phy on Windows is through Windows Subsystem for
-      Linux (WSL2). This lets you follow the Linux commands in this guide, including commands
-      for running several analyses and processing their output. Alternatively, install the
-      native Windows package and run it from PowerShell or Command Prompt.</para>
+    <para>Choose between installing inside Windows Subsystem for Linux (WSL2, preferred)
+      and installing the native Windows package. Inside WSL2, follow the Linux installation
+      instructions. For terminals outside WSL2, including Git Bash and MSYS2 Bash, use the
+      native Windows package below.</para>
 
     <section xml:id="install-wsl"><info><title>Install inside WSL2 (preferred)</title></info>
       <para><link xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -175,13 +184,13 @@
         the Linux commands throughout this guide.</para>
       <para>Programs installed inside WSL2 use Linux paths such as
         <filename>/home/user/data.fasta</filename>.  The native Windows package instead uses
-        Windows paths such as <filename>C:\Users\user\data.fasta</filename>.  Choose one
+        Windows paths such as <filename>C:\Users\user\data.fasta</filename>. Choose one
         installation route for an analysis rather than mixing commands and paths from the two
         environments.</para>
     </section>
 
     <section><info><title>Install the native Windows package</title></info>
-      <para>For native Windows analyses, installing the
+      <para>If you use PowerShell, installing the
         <link xmlns:xlink="http://www.w3.org/1999/xlink"
               xlink:href="https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell-on-windows">latest stable PowerShell</link>
         improves handling of quoted arguments and redirected program output. Start it with
@@ -190,11 +199,29 @@
       <para>Download
         <link xmlns:xlink="http://www.w3.org/1999/xlink"
               xlink:href="&win64.url;"><filename>&win64.file;</filename></link>
-        from the BAli-Phy release page.  Then open PowerShell and extract it into a versioned
-        directory under your user account:</para>
+        from the BAli-Phy release page. In your chosen terminal, extract it into a versioned
+        directory under your home directory and check that it runs:</para>
+<variablelist role="panelset">
+  <varlistentry><term>PowerShell</term><listitem>
 <screen><prompt>PS&gt;</prompt> <userinput>New-Item -ItemType Directory -Force "$HOME\Applications"</userinput>
 <prompt>PS&gt;</prompt> <userinput>tar -xf "$HOME\Downloads\&win64.file;" -C "$HOME\Applications"</userinput>
 <prompt>PS&gt;</prompt> <userinput>&amp; "$HOME\Applications\bali-phy-&version;\bin\bali-phy.exe" --version</userinput></screen>
+  </listitem></varlistentry>
+  <varlistentry><term>Command Prompt</term><listitem>
+<screen><prompt>C:\&gt;</prompt> <userinput>if not exist "%USERPROFILE%\Applications" mkdir "%USERPROFILE%\Applications"</userinput>
+<prompt>C:\&gt;</prompt> <userinput>tar -xf "%USERPROFILE%\Downloads\&win64.file;" -C "%USERPROFILE%\Applications"</userinput>
+<prompt>C:\&gt;</prompt> <userinput>"%USERPROFILE%\Applications\bali-phy-&version;\bin\bali-phy.exe" --version</userinput></screen>
+  </listitem></varlistentry>
+  <varlistentry><term>Git Bash / MSYS2 Bash</term><listitem>
+<screen><prompt>%</prompt> <userinput>mkdir -p "$HOME/Applications"</userinput>
+<prompt>%</prompt> <userinput>tar -xf "$(cygpath "$USERPROFILE")/Downloads/&win64.file;" -C "$HOME/Applications"</userinput>
+<prompt>%</prompt> <userinput>"$HOME/Applications/bali-phy-&version;/bin/bali-phy" --version</userinput></screen>
+    <para>The archive is read from your Windows Downloads directory and extracted under
+      <envar>$HOME</envar>, your shell's home directory. In MSYS2, this can differ from your
+      Windows user directory. <command>cygpath</command> converts the Windows user-directory
+      path to the Unix-style path used by these commands.</para>
+  </listitem></varlistentry>
+</variablelist>
       <para>If your browser downloaded the archive somewhere other than
         <filename>Downloads</filename>, replace that path with the location of the downloaded
         file.  The archive contains all required non-system runtime DLLs for the
@@ -210,18 +237,24 @@
   <varlistentry><term>Command Prompt</term><listitem>
 <screen><prompt>C:\&gt;</prompt> <userinput>set "PATH=%USERPROFILE%\Applications\bali-phy-&version;\bin;%PATH%"</userinput></screen>
   </listitem></varlistentry>
+  <varlistentry><term>Git Bash / MSYS2 Bash</term><listitem>
+<screen><prompt>%</prompt> <userinput>export PATH="$HOME/Applications/bali-phy-&version;/bin:$PATH"</userinput></screen>
+  </listitem></varlistentry>
 </variablelist>
       <para>These settings affect only the current terminal. See <xref linkend="windows-path"/>
         to make the setting permanent.</para>
 
       <para>The compiled BAli-Phy programs do not require Python.  The
         <command>bpy-summarize</command> and <command>bali-phy-pkg</command> commands are Python
-        scripts, however, and require
+        scripts, however, and require Python 3. You can install
         <link xmlns:xlink="http://www.w3.org/1999/xlink"
               xlink:href="https://www.python.org/downloads/windows/">Python 3 for Windows</link>.
         When using the Python installer, select the option that makes Python available from
-        the command line.  The launchers recognize either <command>py -3</command> or
-        <command>python</command>.</para>
+        the command line. In the terminal you will use for BAli-Phy, check
+        <userinput>py -3 --version</userinput>. If <command>py</command> is not found, check
+        <userinput>python --version</userinput> instead; it must report Python 3.
+        Run the scripts as <command>bpy-summarize</command> and <command>bali-phy-pkg</command>
+        in all these shells; no filename extension is needed.</para>
 
       <para><application>R</application> is optional.
         When it is installed and available on <envar>Path</envar>,
@@ -354,21 +387,29 @@
 
       <section xml:id="windows-path"><title>Windows</title>
         <para>The Windows installation instructions above show how to add BAli-Phy to the
-          current PowerShell or Command Prompt session.  To make the change permanent, search
-          for “environment variables” in Windows Settings, edit your user <envar>Path</envar>,
-          and add:</para>
+          current terminal session. For PowerShell and Command Prompt, make the change permanent
+          by searching for “environment variables” in Windows Settings, editing your user <envar>Path</envar>,
+          and adding:</para>
 <literallayout class="monospaced">%USERPROFILE%\Applications\bali-phy-&version;\bin</literallayout>
-        <para>Open a new terminal and check the result:</para>
-<screen><prompt>PS&gt;</prompt> <userinput>bali-phy --version</userinput></screen>
-        <para>If you installed BAli-Phy somewhere else, add the <filename>bin</filename>
-          directory from that location instead.</para>
+        <para>For Git Bash and MSYS2 Bash, add this line to <filename>~/.bashrc</filename>:</para>
+<screen><userinput>export PATH="$HOME/Applications/bali-phy-&version;/bin:$PATH"</userinput></screen>
+        <para>If you installed BAli-Phy somewhere else, use the <filename>bin</filename>
+          directory from that location instead. Open a new terminal and check the result:</para>
+<screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
+        <para>If a new Git Bash or MSYS2 Bash terminal does not pick up the setting, make sure
+          its login startup file reads <filename>~/.bashrc</filename>. Bash uses the first
+          existing file among <filename>~/.bash_profile</filename>,
+          <filename>~/.bash_login</filename>, and <filename>~/.profile</filename>; if none
+          exists, create <filename>~/.bash_profile</filename>. Add this line if it is not
+          already present, then open a new terminal and repeat the check:</para>
+<screen><userinput>if [ -f ~/.bashrc ]; then . ~/.bashrc; fi</userinput></screen>
       </section>
 
       <section><title>Linux, macOS, and WSL2</title>
         <para>If you extracted BAli-Phy under <filename>&install.prefix;</filename>, add its
           <filename>bin</filename> directory to the current <command>sh</command>,
           <command>bash</command>, or <command>zsh</command> shell:</para>
-<screen><prompt>%</prompt> <userinput>export PATH=$HOME/Applications/bali-phy-&version;/bin:$PATH</userinput></screen>
+<screen><prompt>%</prompt> <userinput>export PATH="$HOME/Applications/bali-phy-&version;/bin:$PATH"</userinput></screen>
         <para>For <command>csh</command> or <command>tcsh</command>, use:</para>
 <screen><prompt>%</prompt> <userinput>setenv PATH $HOME/Applications/bali-phy-&version;/bin:$PATH</userinput></screen>
         <para>To apply the setting in future interactive terminals, add the corresponding
@@ -402,8 +443,9 @@
     <section xml:id="tests"><info><title>Test the installed software</title></info>
       <para>First copy an example alignment into a new working directory:</para>
 <variablelist role="panelset">
-  <varlistentry><term>Unix shell</term><listitem>
-<screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/5S-rRNA/25.fasta .</userinput></screen>
+  <varlistentry><term><phrase role="shell-label">Unix shell
+    <phrase role="shell-detail">including Git Bash and MSYS2 Bash</phrase></phrase></term><listitem>
+<screen><prompt>%</prompt> <userinput>cp "$HOME/Applications/bali-phy-&version;/share/doc/bali-phy/examples/5S-rRNA/25.fasta" .</userinput></screen>
   </listitem></varlistentry>
   <varlistentry><term>PowerShell</term><listitem>
 <screen><prompt>PS&gt;</prompt> <userinput>cp "$HOME\Applications\bali-phy-&version;\share\doc\bali-phy\examples\5S-rRNA\25.fasta" .</userinput></screen>
@@ -562,8 +604,9 @@
         results in directories named <filename>25-1</filename> through <filename>25-4</filename>.
         Copy the example data into this directory:</para>
 <variablelist role="panelset">
-  <varlistentry><term>Unix shell</term><listitem>
-<screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/5S-rRNA/25.fasta .</userinput></screen>
+  <varlistentry><term><phrase role="shell-label">Unix shell
+    <phrase role="shell-detail">including Git Bash and MSYS2 Bash</phrase></phrase></term><listitem>
+<screen><prompt>%</prompt> <userinput>cp "$HOME/Applications/bali-phy-&version;/share/doc/bali-phy/examples/5S-rRNA/25.fasta" .</userinput></screen>
   </listitem></varlistentry>
   <varlistentry><term>PowerShell</term><listitem>
 <screen><prompt>PS&gt;</prompt> <userinput>cp "$HOME\Applications\bali-phy-&version;\share\doc\bali-phy\examples\5S-rRNA\25.fasta" .</userinput></screen>
@@ -577,7 +620,8 @@
 
       <para>Start four independent chains:</para>
 <variablelist role="panelset">
-  <varlistentry><term>Unix shell</term><listitem>
+  <varlistentry><term><phrase role="shell-label">Unix shell
+    <phrase role="shell-detail">including Git Bash and MSYS2 Bash</phrase></phrase></term><listitem>
     <para>Run this command <emphasis>four times</emphasis> in the same terminal.
       The trailing <userinput>&amp;</userinput> lets the chains run simultaneously:</para>
 <screen><prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; ASRV.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp;</userinput></screen>
@@ -684,13 +728,15 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
     <section xml:id="shell-differences"><info><title>Shell differences</title></info>
       <para>The same BAli-Phy options, such as <userinput>-S</userinput> and
         <userinput>--iterations</userinput>, work in all the shells covered here.
-        Native Windows also accepts slash forms such as <userinput>/iterations:1000</userinput>,
+        In PowerShell and Command Prompt, native Windows also accepts slash forms such as
+        <userinput>/iterations:1000</userinput>,
         but this guide uses the shared forms.</para>
       <para>Put quotes around model expressions containing spaces, parentheses, or square
         brackets. Single quotes work in Unix shells and PowerShell; in Command Prompt, use
         double quotes instead. For example:</para>
 <variablelist role="panelset">
-  <varlistentry><term>Unix shell / PowerShell</term><listitem>
+  <varlistentry><term><phrase role="shell-label">Unix shell
+    <phrase role="shell-detail">including Git Bash and MSYS2 Bash</phrase></phrase> / PowerShell</term><listitem>
 <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S 'HKY85(kappa=2)'</userinput></screen>
   </listitem></varlistentry>
   <varlistentry><term>Command Prompt</term><listitem>
@@ -713,9 +759,11 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
         when passing arguments to a program; use the configuration-file form there or in
         Command Prompt. To check your PowerShell version, run
         <userinput>$PSVersionTable.PSVersion</userinput>.</para>
-      <para>For interactive PowerShell commands on Windows, <command>cp</command> is a short
+      <para>To view a report in any environment, open <filename>Results/index.html</filename>
+        in your web browser. For interactive PowerShell commands on Windows,
+        <command>cp</command> is a short
         form of <command>Copy-Item</command>, and <command>start</command> is a short form of
-        <command>Start-Process</command>. To open a report, use:</para>
+        <command>Start-Process</command>. PowerShell and Command Prompt also provide these shortcuts:</para>
 <variablelist role="panelset">
   <varlistentry><term>PowerShell</term><listitem>
 <screen><prompt>PS&gt;</prompt> <userinput>start Results\index.html</userinput></screen>
@@ -3807,7 +3855,8 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
           to saved alignments is to extract every 10th tree with the program
           <userinput>bpy-subsample</userinput>:
             <variablelist role="panelset">
-  <varlistentry><term>Unix shell / Command Prompt</term><listitem>
+  <varlistentry><term><phrase role="shell-label">Unix shell
+    <phrase role="shell-detail">including Git Bash and MSYS2 Bash</phrase></phrase> / Command Prompt</term><listitem>
 <screen><prompt>%</prompt> <userinput>bpy-subsample 10 &lt; C1.trees &gt; C1.10.trees</userinput></screen>
   </listitem></varlistentry>
   <varlistentry><term>PowerShell</term><listitem>
