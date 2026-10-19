@@ -1,84 +1,89 @@
-# Building the User Guide
+# Building documentation
 
-Install ordinary system tools first. On Ubuntu 24.04:
+See [README.md](README.md) for source locations and [AUTHORING.md](AUTHORING.md) for writing
+conventions. Run the commands below from the checkout root.
+
+## Dependencies and builds
+
+On Ubuntu 24.04, install the system tools:
 
 ```sh
-sudo apt-get install make python3 python3-pygments weasyprint default-jre-headless nodejs npm fonts-dejavu-core
+sudo apt-get install make python3 python3-pygments weasyprint default-jre-headless nodejs npm fonts-dejavu-core xsltproc docbook-xsl-ns
 ```
 
-Then, from the checkout root:
+Then set up the user-guide dependencies and build:
 
 ```sh
 make -C doc setup-user-guide
+make -C doc all model-reference
 make -C doc check-user-guide
 ```
 
-Setup obtains xslTNG if necessary and installs MathJax. It does not manage Python
-packages or fonts. Subsequent builds need only `make -C doc user-guide`.
-The build produces `UserGuide.pdf` with US Letter pages and `UserGuide-A4.pdf` with A4 pages.
-`UserGuide.html`, `UserGuide.pdf`, and `UserGuide-A4.pdf` are also individual convenience targets.
+Setup obtains xslTNG and MathJax in `doc/_tools/`; it does not manage Python packages or fonts.
+Ordinary builds do not install packages. Individual targets are `user-guide`, `tutorial`,
+`instructions`, and `model-reference`. The guide also has `UserGuide.html`, `UserGuide.pdf`,
+and `UserGuide-A4.pdf` convenience targets.
 
-Outputs are in `../../build/user-guide` relative to `doc/`. Publish `UserGuide.html` with
-`user-guide.css` and `user-guide-assets/`, including licenses. Both PDFs are standalone.
-`UserGuide.print.html` is an intermediate input to WeasyPrint, not a file to publish.
-`make -C doc clean-user-guide` removes generated guide files, preserving the source
-and installed tools. Tutorial and Instructions retain their older build rules.
+| Target | Default output directory | Published files |
+| --- | --- | --- |
+| `user-guide` | `doc/_build/user-guide/` | `UserGuide.html`, `UserGuide.pdf`, `UserGuide-A4.pdf` |
+| `tutorial` | `doc/_build/tutorial/` | `Tutorial.html`, `Tutorial.pdf` |
+| `instructions` | `doc/_build/instructions/` | `Instructions.html`, `Instructions.pdf` |
+| `model-reference` | `doc/_build/model-reference/` | Markdown and YAML metadata for website rendering |
 
-Build the tutorial with `make -C doc tutorial`. Outputs are in `../../build/tutorial`
-relative to `doc/`. Publish `Tutorial.html` with both `guide.css` and `tutorial.css`;
-`Tutorial.pdf` is standalone. The tutorial keeps the legacy DocBook processor and uses
-`tutorial.css` for its white background, typography, and automatic command wrapping.
-Adjust `--tutorial-width` there to change the browser reading width (initially 50rem).
+The default PDF paper size is US Letter; `UserGuide-A4.pdf` uses A4. `UserGuide.print.html`
+and preprocessed tutorial/exercise XML are intermediate files, not publications.
 
-## Installation choices
+`make -C doc clean` removes generated outputs, preserving sources and downloaded dependencies.
+Individual clean targets are `clean-user-guide`, `clean-tutorial`, `clean-instructions`, and
+`clean-model-reference`. Both `_build/` and `_tools/` are ignored by version control.
 
-Use `BUILD_DIR` and `TOOLS_DIR` to override the output and tool directories. Tools
-default to `../../build/user-guide-tools`, relative to `doc/`. To use an existing
-complete xslTNG installation, pass `DOCBOOK_XSLTNG=/path/to/docbook-xslTNG` to both
-setup and builds. Setup downloads release 2.8.4 by default; this is a known working
-choice, not a restriction on other installed releases.
+## Configuration
 
-WeasyPrint and Pygments are taken from the normal command path. If distribution
-packages are unsuitable or unavailable, an optional virtual environment can supply them:
+Override `BUILD_DIR`, `TUTORIAL_BUILD_DIR`, `INSTRUCTIONS_BUILD_DIR`, or `REFERENCE_BUILD_DIR`
+to select output directories. Relative paths are interpreted from `doc/`. Use dedicated output
+directories containing no handwritten files: the reference clean target removes its whole directory.
+`TOOLS_DIR` selects the downloaded dependency directory and defaults to `_tools`.
+CI uses explicit directories under the runner's temporary directory.
+
+To use an existing complete xslTNG installation, pass `DOCBOOK_XSLTNG=/path/to/docbook-xslTNG`
+to setup and builds. Setup downloads release 2.8.4 by default; this is a known working choice,
+not a restriction on other installed releases.
+
+WeasyPrint and Pygments are taken from the normal command path. An optional Python environment
+can supply them when distribution packages are unsuitable:
 
 ```sh
-python3 -m venv ../build/guide-python
-. ../build/guide-python/bin/activate
+python3 -m venv doc/_tools/python
+. doc/_tools/python/bin/activate
 python3 -m pip install -r doc/requirements.txt
 ```
 
-Install Python venv support and WeasyPrint's native Pango libraries if your system does
-not already provide them. Make respects the activated environment and never deletes it.
-Java, Node.js, npm, and fonts are installed separately with the system's usual tools.
-Node.js 18.17 or newer is needed by the asset checker.
+Install Python venv support and WeasyPrint's native Pango libraries separately. Make respects
+the activated environment and never deletes it. Java, Node.js, npm, and fonts are system tools;
+the asset checker needs Node.js 18.17 or newer.
 
-MathJax is installed from `package.json` without a project lockfile. Its version range
-allows updates within version 3 because the converter currently uses that package API.
-Rerun setup to install dependencies on another machine; use `npm update --prefix ../build/user-guide-tools/npm --package-lock=false` from the checkout root to update
-an existing default installation. Rebuild with `make -C doc -B user-guide` after tool
-updates if generated files are already present.
+MathJax is installed from `package.json` without a project lockfile. Its version range allows
+updates within version 3 because the converter uses that package API. To update an existing
+installation, run `npm update --prefix doc/_tools/npm --package-lock=false`. After tool updates,
+use `make -C doc -B user-guide` to rebuild existing outputs.
 
-## Authoring and rendering
+## Rendering and maintenance
 
-The source is ordinary XML in `UserGuide.xml`. Use `\(…\)` for inline mathematics and
-`\[…\]` for display mathematics. Keep each expression in one text segment, without
-XML markup inside it. XML still requires escaping `<` and `&` inside TeX.
-Dollar signs are ordinary text, including in shell examples.
+```text
+UserGuide.xml → xslTNG → UserGuide.html → local MathJax in the browser
+                             ↓ Node.js MathJax
+                         UserGuide.print.html → WeasyPrint → PDFs
+```
 
 Browser and PDF rendering share `mathjax-config.js`: delimiters, the base/AMS TeX
 packages, and exclusions for code blocks, inline code, and command input. Prose,
 terms (including filename patterns), and table entries remain eligible.
 
-```text
-UserGuide.xml → xslTNG → UserGuide.html → local MathJax in the browser
-                         ↓ Node.js MathJax
-                     UserGuide.print.html → WeasyPrint → UserGuide.pdf / UserGuide-A4.pdf
-```
-
 The browser MathJax bundle is copied from the same installation used by the PDF
 converter. PDF equations are self-contained SVG paths, retaining their dimensions
-and baseline offsets. Malformed TeX fails the conversion. The A4 build applies `user-guide-A4.css` to override only the paper size.
-WeasyPrint handles pagination,
+and baseline offsets. Malformed TeX fails the conversion. The A4 build applies
+`user-guide-A4.css` to override only the paper size. WeasyPrint handles pagination,
 contents-page numbers, and links. Glyph paths do not guarantee selectable mathematical
 text or full PDF accessibility.
 
@@ -86,58 +91,11 @@ Text uses installed fonts, preferring DejaVu serif, sans-serif, and monospace fa
 where available. The copied xslTNG stylesheet has Google Fonts imports removed, so
 viewing and rendering do not require a font download. System font fallbacks are allowed.
 
-## Notes, cautions, and warnings
+The tutorial and Instructions use `add_screen.py` followed by the system DocBook XSL processor
+and WeasyPrint. `guide.css` supplies their common styles; `tutorial.css` additionally controls
+the tutorial's typography and wrapping. Its `--tutorial-width` sets the browser reading width.
 
-Keep information needed for the current explanation or next step in the main text. Use
-`<note>` for self-contained supplementary material, and `<caution>` or `<warning>` for
-consequences readers should see before acting. Warnings identify actions that could discard
-information or stop work unexpectedly. Use `<important>` for an essential prerequisite,
-such as removing quarantine before extracting the macOS archive. Give each box a descriptive `<title>` that includes
-its type, such as “Caution: Preserve branch annotations”. Move relevant prose into the box
-rather than repeating it. Informational boxes use `<note>`; `<info>` contains metadata.
-
-## Commands, files, and expressions
-
-Use `<screen>` for terminal commands and transcripts, with `<prompt>`, `<userinput>`, and
-`<computeroutput>` identifying their parts. Keep short command/output exchanges together.
-
-Use `<programlisting role="expression" language="bali-phy-model">` for model expressions.
-A multiline expression listing may compare alternatives or show equivalent expressions;
-it does not necessarily represent a file or script. Explain the relationship in the preceding
-prose. `language` identifies syntax, while `role` identifies the purpose of the example.
-Use `<synopsis role="expression">` for schematic syntax without model-language highlighting.
-
-Give file contents and excerpts a caption identifying their filename or format. Mark excerpts
-as such, and do not invent filenames for generic examples:
-
-```xml
-<example role="file-content">
-  <title><filename>model.config</filename></title>
-  <programlisting>:smodel HKY85</programlisting>
-</example>
-```
-
-Place this block between paragraphs, not inside one. A file listing may also have a `language`
-attribute when highlighting is supported; it retains the file presentation. The guide's XSL
-renders these examples with unnumbered captions and delegates their contents to DocBook.
-HTML uses gray terminal blocks, white captioned files, and pale blue-gray expressions. Print
-retains captions and borders. Inline filenames use plain monospace without a background.
-Keep captions with the beginning of files, but allow long listings to cross page boundaries.
-
-## Table layout
-
-Set table column proportions with DocBook `colspec` entries in `UserGuide.xml`; the same
-proportions serve HTML and PDF. Give numeric columns less room than descriptions, but
-allow space for expressions in parameter-count columns. Use ordinary spaces between
-model-expression components so they can wrap without splitting identifiers.
-
-Print CSS suppresses automatic hyphenation and arbitrary word breaks in table code and
-tries to keep each row on one page. Tables may continue across pages with repeated headings;
-rows taller than a page must still be allowed to split. After changing tables, inspect the PDF
-for overflow, split identifiers, awkward gaps, and readable continuation headings. Check narrow
-HTML layouts too, where wide tables scroll. Exact pagination is not a requirement.
-
-## Contents navigation
+### Contents navigation
 
 The opening HTML contents list shows two section levels. The button at the upper right
 opens xslTNG's full contents panel, including a search of section titles. Its checkbox keeps
@@ -157,51 +115,20 @@ The PDF omits the interactive controls.
 `user-guide.xsl` enables the upstream panel; `user-guide.css` limits only the opening screen
 list and constrains the panel to the viewport. The XSL also generates local contents from
 subsection headings, reusing the upstream ID and heading renderers. These lists are hidden
-on screen. Do not duplicate contents entries or insert manual page breaks to tune individual
-pages. `guide-toc.js` adds keyboard controls and
-hidden-panel focus handling to the upstream script, without implementing search or navigation.
+on screen. `guide-toc.js` adds keyboard controls and hidden-panel focus handling to the upstream script, without implementing search or navigation.
 When updating xslTNG, check these interactions in a browser, including a narrow viewport and
 local-file viewing. Remove the adapter if upstream supplies equivalent accessibility support.
 
-## Shell alternatives
+### Shell selectors
 
-Keep shared commands and explanations outside panels. Where commands or execution instructions
-differ, use xslTNG's built-in panelsets:
+Shell alternatives use xslTNG's native HTML radio buttons and work without JavaScript. Print
+shows every alternative. `user-guide.css` makes the hidden radio buttons keyboard-focusable
+and provides a visible focus outline. Check Tab and arrow-key navigation, narrow screens,
+local-file viewing, and print output when changing panels or upgrading xslTNG. Remove the
+keyboard workaround when upstream provides equivalent support. Do not add ARIA tab roles
+without implementing their keyboard model.
 
-```xml
-<variablelist role="panelset">
-  <varlistentry><term><phrase role="shell-label">Unix shell
-    <phrase role="shell-detail">including Git Bash and MSYS2 Bash</phrase></phrase> / Command Prompt</term><listitem>
-    <screen><userinput>bpy-subsample 10 &lt; C1.trees &gt; C1.10.trees</userinput></screen>
-  </listitem></varlistentry>
-  <varlistentry><term>PowerShell</term><listitem>
-    <screen><userinput>cmd /c "bpy-subsample 10 &lt; C1.trees &gt; C1.10.trees"</userinput></screen>
-  </listitem></varlistentry>
-</variablelist>
-```
-
-Use consistent shell labels and combine alternatives when the complete instructions are identical.
-“Unix shell” includes Linux, macOS, WSL, Git Bash, and MSYS2 Bash. Keep the Windows Bash
-clarification inside each Unix-shell label, as above; the stylesheet displays it in smaller
-text below “Unix shell”. Windows-only selectors use “Git Bash / MSYS2 Bash”. Keep archive
-choices and other operating-system requirements in the installation sections.
-
-Native HTML controls select one panel without JavaScript; the PDF prints every label and its
-content in source order. Keep version-specific explanations beside the affected commands rather
-than repeating them in the common workflow.
-
-HTML uses compact selectors with a blue underline and bold text for the selected shell. Each
-label retains its underline when selectors wrap; panel content has no enclosing box. Print uses
-smaller bold sans-serif labels and modest spacing between alternatives, with more space after the
-group. Keep labels with the start of their content and short commands together, but let long
-alternatives and groups cross pages to avoid large blank areas.
-
-`user-guide.css` makes xslTNG's hidden radio buttons keyboard-focusable and provides a visible
-focus outline. Check Tab and arrow-key navigation, narrow screens, local-file viewing, and print
-output when changing panels or upgrading xslTNG. Remove the keyboard workaround when upstream
-provides equivalent support. Do not add ARIA tab roles without implementing their keyboard model.
-
-## Print presentation
+### Print presentation
 
 In print, the FAQ uses the section's topic list instead of separate question indexes.
 Questions appear in bold above their answers, without question numbers or an empty label column.
@@ -211,7 +138,7 @@ Print styles also use light table stripes, padded cells, compact table paragraph
 definition lists, and regular-weight commands. Technical text is not automatically hyphenated.
 These rules are confined to print media; browser navigation and styling are unchanged.
 
-## Checks and maintenance
+## Validation
 
 `check-user-guide` builds HTML/PDF, runs the converter tests, and checks internal links
 and local assets using MathJax's existing HTML parser. The separate documentation CI
@@ -222,25 +149,32 @@ tables, code wrapping, contents-page references, and any substantial increase in
 Small changes in line breaks, pagination, and typography are acceptable. There are no
 PDF snapshots or fixed page-count/font-inventory tests.
 
-Tool versions used in successful builds are useful diagnostic information, not exact
-requirements. Add compatibility restrictions only for demonstrated problems. A clean Ubuntu 24.04 build passed with its packaged WeasyPrint 61.1, Pygments 2.17.2,
-and Node.js 18.19.1. Local checks also passed with WeasyPrint 69.0, Pygments 2.20.0,
-Java 25, and Node.js 24. These are tested examples, not a required version list.
+## Publishing
+
+Copy the user-guide HTML together with `user-guide.css`, `user-guide-assets/` (including
+licenses), and `guide-images/`. Copy tutorial HTML with `guide.css` and `tutorial.css`, and
+Instructions HTML with `guide.css`. PDFs are standalone. Preserve these relative paths when
+serving a document through an alias at another directory level.
+
+The website stores the current guide and tutorial in `doc/4.3/`. Copy the built files and
+assets there before changing links. Root `UserGuide.html`, `UserGuide.pdf`, `UserGuide-A4.pdf`,
+`Tutorial.html`, and `Tutorial.pdf` are symlinks to those publications. Root asset aliases must
+resolve the stylesheets, images, and scripts at the same level. Older current-guide `README.*`
+URLs remain compatibility symlinks; keep these until old incoming links no longer need support.
+Leave historical release directories intact.
+
+Validate links and PHP in an isolated website checkout before publishing. Install files and
+aliases before switching incoming links so that every newly advertised URL already exists.
 
 ## Function reference
 
-`make -C doc model-reference` generates Markdown with YAML metadata in
-`../build/model-reference` (override `REFERENCE_BUILD_DIR` to change this). It needs only Python 3
-and reads the JSON files under `bindings/`; it does not require a compiled BAli-Phy executable.
-Edit those bindings to update descriptions, arguments, examples, or related entries.
-The generator reports missing descriptions and unresolved references without inventing replacements.
-
-Each binding has a directory URL derived from its source path, with category and alphabetical
-indexes. Argument references in defaults link to the corresponding arguments; expandable source
-expressions retain the original syntax. The Markdown can be rendered with Pandoc or incorporated
-into another publishing system.
+`make -C doc model-reference` needs only Python 3 and reads the JSON files under `bindings/`;
+it does not require a compiled BAli-Phy executable. The generator reports missing descriptions
+and unresolved references. Each binding has a directory URL derived from its source path,
+with category and alphabetical indexes. Generated Markdown can be rendered with Pandoc or
+incorporated into another publishing system.
 
 The website's `python3 update-reference.py /path/to/bali-phy` renders these pages with its PHP
-template and existing sidebar. It requires Pandoc and PHP CLI, checks PHP syntax and internal
-links, and replaces the generated `reference/` directory only after those checks pass.
-Keep website styles, scripts, and templates outside that directory.
+template and sidebar. It requires Pandoc and PHP CLI, checks PHP syntax and internal links,
+and replaces `reference/` only after those checks pass. Keep website styles, scripts, and
+templates outside that generated directory.
