@@ -4319,28 +4319,28 @@ Otherwise you can install meson through pip3:
     <para>This section is for developers compiling BAli-Phy from source.  Users of the native
       binary package do not need MSYS2.  The
       <link xmlns:xlink="http://www.w3.org/1999/xlink"
-            xlink:href="https://www.msys2.org/">MSYS2</link> project provides the MINGW64
-      compiler that can create native Windows executables.</para>
-    <para>After installing MSYS2, open the <application>MSYS2 MINGW64</application> shell and
+            xlink:href="https://www.msys2.org/">MSYS2</link> project provides GCC/MinGW-w64 in its UCRT64
+      environment to create native Windows executables.</para>
+    <para>After installing MSYS2, open the <application>MSYS2 UCRT64</application> shell and
       perform a full system update:</para>
 <screen><prompt>%</prompt> <userinput>pacman -Syu</userinput></screen>
     <para>If the update asks you to close the terminal, reopen the
-      <application>MSYS2 MINGW64</application> shell and run <command>pacman -Syu</command>
+      <application>MSYS2 UCRT64</application> shell and run <command>pacman -Syu</command>
       again.  Then install the compiler, build tools, and libraries used by BAli-Phy:</para>
 <screen><prompt>%</prompt> <userinput>pacman -S --needed \
   git \
-  mingw-w64-x86_64-boost \
-  mingw-w64-x86_64-cairo \
-  mingw-w64-x86_64-cereal \
-  mingw-w64-x86_64-eigen3 \
-  mingw-w64-x86_64-fmt \
-  mingw-w64-x86_64-gcc \
-  mingw-w64-x86_64-meson \
-  mingw-w64-x86_64-range-v3 \
-  mingw-w64-x86_64-zstd</userinput></screen>
+  mingw-w64-ucrt-x86_64-boost \
+  mingw-w64-ucrt-x86_64-cairo \
+  mingw-w64-ucrt-x86_64-cereal \
+  mingw-w64-ucrt-x86_64-eigen3 \
+  mingw-w64-ucrt-x86_64-fmt \
+  mingw-w64-ucrt-x86_64-gcc \
+  mingw-w64-ucrt-x86_64-meson \
+  mingw-w64-ucrt-x86_64-range-v3 \
+  mingw-w64-ucrt-x86_64-zstd</userinput></screen>
     <para><command>pacman</command> installs the Python, Ninja, and pkg-config dependencies of
-      the packaged MINGW64 version of Meson automatically.  Cairo is included so that the
-      <command>draw-tree</command> program is built.  The MINGW64 shell refers to drives as
+      the packaged UCRT64 version of Meson automatically.  Cairo is included so that the
+      <command>draw-tree</command> program is built.  The UCRT64 shell refers to drives as
       <filename>/c/</filename> instead of <filename>C:/</filename>.</para>
     </section>
 
