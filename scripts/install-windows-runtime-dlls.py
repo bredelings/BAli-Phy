@@ -28,6 +28,7 @@ WINDOWS_SYSTEM_DLLS = {
     "ole32.dll",
     "rpcrt4.dll",
     "shell32.dll",
+    "ucrtbase.dll",
     "user32.dll",
     "usp10.dll",
     "ws2_32.dll",

@@ -278,7 +278,7 @@ if host_machine.system() == 'windows'
     mingw_prefix = meson.get_external_property('mingw_prefix', '')
     if mingw_prefix != ''
       windows_objdump = find_program(
-        'x86_64-w64-mingw32-objdump', 'objdump', native: true
+        'x86_64-w64-mingw32ucrt-objdump', 'x86_64-w64-mingw32-objdump', 'objdump', native: true
       )
       windows_runtime_dll_args += [
         '--mingw-prefix', mingw_prefix,
