@@ -210,6 +210,8 @@ endforeach
 if host_machine.system() == 'windows'
   install_data('scripts/bpy-summarize', rename: 'bpy-summarize.py', install_dir: 'bin')
   install_data('scripts/bpy-summarize.cmd', install_dir: 'bin')
+  install_data('scripts/bpy-summarize.sh', rename: 'bpy-summarize',
+               install_mode: 'rwxr-xr-x', install_dir: 'bin')
 else
   install_data('scripts/bpy-summarize', install_mode: 'rwxr-xr-x', install_dir: 'bin')
 endif
@@ -234,6 +236,8 @@ install_data([
 if host_machine.system() == 'windows'
   install_data('scripts/bali-phy-pkg.py', install_dir: 'bin')
   install_data('scripts/bali-phy-pkg.cmd', install_dir: 'bin')
+  install_data('scripts/bali-phy-pkg.sh', rename: 'bali-phy-pkg',
+               install_mode: 'rwxr-xr-x', install_dir: 'bin')
 else
   install_data('scripts/bali-phy-pkg.py', rename: 'bali-phy-pkg', install_mode: 'rwxr-xr-x', install_dir: 'bin')
 endif
