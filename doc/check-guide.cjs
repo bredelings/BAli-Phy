@@ -26,7 +26,7 @@ function main()
         throw new Error('Usage: node check-guide.cjs BUILD_DIR');
     const output = path.resolve(process.argv[2]);
     const adaptor = liteAdaptor();
-    for (const name of ['README.html', 'README.print.html']) {
+    for (const name of ['UserGuide.html', 'UserGuide.print.html']) {
         const filename = path.join(output, name);
         const document = adaptor.parse(fs.readFileSync(filename, 'utf8'));
         const ids = new Set(), fragments = [];

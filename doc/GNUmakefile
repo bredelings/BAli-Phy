@@ -15,7 +15,7 @@ GUIDE_ASSETS = $(addprefix $(ASSET_DIR)/,docbook.css docbook-paged.css docbook-t
 MATH_ASSETS = $(addprefix $(ASSET_DIR)/,mathjax-config.js tex-svg.js MathJax-LICENSE)
 
 .DELETE_ON_ERROR:
-.PHONY: all user-guide README.html README.pdf README-A4.pdf clean clean-user-guide setup-user-guide check-user-guide tutorial Tutorial.html Tutorial.pdf clean-tutorial
+.PHONY: all user-guide UserGuide.html UserGuide.pdf UserGuide-A4.pdf clean clean-user-guide setup-user-guide check-user-guide tutorial Tutorial.html Tutorial.pdf clean-tutorial
 
 setup-user-guide:
 	python3 setup-guide.py "$(TOOLS_DIR)" "$(DOCBOOK_XSLTNG)"
@@ -30,17 +30,17 @@ check-user-guide: user-guide
 	node test-render-math-svg.cjs
 	node check-guide.cjs "$(BUILD_DIR)"
 
-user-guide: $(BUILD_DIR)/README.html $(BUILD_DIR)/README.pdf $(BUILD_DIR)/README-A4.pdf
-README.html: $(BUILD_DIR)/README.html
-README.pdf: $(BUILD_DIR)/README.pdf
-README-A4.pdf: $(BUILD_DIR)/README-A4.pdf
+user-guide: $(BUILD_DIR)/UserGuide.html $(BUILD_DIR)/UserGuide.pdf $(BUILD_DIR)/UserGuide-A4.pdf
+UserGuide.html: $(BUILD_DIR)/UserGuide.html
+UserGuide.pdf: $(BUILD_DIR)/UserGuide.pdf
+UserGuide-A4.pdf: $(BUILD_DIR)/UserGuide-A4.pdf
 
-$(BUILD_DIR)/README.html: $(DOCBOOK_XSLTNG)/bin/docbook $(NODE_MODULES)/mathjax-full/package.json \
-                        README.xml user-guide.xsl $(GUIDE_IMAGES) $(GUIDE_ASSETS) $(MATH_ASSETS) $(BUILD_DIR)/user-guide.css \
+$(BUILD_DIR)/UserGuide.html: $(DOCBOOK_XSLTNG)/bin/docbook $(NODE_MODULES)/mathjax-full/package.json \
+                        UserGuide.xml user-guide.xsl $(GUIDE_IMAGES) $(GUIDE_ASSETS) $(MATH_ASSETS) $(BUILD_DIR)/user-guide.css \
                         $(DOCBOOK_XSLTNG)/xslt/catalog.xml $(DOCBOOK_XSLTNG)/xslt/docbook.xsl
 	@command -v pygmentize >/dev/null || { echo 'User Guide requires pygmentize (Pygments).' >&2; exit 1; }
 	"$(DOCBOOK_XSLTNG)/bin/docbook" -catalog:"$(DOCBOOK_XSLTNG)/xslt/catalog.xml" \
-	    -xi:on -s:README.xml -xsl:user-guide.xsl -o:"$@"
+	    -xi:on -s:UserGuide.xml -xsl:user-guide.xsl -o:"$@"
 
 # Strip remote font imports only from the copied stylesheet, preserving upstream CSS.
 $(ASSET_DIR)/docbook.css: $(DOCBOOK_XSLTNG)/resources/css/docbook.css
@@ -83,14 +83,14 @@ $(ASSET_DIR)/MathJax-LICENSE: $(NODE_MODULES)/mathjax-full/LICENSE
 	mkdir -p "$(ASSET_DIR)"
 	cp "$<" "$@"
 
-$(BUILD_DIR)/README.print.html: $(BUILD_DIR)/README.html render-math-svg.cjs mathjax-config.js $(NODE_MODULES)/mathjax-full/package.json
+$(BUILD_DIR)/UserGuide.print.html: $(BUILD_DIR)/UserGuide.html render-math-svg.cjs mathjax-config.js $(NODE_MODULES)/mathjax-full/package.json
 	node render-math-svg.cjs "$<" "$@"
 
-$(BUILD_DIR)/README.pdf: $(BUILD_DIR)/README.print.html \
+$(BUILD_DIR)/UserGuide.pdf: $(BUILD_DIR)/UserGuide.print.html \
                        $(BUILD_DIR)/user-guide.css $(GUIDE_ASSETS)
 	weasyprint "$<" "$@"
 
-$(BUILD_DIR)/README-A4.pdf: $(BUILD_DIR)/README.print.html \
+$(BUILD_DIR)/UserGuide-A4.pdf: $(BUILD_DIR)/UserGuide.print.html \
                           $(BUILD_DIR)/user-guide.css $(GUIDE_ASSETS) user-guide-A4.css
 	weasyprint --stylesheet user-guide-A4.css "$<" "$@"
 
@@ -118,9 +118,9 @@ clean-tutorial:
 
 Instructions.pdf: guide.css
 
-# Name the generated files explicitly: README.xml is now a source file.
+# Name the generated files explicitly: UserGuide.xml is now a source file.
 clean-user-guide:
-	$(RM) "$(BUILD_DIR)/README.html" "$(BUILD_DIR)/README.print.html" "$(BUILD_DIR)/README.pdf" "$(BUILD_DIR)/README-A4.pdf"
+	$(RM) "$(BUILD_DIR)/UserGuide.html" "$(BUILD_DIR)/UserGuide.print.html" "$(BUILD_DIR)/UserGuide.pdf" "$(BUILD_DIR)/UserGuide-A4.pdf"
 	$(RM) "$(BUILD_DIR)/user-guide.css" $(GUIDE_IMAGES) $(GUIDE_ASSETS) $(MATH_ASSETS)
 
 clean: clean-user-guide clean-tutorial

@@ -655,7 +655,7 @@ Hs::Stmts generate_main(const InferOptions& options,
             "You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the "
             "BEAST program Tracer (graphical)."))});
     HsG::Expr(report, HsG::Apply(Hs::Var("when"), {tsv_enabled, tsv_help}));
-    put_line("See the manual at http://www.bali-phy.org/README.html for further information.");
+    put_line("See the manual at https://www.bali-phy.org/UserGuide.html for further information.");
     HsG::Expr(report, HsG::Apply(Hs::Var("hFlush"), {Hs::Var("stdout")}));
     HsG::Expr(main, HsG::Apply(Hs::Var("unless"), {is_test, HsG::Do(report)}));
 

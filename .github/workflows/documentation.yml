@@ -42,9 +42,9 @@ jobs:
           name: user-guide
           if-no-files-found: error
           path: |
-            ${{ runner.temp }}/user-guide/README.html
-            ${{ runner.temp }}/user-guide/README.pdf
-            ${{ runner.temp }}/user-guide/README-A4.pdf
+            ${{ runner.temp }}/user-guide/UserGuide.html
+            ${{ runner.temp }}/user-guide/UserGuide.pdf
+            ${{ runner.temp }}/user-guide/UserGuide-A4.pdf
             ${{ runner.temp }}/user-guide/user-guide.css
             ${{ runner.temp }}/user-guide/user-guide-assets/
             ${{ runner.temp }}/user-guide/guide-images/

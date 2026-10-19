@@ -55,7 +55,7 @@ The hyphenated option forms shown here work on all platforms. Native Windows als
 slash forms such as `/iterations:1000`.
 
 The user's guide provides tutorials and fuller explanations of models and analyses:
-<https://www.bali-phy.org/README.html>.
+<https://www.bali-phy.org/UserGuide.html>.
 
 # INPUT AND OUTPUT
 

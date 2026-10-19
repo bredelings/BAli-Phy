@@ -15,12 +15,12 @@ make -C doc check-user-guide
 
 Setup obtains xslTNG if necessary and installs MathJax. It does not manage Python
 packages or fonts. Subsequent builds need only `make -C doc user-guide`.
-The build produces `README.pdf` with US Letter pages and `README-A4.pdf` with A4 pages.
-`README.html`, `README.pdf`, and `README-A4.pdf` are also individual convenience targets.
+The build produces `UserGuide.pdf` with US Letter pages and `UserGuide-A4.pdf` with A4 pages.
+`UserGuide.html`, `UserGuide.pdf`, and `UserGuide-A4.pdf` are also individual convenience targets.
 
-Outputs are in `../../build/user-guide` relative to `doc/`. Publish `README.html` with
+Outputs are in `../../build/user-guide` relative to `doc/`. Publish `UserGuide.html` with
 `user-guide.css` and `user-guide-assets/`, including licenses. Both PDFs are standalone.
-`README.print.html` is an intermediate input to WeasyPrint, not a file to publish.
+`UserGuide.print.html` is an intermediate input to WeasyPrint, not a file to publish.
 `make -C doc clean-user-guide` removes generated guide files, preserving the source
 and installed tools. Tutorial and Instructions retain their older build rules.
 
@@ -60,7 +60,7 @@ updates if generated files are already present.
 
 ## Authoring and rendering
 
-The source is ordinary XML in `README.xml`. Use `\(…\)` for inline mathematics and
+The source is ordinary XML in `UserGuide.xml`. Use `\(…\)` for inline mathematics and
 `\[…\]` for display mathematics. Keep each expression in one text segment, without
 XML markup inside it. XML still requires escaping `<` and `&` inside TeX.
 Dollar signs are ordinary text, including in shell examples.
@@ -70,9 +70,9 @@ packages, and exclusions for code blocks, inline code, and command input. Prose,
 terms (including filename patterns), and table entries remain eligible.
 
 ```text
-README.xml → xslTNG → README.html → local MathJax in the browser
+UserGuide.xml → xslTNG → UserGuide.html → local MathJax in the browser
                          ↓ Node.js MathJax
-                     README.print.html → WeasyPrint → README.pdf / README-A4.pdf
+                     UserGuide.print.html → WeasyPrint → UserGuide.pdf / UserGuide-A4.pdf
 ```
 
 The browser MathJax bundle is copied from the same installation used by the PDF
@@ -126,7 +126,7 @@ Keep captions with the beginning of files, but allow long listings to cross page
 
 ## Table layout
 
-Set table column proportions with DocBook `colspec` entries in `README.xml`; the same
+Set table column proportions with DocBook `colspec` entries in `UserGuide.xml`; the same
 proportions serve HTML and PDF. Give numeric columns less room than descriptions, but
 allow space for expressions in parameter-count columns. Use ordinary spaces between
 model-expression components so they can wrap without splitting identifiers.

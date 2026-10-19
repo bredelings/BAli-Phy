@@ -40,7 +40,7 @@
   <xsl:template match="db:article" mode="m:generate-titlepage">
     <xsl:next-match/>
     <p class="guide-pdf-downloads">Download PDF:
-      <a href="README.pdf">Letter</a> · <a href="README-A4.pdf">A4</a>
+      <a href="UserGuide.pdf">Letter</a> · <a href="UserGuide-A4.pdf">A4</a>
     </p>
   </xsl:template>
 
