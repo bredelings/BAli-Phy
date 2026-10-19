@@ -8,3 +8,6 @@
 /user-guide-assets/
 
 /node_modules/
+
+/_build/
+/_tools/
