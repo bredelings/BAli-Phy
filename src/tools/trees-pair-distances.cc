@@ -164,13 +164,6 @@ int main(int argc,char* argv[])
         D.finalize();
 
         //------- Merge lengths and topology -------//
-        vector<string> s_out;
-        vector<double> v1_out;
-        vector<double> v2_out;
-        s_out.push_back("level");
-        v1_out.push_back(-1);
-        v2_out.push_back(-2);
-
         const auto& distances = args.count("var") ? D.m2 : D.m1;
         cout<<join(D.names,'\t')<<endl;
         for(int s1=0;s1<D.N;s1++)
