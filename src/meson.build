@@ -203,7 +203,7 @@ tools = ['model_P','statreport','stats-select','alignment-gild','alignment-conse
 	 'alignments-diff','tree-tool','alignment-distances','alignment-draw', 'trees-bootstrap', 'draw-tree', 'extract-ancestors',
          'summarize-ancestors','mcon-tool','character-properties']
 
-extra_tools = ['stats-merge', 'stats-cat', 'alignment-identity', 'alignment-compare', 'joint-indels', 'joint-parsimony', 'alignment-smc',
+extra_tools = ['stats-merge', 'stats-cat', 'alignment-compare', 'joint-indels', 'joint-parsimony', 'alignment-smc',
 		 'alignment-find-conserved', 'partitions-supported', 'draw-graph', 'trees-pair-distances', 'tree-partitions', 'tree-reroot',
 		 'path-graph']
 
