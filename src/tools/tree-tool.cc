@@ -75,7 +75,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
         ("resolve","Resolve polytomies")
         ("remove-root-branch","Remove single branch from root.")
         ("remove-root-branches","Ensure root is not a tip.")
-        ("remove-knuckles","Remove degree-2 nodes.")
+        ("remove-knuckles",value<string>()->implicit_value("nonroot"),"Remove degree-2 nodes: nonroot (default) or all")
         ("scale", value<double>(), "Scale branch-lengths by factor")
         ("strip-internal-names","Remove internal node names")
         ("name-all-nodes","Add node names")
@@ -175,6 +175,13 @@ int main(int argc,char* argv[])
         variables_map args = parse_cmd_line(argc,argv);
 
         vector<string> prune = get_string_list(args, "prune");
+        string knuckles;
+        if (args.count("remove-knuckles"))
+        {
+            knuckles = args["remove-knuckles"].as<string>();
+            if (knuckles != "nonroot" and knuckles != "all")
+                throw myexception()<<"--remove-knuckles must be nonroot or all";
+        }
 
         //----------- Read the topology -----------//
         if (not args.count("tree"))
@@ -200,6 +207,21 @@ int main(int argc,char* argv[])
         {
             while(remove_root_branch(T))
                 ;
+        }
+        if (knuckles == "all")
+            remove_sub_branches(T);
+        else if (knuckles == "nonroot")
+        {
+            // Suppress only intermediate nodes, preserving the designated root. Removal
+            // renumbers nodes, so restart the search after each joined pair of branches.
+            while (true)
+            {
+                int node = 0;
+                while (node < T.n_nodes() and (node == T.root() or T.node(node).degree() != 2))
+                    ++node;
+                if (node == T.n_nodes()) break;
+                T.remove_node_from_branch(node);
+            }
         }
         if (args.count("resolve"))
         {

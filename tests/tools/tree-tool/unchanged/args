@@ -1,0 +1,3 @@
+# Protect root selection and branch joining through the CLI; general tree tests do not exercise this option.
+# Obsolete if knuckle-removal modes are replaced.
+-
