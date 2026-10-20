@@ -312,6 +312,8 @@ int main(int argc,char* argv[])
 
                 string filename = args["uncertainty"].as<string>();
                 ofstream graph_file(filename);
+                if (not graph_file)
+                    throw myexception()<<"Cannot open uncertainty file '"<<filename<<"'.";
 
                 int total_seq_length=0;
                 for(int length: L)
@@ -327,8 +329,13 @@ int main(int argc,char* argv[])
                     graph_file<<LOD<<" "<<unknowns*scale2<<"  "<<columns*scale1<<endl;
                 }
                 graph_file.close();
+                if (not graph_file)
+                    throw myexception()<<"Cannot finish writing uncertainty file '"<<filename<<"'.";
             }
         }
+        cout.flush();
+        if (not cout)
+            throw myexception()<<"Cannot finish writing alignment to stdout.";
     }
     catch (std::exception& e) {
         std::cerr<<"alignment-consensus: Error! "<<e.what()<<endl;
