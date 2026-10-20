@@ -32,7 +32,7 @@ Options are applied in a fixed order, regardless of their command-line order:
 # INPUT
 
 _TREE_ is a Newick or NEXUS file, or **-** for standard input. Only its first tree
-is used. **--tree** may supply the filename instead of the positional argument.
+is used. Supply the filename as the positional argument.
 Use branch lengths for scaling, distance summaries, branch joining, and root
 finding. Root finding requires a positive total tree length.
 
@@ -118,9 +118,6 @@ is used:
 
 **-V**, **--verbose**
 : Enable diagnostic output on standard error.
-
-**--tree** _TREE_
-: Supply the input file, or **-** for standard input.
 
 # EXAMPLES
 

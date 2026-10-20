@@ -115,7 +115,7 @@ int main(int argc,char* argv[])
         bool strip_internal_names = false, name_all_nodes = false;
         bool length = false, diameter = false, count_leaves = false, count_nodes = false;
         bool node_degrees = false, show_leaves = false, show_nodes = false;
-        app.add_option("--tree,TREE", tree_file, "Tree file ('-' reads stdin)")->required()->type_name("");
+        app.add_option("TREE", tree_file, "Tree file ('-' reads stdin)")->required()->type_name("");
         app.add_flag("-V,--verbose", verbose, "Output diagnostic messages");
         app.add_option("--prune", prune_names, "Taxa to remove (comma-separated list or @filename)");
         app.add_option("--scale", factor, "Multiply branch lengths by this factor");
