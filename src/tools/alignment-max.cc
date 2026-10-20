@@ -728,6 +728,8 @@ MPD::write_debug_graph(const vector<double>& score, const string& filename, int 
 
 
     std::ofstream debugfile(filename);
+    if (not debugfile)
+        throw myexception()<<"Cannot open debug graph file '"<<filename<<"'.";
     debugfile<<"digraph \"token0\" {\n";
     debugfile<<"graph [ranksep=0.25, fontname=Arial,  nodesep=0.25, ranksep=0.5];\n";
     debugfile<<"node [fontname=Arial, style=\"rounded,filled\", height=0, width=0, shape=box];\n";
@@ -787,6 +789,8 @@ MPD::write_debug_graph(const vector<double>& score, const string& filename, int 
     debugfile<<"}\n";
 
     debugfile.close();
+    if (not debugfile)
+        throw myexception()<<"Cannot finish writing debug graph file '"<<filename<<"'.";
 }
 
 alignment MPD::get_best_alignment(int type)
@@ -897,6 +901,8 @@ int main(int argc,char* argv[])
 
 	    outfile<<amax<<endl;
 	    outfile.close();
+            if (not outfile)
+                throw myexception()<<"Cannot finish writing alignment file '"<<out<<"'.";
 	}
 
 	//------------------ Write column probabilites -------------------//
@@ -914,6 +920,8 @@ int main(int argc,char* argv[])
 		outfile<<column_probabilities[c]<<endl;
 
 	    outfile.close();
+            if (not outfile)
+                throw myexception()<<"Cannot finish writing column probabilities to '"<<outp<<"'.";
 	}
 
         if (args.count("debug-graph"))
@@ -928,6 +936,9 @@ int main(int argc,char* argv[])
             auto score = mpd.get_score( type );
             mpd.write_debug_graph( score, filename, n_states);
         }
+        cout.flush();
+        if (not cout)
+            throw myexception()<<"Cannot finish writing alignment to stdout.";
     }
     catch (std::exception& e) {
 	std::cerr<<"alignment-max: Error! "<<e.what()<<endl;
