@@ -250,23 +250,24 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
     {
         istream_or_ifstream input_stream(std::cin, "-", filename, "alignment collection");
 
-        try
+        // Read once: retrying after a name mismatch would lose samples, especially on stdin.
+        auto new_alignments = load_alignments(input_stream, A.get_alphabet().name, skip, maxalignments);
+        const auto& first = new_alignments.front();
+        auto names = T.get_leaf_labels();
+        if (first.n_sequences() != T.n_leaves())
         {
-            auto new_alignments = load_alignments(input_stream, T.get_leaf_labels(), A.get_alphabet(), skip, maxalignments);
-            alignments.insert(alignments.end(), new_alignments.begin(), new_alignments.end());
+            add_internal_labels(T);
+            names = T.get_labels();
         }
-        catch (std::exception& e)
+        vector<int> lengths(T.n_leaves());
+        for(int i=0; i<T.n_leaves(); i++)
+            lengths[i] = A.seqlength(i);
+        for(auto& sample: new_alignments)
         {
-            // what's going on here?
-            if (alignments.size() == 0)
-            {
-                add_internal_labels(T);
-                auto new_alignments = load_alignments(input_stream, T.get_labels(), A.get_alphabet(), skip, maxalignments);
-                alignments.insert(alignments.end(), new_alignments.begin(), new_alignments.end());
-            }
-            else
-                throw;
+            sample = reorder_sequences(sample, names);
+            check_same_sequence_lengths(lengths, chop_internal(sample, T.n_leaves()));
         }
+        alignments.splice(alignments.end(), new_alignments);
     }
 
     if (log_verbose) std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;

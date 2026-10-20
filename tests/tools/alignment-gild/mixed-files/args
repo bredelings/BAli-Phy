@@ -1,0 +1,3 @@
+# Retain all samples and match residues by sequence name across supported sample layouts.
+# Help tests cannot detect lost samples or wrong ordering; retire if ancestral samples are unsupported.
+results/files/reference.fa results/files/tree.nwk results/files/leaves.fa results/files/internal.fa
