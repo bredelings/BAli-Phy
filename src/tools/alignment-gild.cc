@@ -35,15 +35,13 @@
 #include "util/range.hh"
 #include "distance-methods.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
 extern int log_verbose;
 
-namespace po = boost::program_options;
 using std::vector;
 using std::string;
 using std::endl;
-using po::variables_map;
 
 // FIXME - also show which COLUMNS are more that 99% conserved?
 
@@ -176,58 +174,6 @@ Matrix counts_to_probability(const Tree& T,const vector<int>& column,
 
 void add_internal_labels(SequenceTree& T);
 
-void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A,RootedSequenceTree& T) 
-{
-    //--------------- Load and link template A and T -----------------//
-    A = load_A(args, false);
-    T = load_T(args);
-    link(A,T,false);
-    check_alignment(A,T,false);
-
-    //------------ Try to load alignments -----------//
-    vector<string> filenames;
-    if (args.count("files"))
-        filenames = args["files"].as<vector<string> >();
-
-    // read from cin if nothing specified
-    if (filenames.empty())
-        filenames.push_back("-");
-
-    int maxalignments = args["max-alignments"].as<int>();
-    unsigned skip = args["skip"].as<unsigned>();
-
-    if (log_verbose) std::cerr<<"alignment-gild: Loading alignments...";
-
-    // Instead of reordering the tree, just specify the names, here.
-
-    for(auto& filename: filenames)
-    {
-        istream_or_ifstream input_stream(std::cin, "-", filename, "alignment collection");
-
-        // Read once: retrying after a name mismatch would lose samples, especially on stdin.
-        auto new_alignments = load_alignments(input_stream, A.get_alphabet().name, skip, maxalignments);
-        const auto& first = new_alignments.front();
-        auto names = T.get_leaf_labels();
-        if (first.n_sequences() != T.n_leaves())
-        {
-            add_internal_labels(T);
-            names = T.get_labels();
-        }
-        vector<int> lengths(T.n_leaves());
-        for(int i=0; i<T.n_leaves(); i++)
-            lengths[i] = A.seqlength(i);
-        for(auto& sample: new_alignments)
-        {
-            sample = reorder_sequences(sample, names);
-            check_same_sequence_lengths(lengths, chop_internal(sample, T.n_leaves()));
-        }
-        alignments.splice(alignments.end(), new_alignments);
-    }
-
-    if (log_verbose) std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
-    if (alignments.empty()) 
-	throw myexception()<<"Alignment sample is empty.";
-}
 
 
 vector<int> get_column(const matrix<int>& MA,int c,int nleaves) {
@@ -286,55 +232,6 @@ double get_column_probability(const vector<int>& column,
     }
 
     return double(0.5+count)/(1.0+alignments.size());
-}
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-	("files",value<vector<string> >()->composing(),"tree samples to examine")
-	;
-
-    // named options
-    options_description visible("Allowed options");
-    visible.add_options()
-	("help,h", "produce help message")
-	("align", value<string>(),"file with alignment to annotate")
-	("tree",value<string>(),"file with tree")
-	("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
-	("skip",value<unsigned>()->default_value(0),"number of alignment samples to skip")
-	("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
-	("verbose,V","Output more log messages on stderr.")
-	;
-
-    options_description all("All options");
-    all.add(invisible).add(visible);
-
-    // positional options
-    positional_options_description p;
-    p.add("align", 1);
-    p.add("tree", 1);
-    p.add("files", -1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Annotate each residue in the alignment according to the probability that it should align to the hypothetical root character in its column.\n\n";
-	cout<<"Usage: alignment-gild alignment-file tree-file alignments-file [alignments-file] [OPTIONS]\n\n";
-	cout<<visible<<"\n";
-	exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = 1;
-
-    return args;
 }
 
 vector<double> letter_weights_project(const vector<int>& column, const Matrix& Q, const SequenceTree& T)
@@ -434,17 +331,84 @@ vector<double> letter_weights(const vector<int>& column, const Matrix& Q, const 
     return w;
 }
 
+// Annotate reference columns using sample support projected onto the tree topology.
 int main(int argc,char* argv[]) { 
     try {
-	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Annotate an alignment using sampled homology support and a tree topology.", "alignment-gild"};
+        app.usage("Usage: alignment-gild [OPTIONS] ALIGNMENT TREE [SAMPLE ...]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string alignment_file, tree_file, alphabet_name;
+        vector<string> filenames;
+        unsigned skip = 0;
+        int maxalignments = 1000;
+        bool verbose = false;
+        app.add_option("ALIGNMENT", alignment_file, "Reference alignment to annotate")->required()->type_name("");
+        app.add_option("TREE", tree_file, "Tree whose leaves match the reference sequences")->required()->type_name("");
+        app.add_option("SAMPLE", filenames, "Alignment samples (default: stdin; '-' reads stdin)")
+            ->type_size(1)->expected(-1);
+        app.add_option("--alphabet", alphabet_name, "Sequence alphabet (default: infer from reference)")->type_name("ALPHABET");
+        app.add_option("--skip", skip, "Samples to skip in each file")->capture_default_str();
+        app.add_option("--max-alignments", maxalignments, "Maximum samples retained per file by thinning")
+            ->capture_default_str();
+        app.add_flag("-V,--verbose", verbose, "Output more log messages on stderr");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        if (verbose) log_verbose = 1;
     
 	//----------- Load alignment and tree ---------//
 	alignment A;
 	RootedSequenceTree RT;
 	list<alignment> alignments;
 	vector<matrix<int> > Ms;
-	do_setup(args,alignments,A,RT);
+        //--------------- Load and link template A and T -----------------//
+        A = chop_internal(load_alignment(alignment_file, alphabet_name));
+        RT = load_tree_from_file(tree_file);
+        link(A,RT,false);
+        check_alignment(A,RT,false);
+
+        //------------ Try to load alignments -----------//
+        // read from cin if nothing specified
+        if (filenames.empty())
+            filenames.push_back("-");
+
+        if (log_verbose) std::cerr<<"alignment-gild: Loading alignments...";
+
+        // Instead of reordering the tree, just specify the names, here.
+
+        for(auto& filename: filenames)
+        {
+            istream_or_ifstream input_stream(std::cin, "-", filename, "alignment collection");
+
+            // Read once: retrying after a name mismatch would lose samples, especially on stdin.
+            auto new_alignments = load_alignments(input_stream, A.get_alphabet().name, skip, maxalignments);
+            const auto& first = new_alignments.front();
+            auto names = RT.get_leaf_labels();
+            if (first.n_sequences() != RT.n_leaves())
+            {
+                add_internal_labels(RT);
+                names = RT.get_labels();
+            }
+            vector<int> lengths(RT.n_leaves());
+            for(int i=0; i<RT.n_leaves(); i++)
+                lengths[i] = A.seqlength(i);
+            for(auto& sample: new_alignments)
+            {
+                sample = reorder_sequences(sample, names);
+                check_same_sequence_lengths(lengths, chop_internal(sample, RT.n_leaves()));
+            }
+            alignments.splice(alignments.end(), new_alignments);
+        }
+
+        if (log_verbose) std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
+        if (alignments.empty())
+            throw myexception()<<"Alignment sample is empty.";
 	for(const auto& i: alignments)
 	    Ms.push_back(M(i));
 
