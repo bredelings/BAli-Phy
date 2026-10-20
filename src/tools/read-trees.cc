@@ -75,18 +75,27 @@ namespace trees_format
 	    return false;
     }
 
+    // Return the current element even when advancing exhausts the selected sequence.
     bool reader_t::next_tree(Tree& T)
     {
-	return current_tree(T) and skip(1);
+	if (not current_tree(T)) return false;
+        // Advancement changes the next position; its result does not invalidate this tree.
+        skip(1);
+        return true;
     }
 
+    // Return the current element even when advancing exhausts the selected sequence.
     bool reader_t::next_tree(RootedTree& T)
     {
-	return current_tree(T) and skip(1);
+	if (not current_tree(T)) return false;
+        // Advancement changes the next position; its result does not invalidate this tree.
+        skip(1);
+        return true;
     }
   
     bool Newick::current_tree(Tree& T,int& r)
     {
+        if (done()) return false;
 	if (not line.size())
 	    while (portable_getline(fileref,line) and not line.size());
 	if (not line.size()) return false;
@@ -105,6 +114,7 @@ namespace trees_format
 
     bool Newick::skip(int n)
     {
+        if (n <= 0 or done()) return not done();
 	if (line.size()) {
 	    line.clear();
 	    n--;
@@ -119,18 +129,19 @@ namespace trees_format
 
     bool Newick::done() const
     {
-	return (not fileref);
+	return not fileref or (fileref.eof() and line.empty());
     }
 
     void Newick::initialize()
     {
 	SequenceTree T;
-	portable_getline(fileref,line);
+        while (portable_getline(fileref,line) and line.empty());
+        if (line.empty()) return;
 	T.parse(line);
 	leaf_names = T.get_leaf_labels();
 	std::sort(leaf_names.begin(),leaf_names.end());
     
-	//FIXME - this loses the first line!
+        // Retain the first line for current_tree(); discovering names does not consume a tree.
     }
 
     Newick::Newick(const fs::path& filename)
@@ -153,6 +164,7 @@ namespace trees_format
 
     bool NEXUS::skip(int n)
     {
+        if (n <= 0 or done()) return not done();
 	if (line.size()) {
 	    line.clear();
 	    n--;
@@ -167,7 +179,7 @@ namespace trees_format
 
     bool NEXUS::done() const
     {
-	return (not fileref);
+	return ended or not fileref or (fileref.eof() and line.empty());
     }
 
     istream& get_NEXUS_command(istream& file,std::string& s)
@@ -273,6 +285,7 @@ namespace trees_format
 
     bool NEXUS::current_tree(Tree& T,int& r)
     {
+        if (done()) return false;
 	if (not line.size())
 	    get_NEXUS_command(fileref,line);
 	if (not line.size()) return false;
@@ -281,7 +294,8 @@ namespace trees_format
 	    int pos=0;
 	    get_word_NEXUS(word,pos,line);
 	    if (uppercase(word) == "END" or uppercase(word) == "ENDBLOCK") {
-		fileref.setstate(std::ios::badbit);
+		ended = true;
+                line.clear();
 		return false;
 	    }
 	    get_word_NEXUS(word,pos,line);
@@ -500,10 +514,26 @@ namespace trees_format
 	:wrapped_reader_t(r),subsample(s)
     { }
 
+    // A limit belongs to this view, independently of the underlying reader's position.
+    bool Last::done() const
+    {
+        return lines >= last or tfr->done();
+    }
+
+    // Refuse access after the limit even when the underlying reader has more trees.
+    bool Last::current_tree(Tree& T, int& root)
+    {
+        return not done() and tfr->current_tree(T, root);
+    }
+
+    // Advance only within this view; reaching its limit must not discard its last tree.
     bool Last::skip(int n)
     {
-	lines += n;
-	return (tfr->skip(n) and lines < last);
+        if (n <= 0 or done()) return not done();
+        n = std::min(n, last - lines);
+        lines += n;
+        tfr->skip(n);
+        return not done();
     }
 
     Last::Last(int l, const reader_t& r)

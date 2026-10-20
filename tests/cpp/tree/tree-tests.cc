@@ -1,4 +1,6 @@
 #include "tree/sequencetree.hh"
+#include "tools/read-trees.hh"
+#include <sstream>
 #include "tools/distance-methods.hh"
 
 #include <cstdlib>
@@ -16,6 +18,44 @@ void require(bool condition, const char* message)
 // cases can move to tool tests if those tools expose the same operations and results.
 int main()
 {
+    // Reader boundaries and adapter order must retain the last selected tree. Tool tests
+    // cannot inspect exhaustion directly; retire this group if this reader API is replaced.
+    for (bool rooted_input: {false, true})
+    for (bool nexus: {false, true})
+        for (int count: {0, 1, 5, 6})
+            for (int limit: {0, 1, 3, 8})
+                for (bool limit_first: {false, true})
+                {
+                    std::ostringstream text;
+                    if (nexus) text << "#NEXUS\nbegin trees;\n";
+                    for (int i = 1; i <= count; ++i)
+                    {
+                        if (nexus) text << "tree t" << i << " = ";
+                        text << "(A:" << i << ",B:1,C:1);\n";
+                    }
+                    if (nexus) text << "end;\n";
+                    std::istringstream input(text.str());
+                    using namespace trees_format;
+                    std::shared_ptr<reader_t> reader = std::make_shared<Newick_or_NEXUS>(input);
+                    if (limit_first) reader = std::make_shared<Last>(limit, *reader);
+                    reader = std::make_shared<Subsample>(2, *reader);
+                    if (not limit_first) reader = std::make_shared<Last>(limit, *reader);
+                    int obtained = 0;
+                    RootedSequenceTree tree;
+                    while (rooted_input ? reader->next_tree(tree) : reader->next_tree(static_cast<Tree&>(tree)))
+                    {
+                        require(tree.branch(tree.index("A")).length() == 1 + 2*obtained,
+                                "Selected tree identity");
+                        ++obtained;
+                    }
+                    int expected = limit_first ? (std::min(count, limit) + 1)/2
+                                               : std::min((count + 1)/2, limit);
+                    require(obtained == expected, "Selected tree count");
+                    require(reader->done(), "Reader exhaustion");
+                    require(not reader->next_tree(tree), "Repeated exhausted read");
+                    require(not input.bad(), "Normal exhaustion is not a parse error");
+                }
+
     // A singleton must use the same representation whether constructed or parsed;
     // usual tree-tool inputs have several taxa and do not exercise its first edge.
     Tree singleton;

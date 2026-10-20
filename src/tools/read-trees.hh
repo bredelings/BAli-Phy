@@ -41,6 +41,7 @@ namespace trees_format {
 	virtual const std::vector<std::string>& names() const;
 	bool current_tree(Tree&);
 	bool current_tree(RootedTree&);
+	// Obtain the current tree, then advance; success describes the tree obtained.
 	virtual bool next_tree(Tree&);
 	virtual bool next_tree(RootedTree&);
 	int lines() const;
@@ -76,6 +77,7 @@ namespace trees_format {
 	std::shared_ptr<checked_ifstream> fileptr;
 	std::istream& fileref;
 	bool translate;
+        bool ended = false;
 
 	void parse_translate_command(const std::string&);
 	void initialize();
@@ -154,9 +156,11 @@ namespace trees_format {
     {
 	int last;
 	int lines=0;
+        bool current_tree(Tree&, int&);
     public:
 	bool skip(int n);
 	Last* clone() const {return new Last(*this);}
+        bool done() const;
     
 	Last(int, const reader_t&);
     };
