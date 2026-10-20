@@ -24,9 +24,8 @@ partition output. **--all** affects only partition output.
 
 # INPUT
 
-_TREE_ is a Newick or NEXUS file. Only its first tree is used. The filename may
-also be supplied with **--tree**. This command requires a file; **-** is not a
-standard-input alias.
+_TREE_ is a positional Newick or NEXUS filename. Only its first tree is used.
+This command requires a file; **-** is not a standard-input alias.
 
 # OUTPUT
 
@@ -53,9 +52,6 @@ a rooted representation.
 
 **-h**, **--help**
 : Print help and exit.
-
-**--tree** _TREE_
-: Supply the input filename instead of the positional argument.
 
 **--all**
 : Include partitions from leaf branches as well as internal branches.

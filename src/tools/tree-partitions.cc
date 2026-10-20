@@ -76,7 +76,7 @@ int main(int argc,char* argv[])
     string tree_file;
     double scale = 1;
     bool all = false, info = false;
-    app.add_option("--tree,TREE", tree_file, "Tree file (Newick or NEXUS)")->required()->type_name("");
+    app.add_option("TREE", tree_file, "Tree file (Newick or NEXUS)")->required()->type_name("");
     app.add_flag("--all", all, "Include leaf partitions as well as internal partitions");
     app.add_flag("--info", info, "Print tree information instead of partitions");
     app.add_option("--scale", scale, "Multiply branch lengths and print the tree");
