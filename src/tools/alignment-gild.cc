@@ -499,6 +499,9 @@ int main(int argc,char* argv[]) {
 
 	    cout<<column_probabilities[c]<<endl;
 	}
+        cout.flush();
+        if (not cout)
+            throw myexception()<<"Cannot finish writing annotations to stdout.";
     }
     catch (std::exception& e) {
 	std::cerr<<"alignment-gild: Error! "<<e.what()<<endl;
