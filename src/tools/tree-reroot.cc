@@ -27,11 +27,9 @@
 #include "tree/tree-util.hh"
 #include "util/myexception.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
 using namespace std;
-namespace po = boost::program_options;
-using po::variables_map;
 
 using std::cout;
 using std::cerr;
@@ -40,40 +38,6 @@ using std::string;
 
 using boost::dynamic_bitset;
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description all("Allowed options");
-    all.add_options()
-	("help,h", "produce help message")
-	("tree", value<string>(),"tree to re-root")
-	("outgroup", value<string>(),"Add root in middle of branch to this leaf")
-	("leaf", value<string>(),"Root tree at this leaf")
-	("taxa",value<string>(),"3 sequences to triangulate node position")
-	("parent-of",value<string>(),"Root at parent of this leaf taxon")
-	("branch",value<string>(),"Add root in middle of this branch (partition)")
-	;
-
-    // positional options
-    positional_options_description p;
-    p.add("tree", 1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Place the root on the external branch leading to <outgroup>.\n\n";
-	cout<<"Usage: tree-reroot <tree-file> <outgroup>\n";
-	cout<<all<<"\n";
-	exit(0);
-    }
-
-    return args;
-}
 
 
 int find_leaf(const SequenceTree& T,const string& name)
@@ -106,22 +70,39 @@ int main(int argc,char* argv[])
 { 
     try {
 	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+	CLI::App app{"Place the root at a selected node or branch.", "tree-reroot"};
+        app.usage("Usage: tree-reroot TREE --outgroup NAME [OPTIONS]\n"
+                  "       tree-reroot TREE {--taxa LIST|--leaf NAME|--parent-of NAME|--branch SPLIT}");
+        string tree_file, outgroup, taxa, leaf_name_option, parent, branch;
+        app.add_option("--tree,TREE", tree_file, "Tree file (Newick or NEXUS)")->required()->type_name("");
+        app.add_option("--outgroup", outgroup, "Place root halfway along this leaf's branch");
+        app.add_option("--taxa", taxa, "Three taxa whose connecting paths meet at the root (list or @filename)");
+        app.add_option("--leaf", leaf_name_option, "Root at this leaf");
+        app.add_option("--parent-of", parent, "Root at the node adjacent to this leaf");
+        app.add_option("--branch", branch, "Place root halfway along a partition: 'A B | C D'");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
 
-	RootedSequenceTree T = load_T(args);
+	RootedSequenceTree T = load_tree_from_file(tree_file);
     
 	int root=-1;
-	if (args.count("outgroup")) 
+	if (app.count("--outgroup"))
 	{
-	    string outgroup = args["outgroup"].as<string>();
-
 	    int leaf = find_leaf(T,outgroup);
 
 	    root = split_branch(T,leaf);
 	}
-	else if (args.count("taxa"))
+	else if (app.count("--taxa"))
 	{
-	    vector<string> taxon = get_string_list(args, "taxa");
+	    vector<string> taxon = get_string_list(taxa);
       
 	    if (taxon.size() != 3)
 		throw myexception()<<"You must supply exactly 3 taxa, but you supplied "<<taxon.size();
@@ -134,23 +115,23 @@ int main(int argc,char* argv[])
 
 	    root = T.common_ancestor(n2,n3);
 	}
-	else if (args.count("leaf"))
+	else if (app.count("--leaf"))
 	{
-	    string leaf_name = args["leaf"].as<string>();
+	    string leaf_name = leaf_name_option;
 
 	    root = find_leaf(T,leaf_name);
 	}
-	else if (args.count("parent-of"))
+	else if (app.count("--parent-of"))
 	{
-	    string leaf_name = args["parent-of"].as<string>();
+	    string leaf_name = parent;
 
 	    int leaf = find_leaf(T,leaf_name);
 
 	    root = T.branch(leaf).target();
 	}
-	else if (args.count("branch"))
+	else if (app.count("--branch"))
 	{
-	    string p = args["branch"].as<string>();
+	    string p = branch;
 	    vector<string> taxa = split(p,' ');
 
 	    dynamic_bitset<> mask(T.n_leaves());
@@ -180,7 +161,7 @@ int main(int argc,char* argv[])
 	    root = split_branch(T,b);
 	}
 	else
-	    throw myexception("neither --outgroup nor --taxa nor --leaf specified!");
+	    throw myexception("Specify --outgroup, --taxa, --leaf, --parent-of, or --branch.");
 
     
 	T.reroot(root);
