@@ -1,0 +1,3 @@
+# A split and its complement must both accept directed branch indices.
+# General tree tests do not cover selector wiring; retire if this selector is removed.
+tree.nwk --branch 'A B | C D'

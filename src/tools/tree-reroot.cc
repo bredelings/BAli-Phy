@@ -51,7 +51,8 @@ int find_leaf(const SequenceTree& T,const string& name)
 
 int split_branch(Tree& T,int b)
 {
-    double L = T.branch(b).length();
+    // Partition lookup can select either orientation of the same branch.
+    double L = T.directed_branch(b).length();
 
     int n = T.create_node_on_branch(b);
 
