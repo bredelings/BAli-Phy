@@ -1,0 +1,3 @@
+# Residue-index calculations require matching sequence lengths throughout the sample.
+# Help tests do not exercise indexing; retire if differing sequence lengths become supported.
+--strict 1

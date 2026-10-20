@@ -286,14 +286,12 @@ int main(int argc,char* argv[])
             throw myexception()<<"Didn't read any alignments!";      
 
         int N = alignments[0].n_sequences();
-        if (alignments.size() > 1) {
-            assert(alignments[1].n_sequences() == N);
-            assert(alignments[1].seqlength(N-1) == alignments[0].seqlength(N-1));
-        }
-
         vector<int> L(N);
         for(int i=0;i<L.size();i++)
             L[i] = alignments[0].seqlength(i);
+
+        for(const auto& A: alignments)
+            check_same_sequence_lengths(L, A);
 
         //--------- Build alignment from list ---------//
         alignment consensus;
