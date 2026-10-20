@@ -31,13 +31,11 @@
 #include "tree/tree-util.hh"
 #include "tree-align/link.hh"
 #include "optimize.hh"
-#include "findroot.hh"
 #include "util/mapping.hh"
 #include "util/range.hh"
 #include "distance-methods.hh"
 
 #include <boost/program_options.hpp>
-#include <boost/dynamic_bitset.hpp>
 
 extern int log_verbose;
 
@@ -46,7 +44,6 @@ using std::vector;
 using std::string;
 using std::endl;
 using po::variables_map;
-using boost::dynamic_bitset;
 
 // FIXME - also show which COLUMNS are more that 99% conserved?
 
@@ -69,17 +66,6 @@ using std::ifstream;
 using std::list;
 using namespace optimize;
 
-inline double log_fact(int n) {
-    if (n<2)
-	return 0;
-
-    double total=0;
-    for(int i=2;i<=n;i++)
-	total += log(i);
-
-    return total;
-}
-
 Matrix probability_to_distance(const Matrix &Q) {
     Matrix D(Q.size1(),Q.size2());
     for(int i=0;i<Q.size1();i++)
@@ -88,38 +74,6 @@ Matrix probability_to_distance(const Matrix &Q) {
 	    D(i,j) = -log(Q(i,j));
 	}
     return D;
-}
-
-Matrix probability_to_distance_variance(const Matrix &Q) 
-{
-    unsigned N = 1;
-
-    Matrix S2(Q.size1(),Q.size2());
-
-    for(int i=0;i<Q.size1();i++)
-	for(int j=0;j<Q.size2();j++) {
-
-	    assert(0 <= Q(i,j) and Q(i,j) <= 1.0);
-
-	    S2(i,j) = (1.0-Q(i,j))/(Q(i,j)*N);
-	}
-    return S2;
-}
-
-Matrix probability_to_distance_weights(const Matrix &Q) 
-{
-    unsigned N = 1;
-
-    Matrix W(Q.size1(),Q.size2());
-
-    for(int i=0;i<Q.size1();i++)
-	for(int j=0;j<Q.size2();j++) {
-
-	    assert(0 <= Q(i,j) and Q(i,j) <= 1.0);
-
-	    W(i,j) = Q(i,j)*N/(1.0-Q(i,j));
-	}
-    return W;
 }
 
 // character i of species s1 is not homologous to any character of species s2
@@ -350,7 +304,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("help,h", "produce help message")
 	("align", value<string>(),"file with alignment to annotate")
 	("tree",value<string>(),"file with tree")
-	("find-root","estimate the root position from branch lengths")
 	("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
 	("skip",value<unsigned>()->default_value(0),"number of alignment samples to skip")
 	("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
@@ -384,48 +337,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     return args;
 }
 
-int which_directed_branch_equals(const Tree& T, const dynamic_bitset<>& p)
-{
-    assert(p.size() == T.n_leaves());
-
-    for(int b=0;b<2*T.n_branches();b++)
-	if (p == branch_partition(T,b))
-	    return b;
-
-    return -1;
-}
-
-struct root_position
-{
-    int b;
-    double x;
-    root_position() {}
-    root_position(int i,double d):b(i),x(d) {}
-};
-
-
-root_position find_root_branch_and_position(const SequenceTree& T,const RootedSequenceTree& RT)
-{
-    root_position rootp;
-
-    vector<const_branchview> branches;
-    append(RT.root().branches_out(),branches);
-
-    if (branches.size() < 2)
-	throw myexception()<<"Can't use a leaf node as root, sorry.";
-
-    rootp.b = which_directed_branch_equals(T, branch_partition(RT,branches[0]));
-    rootp.x = 0;
-
-    assert(rootp.b != -1);
-
-    if (branches.size() == 2)
-	rootp.x = branches[1].length()/(branches[0].length() + branches[1].length());
-    return rootp;
-}
-
-vector<double> letter_weights_project(const vector<int>& column, const Matrix& Q, const SequenceTree& T,
-				      vector<vector<int> >& /* leaf_sets */)
+vector<double> letter_weights_project(const vector<int>& column, const Matrix& Q, const SequenceTree& T)
 {
     // get ordered list of features to keep (also a mapping)
     vector<int> f;
@@ -466,7 +378,6 @@ vector<double> letter_weights_project(const vector<int>& column, const Matrix& Q
 
 	// Compute the LS branch lengths
 	Matrix D = probability_to_distance(Q2);
-	Matrix W = probability_to_distance_weights(Q2);
 
 	vector<double> LS_branch_lengths = FastLeastSquares(ST,D,partition_sets(ST));
     
@@ -498,8 +409,7 @@ vector<double> letter_weights_project(const vector<int>& column, const Matrix& Q
 }
 
 
-vector<double> letter_weights(const vector<int>& column, const Matrix& Q, const SequenceTree& T,
-			      vector<vector<int> >& leaf_sets)
+vector<double> letter_weights(const vector<int>& column, const Matrix& Q, const SequenceTree& T)
 {
     // Store ordered list of features to keep
     vector<int> f;
@@ -508,7 +418,7 @@ vector<double> letter_weights(const vector<int>& column, const Matrix& Q, const 
 	    f.push_back(i);
 
     // Compute weights for '+'
-    vector<double> w = letter_weights_project(column,Q,T,leaf_sets);
+    vector<double> w = letter_weights_project(column,Q,T);
 
     // Compute weights for '-' and '?'
     for(int i=0;i<column.size();i++)
@@ -545,12 +455,6 @@ int main(int argc,char* argv[]) {
 
 	vector<int> pi = compute_mapping(T.get_leaf_labels(), sequence_names(A));
 
-	//----------- Find root branch ---------//
-	if (args.count("find-root"))
-	    RT = find_rooted_tree(T);
-
-	//    root_position rootp = find_root_branch_and_position(T,RT);
-
 	//----------- Construct alignment indexes ----------//
 	vector< vector< vector<int> > >  column_indexes;
 	for(const auto& i: alignments)
@@ -577,13 +481,6 @@ int main(int argc,char* argv[]) {
 	}
 
 	//------- Analyze the columns -------//
-	Matrix P_total(T.n_leaves(),T.n_leaves());
-	for(int i=0;i<P_total.size1();i++)
-	    for(int j=0;j<P_total.size2();j++)
-		P_total(i,j) = 0;
-
-	vector<vector<int> > leaf_sets = partition_sets(T);
-
 	for(int c=0;c<A.length();c++) 
 	{
 	    vector<int> column = get_column(MA,c,T.n_leaves());
@@ -594,7 +491,7 @@ int main(int argc,char* argv[]) {
 	    Matrix Q = counts_to_probability(T,column, Ms, column_indexes);
 
 	    // Convert the pairwise probabilities to weights
-	    vector<double> w = letter_weights(column,Q,T,leaf_sets);
+	    vector<double> w = letter_weights(column,Q,T);
 
 	    // Print out the weights
 	    for(int i=0;i<w.size();i++)

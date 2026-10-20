@@ -24,9 +24,6 @@ Annotate each residue in the alignment according to the probability that it shou
 **--tree** _arg_
 : file with tree
 
-**--find-root**
-: estimate the root position from branch lengths
-
 **--alphabet** _arg_
 : set to 'Codons' to prefer codon alphabets
 
