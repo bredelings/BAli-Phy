@@ -28,10 +28,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util/string/join.hh"
 #include "util/matrix.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 using std::cout;
 using std::cerr;
@@ -42,34 +40,6 @@ using std::list;
 using std::valarray;
 using std::pair;
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description all("Allowed options");
-    all.add_options()
-        ("help,h", "produce help message")
-        ("skip",value<int>()->default_value(0),"number of tree samples to skip")
-        ("max",value<int>(),"maximum number of tree samples to read")
-        ("subsample",value<int>()->default_value(1),"factor by which to sub-sample")
-        ("RF","just count the number of branches")
-        ("var","report standard deviation of leaf-to-leaf distances instead of mean")
-        ;
-
-    variables_map args;     
-    store(parse_command_line(argc, argv, all), args);
-    notify(args);    
-
-    if (args.count("help")) {
-        cout<<"Compute the mean (stddev) of all leaf-leaf distances.\n\n";
-        cout<<"Usage: trees-pair-distances < in-file\n\n";
-        cout<<all<<"\n";
-        exit(0);
-    }
-
-    return args;
-}
 
 using bali_phy::matrix;
 
@@ -145,26 +115,36 @@ int main(int argc,char* argv[])
 { 
     try {
         //----------- Parse command line  ----------//
-        variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Summarize leaf-to-leaf distances across sampled trees.", "trees-pair-distances"};
+        app.usage("Usage: trees-pair-distances [OPTIONS] < sampled.trees");
+        int skip = 0, subsample = 1;
+        std::optional<int> max;
+        bool RF = false, var = false;
+        app.add_option("--skip", skip, "Number of initial trees to skip")->capture_default_str();
+        app.add_option("--max", max, "Maximum number of selected trees to process");
+        app.add_option("--subsample", subsample, "Keep every Nth tree after skipping")->capture_default_str();
+        app.add_flag("--RF", RF, "Count edges along leaf-to-leaf paths instead of summing lengths");
+        app.add_flag("--var", var, "Report population standard deviations instead of means");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+
 
         //-------- Read in the tree samples --------//
-        int skip = args["skip"].as<int>();
-
-        std::optional<int> max;
-        if (args.count("max"))
-            max = args["max"].as<int>();
-
-        int subsample = args["subsample"].as<int>();
-
-        bool RF = args.count("RF")>0;
-
         count_pair_distances D(RF);
 
         scan_trees(std::cin, skip, max, subsample, D);
         D.finalize();
 
         //------- Merge lengths and topology -------//
-        const auto& distances = args.count("var") ? D.m2 : D.m1;
+        const auto& distances = var ? D.m2 : D.m1;
         cout<<join(D.names,'\t')<<endl;
         for(int s1=0;s1<D.N;s1++)
         {
