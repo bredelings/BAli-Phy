@@ -32,14 +32,12 @@
 #include "findroot.hh"
 #include "tools/read-trees.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
 extern int log_verbose;
 
 using boost::dynamic_bitset;
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 using std::cout;
 using std::cerr;
@@ -53,71 +51,6 @@ using std::pair;
 
 using std::optional;
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-        ("tree", value<string>(),"tree to operate on");
-
-    options_description general("General options");
-    general.add_options()
-        ("help,h", "produce help message")
-        ("verbose,V","Output more log messages on stderr.")
-        ;
-
-    options_description commands("Modification options");
-    commands.add_options()
-        ("prune",value<string>(),"Comma-separated taxa to remove")
-        ("root","Find a root position")
-        ("resolve","Resolve polytomies")
-        ("remove-root-branch","Remove single branch from root.")
-        ("remove-root-branches","Ensure root is not a tip.")
-        ("remove-knuckles",value<string>()->implicit_value("nonroot"),"Remove degree-2 nodes: nonroot (default) or all")
-        ("scale", value<double>(), "Scale branch-lengths by factor")
-        ("strip-internal-names","Remove internal node names")
-        ("name-all-nodes","Add node names")
-        ;
-
-    options_description output("Output options");
-    output.add_options()
-        ("length","Report the total tree length")
-        ("diameter","Report the tree diameter")
-        ("node-degrees","Report the tree diameter")
-        ("count-leaves","Show the number of leaves")
-        ("count-nodes","Show the number of nodes")
-        ("show-leaves","Show the leaf names")
-        ("show-nodes","Show the node names")
-        ;
-    options_description visible("All options");
-    visible.add(general).add(commands);
-    options_description all("All options");
-    all.add(general).add(commands).add(output).add(invisible);
-
-    // positional options
-    positional_options_description p;
-    p.add("tree", 1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-          options(all).positional(p).run(), args);
-    notify(args);    
-
-    if (args.count("help")) {
-        cout<<"Perform various operations on Newick trees.\n\n";
-        cout<<"Usage: tree-tool <tree-file> [OPTIONS]\n\n";
-        cout<<general<<"\n";
-        cout<<commands<<"\n";
-        cout<<output<<"\n";
-        exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = 1;
-
-    return args;
-}
 
 void resolve(Tree& T, int node)
 {
@@ -172,38 +105,66 @@ int main(int argc,char* argv[])
 { 
     try {
         //----------- Parse command line  ----------//
-        variables_map args = parse_cmd_line(argc,argv);
-
-        vector<string> prune = get_string_list(args, "prune");
-        string knuckles;
-        if (args.count("remove-knuckles"))
+        CLI::App app{"Transform one tree or report its properties.", "tree-tool"};
+        app.usage("Usage: tree-tool TREE [OPTIONS]");
+        string tree_file, prune_names, knuckles;
+        double factor = 1;
+        bool verbose = false;
+        bool do_root = false, do_resolve = false;
+        bool do_remove_root_branch = false, remove_root_branches = false;
+        bool strip_internal_names = false, name_all_nodes = false;
+        bool length = false, diameter = false, count_leaves = false, count_nodes = false;
+        bool node_degrees = false, show_leaves = false, show_nodes = false;
+        app.add_option("--tree,TREE", tree_file, "Tree file ('-' reads stdin)")->required()->type_name("");
+        app.add_flag("-V,--verbose", verbose, "Output diagnostic messages");
+        app.add_option("--prune", prune_names, "Taxa to remove (comma-separated list or @filename)");
+        app.add_option("--scale", factor, "Multiply branch lengths by this factor");
+        app.add_option("--remove-knuckles", knuckles, "Suppress degree-two nodes: nonroot (default) or all")
+            ->expected(0, 1)->default_str("nonroot")->check(CLI::IsMember({"nonroot", "all"}));
+        app.add_flag("--root", do_root, "Find a root position");
+        app.add_flag("--resolve", do_resolve, "Resolve polytomies");
+        app.add_flag("--remove-root-branch", do_remove_root_branch, "Remove a degree-one root and its branch");
+        app.add_flag("--remove-root-branches", remove_root_branches, "Repeat degree-one root removal");
+        app.add_flag("--strip-internal-names", strip_internal_names, "Remove internal node names");
+        app.add_flag("--name-all-nodes", name_all_nodes, "Name unnamed nodes");
+        app.add_flag("--length", length, "Print total tree length");
+        app.add_flag("--diameter", diameter, "Print tree diameter");
+        app.add_flag("--count-leaves", count_leaves, "Print leaf count");
+        app.add_flag("--count-nodes", count_nodes, "Print node count");
+        app.add_flag("--node-degrees", node_degrees, "Print node degrees and labels in descending degree order");
+        app.add_flag("--show-leaves", show_leaves, "Print leaf names");
+        app.add_flag("--show-nodes", show_nodes, "Print all node names");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        try
         {
-            knuckles = args["remove-knuckles"].as<string>();
-            if (knuckles != "nonroot" and knuckles != "all")
-                throw myexception()<<"--remove-knuckles must be nonroot or all";
+            app.parse(argc, argv);
         }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        if (verbose) log_verbose = 1;
 
-        //----------- Read the topology -----------//
-        if (not args.count("tree"))
-            throw myexception()<<"Tree file not specified! (--tree <filename>)";
+
+        vector<string> prune = get_string_list(prune_names);
 
         RootedSequenceTree T;
         {
-            auto filename = args["tree"].as<string>();
             using namespace trees_format;
-            istream_or_ifstream file(std::cin, "-", filename, "tree file");
+            istream_or_ifstream file(std::cin, "-", tree_file, "tree file");
             std::shared_ptr<reader_t> trees_in(new Newick_or_NEXUS(file));
             if (not prune.empty())
                 trees_in = std::shared_ptr<reader_t>(new Prune(prune,*trees_in));
             if (not trees_in->next_tree(T))
-                throw myexception()<<"No tree in file '"<<filename<<"'";
+                throw myexception()<<"No tree in file '"<<tree_file<<"'";
         }
 
-        if (args.count("remove-root-branch"))
+        if (do_remove_root_branch)
         {
             remove_root_branch(T);
         }
-        if (args.count("remove-root-branches"))
+        if (remove_root_branches)
         {
             while(remove_root_branch(T))
                 ;
@@ -223,23 +184,22 @@ int main(int argc,char* argv[])
                 T.remove_node_from_branch(node);
             }
         }
-        if (args.count("resolve"))
+        if (do_resolve)
         {
             for(int n: polytomies(T))
                 resolve(T,n);
             assert(polytomies(T).empty());
         }
-        if (args.count("scale"))
+        if (app.count("--scale"))
         {
-            double factor = args["scale"].as<double>();
             scale(T, factor);
         }
-        if (args.count("strip-internal-names"))
+        if (strip_internal_names)
         {
             for(int n=T.n_leaves(); n<T.n_nodes(); n++)
                 T.set_label(n,"");
         }
-        if (args.count("name-all-nodes"))
+        if (name_all_nodes)
         {
             // FIXME - avoid using existing names!
             set<string> all_names;
@@ -264,20 +224,20 @@ int main(int argc,char* argv[])
                 }
             }
         }
-        if (args.count("root"))
+        if (do_root)
         {
             T = find_rooted_tree(T);
         }
 
-        if (args.count("length"))
+        if (length)
             std::cout<<tree_length(T)<<std::endl;
-        else if (args.count("diameter"))
+        else if (diameter)
             std::cout<<tree_diameter(T)<<std::endl;
-        else if (args.count("count-leaves"))
+        else if (count_leaves)
             std::cout<<T.n_leaves()<<std::endl;
-        else if (args.count("count-nodes"))
+        else if (count_nodes)
             std::cout<<T.n_nodes()<<std::endl;
-        else if (args.count("node-degrees"))
+        else if (node_degrees)
         {
             std::vector<std::pair<int,string>> degrees;
             for(int i=0; i<T.n_nodes(); i++)
@@ -286,12 +246,12 @@ int main(int argc,char* argv[])
             for(auto& [degree,label]: degrees)
                 std::cout<<degree<<"\t"<<label<<"\n";
         }
-        else if (args.count("show-leaves"))
+        else if (show_leaves)
         {
             for(auto& label: T.get_leaf_labels())
                 std::cout<<label<<std::endl;
         }
-        else if (args.count("show-nodes"))
+        else if (show_nodes)
         {
             for(auto& label: T.get_labels())
                 std::cout<<label<<std::endl;
