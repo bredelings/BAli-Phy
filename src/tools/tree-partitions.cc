@@ -26,49 +26,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree-dist.hh"
 #include "tree/tree-util.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 using namespace std;
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-  using namespace po;
-
-  // named options
-  options_description input("Input options");
-  input.add_options()
-    ("help,h", "produce help message")
-    ("all","show only informative partitions")
-    ("info","Print information about the tree")
-    ("scale",value<double>(),"Scale the branch lengths")
-    ("tree",value<string>(),"tree file")
-    ;
-  
-  options_description all("All options");
-  all.add(input);
-
-  // positional options
-  positional_options_description p;
-  p.add("tree", -1);
-  
-  variables_map args;     
-  store(command_line_parser(argc, argv).
-	    options(all).positional(p).run(), args);
-  // store(parse_command_line(argc, argv, desc), args);
-  notify(args);    
-
-  if (args.count("help")) {
-    cout<<"Get partitions from a tree.\n\n";
-    cout<<"Usage: tree-partitions <file> [OPTIONS]\n";
-    cout<<all<<"\n";
-    exit(0);
-  }
-
-  return args;
-}
 
 void describe_tree(const SequenceTree& T)
 {
@@ -109,29 +71,47 @@ int main(int argc,char* argv[])
   try 
   {
     //------------- Parse command line  --------------//
-    variables_map args = parse_cmd_line(argc,argv);
+    CLI::App app{"Print branch partitions or information about one tree.", "tree-partitions"};
+    app.usage("Usage: tree-partitions TREE [OPTIONS]");
+    string tree_file;
+    double scale = 1;
+    bool all = false, info = false;
+    app.add_option("--tree,TREE", tree_file, "Tree file (Newick or NEXUS)")->required()->type_name("");
+    app.add_flag("--all", all, "Include leaf partitions as well as internal partitions");
+    app.add_flag("--info", info, "Print tree information instead of partitions");
+    app.add_option("--scale", scale, "Multiply branch lengths and print the tree");
+    app.get_formatter()->long_option_alignment_ratio(0.2f);
+    try
+    {
+        app.parse(argc, argv);
+    }
+    catch (const CLI::ParseError& error)
+    {
+        app.exit(error);
+        return error.get_exit_code() == 0 ? 0 : 1;
+    }
 
-    SequenceTree T = load_T(args);
+
+    SequenceTree T = load_tree_from_file(tree_file);
     standardize(T);
 
     //-------------- Load Partitions -----------------//
     vector<Partition> partitions;
     int start = 0;
-    if (args.count("info"))
+    if (info)
     {
       describe_tree(T);
       exit(0);
     }
-    else if (args.count("scale"))
+    else if (app.count("--scale"))
     {
-      double scale = args["scale"].as<double>();
       for(int b=0;b<T.n_branches();b++)
 	T.branch(b).set_length(scale*T.branch(b).length());
       cout<<T.write()<<endl;
       exit(0);
     }
 
-    if (not args.count("all"))
+    if (not all)
       start = T.n_leafbranches();
 
     for(int b=start;b<T.n_branches();b++)
