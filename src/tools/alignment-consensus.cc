@@ -37,110 +37,9 @@
 
 
 
-#include <boost/program_options.hpp>
-
-namespace po = boost::program_options;
-using po::variables_map;
+#include <CLI/CLI.hpp>
 
 using namespace std;
-
-void do_setup(const variables_map& args,vector<alignment>& alignments) 
-{
-    //------------ Try to load alignments -----------//
-    vector<string> filenames;
-    if (args.count("files"))
-        filenames = args["files"].as<vector<string> >();
-
-    // read from cin if nothing specified
-    if (filenames.empty())
-        filenames.push_back("-");
-
-    int maxalignments = args["max"].as<int>();
-    unsigned skip = args["skip"].as<unsigned>();
-
-    std::optional<int> chop_to;
-    if (args.count("chop-to"))
-        chop_to = args["chop-to"].as<int>();
-
-    // --------------------- try ---------------------- //
-    for(auto& filename: filenames)
-    {
-        istream_or_ifstream input_stream(std::cin, "-", filename, "alignment collection");
-
-        if (log_verbose)
-            std::cerr<<"alignment-consensus: Loading alignments from "<<filename<<"...";
-
-        list<alignment> As;
-        if (alignments.empty())
-        {
-            As = load_alignments(input_stream, get_alphabet_name(args), skip, maxalignments);
-        }
-        else
-        {
-            As = load_alignments(input_stream, sequence_names(alignments[0]), get_alphabet_name(args), skip, maxalignments);
-        }
-        alignments.insert(alignments.end(),As.begin(),As.end());
-
-        if (log_verbose)
-            std::cerr<<"done. ("<<As.size()<<" alignments)"<<std::endl;
-    }
-
-    // Chop internal-node-sequences
-    if (chop_to)
-        for(auto& A: alignments)
-            A = chop_internal(A, *chop_to);
-
-    if (not alignments.size())
-        throw myexception()<<"Alignment sample is empty.";
-}
-
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // invisible options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-	("files",value<vector<string> >()->composing(),"tree samples to examine")
-	;
-
-    // visible options
-    options_description visible("Allowed options");
-    visible.add_options()
-        ("help,h", "produce help message")
-        ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
-        ("skip,s",value<unsigned>()->default_value(0),"number of alignment samples to skip")
-        ("max,m",value<int>()->default_value(1000),"maximum number of alignments to analyze")
-        ("strict",value<double>(),"ignore events below this probability")
-        ("cutoff",value<double>(),"ignore events below this probability")
-        ("uncertainty",value<string>(),"file-name for AU uncertainty vs level")
-        ("chop-to",value<int>(),"keep only the first arg taxa")
-        ("verbose,V",value<int>()->implicit_value(1), "Output more log messages on stderr.")
-        ;
-
-    options_description all("All options");
-    all.add(invisible).add(visible);
-
-    positional_options_description p;
-    p.add("files", -1);
-
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    notify(args);    
-
-    if (args.count("help")) {
-        cout<<"Construct a consensus alignment to summarize an alignment sample.\n\n";
-        cout<<"Usage: alignment-consensus alignments-file [alignments-file ...] [OPTIONS] \n\n";
-        cout<<visible<<"\n";
-        exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = args.at("verbose").as<int>();
-
-    return args;
-}
 
 sparse_index_matrix split_alignment(const sparse_index_matrix& M1, const sparse_index_matrix& M2)
 {
@@ -181,37 +80,94 @@ sparse_index_matrix split_alignment(const sparse_index_matrix& M1, const sparse_
     return M3;
 }
 
+// Summarize the retained alignment samples using strict intersection or supported merges.
 int main(int argc,char* argv[]) 
 { 
     try {
-        //---------- Parse command line  -------//
-        variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Construct a consensus alignment from an alignment sample.", "alignment-consensus"};
+        app.usage("Usage: alignment-consensus [OPTIONS] [SAMPLE ...]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        vector<string> filenames;
+        string alphabet_name;
+        unsigned skip = 0;
+        int maxalignments = 1000;
+        optional<int> chop_to;
+        optional<double> cutoff_strict, cutoff;
+        optional<string> uncertainty_file;
 
-        optional<double> cutoff_strict;
-        optional<double> cutoff;
-
-        if (args.count("strict"))
-            cutoff_strict = args["strict"].as<double>();
-
-        if (args.count("cutoff"))
-            cutoff = args["cutoff"].as<double>();
+        app.add_option("SAMPLE", filenames, "Alignment samples (default: stdin; '-' reads stdin)")
+            ->type_size(1)->expected(-1);
+        app.add_option("--alphabet", alphabet_name, "Sequence alphabet (default: infer from input)")->type_name("ALPHABET");
+        app.add_option("-s,--skip", skip, "Samples to skip in each file")->capture_default_str();
+        app.add_option("-m,--max", maxalignments, "Maximum samples retained per file by thinning")->capture_default_str();
+        app.add_option("--strict", cutoff_strict, "Strict merging support threshold; 1 selects strict consensus")
+            ->type_name("P");
+        app.add_option("--cutoff", cutoff, "Merging support threshold (0.75 if neither threshold is supplied)")
+            ->type_name("P");
+        app.add_option("--uncertainty", uncertainty_file, "Write uncertainty versus support; unavailable at threshold 1")
+            ->type_name("FILE");
+        app.add_option("--chop-to", chop_to, "Keep only the first N sequences")->type_name("N");
+        auto* verbosity = app.add_option("-V,--verbose", log_verbose, "Diagnostic verbosity (1 if no value is given)")
+            ->type_name("LEVEL")->expected(0, 1);
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        // CLI11 represents a value-less optional argument as an empty result; -V means level 1.
+        if (verbosity->count() and verbosity->results().front().empty())
+            log_verbose = 1;
 
         if (not cutoff_strict and not cutoff)
             cutoff = 0.75;
 
-        if ((cutoff_strict == 1.0 or cutoff == 1.0) and args.count("uncertainty"))
+        if ((cutoff_strict == 1.0 or cutoff == 1.0) and uncertainty_file)
             throw myexception()<<"--uncertainty is unavailable with the strict-consensus algorithm "
                                <<"(--strict 1 or --cutoff 1).";
 
         //------------ Load alignment and tree ----------//
         vector<alignment> alignments;
 
-        do_setup(args,alignments);
+        // read from cin if nothing specified
+        if (filenames.empty())
+            filenames.push_back("-");
+
+        // --------------------- try ---------------------- //
+        for(auto& filename: filenames)
+        {
+            istream_or_ifstream input_stream(std::cin, "-", filename, "alignment collection");
+
+            if (log_verbose)
+                std::cerr<<"alignment-consensus: Loading alignments from "<<filename<<"...";
+
+            list<alignment> As;
+            if (alignments.empty())
+            {
+                As = load_alignments(input_stream, alphabet_name, skip, maxalignments);
+            }
+            else
+            {
+                As = load_alignments(input_stream, sequence_names(alignments[0]), alphabet_name, skip, maxalignments);
+            }
+            alignments.insert(alignments.end(),As.begin(),As.end());
+
+            if (log_verbose)
+                std::cerr<<"done. ("<<As.size()<<" alignments)"<<std::endl;
+        }
+
+        // Chop internal-node-sequences
+        if (chop_to)
+            for(auto& A: alignments)
+                A = chop_internal(A, *chop_to);
+
+        if (not alignments.size())
+            throw myexception()<<"Alignment sample is empty.";
         for(auto& alignment: alignments)
             alignment = chop_internal(alignment);
-
-        if (not alignments.size()) 
-            throw myexception()<<"Didn't read any alignments!";      
 
         int N = alignments[0].n_sequences();
         vector<int> L(N);
@@ -308,9 +264,9 @@ int main(int argc,char* argv[])
             std::cout<<consensus<<std::endl;
 
 
-            if (args.count("uncertainty")) {
+            if (uncertainty_file) {
 
-                string filename = args["uncertainty"].as<string>();
+                const string& filename = *uncertainty_file;
                 ofstream graph_file(filename);
                 if (not graph_file)
                     throw myexception()<<"Cannot open uncertainty file '"<<filename<<"'.";
