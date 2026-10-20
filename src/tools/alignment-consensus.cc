@@ -24,6 +24,7 @@
 #include <cmath>
 #include <list>
 #include <numeric>
+#include <optional>
 #include "util/myexception.hh"
 #include "util/log-level.hh"
 #include "util/io.hh"
@@ -279,8 +280,8 @@ int main(int argc,char* argv[])
             L[i] = alignments[0].seqlength(i);
 
         //--------- Build alignment from list ---------//
-        double cutoff_strict = -1;
-        double cutoff = -1;
+        optional<double> cutoff_strict;
+        optional<double> cutoff;
 
         if (args.count("strict"))
             cutoff_strict = args["strict"].as<double>();
@@ -288,7 +289,7 @@ int main(int argc,char* argv[])
         if (args.count("cutoff"))
             cutoff = args["cutoff"].as<double>();
 
-        if (cutoff_strict < 0 and cutoff < 0)
+        if (not cutoff_strict and not cutoff)
             cutoff = 0.75;
 
         alignment consensus;
@@ -336,6 +337,8 @@ int main(int argc,char* argv[])
             //--------- Get list of supported pairs ---------//
             // Warning: This takes N*N*L memory for a lookup table!  And N*N time.
             Edges E(L);
+            const double edge_cutoff = cutoff and cutoff_strict ? min(*cutoff, *cutoff_strict)
+                                     : cutoff ? *cutoff : *cutoff_strict;
 
             // Warning: This should take N*N*L memory and time.
             for(int s1=0;s1<N;s1++)
@@ -345,7 +348,7 @@ int main(int argc,char* argv[])
                 {
                     if (log_verbose >= 2) std::cerr<<"   s2 = "<<s2<<"/"<<N<<"\n";
                     add_edges(E, SMs, s1, s2, L[s1], L[s2],
-                              min(abs(cutoff), abs(cutoff_strict))
+                              edge_cutoff
                         );
                 }
             }
@@ -358,11 +361,11 @@ int main(int argc,char* argv[])
 
             map<unsigned,pair<unsigned,unsigned> > graph;
 
-            if (cutoff_strict > 0) 
-                graph = M.merge2(E,cutoff_strict,true);
+            if (cutoff_strict)
+                graph = M.merge2(E,*cutoff_strict,true);
 
-            if (cutoff > 0) 
-                graph = M.merge2(E,cutoff,false);
+            if (cutoff)
+                graph = M.merge2(E,*cutoff,false);
 
             //-------- Construct Build a beginning alignment --------//
 

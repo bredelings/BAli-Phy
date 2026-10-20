@@ -33,6 +33,9 @@ Construct a consensus alignment to summarize an alignment sample.
 **--cutoff** _arg_
 : ignore events below this probability
 
+If neither **--strict** nor **--cutoff** is specified, **--cutoff 0.75** is used.
+Otherwise, only the specified merging stages run, with the strict stage first.
+
 **--uncertainty** _arg_
 : file-name for AU uncertainty vs level
 
