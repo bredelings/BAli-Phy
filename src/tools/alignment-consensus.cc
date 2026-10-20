@@ -259,6 +259,22 @@ int main(int argc,char* argv[])
         //---------- Parse command line  -------//
         variables_map args = parse_cmd_line(argc,argv);
 
+        optional<double> cutoff_strict;
+        optional<double> cutoff;
+
+        if (args.count("strict"))
+            cutoff_strict = args["strict"].as<double>();
+
+        if (args.count("cutoff"))
+            cutoff = args["cutoff"].as<double>();
+
+        if (not cutoff_strict and not cutoff)
+            cutoff = 0.75;
+
+        if ((cutoff_strict == 1.0 or cutoff == 1.0) and args.count("uncertainty"))
+            throw myexception()<<"--uncertainty is unavailable with the strict-consensus algorithm "
+                               <<"(--strict 1 or --cutoff 1).";
+
         //------------ Load alignment and tree ----------//
         vector<alignment> alignments;
 
@@ -280,18 +296,6 @@ int main(int argc,char* argv[])
             L[i] = alignments[0].seqlength(i);
 
         //--------- Build alignment from list ---------//
-        optional<double> cutoff_strict;
-        optional<double> cutoff;
-
-        if (args.count("strict"))
-            cutoff_strict = args["strict"].as<double>();
-
-        if (args.count("cutoff"))
-            cutoff = args["cutoff"].as<double>();
-
-        if (not cutoff_strict and not cutoff)
-            cutoff = 0.75;
-
         alignment consensus;
 
         if (cutoff_strict == 1.0 or cutoff == 1.0)

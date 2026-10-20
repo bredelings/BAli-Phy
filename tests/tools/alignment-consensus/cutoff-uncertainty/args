@@ -1,0 +1,3 @@
+# Strict consensus cannot produce a merging curve; reject it before reading even empty input.
+# Help and merging tests cannot catch silent omission; retire if this algorithm gains curve output.
+--cutoff 1 --uncertainty curve.txt

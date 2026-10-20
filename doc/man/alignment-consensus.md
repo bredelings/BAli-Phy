@@ -35,9 +35,11 @@ Construct a consensus alignment to summarize an alignment sample.
 
 If neither **--strict** nor **--cutoff** is specified, **--cutoff 0.75** is used.
 Otherwise, only the specified merging stages run, with the strict stage first.
+If either threshold is 1, a separate strict-consensus algorithm is used instead.
 
 **--uncertainty** _arg_
-: file-name for AU uncertainty vs level
+: file-name for AU uncertainty vs level. Unavailable when **--strict 1** or **--cutoff 1**
+  selects the strict-consensus algorithm; these combinations produce an error.
 
 **--chop-to** _arg_
 : keep only the first arg taxa

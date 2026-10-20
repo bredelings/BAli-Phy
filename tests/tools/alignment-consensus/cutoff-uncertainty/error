@@ -1,0 +1,1 @@
+alignment-consensus: Error! --uncertainty is unavailable with the strict-consensus algorithm (--strict 1 or --cutoff 1).
