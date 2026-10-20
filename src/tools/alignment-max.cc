@@ -52,10 +52,7 @@ typedef adjacency_list< vecS, vecS, bidirectionalS> Graph;
 typedef graph_traits<Graph>::vertex_descriptor Vertex;
 typedef graph_traits<Graph>::edge_descriptor Edge_t;
 
-#include <boost/program_options.hpp>
-
-namespace po = boost::program_options;
-using po::variables_map;
+#include <CLI/CLI.hpp>
 
 using std::vector;
 using std::string;
@@ -69,59 +66,6 @@ using std::ofstream;
 using std::cout;
 using std::cerr;
 using std::endl;
-
-void do_setup(const variables_map& args,vector<alignment>& alignments) 
-{
-    //------------ Try to load alignments -----------//
-    int maxalignments = args["max-alignments"].as<int>();
-    unsigned skip = args["skip"].as<unsigned>();
-
-    // --------------------- try ---------------------- //
-    if (log_verbose) std::cerr<<"alignment-max: Loading alignments...";
-    list<alignment> As = load_alignments(std::cin,get_alphabet_name(args),skip,maxalignments);
-    alignments.insert(alignments.begin(),As.begin(),As.end());
-    if (log_verbose) std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
-    if (not alignments.size())
-	throw myexception()<<"Alignment sample is empty.";
-}
-
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description all("Allowed options");
-    all.add_options()
-	("help,h", "Produce help message")
-	("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
-	("skip,s",value<unsigned>()->default_value(0),"Number of alignment samples to skip")
-	("max-alignments,m",value<int>()->default_value(1000),"Maximum number of alignments to analyze")
-	("score",value<string>()->default_value("wsum2"),"sum, wsum, wsum2, multiply")
-	("column-pr",value<string>()->default_value("homology"),"homology, alignment")
-        ("sort,S",value<bool>()->default_value(true),"Sort partially ordered columns to group similar gaps")
-	("out,o",value<string>()->default_value("-"),"Output file (defaults to stdout)")
-	("out-probabilities,p",value<string>(),"Output file for column probabilities, if specified")
-        ("debug-graph",value<string>(),"Filename for debug graph")
-	("verbose,V","Output more log messages on stderr.")
-	;
-
-    variables_map args;     
-    store(parse_command_line(argc, argv, all), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Construct a posterior decoding alignment to summarize an alignment sample.\n\n";
-	cout<<"Usage: alignment-max [OPTIONS] < alignments-file\n\n";
-	cout<<all<<"\n";
-	exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = 1;
-
-    return args;
-}
-
 
 /// Extract column @c from the index-matrix @M
 vector<int> get_column(const matrix<int>& M, int c)
@@ -837,14 +781,46 @@ vector<double> MPD::get_column_probabilities(const alignment& A) const
     return column_pr;
 }
 
+// Decode a posterior alignment and write its optional column probabilities and graph.
 int main(int argc,char* argv[]) 
 { 
     try {
-	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Construct a posterior decoding alignment from an alignment sample.", "alignment-max"};
+        app.usage("Usage: alignment-max [OPTIONS] < alignments-file");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string alphabet_name, score = "wsum2", column_pr = "homology", out = "-";
+        optional<string> out_probabilities, debug_graph;
+        unsigned skip = 0;
+        int maxalignments = 1000;
+        bool sort = true, verbose = false;
+
+        app.add_option("--alphabet", alphabet_name, "Sequence alphabet (default: infer from input)")->type_name("ALPHABET");
+        app.add_option("-s,--skip", skip, "Alignment samples to skip")->capture_default_str();
+        app.add_option("-m,--max-alignments", maxalignments, "Maximum samples retained by thinning")->capture_default_str();
+        app.add_option("--score", score, "Posterior decoding objective")
+            ->check(CLI::IsMember({"sum", "wsum", "wsum2", "multiply"}))->capture_default_str();
+        app.add_option("--column-pr", column_pr, "Column probability definition")
+            ->check(CLI::IsMember({"homology", "alignment"}))->capture_default_str();
+        app.add_option("-S,--sort", sort, "Group similar gaps when ordering independent columns")
+            ->type_name("BOOL")->capture_default_str();
+        app.add_option("-o,--out", out, "Output alignment file ('-' writes stdout)")->type_name("FILE")->capture_default_str();
+        app.add_option("-p,--out-probabilities", out_probabilities, "Write homology probability for each output column")
+            ->type_name("FILE");
+        app.add_option("--debug-graph", debug_graph, "Write a Graphviz graph of up to N_STATES states")
+            ->type_name("FILE:N_STATES");
+        app.add_flag("-V,--verbose", verbose, "Output more log messages on stderr");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        if (verbose) log_verbose = 1;
 
 	int type = -1;
-	string score = args["score"].as<string>();
 	if (score == "sum")
 	    type = 0;
 	else if (score == "wsum")
@@ -859,7 +835,10 @@ int main(int argc,char* argv[])
 	//------------ Load alignment and tree ----------//
 	vector<alignment> alignments;
 
-	do_setup(args,alignments);
+        if (log_verbose) cerr<<"alignment-max: Loading alignments...";
+        auto As = load_alignments(std::cin, alphabet_name, skip, maxalignments);
+        alignments.insert(alignments.end(), As.begin(), As.end());
+        if (log_verbose) cerr<<"done. ("<<As.size()<<" alignments)"<<endl;
 	for(int i=0;i<alignments.size();i++)
 	    alignments[i] = chop_internal(alignments[i]);
 
@@ -869,12 +848,12 @@ int main(int argc,char* argv[])
 	//--------- Construct alignment indexes ---------//
 	MPD mpd( alignments[0] );
 
-        if (args["column-pr"].as<string>() == "alignment")
+        if (column_pr == "alignment")
         {
             if (log_verbose) std::cerr<<"column-pr-type = gaps specify how many letters previously emitted\n";
             mpd.column_pr_type = column_pr_type_t::emitted;
         }
-        else if (args["column-pr"].as<string>() == "homology")
+        else if (column_pr == "homology")
         {
             if (log_verbose) std::cerr<<"column-pr-type = gaps do not specify how many letters previously emitted\n";
             mpd.column_pr_type = column_pr_type_t::homology_only;
@@ -886,11 +865,10 @@ int main(int argc,char* argv[])
 	    mpd.add_alignment( alignments[i] );
 
 	alignment amax = mpd.get_best_alignment( type );
-        if (args["sort"].as<bool>())
+        if (sort)
             amax = get_ordered_alignment(amax);
 
 	//------------------ Write best alignment -------------------//
-	string out = args["out"].as<string>();
 
 	if (out == "-")
 	    cout<<amax<<endl;
@@ -906,11 +884,11 @@ int main(int argc,char* argv[])
 	}
 
 	//------------------ Write column probabilites -------------------//
-	if (args.count("out-probabilities")) 
+	if (out_probabilities)
 	{
 	    vector<double> column_probabilities = mpd.get_column_probabilities( amax );
 
-	    string outp = args["out-probabilities"].as<string>();
+	    const string& outp = *out_probabilities;
 	    ofstream outfile(outp);
 
 	    if (not outfile)
@@ -924,9 +902,9 @@ int main(int argc,char* argv[])
                 throw myexception()<<"Cannot finish writing column probabilities to '"<<outp<<"'.";
 	}
 
-        if (args.count("debug-graph"))
+        if (debug_graph)
         {
-            string unsplit_args = args["debug-graph"].as<string>();
+            const string& unsplit_args = *debug_graph;
             vector<string> args = split(unsplit_args,':');
             if (args.size() != 2)
                 throw myexception()<<"Need --debug-graph=filename:n_states but got "<<unsplit_args;
