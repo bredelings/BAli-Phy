@@ -1,0 +1,3 @@
+# Protect matrix selection and sample limits; reader-unit tests do not cover CLI wiring.
+# Obsolete if this matrix output interface is removed.
+--RF

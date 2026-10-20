@@ -54,7 +54,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
         ("max",value<int>(),"maximum number of tree samples to read")
         ("subsample",value<int>()->default_value(1),"factor by which to sub-sample")
         ("RF","just count the number of branches")
-        ("var","report standard deviation of branch lengths instead of mean")
+        ("var","report standard deviation of leaf-to-leaf distances instead of mean")
         ;
 
     variables_map args;     
@@ -171,12 +171,13 @@ int main(int argc,char* argv[])
         v1_out.push_back(-1);
         v2_out.push_back(-2);
 
+        const auto& distances = args.count("var") ? D.m2 : D.m1;
         cout<<join(D.names,'\t')<<endl;
         for(int s1=0;s1<D.N;s1++)
         {
             for(int s2=0; s2<D.N; s2++)
             {
-                cout<<D.m1(s1,s2);
+                cout<<distances(s1,s2);
                 if (s2 + 1 < D.N)
                     cout<<'\t';
             }
