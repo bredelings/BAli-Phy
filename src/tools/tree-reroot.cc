@@ -75,7 +75,7 @@ int main(int argc,char* argv[])
         app.usage("Usage: tree-reroot TREE --outgroup NAME [OPTIONS]\n"
                   "       tree-reroot TREE {--taxa LIST|--leaf NAME|--parent-of NAME|--branch SPLIT}");
         string tree_file, outgroup, taxa, leaf_name_option, parent, branch;
-        app.add_option("--tree,TREE", tree_file, "Tree file (Newick or NEXUS)")->required()->type_name("");
+        app.add_option("TREE", tree_file, "Tree file (Newick or NEXUS)")->required()->type_name("");
         app.add_option("--outgroup", outgroup, "Place root halfway along this leaf's branch");
         app.add_option("--taxa", taxa, "Three taxa whose connecting paths meet at the root (list or @filename)");
         app.add_option("--leaf", leaf_name_option, "Root at this leaf");

@@ -36,17 +36,14 @@ in this list wins: **--outgroup**, **--taxa**, **--leaf**, **--parent-of**,
 
 # INPUT
 
-_TREE_ is a Newick or NEXUS file; only its first tree is used. **--tree** may be
-used instead of the positional filename. **-** is not a standard-input alias.
+_TREE_ is a positional Newick or NEXUS filename; only its first tree is used.
+**-** is not a standard-input alias.
 Names must match the tree's taxon labels.
 
 # OPTIONS
 
 **-h**, **--help**
 : Print help and exit.
-
-**--tree** _TREE_
-: Input tree file.
 
 **--outgroup** _NAME_
 : Insert the root halfway along the branch leading to this leaf. The outgroup
