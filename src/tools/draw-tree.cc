@@ -17,6 +17,7 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
+#include <algorithm>
 #include <cmath>
 #include <string>
 #include <iostream>
@@ -24,6 +25,7 @@
 #include <fstream>
 #include <memory>
 #include <optional>
+#include <tuple>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -1432,20 +1434,259 @@ void draw_node_circles(cairo_t* cr, const common_layout& layout, double line_wid
     cairo_restore(cr);
 }
 
-// Place a horizontal tip label using the existing branch-direction offsets and alignment.
-void draw_horizontal_label(cairo_t* cr, const string& name, const point_position& tip,
-                           const point_position& neighbor, double line_width)
+namespace {
+
+// Keep measured text and its anchor together through candidate selection and painting.
+struct tip_label
 {
-    double a = atan2(tip.y-neighbor.y, tip.x-neighbor.x);
+    string name;
+    point_position tip, direction, baseline;
+    double radius;
+    cairo_text_extents_t extents;
+};
+
+// Measure the preferred position, retaining the existing branch-direction offsets.
+tip_label measure_tip_label(cairo_t* cr, const string& name, const point_position& tip,
+                            const point_position& neighbor, double radius,
+                            const point_position& center, double line_width)
+{
+    point_position direction(tip.x-neighbor.x, tip.y-neighbor.y);
+    double distance = std::hypot(direction.x, direction.y);
+    if (distance == 0)
+    {
+        direction = point_position(tip.x-center.x, tip.y-center.y);
+        distance = std::hypot(direction.x, direction.y);
+    }
+    if (distance == 0) direction = point_position(1, 0);
+    else { direction.x /= distance; direction.y /= distance; }
     cairo_text_extents_t extents;
     cairo_text_extents(cr, name.c_str(), &extents);
-    double x = tip.x + cos(a)*(line_width+extents.height/8);
-    double y = tip.y + sin(a)*(line_width+extents.height/2);
-    y += 0.5*extents.height;
-    if (cos(a) < 0) x -= extents.width;
-    cairo_move_to(cr, x, y);
-    cairo_show_text(cr, name.c_str());
+    double x = tip.x + direction.x*(line_width+extents.height/8);
+    double y = tip.y + direction.y*(line_width+extents.height/2) + extents.height/2;
+    if (direction.x < 0) x -= extents.width;
+    return {name, tip, direction, point_position(x, y), radius, extents};
 }
+
+// Cairo bearings locate the ink relative to the baseline; padding reserves physical clearance.
+cairo_rectangle_t label_rectangle(const tip_label& label, double padding)
+{
+    const auto& e = label.extents;
+    return {label.baseline.x + e.x_bearing-padding, label.baseline.y + e.y_bearing-padding,
+            e.width+2*padding, e.height+2*padding};
+}
+
+// Include boundary contact when testing the reserved label clearance.
+bool rectangles_intersect(const cairo_rectangle_t& a, const cairo_rectangle_t& b)
+{
+    return a.x <= b.x+b.width and b.x <= a.x+a.width and
+           a.y <= b.y+b.height and b.y <= a.y+a.height;
+}
+
+// Clip the segment's parameter interval against both rectangle slabs, including contact.
+bool rectangle_intersects_segment(const cairo_rectangle_t& r, point_position a, point_position b)
+{
+    double first = 0, last = 1;
+    for (int axis = 0; axis < 2; ++axis)
+    {
+        double start = axis ? a.y : a.x;
+        double delta = axis ? b.y-a.y : b.x-a.x;
+        double lo = axis ? r.y : r.x;
+        double hi = lo + (axis ? r.height : r.width);
+        if (delta == 0)
+        {
+            if (start < lo or start > hi) return false;
+        }
+        else
+        {
+            double t1 = (lo-start)/delta, t2 = (hi-start)/delta;
+            if (t1 > t2) std::swap(t1, t2);
+            first = std::max(first, t1);
+            last = std::min(last, t2);
+            if (first > last) return false;
+        }
+    }
+    return true;
+}
+
+// Test the closest point of the rectangle against the filled circle and its outline.
+bool rectangle_intersects_circle(const cairo_rectangle_t& r, point_position center, double radius)
+{
+    double x = std::clamp(center.x, r.x, r.x+r.width);
+    double y = std::clamp(center.y, r.y, r.y+r.height);
+    return std::hypot(x-center.x, y-center.y) <= radius;
+}
+
+// Test padded text against branch strokes and bubbles; cloud interiors are not obstacles.
+bool label_intersects_tree(const cairo_rectangle_t& box, const common_layout& layout,
+                           const vector<std::pair<point_position,point_position>>& edges, double line_width)
+{
+    cairo_rectangle_t stroke_box{box.x-line_width/2, box.y-line_width/2,
+                                box.width+line_width, box.height+line_width};
+    for (const auto& [a,b]: edges)
+        if (rectangle_intersects_segment(stroke_box, a, b)) return true;
+    for (int n=0; n<layout.node_positions.size(); ++n)
+        if (layout.node_radius[n] > 0 and
+            rectangle_intersects_circle(box, layout.node_positions[n], layout.node_radius[n]+line_width/4))
+            return true;
+    return false;
+}
+
+// The farthest corner bounds the distance of every point in an axis-aligned rectangle.
+double rectangle_radius(const cairo_rectangle_t& box, const point_position& origin)
+{
+    double dx = std::max(std::abs(box.x-origin.x), std::abs(box.x+box.width-origin.x));
+    double dy = std::max(std::abs(box.y-origin.y), std::abs(box.y+box.height-origin.y));
+    return std::hypot(dx, dy);
+}
+
+// Select horizontal rectangles without moving the tree. Three candidates per label form a
+// conflict graph; removing candidates updates degrees without rebuilding intersections.
+// Minimum degree preserves choices for other labels; ties prefer the original position, then
+// candidate order and leaf index. The quadratic work/storage is confined to this drawing pass.
+vector<cairo_rectangle_t> place_horizontal_labels(const vector<tip_label>& labels, const common_layout& layout,
+    const vector<std::pair<point_position,point_position>>& edges, double pt, double font_height)
+{
+    const double line_width = 2*pt;
+    const int count = labels.size();
+    vector<cairo_rectangle_t> candidates, placed(count);
+    vector<bool> active, assigned(count, false);
+    for (int i=0; i<count; ++i)
+    {
+        const auto& label = labels[i];
+        auto box = label_rectangle(label, pt);
+        double spacing = label.extents.height + 2*pt;
+        bool empty = label.extents.width == 0 or label.extents.height == 0;
+        if (empty) { assigned[i] = true; placed[i] = box; }
+        for (int choice=0; choice<3; ++choice)
+        {
+            double offset = choice == 0 ? 0 : (choice == 1 ? spacing : -spacing);
+            auto shifted = box;
+            shifted.x -= offset*label.direction.y;
+            shifted.y += offset*label.direction.x;
+            candidates.push_back(shifted);
+            active.push_back(not empty and not label_intersects_tree(shifted, layout, edges, line_width));
+        }
+    }
+    vector<vector<int>> conflicts(candidates.size());
+    vector<int> degree(candidates.size(), 0);
+    for (int i=0; i<candidates.size(); ++i)
+        if (active[i])
+            for (int j=0; j<i; ++j)
+                if (active[j] and i/3 != j/3 and rectangles_intersect(candidates[i], candidates[j]))
+                {
+                    conflicts[i].push_back(j);
+                    conflicts[j].push_back(i);
+                    degree[i]++;
+                    degree[j]++;
+                }
+    // Removing a candidate also removes its contribution to every surviving conflict count.
+    auto remove = [&](int i) {
+        if (not active[i]) return;
+        active[i] = false;
+        for (int j: conflicts[i])
+            if (active[j]) --degree[j];
+    };
+    while (true)
+    {
+        int best = -1;
+        for (int i=0; i<candidates.size(); ++i)
+            if (active[i] and (best == -1 or
+                std::tuple(degree[i], i%3, i/3) < std::tuple(degree[best], best%3, best/3)))
+                best = i;
+        if (best == -1) break;
+        int label = best/3;
+        placed[label] = candidates[best];
+        assigned[label] = true;
+        for (int j: conflicts[best]) remove(j);
+        for (int j=3*label; j<3*label+3; ++j) remove(j);
+    }
+
+    for (int i=0; i<count; ++i)
+    {
+        if (assigned[i]) continue;
+        const auto& label = labels[i];
+        auto initial = candidates[3*i];
+        // All obstacles lie in a disk of radius R about this tip. Every point of the initial
+        // padded label is within B of it. Translating by more than R+B puts the whole label
+        // outside that disk (reverse triangle inequality), providing a finite search endpoint.
+        double radius = 0;
+        for (const auto& [a,b]: edges)
+            radius = std::max(radius, std::max(std::hypot(a.x-label.tip.x, a.y-label.tip.y),
+                                             std::hypot(b.x-label.tip.x, b.y-label.tip.y)) + line_width);
+        for (int n=0; n<layout.node_positions.size(); ++n)
+            radius = std::max(radius, std::hypot(layout.node_positions[n].x-label.tip.x,
+                                               layout.node_positions[n].y-label.tip.y)
+                                     + layout.node_radius[n] + line_width);
+        for (int j=0; j<count; ++j)
+            if (assigned[j] and labels[j].extents.width > 0 and labels[j].extents.height > 0)
+                radius = std::max(radius, rectangle_radius(placed[j], label.tip));
+        double limit = radius + rectangle_radius(initial, label.tip) + pt;
+        double distance = std::min(std::max(font_height, pt), limit);
+        while (true)
+        {
+            auto box = initial;
+            box.x += distance*label.direction.x;
+            box.y += distance*label.direction.y;
+            bool blocked = label_intersects_tree(box, layout, edges, line_width);
+            for (int j=0; not blocked and j<count; ++j)
+                if (assigned[j] and labels[j].extents.width > 0 and labels[j].extents.height > 0)
+                    blocked = rectangles_intersect(box, placed[j]);
+            if (not blocked) { placed[i] = box; assigned[i] = true; break; }
+            assert(distance < limit);
+            distance = std::min(2*distance, limit);
+        }
+    }
+#ifndef NDEBUG
+    // The placement pass guarantees clearance for nonempty label bodies, not for leader lines.
+    for (int i=0; i<count; ++i)
+        if (labels[i].extents.width > 0 and labels[i].extents.height > 0)
+        {
+            assert(not label_intersects_tree(placed[i], layout, edges, line_width));
+            for (int j=0; j<i; ++j)
+                if (labels[j].extents.width > 0 and labels[j].extents.height > 0)
+                    assert(not rectangles_intersect(placed[i], placed[j]));
+        }
+#endif
+    return placed;
+}
+
+// Draw displaced labels' leaders before the text. Leaders are graphical annotations, with
+// a thinner dashed gray stroke; their crossings and cloud intersections are not optimized.
+void draw_horizontal_labels(cairo_t* cr, const vector<tip_label>& labels, const common_layout& layout,
+    const vector<std::pair<point_position,point_position>>& edges, double pt, double font_height)
+{
+    auto placed = place_horizontal_labels(labels, layout, edges, pt, font_height);
+    cairo_save(cr);
+    const double dashes[] = {2*pt, 2*pt};
+    cairo_set_dash(cr, dashes, 2, 0);
+    cairo_set_line_width(cr, 0.5*pt);
+    cairo_set_source_rgb(cr, 0.5, 0.5, 0.5);
+    for (int i=0; i<labels.size(); ++i)
+    {
+        const auto& label = labels[i];
+        if (label.extents.width == 0 or label.extents.height == 0) continue;
+        auto original = label_rectangle(label, pt);
+        if (placed[i].x == original.x and placed[i].y == original.y) continue;
+        auto box = placed[i];
+        double x = std::clamp(label.tip.x, box.x+pt, box.x+box.width-pt);
+        double y = std::clamp(label.tip.y, box.y+pt, box.y+box.height-pt);
+        double distance = std::hypot(x-label.tip.x, y-label.tip.y);
+        if (distance <= label.radius+2*pt) continue;
+        double dx = (x-label.tip.x)/distance, dy = (y-label.tip.y)/distance;
+        cairo_move_to(cr, label.tip.x+(label.radius+pt)*dx, label.tip.y+(label.radius+pt)*dy);
+        cairo_line_to(cr, x-pt*dx, y-pt*dy);
+        cairo_stroke(cr);
+    }
+    cairo_restore(cr);
+    for (int i=0; i<labels.size(); ++i)
+    {
+        cairo_move_to(cr, placed[i].x+pt-labels[i].extents.x_bearing,
+                          placed[i].y+pt-labels[i].extents.y_bearing);
+        cairo_show_text(cr, labels[i].name.c_str());
+    }
+}
+
+} // namespace
 
 struct tree_plotter: public cairo_plotter
 {
@@ -1495,12 +1736,20 @@ void tree_plotter::operator()(cairo_t* cr)
     cairo_set_font_size (cr, font_size()/scale);
   
     if (horizontal_names)
-        for(int l=0;l<L.T.n_leaves();l++)
+    {
+        vector<tip_label> labels;
+        point_position center(L.x_center(), L.y_center());
+        for (int l=0; l<L.T.n_leaves(); ++l)
         {
             int parent = L.T.directed_branch(l).target();
-            draw_horizontal_label(cr, L.T.get_label(l), L.node_positions[l],
-                                  L.node_positions[parent], line_width);
+            labels.push_back(measure_tip_label(cr, L.T.get_label(l), L.node_positions[l],
+                L.node_positions[parent], L.node_radius[l], center, line_width));
         }
+        vector<std::pair<point_position,point_position>> edges;
+        for (int b=0; b<L.T.n_branches(); ++b)
+            edges.emplace_back(L.node_positions[L.T.branch(b).source()], L.node_positions[L.T.branch(b).target()]);
+        draw_horizontal_labels(cr, labels, L, edges, pt, font_size()/scale);
+    }
     else
 	for(int l=0;l<L.T.n_leaves();l++)
 	{  
@@ -2923,14 +3172,21 @@ void graph_plotter::operator()(cairo_t* cr)
 			    CAIRO_FONT_WEIGHT_BOLD);
     cairo_set_font_size (cr, font_size()/scale);
 
-    for(int l=0;l<L.MC.n_leaves();l++)
+    vector<tip_label> labels;
+    point_position center(L.x_center(), L.y_center());
+    for (int l=0; l<L.MC.n_leaves(); ++l)
     {
         int node = L.MC.leaf(l);
         int branch = L.MC.branch_to_node(node);
         int neighbor = L.MC.mapping[L.MC.reverse(branch)];
-        draw_horizontal_label(cr, L.MC.names()[l], L.node_positions[node],
-                              L.node_positions[neighbor], line_width);
+        labels.push_back(measure_tip_label(cr, L.MC.names()[l], L.node_positions[node],
+            L.node_positions[neighbor], L.node_radius[node], center, line_width));
     }
+    vector<std::pair<point_position,point_position>> edges;
+    for (const auto& edge: L.MC.edges)
+        if (edge.type != 2 or draw_type_2_edges)
+            edges.emplace_back(L.node_positions[edge.from], L.node_positions[edge.to]);
+    draw_horizontal_labels(cr, labels, L, edges, pt, font_size()/scale);
 }
 
 

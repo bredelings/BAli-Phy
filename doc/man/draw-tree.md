@@ -21,7 +21,11 @@ Supplying only a width or height uniformly resizes the complete drawing and deri
 dimension from its aspect ratio. Supplying both fits the drawing inside that page and centers it,
 adding whitespace rather than distorting the image. Explicit resizing also scales fonts, strokes,
 and margins. When both dimensions are supplied, they also guide initial tree scaling and rotation.
-Page fitting prevents clipping; it does not prevent labels from overlapping each other.
+
+Horizontal labels are positioned to avoid branches, node bubbles, and other labels. Crowded labels
+may move farther outward, with thin gray dashed lines connecting them to their tips. These leader
+lines do not represent evolutionary distances and may cross other drawing elements. Angled labels
+follow terminal branches and may overlap. Page fitting includes labels and leader lines.
 
 # INPUT OPTIONS:
 **-h**, **--help**
@@ -55,7 +59,8 @@ Page fitting prevents clipping; it does not prevent labels from overlapping each
 : Number of iterations for layout algorithm with small-angle penalties
 
 **--labels** _arg_ (=horizontal)
-: Are the names horizontal or angled?
+: Use `horizontal` for horizontal labels with overlap avoidance, or `angled` for labels aligned
+  with terminal branches in equal-angle and equal-daylight layouts. Graph layouts use horizontal labels.
 
 **--collapse**
 : Give node lengths evenly to neighboring branches and zero the node lengths.
