@@ -40,13 +40,6 @@ Extract and name ancestral sequences according to node- and branch- queries.
 **-g** _arg_, **--groups** _arg_
 : File with named groups
 
-**--nodes-min** _arg_ (=0.34)
-: Minimum fraction to include a node.
-
-**--groups-min** _arg_ (=0.34)
-: Minimum fraction to include a group.
-
-
 # EXAMPLES:
  
 Add named ancestral sequences to alignments where they are present:

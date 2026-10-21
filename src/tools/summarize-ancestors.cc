@@ -286,14 +286,13 @@ map<int,int> find_and_name_nodes(const SequenceTree& T,const SequenceTree& Q)
 
 struct profile
 {
-    const alignment& template_A;
     vector<vector<int>> observations; // observations[site][i]
     ambiguity_database ambiguities;
     int count = 0;
 
     void count_alignment(const alignment& A, int row, const vector<pair<int,int>>& corresponding_columns);
     int max_for_position(int i, bool gap_must_be_half=true) const;
-    profile(const alignment& A): template_A(A), observations(A.length()),
+    profile(const alignment& A): observations(A.length()),
         ambiguities(A.get_alphabet().n_letters()) {}
 };
 
@@ -366,47 +365,6 @@ void profile::count_alignment(const alignment& A, int row, const vector<pair<int
     }
 }
 
-
-vector<int> get_index_column(const matrix<int>& m, int c)
-{
-    int n_taxa = m.size2();
-    vector<int> column(n_taxa);
-    for(int i=0;i<n_taxa;i++)
-        column[i] = m(c,i);
-    return column;
-}
-   
-
-vector<pair<int,int>> map_columns(const alignment& template_A, const alignment& sample_A)
-{
-    int n_leaves = template_A.n_sequences();
-
-    // 1. Construct map of indices -> template alignment column
-    map<vector<int>,int> indices_to_col;
-
-    auto template_m = M(template_A);
-    for(int c=0; c<template_A.length(); c++)
-    {
-        auto col = get_index_column(template_m, c);
-        indices_to_col.insert({col, c});
-    }
-
-    // 2. Construct list of (template column, sample column)
-    vector<pair<int,int>> columns;
-    auto sample_m = M(sample_A);
-    for(int c=0; c<sample_A.length(); c++)
-    {
-        auto sample_col = get_index_column(sample_m, c);
-        sample_col.resize(n_leaves);
-        if (indices_to_col.count(sample_col))
-        {
-            int template_c = indices_to_col.at(sample_col);
-            columns.push_back({template_c,c});
-        }
-    }
-
-    return columns;
-}
 
 vector<pair<int,int>> get_characters(const matrix<int>& template_m, int c)
 {
@@ -492,22 +450,6 @@ std::ostream& write_alignment_row(std::ostream& o, const string& name, const ali
     if (widened)
         std::cerr<<"Warning: widened "<<widened
                  <<" non-Cartesian or unspellable ambiguities while writing sequences.\n";
-    return o;
-}
-
-
-std::ostream& write_corresponding_alignment_row(std::ostream& o, const string& name, const alignment& A, int row,
-                                                const vector<pair<int,int>>& corresponding_columns, int row_length)
-{
-    vector<int> corresponding_row(row_length,alphabet::unknown);
-    for(auto& [template_c, sample_c]: corresponding_columns)
-        corresponding_row[template_c] = A(sample_c,row);
-
-    o<<">"<<name<<"\n";
-    auto& a = A.get_alphabet();
-    for(int c: corresponding_row)
-        o<<a.lookup(c);
-    o<<"\n";
     return o;
 }
 

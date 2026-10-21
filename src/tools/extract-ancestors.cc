@@ -283,23 +283,6 @@ map<int,int> find_and_name_nodes(const SequenceTree& T,const SequenceTree& Q)
 }
 
 
-int argmax(const map<int,int>& counts)
-{
-    auto max_x = counts.begin()->first;
-    auto max_count = counts.begin()->second;
-
-    for(auto& [x,count]: counts)
-    {
-        if (count > max_count)
-        {
-            max_x = x;
-            max_count = count;
-        }
-    }
-
-    return max_x;
-}
-
 optional<SequenceTree> get_node_queries(const variables_map& args, const joint_A_T& samples)
 {
     optional<SequenceTree> Q;
@@ -442,8 +425,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ancestors.add_options()
         ("nodes,n",value<string>(),"Newick tree with labelled ancestors")
         ("groups,g",value<string>(),"File with named groups")
-        ("nodes-min",value<double>()->default_value(0.34,"0.34"),"Minimum fraction to include a node.")
-        ("groups-min",value<double>()->default_value(0.34,"0.34"),"Minimum fraction to include a group.")
         ;
 
     options_description all("All options");
