@@ -392,7 +392,11 @@ int main(int argc,char* argv[])
 
         // 1. Load alignment and tree samples
         if (log_verbose) cerr<<"summarize-ancestors: Loading alignments and trees...\n";
-        joint_A_T samples = get_multiple_joint_A_T(args,true);
+        joint_A_T samples = get_multiple_joint_A_T(
+            args["alignments"].as<vector<string>>(), args["trees"].as<vector<string>>(),
+            get_alphabet_name(args), true, args["subsample"].as<unsigned>(),
+            args["skip"].as<std::int64_t>(), get_arg<std::int64_t>(args, "until"),
+            args["thin"].as<int>(), args["max"].as<unsigned>());
 
         if (samples.size() == 0)
             throw myexception()<<"No usable alignment/tree pairs remain after sample selection.";

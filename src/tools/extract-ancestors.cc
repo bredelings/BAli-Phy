@@ -217,7 +217,9 @@ int main(int argc,char* argv[])
 
         // 1. Load alignment and tree samples
         if (log_verbose) cerr<<"extract-ancestors: Loading alignments and trees...\n";
-        joint_A_T samples = get_multiple_joint_A_T(args,true);
+        joint_A_T samples = get_multiple_joint_A_T(
+            args["alignments"].as<vector<string>>(), args["trees"].as<vector<string>>(),
+            get_alphabet_name(args), true, args["subsample"].as<unsigned>(), 0, {}, 1, {});
 
         if (samples.size() == 0)
             throw myexception()<<"No (A,T) read in!";

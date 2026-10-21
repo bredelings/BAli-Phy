@@ -137,22 +137,12 @@ void thin_joint_samples(vector<vector<pair<string,string>>>& chains, std::size_t
 
 }
 
-joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
+// Select raw pairs independently by chain, then parse and link only the retained sample.
+joint_A_T get_multiple_joint_A_T(const vector<string>& a_filenames, const vector<string>& t_filenames,
+                               const string& alphabet_name, bool internal, unsigned alignment_thin_factor,
+                               std::uint64_t first, optional<std::uint64_t> last, unsigned thin,
+                               optional<unsigned> max)
 {
-    auto a_filenames = args["alignments"].as<vector<string>>();
-    auto t_filenames = args["trees"].as<vector<string>>();
-
-    // Tree stride establishes correspondence with the saved alignment records.
-    unsigned alignment_thin_factor = args["subsample"].as<unsigned>();
-    std::uint64_t first = args.count("skip") ? args["skip"].as<std::int64_t>() : 0;
-    optional<std::uint64_t> last;
-    if (args.count("until")) last = args["until"].as<std::int64_t>();
-    unsigned thin = args.count("thin") ? args["thin"].as<int>() : 1;
-
-    optional<int> max;
-    if (args.count("max"))
-        max = args["max"].as<unsigned>();
-
     if (a_filenames.size() != t_filenames.size())
         throw myexception()<<"The number of alignments files ("<<a_filenames.size()<<") and the number of trees files ("<<t_filenames.size()<<") don't match!";
 
@@ -245,6 +235,7 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
     vector<SequenceTree> T;
     shared_ptr<const alphabet> alph;
     vector<string> names;
+    // Parse a retained pair, reusing the first alignment's alphabet and sequence ordering.
     auto f = [&](const pair<string,string>& at)
         {
             auto& [a,t] = at;
@@ -257,7 +248,7 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
             {
                 try
                 {
-                    aa = load_next_alignment(astringfile, get_alphabet_name(args));
+                    aa = load_next_alignment(astringfile, alphabet_name);
                     names = sequence_names(aa);
                     alph = shared_ptr<const alphabet>(aa.get_alphabet().clone());
                 }

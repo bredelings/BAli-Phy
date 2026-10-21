@@ -20,6 +20,7 @@
 #ifndef JOINT_A_T_H
 #define JOINT_A_T_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <optional>
@@ -48,6 +49,9 @@ public:
 
 joint_A_T get_joint_A_T(const boost::program_options::variables_map& args,bool internal);
 
-joint_A_T get_multiple_joint_A_T(const boost::program_options::variables_map& args,bool internal);
+joint_A_T get_multiple_joint_A_T(const std::vector<std::string>& alignment_files,
+                               const std::vector<std::string>& tree_files, const std::string& alphabet_name,
+                               bool internal, unsigned tree_stride, std::uint64_t first,
+                               std::optional<std::uint64_t> last, unsigned thin, std::optional<unsigned> max);
 
 #endif
