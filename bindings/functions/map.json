@@ -6,11 +6,15 @@
     "args": [
         {
             "name": "f",
-            "type": "a -> b"
+            "type": "a -> b",
+            "description": "Function that takes an element and returns its replacement"
         },
         {
             "name": "xs",
-            "type": "m<a>"
+            "type": "m<a>",
+            "description": "List or other supported container whose elements are transformed"
         }
-    ]
+    ],
+    "description": "Apply f to each element of xs, preserving the container's structure. For a list, the result has the same length and element order.\n\nIn the type signature, a is the input element type, b is the output element type, and m is the container type. The function may change the element type.\n\nIn the example below, |x: x+1| defines a function that adds 1 to its argument.",
+    "examples": ["map(|x: x+1|, [1,2,3])   // returns [2,3,4]"]
 }
