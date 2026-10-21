@@ -1254,8 +1254,10 @@ bool shades(tree_layout& L)
     return false;
 }
 
-void equalize_daylight(tree_layout& L,int n)
+// Balance gaps around each component and return the largest elementary rotation.
+double equalize_daylight(tree_layout& L,int n)
 {
+    double movement = 0;
     const Tree& T = L.T;
 
     // get outwards branches - which point to subtrees
@@ -1287,12 +1289,17 @@ void equalize_daylight(tree_layout& L,int n)
             double delta = (daylight_after - daylight_before)/2.0;
 	    angles[b].shift(delta);
 	    L.rotate_subtree(branches[b],delta);
+            // Equivalent turns describe the same position; measure the shorter angular displacement.
+            movement = std::max(movement, std::abs(std::remainder(delta, 2*M_PI)));
 	}
     }
+    return movement;
 }
 
-void equalize_daylight_greedy(tree_layout& L,int n)
+// Redistribute available daylight equally and return the largest elementary rotation.
+double equalize_daylight_greedy(tree_layout& L,int n)
 {
+    double movement = 0;
     const Tree& T = L.T;
 
     // get outwards branches - which point to subtrees
@@ -1321,12 +1328,15 @@ void equalize_daylight_greedy(tree_layout& L,int n)
 
 	    if (delta != 0) {
 		L.rotate_subtree(branches[b], delta);
+                // Use the shorter equivalent turn, as in the ordinary pivot update.
+                movement = std::max(movement, std::abs(std::remainder(delta, 2*M_PI)));
 		angles[b].shift(delta);
 	    }
 	}
     }
 
     if (L.edges_cross()) throw myexception()<<"equalize_daylight(L,n): edges cross - should not happen!";
+    return movement;
 }
 
 // the size of a split is the size of its smallest set.
@@ -1364,29 +1374,41 @@ vector<int> node_order(const Tree& T)
 
 // Try each pivot in the topology-dependent order. Only positions change, so rejected moves
 // need a coordinate snapshot, not a copy of the tree and all its cached partitions.
-void equalize_daylight(tree_layout& L, const vector<int>& nodes, bool greedy, bool no_shade)
+// Return the largest accepted movement; a rejected rotation contributes zero.
+double equalize_daylight(tree_layout& L, const vector<int>& nodes, bool greedy, bool no_shade)
 {
+    double movement = 0;
     for(int node: nodes)
     {
         vector<point_position> previous_positions;
         if (no_shade) previous_positions = L.node_positions;
-        if (greedy)
-            equalize_daylight_greedy(L,node);
-        else
-            equalize_daylight(L,node);
+        double delta = greedy ? equalize_daylight_greedy(L,node) : equalize_daylight(L,node);
         if (no_shade and shades(L))
             L.node_positions = std::move(previous_positions);
+        else
+            movement = std::max(movement, delta);
     }
+    return movement;
 }
 
 // Equal-angle initialization converts biological lengths to center distances exactly once.
-// The pivot order depends only on topology and is shared by all three daylight sweeps.
+// Reuse topology-dependent pivot order until accepted movements are small, or reach the cap.
 tree_layout equal_daylight_layout(const MC_tree_with_lengths& MC, bool greedy=false, bool no_shade=false)
 {
     tree_layout L = equal_angle_layout(MC);
     const auto nodes = node_order(L.T);
-    for(int i=0;i<3;i++)
-        equalize_daylight(L, nodes, greedy, no_shade);
+    constexpr double tolerance = 0.001; // radians, measured per elementary rotation
+    constexpr int max_sweeps = 50;
+    int sweeps = 0;
+    double movement;
+    do
+    {
+        movement = equalize_daylight(L, nodes, greedy, no_shade);
+        ++sweeps;
+    } while (movement >= tolerance and sweeps < max_sweeps);
+    if (log_verbose)
+        cerr << "draw-tree: Equal-daylight stopped after " << sweeps << " sweeps: "
+             << (movement < tolerance ? "movement below 0.001 radians" : "50-sweep limit reached") << ".\n";
     return L;
 }
 

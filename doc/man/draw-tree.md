@@ -50,7 +50,7 @@ follow terminal branches and may overlap. Page fitting includes labels and leade
 : Consider only full splits by collapsing any partial splits.
 
 **--iterations** _arg_ (=2)
-: Number of iterations for layout algorithm
+: Number of iterations for the graph layout algorithm
 
 **--font-size** _arg_ (=10)
 : Font size in points before explicit output resizing
@@ -67,7 +67,8 @@ follow terminal branches and may overlap. Page fitting includes labels and leade
 
 **--layout** _arg_ (=graph)
 : Layout method: graph, equal-angle, equal-daylight. Equal-daylight balances angular gaps between
-  subtrees, including the space occupied by node bubbles. Labels are placed afterward.
+  subtrees, including the space occupied by node bubbles. It stops when every accepted rotation
+  in a sweep is smaller than 0.001 radians, or after 50 sweeps. Labels are placed afterward.
   The former `fr` placeholder is not implemented.
 
 **--greedy**
