@@ -1425,7 +1425,7 @@ interactively; see <xref linkend="software_req"/>.</para>
 	
 <para>To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, choose a fully resolved tree estimate <replaceable>tree</replaceable>:
 <screen><prompt>%</prompt> cut-range <replaceable>dir</replaceable>-1/C1.P<replaceable>p</replaceable>.fastas <replaceable>dir</replaceable>-2/C1.P<replaceable>p</replaceable>.fastas --skip=<replaceable>burn-in</replaceable> | alignment-chop-internal --tree <replaceable>tree</replaceable>  | alignment-gild <replaceable>alignment</replaceable>.fasta <replaceable>tree</replaceable>  &gt; <replaceable>alignment</replaceable>-AU.prob
-<prompt>%</prompt> alignment-draw <replaceable>alignment</replaceable>.fasta --AU <replaceable>alignment</replaceable>-AU.prob &gt; <replaceable>alignment</replaceable>-AU.html</screen>
+<prompt>%</prompt> alignment-draw <replaceable>alignment</replaceable>.fasta <replaceable>alignment</replaceable>-AU.prob &gt; <replaceable>alignment</replaceable>-AU.html</screen>
 The majority consensus tree is usually not fully resolved, so we recommend using the greedy consensus instead.
 </para>
       </section>
@@ -4216,7 +4216,7 @@ The stabilization criterion is the same one described above for numerical values
       
       <para>Draw an alignment to HTML, optionally coloring residues by AU.</para>
 <screen><prompt>%</prompt>  alignment-draw <replaceable>file</replaceable>.fasta --show-ruler --color-scheme=DNA+contrast > <replaceable>file</replaceable>.html
-<prompt>%</prompt>  alignment-draw <replaceable>file</replaceable>.fasta --show-ruler --AU=<replaceable>file</replaceable>-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > <replaceable>file</replaceable>-AU.html</screen>
+<prompt>%</prompt>  alignment-draw <replaceable>file</replaceable>.fasta <replaceable>file</replaceable>-AU.prob --show-ruler --color-scheme=DNA+contrast+fade+fade+fade+fade > <replaceable>file</replaceable>-AU.html</screen>
     </section>
 
     <section><info><title>alignment-find</title></info>

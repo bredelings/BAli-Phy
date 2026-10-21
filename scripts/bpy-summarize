@@ -2105,7 +2105,7 @@ class Analysis(object):
         if "AU" in kwargs:
             AU = kwargs["AU"]
             if AU is not None:
-                cmd += ['--AU',AU]
+                cmd.insert(2, AU)
 
         properties = kwargs.get("properties")
         alphabet = kwargs.get("alphabet")
@@ -2155,7 +2155,7 @@ class Analysis(object):
             self.exec_show(['alignments-diff',initial,wpd],outfile=outfile)
 
             outhtml = self.outdir / f"P{i+1}.initial-diff.html"
-            self.exec_show(['alignment-draw',initial,'--scale=identity','--AU',outfile,'--show-ruler','--color-scheme=diff[1]'],outfile=outhtml)
+            self.exec_show(['alignment-draw',initial,outfile,'--scale=identity','--show-ruler','--color-scheme=diff[1]'],outfile=outhtml)
             print("*",end='',flush=True);
 
         print(" done.")

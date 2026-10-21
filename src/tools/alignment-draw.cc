@@ -38,10 +38,8 @@
 #include "colors.hh"
 #include "alignment-draw-assets.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 using std::string;
 using std::vector;
@@ -530,9 +528,10 @@ bool match(vector<string>& sstack,const string& s,string& arg) {
     return success;
 }
 
-std::function<double(double)> get_scale(const variables_map& args)
+// Construct the requested probability scale with optional bounds in transformed coordinates.
+std::function<double(double)> get_scale(const string& scale_name,
+                                      std::optional<double> minimum, std::optional<double> maximum)
 {
-    string scale_name = args["scale"].as<string>();
     if (scale_name == "identity") 
 	return [](double x){return x;};
 
@@ -541,29 +540,29 @@ std::function<double(double)> get_scale(const variables_map& args)
 	scale.f = invert;
 	scale.min = 0;
 	scale.max = 1;
-	if (args.count("min")) scale.min = args["min"].as<double>();
-	if (args.count("max")) scale.max = args["max"].as<double>();
+	if (minimum) scale.min = *minimum;
+	if (maximum) scale.max = *maximum;
     }
     else if (scale_name == "square") {
 	scale.f = square;
 	scale.min = 0;
 	scale.max = 1;
-	if (args.count("min")) scale.min = args["min"].as<double>();
-	if (args.count("max")) scale.max = args["max"].as<double>();
+	if (minimum) scale.min = *minimum;
+	if (maximum) scale.max = *maximum;
     }
     else if (scale_name == "cube") {
 	scale.f = cube;
 	scale.min = 0;
 	scale.max = 1;
-	if (args.count("min")) scale.min = args["min"].as<double>();
-	if (args.count("max")) scale.max = args["max"].as<double>();
+	if (minimum) scale.min = *minimum;
+	if (maximum) scale.max = *maximum;
     }
     else if (scale_name == "LOD") {
 	scale.f = LOD10;
 	scale.min = -0.5;
 	scale.max = 2.0;
-	if (args.count("min")) scale.min = args["min"].as<double>();
-	if (args.count("max")) scale.max = args["max"].as<double>();
+	if (minimum) scale.min = *minimum;
+	if (maximum) scale.max = *maximum;
     }
     else
 	throw myexception()<<"Unrecognized scale '"<<scale_name<<"'.";
@@ -620,16 +619,10 @@ owned_ptr<ColorMap> get_base_color_map(vector<string>& string_stack,bool gaps_di
 }
 
 
-owned_ptr<ColorMap> get_color_map(const variables_map& args,bool gaps_different) 
+// Build the base palette and apply its ordered modifiers.
+owned_ptr<ColorMap> get_color_map(const string& scheme, bool gaps_different)
 {
-    // get the string stack
-    vector<string> string_stack;
-    if (args.count("color-scheme"))
-	string_stack = split(args["color-scheme"].as<string>(),'+');
-    else if (args.count("AU"))
-	string_stack = split("Rainbow+fade",'+');
-    else
-	string_stack = split("plain",'+');
+    vector<string> string_stack = split(scheme, '+');
 
     std::reverse(string_stack.begin(),string_stack.end());
     if (string_stack.empty())
@@ -661,85 +654,6 @@ owned_ptr<ColorMap> get_color_map(const variables_map& args,bool gaps_different)
     }
     return color_map;
 }
-
-owned_ptr<ColorScheme> get_color_scheme(const variables_map& args) 
-{
-    bool gaps_different = false;
-    if (args.count("gaps-different") and args["gaps-different"].as<string>() == "yes")
-	gaps_different = true;
-
-    owned_ptr<ColorMap> color_map = get_color_map(args,gaps_different);
-    assert(color_map);
-
-    auto transform = get_scale(args);
-
-    return ColorScheme(*color_map,transform);
-}
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description general("General options");
-    general.add_options()
-	("help,h", "produce help message")
-	("file", value<string>(),"file with sequences and initial alignment")
-	;
-  
-    options_description output("Output");
-    output.add_options()
-	("legend","Print a legend showing how color-scheme indicates uncertainty.") 
-	("show-ruler","Print a ruler to show column numbers") 
-	("column-colors","Color-code column ticks by column certainty") 
-	("AU",value<string>(),"file with alignment uncertainties")
-	("properties",value<string>(),"JSON file with posterior character-property summaries")
-	("alphabet",value<string>(),"alphabet name used to tokenize alignment cells")
-	("show-gaps",value<string>()->default_value("yes"),"Show gaps")
-	("show-letters",value<string>()->default_value("yes"),"Show letters")
-	("show-names",value<string>()->default_value("yes"),"Show names")
-	("gaps-different",value<string>()->default_value("yes"),"Color gaps in grey.")
-	("width",value<int>(),"The number of columns per line")
-	("start",value<int>(),"The first column to plot")
-	("end",value<int>(),"The last column to plot")
-	("min",value<double>(),"Minimum value of scale function")
-	("max",value<double>(),"Maximum value of scale function")
-	("color-scheme",value<string>(),"Include a length of how certainties map to colors")
-	("scale",value<string>()->default_value("LOD"),"scale for the uncertainties")
-	;
-
-    options_description all("All options");
-    all.add(general).add(output);
-
-    // positional options
-    positional_options_description p;
-    p.add("file", 1);
-    p.add("AU", 1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    notify(args);
-
-    if (args.count("help")) {
-	cout<<"Draw an alignment to HTML, optionally coloring residues by AU.\n\n";
-	cout<<"Usage: alignment-draw <alignment> [<AU file>] [OPTIONS]\n\n";
-	cout<<all<<"\n";
-	cout<<"Base Color Schemes:\n";
-	cout<<"    plain, bw, Rainbow, RedBlue, BlueRed, AA, DNA\n";
-	cout<<"\n";
-	cout<<"Modifiers:\n";
-	cout<<"    switch, contrast, fade\n";
-	cout<<"\n";
-	cout<<"Examples:\n";
-	cout<<"    Rainbow+contrast+fade\n";
-	cout<<"    AA+contrast+fade+fade+fade+fade\n";
-	exit(0);
-    }
-
-    return args;
-}
-
 
 /// Escape text inserted into HTML text and attribute contexts.
 string escape_html(std::string_view text)
@@ -977,30 +891,50 @@ int main(int argc,char* argv[])
 	cout.precision(10);
     
 	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
-
-	bool columncolors = args.count("column-colors")==1;
-
-	bool show_column_numbers = args.count("show-ruler")==1;
-
-	bool show_gaps = true;
-	if (args.count("show-gaps") and args["show-gaps"].as<string>() == "no")
-	    show_gaps = false;
-
-	bool show_letters = true;
-	if (args.count("show-letters") and args["show-letters"].as<string>() == "no")
-	    show_letters = false;
-
-	bool show_names = true;
-	if (args.count("show-names") and args["show-names"].as<string>() == "no")
-	    show_names = false;
+        CLI::App app{"Draw an alignment to HTML, optionally coloring cells by alignment uncertainty.", "alignment-draw"};
+        app.usage("Usage: alignment-draw [OPTIONS] ALIGNMENT [AU]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string filename, scale_name = "LOD";
+        std::optional<string> au_file, properties_file, alphabet_name, scheme;
+        std::optional<int> requested_width, requested_start, requested_end;
+        std::optional<double> minimum, maximum;
+        bool legend = false, columncolors = false, show_column_numbers = false;
+        bool show_gaps = true, show_letters = true, show_names = true, gaps_different = true;
+        app.add_option("ALIGNMENT", filename, "Alignment file ('-' reads stdin)")->required()->type_name("");
+        app.add_option("AU", au_file, "Alignment annotation file")->type_name("");
+        app.add_flag("--legend", legend, "Show how the color scheme indicates uncertainty");
+        app.add_flag("--show-ruler", show_column_numbers, "Show column numbers");
+        app.add_flag("--column-colors", columncolors, "Color ruler ticks by column certainty");
+        app.add_option("--properties", properties_file, "JSON posterior character-property summary")->type_name("FILE");
+        app.add_option("--alphabet", alphabet_name, "Alphabet used to tokenize alignment cells")->type_name("ALPHABET");
+        app.add_option("--show-gaps", show_gaps, "Show gaps")->type_name("BOOL")->default_str("yes");
+        app.add_option("--show-letters", show_letters, "Show letters")->type_name("BOOL")->default_str("yes");
+        app.add_option("--show-names", show_names, "Show sequence names")->type_name("BOOL")->default_str("yes");
+        app.add_option("--gaps-different", gaps_different, "Color gaps in grey")->type_name("BOOL")->default_str("yes");
+        app.add_option("--width", requested_width, "Columns per line (default: twice the alignment length)");
+        app.add_option("--start", requested_start, "First column to plot (zero-based; default: 0)");
+        app.add_option("--end", requested_end, "Last column to plot (zero-based; default: last column)");
+        app.add_option("--min", minimum, "Minimum transformed value of the uncertainty scale");
+        app.add_option("--max", maximum, "Maximum transformed value of the uncertainty scale");
+        app.add_option("--color-scheme", scheme, "Base palette plus modifiers (default: Rainbow+fade with AU, plain otherwise)");
+        app.add_option("--scale", scale_name, "Uncertainty scale: identity, invert, square, cube, LOD")
+            ->capture_default_str();
+        app.get_formatter()->enable_footer_formatting(false);
+        app.footer("Base color schemes: plain, bw, Rainbow, RedBlue, BlueRed, AA, DNA, RNA, diff[N]\n"
+                   "Modifiers: switch, contrast, fade\n"
+                   "Examples: Rainbow+contrast+fade; AA+contrast+fade+fade+fade+fade");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
 
 	//---------- Load alignment and tree -----------//
         vector<sequence> S;
-	if (not args.count("file"))
-	    throw myexception()<<"No filename given!";
-
-        auto filename = args["file"].as<string>();
         if (filename == "-")
             S = character_properties::load_template_alignment(std::cin);
         else
@@ -1009,31 +943,32 @@ int main(int argc,char* argv[])
         int n_sequences = S.size();
 
 	std::shared_ptr<const alphabet> alph;
-	if (args.count("alphabet"))
-	    alph = get_alphabet(args["alphabet"].as<string>());
+	if (alphabet_name.has_value())
+	    alph = get_alphabet(*alphabet_name);
 	const auto* codons = alph ? dynamic_cast<const Codons*>(alph.get()) : nullptr;
-	if (args.count("properties") and not alph)
+	if (properties_file.has_value() and not alph)
 	    throw myexception()<<"Option '--alphabet' is required when '--properties' is supplied.";
 
 	auto tokens = character_properties::tokenize_alignment(S, alph.get());
         int L = tokens[0].size();
 
 	std::optional<character_properties::summary> character_property_summary;
-	if (args.count("properties"))
+	if (properties_file.has_value())
 	{
 	    character_property_summary =
-                character_properties::read_summary(args["properties"].as<string>());
+                character_properties::read_summary(*properties_file);
 	    character_properties::validate_for_alignment(*character_property_summary, S, tokens);
 	}
 
 	//---- Find mapping from colorfile to alignment sequence order -----//
-	owned_ptr<ColorScheme> color_scheme = get_color_scheme(args);
+	auto color_map = get_color_map(scheme.value_or(au_file ? "Rainbow+fade" : "plain"), gaps_different);
+        ColorScheme color_scheme(*color_map, get_scale(scale_name, minimum, maximum));
 
 	//---------- Read alignment uncertainty, if available --------------//
 	matrix<double> colors(L, n_sequences+1);
     
-	if (args.count("AU"))
-	    colors = read_alignment_certainty(S,L,args["AU"].as<string>());
+	if (au_file.has_value())
+	    colors = read_alignment_certainty(S,L,*au_file);
 	else
 	    for(int i=0;i<colors.size1();i++)
 		for(int j=0;j<colors.size2();j++)
@@ -1041,15 +976,15 @@ int main(int argc,char* argv[])
 
 	//-------------------- Get width -----------------------//
 	int width = 2*L;
-	if (args.count("width"))
-	    width = args["width"].as<int>();
-	if (args.count("width") and width <= 0)
+	if (requested_width.has_value())
+	    width = *requested_width;
+	if (requested_width.has_value() and width <= 0)
 	    throw myexception()<<"--width must be positive.";
 
 	//-------------------- Get start -----------------------//
 	int start=0;
-	if (args.count("start")) {
-	    start = args["start"].as<int>();
+	if (requested_start.has_value()) {
+	    start = *requested_start;
 	    if (start < 0)
 		throw myexception()<<"Parameter 'start' must be positive.";
 	    if (not (start < L))
@@ -1058,8 +993,8 @@ int main(int argc,char* argv[])
     
 	//--------------------- Get end ------------------------//
 	int end = L-1;
-	if (args.count("end")) {
-	    end =args["end"].as<int>();
+	if (requested_end.has_value()) {
+	    end =*requested_end;
 	    if (end < 0)
 		throw myexception()<<"Parameter 'end' must be positive.";
 	    if (not (end < L))
@@ -1074,7 +1009,7 @@ int main(int argc,char* argv[])
 <html lang=\"en\">\n\
  <head>\n\
   <meta charset=\"utf-8\" />\n\
-  <title>Alignment Uncertainty: "<<escape_html(args["file"].as<string>())<<"</title>\n\
+  <title>Alignment Uncertainty: "<<escape_html(filename)<<"</title>\n\
   <style type=\"text/css\">\n\
 \n\
 TABLE {\n\
@@ -1164,7 +1099,7 @@ BODY {\n\
 //  text-align: center;\n\
 }\n";
 
-	    if (character_property_summary or args.count("AU"))
+	    if (character_property_summary or au_file.has_value())
 		cout<<alignment_draw_stylesheet;
 
 	    cout<<"\
@@ -1175,22 +1110,22 @@ BODY {\n\
 	    if (character_property_summary)
 	    {
 		auto projection = character_properties::project_alignment(S, tokens, *alph);
-		auto viewer_payload = make_viewer_payload(*character_property_summary, S, projection, colors, args.count("AU"));
+		auto viewer_payload = make_viewer_payload(*character_property_summary, S, projection, colors, au_file.has_value());
 		cout<<"<script type=\"application/json\" id=\"alignment-viewer-data\">"
 		    <<serialize_json_for_html(viewer_payload)<<"</script>\n";
 	    }
 
 	    //-------------------- Print a legend ------------------------//
-	    if (args.count("legend")) {
+	    if (legend) {
 		cout<<"\n<table class=\"legend\"><tr>\n";
 
 		cout<<"<td>";
-		draw_legend(cout,*color_scheme,"");
+		draw_legend(cout,color_scheme,"");
 		cout<<"</td>\n";
 
-		if (args.count("gaps-different") and args["gaps-different"].as<string>() == "yes") {
+		if (gaps_different) {
 		    cout<<"<td>";
-		    draw_legend(cout,*color_scheme,"-");
+		    draw_legend(cout,color_scheme,"-");
 		    cout<<"</td>\n";
 		}
 
@@ -1210,7 +1145,7 @@ BODY {\n\
 	  
 		    for(int column=pos;column<pos+width and column <= end; column++) {
 			double P=colors(column, S.size());
-			string style = getstyle(P,"",*color_scheme);
+			string style = getstyle(P,"",color_scheme);
 			string label = column == 0 or (column + 1) % 10 == 0 ? convertToString(column + 1) : "";
 			if (columncolors)
 			    cout<<"<td class=\"alignment-ruler-cell\" style=\""<<style<<"\">";
@@ -1235,7 +1170,7 @@ BODY {\n\
 			                   + column*tokens.token_width, tokens.token_width);
 			bool show_symbol = show_letters and (show_gaps or token.alphabet_code != alphabet::gap);
 			bool color_parts = tokens.token_width > 1;
-			string style = color_parts ? "" : getstyle(colors(column,s), string(c), *color_scheme);
+			string style = color_parts ? "" : getstyle(colors(column,s), string(c), color_scheme);
 			cout<<"<td";
 			if (character_property_summary)
 			{
@@ -1254,7 +1189,7 @@ BODY {\n\
 				cout<<" data-amino-acid=\""<<escape_html(amino_acid)<<"\"";
 			    }
 			}
-			else if (color_parts or args.count("AU")) {
+			else if (color_parts or au_file.has_value()) {
                             cout<<" class=\"";
                             if (color_parts)
                                 cout<<"alignment-compound-cell ";
@@ -1265,7 +1200,7 @@ BODY {\n\
 			if (not style.empty())
 			    cout<<" style=\""<<style<<"\"";
 			cout<<">";
-			write_html_symbol(cout, c, show_symbol, color_parts, colors(column,s), *color_scheme);
+			write_html_symbol(cout, c, show_symbol, color_parts, colors(column,s), color_scheme);
 			cout<<"</td>";
 		    }
 		    cout<<"  </tr>\n";
@@ -1281,7 +1216,7 @@ BODY {\n\
 		    <<"<script>\n"<<alignment_draw_properties_javascript<<"\n</script>\n"
 		    <<"<script>\n"<<table_sort_javascript<<"\n</script>\n"
 		    <<"<script>\n"<<alignment_draw_viewer_javascript<<"\n</script>\n";
-	    if (character_property_summary or args.count("AU"))
+	    if (character_property_summary or au_file.has_value())
                 cout<<"<script>\n"<<alignment_draw_letters_javascript<<"\n</script>\n";
             cout<<"</body>\n</html>\n";
 	}

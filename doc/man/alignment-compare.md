@@ -75,7 +75,7 @@ Compare two samples and lay out scores on a target alignment containing only tip
 
 ```sh
 alignment-compare sample1.fastas sample2.fastas target.fasta > agreement.prob
-alignment-draw target.fasta --AU agreement.prob > agreement.html
+alignment-draw target.fasta agreement.prob > agreement.html
 ```
 
 Read the target from standard input and retain all sample alignments:

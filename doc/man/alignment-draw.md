@@ -60,7 +60,7 @@ active property or its tooltips. Compound symbols occupy one logical table
 cell. Codons show three nucleotide-colored spans, and their report rows use the
 configured genetic code for amino-acid translation.
 
-When **--AU** and **--properties** are supplied together, the viewer can fade
+When an AU file and **--properties** are supplied together, the viewer can fade
 the property color toward white according to posterior alignment certainty.
 The light-gray center of the diverging palette remains distinguishable from
 this white uncertainty limit.
@@ -68,12 +68,17 @@ Property values use ungapped sequence-character coordinates; AU values use
 alignment-grid coordinates. The AU file must therefore have exactly the same
 number of model-character columns as the displayed alignment.
 
+# ARGUMENTS
+
+_alignment_
+: Alignment file; use `-` to read standard input.
+
+_AU file_
+: Optional alignment annotation file.
+
 # GENERAL OPTIONS:
 **-h**, **--help**
 : produce help message
-
-**--file** _arg_
-: file with sequences and initial alignment
 
 **--legend**
 : Print a legend showing how color-scheme indicates uncertainty.
@@ -83,9 +88,6 @@ number of model-character columns as the displayed alignment.
 
 **--column-colors**
 : Color-code column ticks by column certainty
-
-**--AU** _arg_
-: file with alignment uncertainties
 
 **--properties** _arg_
 : JSON property summary produced by **character-properties summarize**
@@ -143,8 +145,8 @@ alignment-draw P1.initial.fasta --alphabet DNA \
 Add posterior alignment uncertainty to the same interactive page:
 
 ```
-alignment-draw P1.initial.fasta --alphabet DNA \
-  --properties P1.site-property-summary.json --AU P1.initial-AU.prob \
+alignment-draw P1.initial.fasta P1.initial-AU.prob --alphabet DNA \
+  --properties P1.site-property-summary.json \
   > P1.initial-AU.html
 ```
 

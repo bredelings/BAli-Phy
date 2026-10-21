@@ -492,7 +492,6 @@ class BPYSummarizePropertyTests(unittest.TestCase):
                 [
                     "alignment-draw",
                     alignment,
-                    "--AU",
                     uncertainty,
                     "--properties",
                     summary,
