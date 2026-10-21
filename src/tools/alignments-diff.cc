@@ -18,6 +18,7 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include <fstream>
+#include <optional>
 #include <string>
 #include <cmath>
 #include <vector>
@@ -33,10 +34,8 @@
 #include "alignment/index-matrix.hh"
 #include "distance-methods.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 using std::shared_ptr;
 using std::string;
@@ -63,66 +62,6 @@ using std::istream;
 using std::ifstream;
 using std::list;
 using namespace optimize;
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-	("alignment1", value<string>(),"First alignment")
-	("alignment2", value<string>(),"Second alignment");
-
-    options_description general("General options");
-    general.add_options()
-	("help,h", "produce help message");
-
-    options_description input("Input options");
-    input.add_options()
-	("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets");
-      
-    options_description output("Output options");
-    output.add_options()
-	("merge","Stack the two alignments into one alignment with duplicate names")
-	("dual","Write out the two aligned alignments separately")
-	("fill",value<string>()->default_value("gap"),"blank columns filled with: gap or unknown")
-	("differences-file,d",value<string>(),"Filename to store differences in AU format")
-	("blocksize",value<int>()->default_value(20),"Width of blocks of same color")
-	("classes",value<int>()->default_value(1),"Number of groups for non-matching characters")
-	;
-
-    options_description all("All options");
-    all.add(invisible).add(general).add(input).add(output);
-
-    // positional options
-    positional_options_description p;
-    p.add("alignment1", 1);
-    p.add("alignment2", 1);
-
-    variables_map args;
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
-    notify(args);
-
-    if (args.count("help")) {
-	cout<<"Align two alignments for comparison.\n\n";
-	cout<<"Usage: alignments-diff alignment-file1 alignment-file2 [OPTIONS]\n\n";
-	cout<<general<<"\n";
-	cout<<input<<"\n";
-	cout<<output<<"\n";
-	exit(0);
-    }
-
-    if (not args.count("alignment1"))
-	throw myexception()<<"No alignment file names given!";
-
-    if (not args.count("alignment2"))
-	throw myexception()<<"Only one alignment file names given!";
-
-    return args;
-}
 
 int score(const matrix<int>& M1, const matrix<int>& M2, int c1, int c2)
 {
@@ -231,23 +170,44 @@ int main(int argc,char* argv[])
 { 
     try {
 	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
-    
-	//----------- Load alignment and tree ---------//
-	string filename1 = args["alignment1"].as<string>();
-	string filename2 = args["alignment2"].as<string>();
+        CLI::App app{"Align two alignments for comparison.", "alignments-diff"};
+        app.usage("Usage: alignments-diff [OPTIONS] ALIGNMENT1 ALIGNMENT2");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string filename1, filename2, alphabet_name, fill_name = "gap";
+        std::optional<string> differences_file;
+        bool merge = false, dual = false;
+        int blocksize = 20, n_types = 1;
+        app.add_option("ALIGNMENT1", filename1, "First alignment")->required()->type_name("");
+        app.add_option("ALIGNMENT2", filename2, "Second alignment")->required()->type_name("");
+        app.add_option("--alphabet", alphabet_name, "Sequence alphabet (default: infer from input)")->type_name("ALPHABET");
+        app.add_flag("--merge", merge, "Stack the aligned alignments with a blank separator row");
+        app.add_flag("--dual", dual, "Write the two aligned alignments separately");
+        app.add_option("--fill", fill_name, "Fill inserted columns with gap or unknown")->capture_default_str();
+        app.add_option("-d,--differences-file", differences_file, "Write merged alignment differences in AU format")
+            ->type_name("FILE");
+        app.add_option("--blocksize", blocksize, "Width of blocks of the same color")->capture_default_str();
+        app.add_option("--classes", n_types, "Number of groups for non-matching characters")->capture_default_str();
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
 
-	alignment A1 = load_alignment(filename1, get_alphabet_name(args));
+	alignment A1 = load_alignment(filename1, alphabet_name);
 	check_names_unique(A1);
 
-	alignment A2 = load_alignment(filename2, get_alphabet_name(args));
+	alignment A2 = load_alignment(filename2, alphabet_name);
 	A2 = reorder_sequences(A2, sequence_names(A1));
 
 	matrix<int> M1 = M(A1);
 	matrix<int> M2 = M(A2);
 
 	int fill = alphabet::gap;
-	if (args.count("fill") and args["fill"].as<string>() == "unknown")
+	if (fill_name == "unknown")
 	    fill = alphabet::unknown;
 
 	vector<int> columns1;
@@ -261,7 +221,7 @@ int main(int argc,char* argv[])
 	matrix<int> M1b = M(A1b);
 	matrix<int> M2b = M(A2b);
 
-	if (args.count("merge")) 
+	if (merge) 
 	{
 	    alignment O = A1b;
 	    // add a blank row
@@ -280,7 +240,7 @@ int main(int argc,char* argv[])
 
 	    cout<<O<<endl;
 
-	    if (args.count("differences-file")) 
+	    if (differences_file) 
 	    {
 		const int N = A1b.n_sequences();
 
@@ -299,7 +259,7 @@ int main(int argc,char* argv[])
 		}
 
 		// write out header: sequence names
-		string filename = args["differences-file"].as<string>();
+		string filename = *differences_file;
 		std::ofstream d(filename);
 		for(int i=0;i<O.n_sequences();i++) {
 		    d<<O.seq(i).name;
@@ -323,7 +283,7 @@ int main(int argc,char* argv[])
 		}
 	    }
 	}
-	else if (args.count("dual")) {
+	else if (dual) {
 	    cout<<A1b<<endl<<endl;
 	    cout<<A2b<<endl<<endl;
 	}
@@ -331,8 +291,6 @@ int main(int argc,char* argv[])
 	{
 	    // Add 1 column for the ruler
 	    auto column_lookup2 = column_lookup(A2);
-	    const int blocksize = args["blocksize"].as<int>();
-	    const int n_types = args["classes"].as<int>();
 
 	    matrix<int> D(A1.length(), A1.n_sequences()+1, 0);
 	    for(int i=0;i<columns1.size();i++)

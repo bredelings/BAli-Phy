@@ -8,7 +8,7 @@
 
 # SYNOPSIS
 
-**alignments-diff** alignment-file1 alignment-file2 [OPTIONS]
+**alignments-diff** [OPTIONS] _alignment-file1_ _alignment-file2_
 
 # DESCRIPTION
 
