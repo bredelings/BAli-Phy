@@ -560,13 +560,13 @@ pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples,
         {
             // 4. Write leaf sequences
             for(int node=0;node<samples.leaf_names().size();node++)
-                write_alignment_row(std::cout, samples.leaf_names()[node], A, node);
+                write_alignment_row(std::cerr, samples.leaf_names()[node], A, node);
 
             // 5. Write named ancestors sequences corresponding to node and branch queries
             for(auto& [name,node]: internal_nodes)
-                write_alignment_row(std::cout, name, A, node);
+                write_alignment_row(std::cerr, name, A, node);
 
-            std::cout<<"\n\n";
+            std::cerr<<"\n\n";
         }
     }
 
