@@ -40,7 +40,7 @@ Construct alignments with internal sequences for labeled nodes in query tree.
 : Keep every kth eligible alignment/tree pair, starting with the first eligible pair in each chain.
 
 **-m** _arg_ (=500), **--max** _arg_ (=500)
-: Thin (alignment,tree) pairs down to this number of samples.
+: Thin alignment/tree pairs to at most this many samples across all input chains.
 
 Alignment record j is paired with tree record j times the tree stride before selection.
 Both input files must therefore start at corresponding samples. For already-filtered files,

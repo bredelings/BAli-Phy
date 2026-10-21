@@ -1,0 +1,3 @@
+# A shared cap must retain both chains while preserving alignment/tree pairs.
+# The selection test never halves its sample; retain this case while adaptive multi-chain thinning is used.
+template.fasta -A samples.fastas -T first.trees -A samples.fastas -T second.trees -n query.tree --subsample=1 --max=2 --alphabet DNA

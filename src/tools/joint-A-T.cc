@@ -22,6 +22,7 @@
 #include <fstream>
 #include <cmath>
 #include <cstdint>
+#include <numeric>
 
 #include "alignment/alignment.hh"
 #include "alignment/load.hh"
@@ -94,12 +95,46 @@ joint_A_T get_joint_A_T(const variables_map& args,bool internal)
     return joint_A_T(A,T,internal);
 }
 
-template<typename T>
-void remove_unordered(vector<T>& v, int i)
+namespace {
+
+// Allocate the final cap proportionally using largest remainders (input order breaks ties).
+// Floored quotas leave fewer than N slots; the remainder awards fill the cap without exceeding
+// any chain's size. Bin midpoints are distinct because each quota is at most its chain size.
+void thin_joint_samples(vector<vector<pair<string,string>>>& chains, std::size_t maximum)
 {
-    if (i < int(v.size())-1)
-        std::swap(v[i], v.back());
-    v.pop_back();
+    std::size_t total = 0;
+    for (const auto& chain: chains) total += chain.size();
+    if (total <= maximum) return;
+
+    vector<std::size_t> counts(chains.size()), remainders(chains.size()), order(chains.size());
+    std::size_t allotted = 0;
+    for (std::size_t i = 0; i < chains.size(); i++)
+    {
+        auto product = std::uint64_t(maximum) * chains[i].size();
+        counts[i] = product / total;
+        remainders[i] = product % total;
+        allotted += counts[i];
+    }
+    std::iota(order.begin(), order.end(), 0);
+    std::stable_sort(order.begin(), order.end(), [&](auto i, auto j) {
+        return remainders[i] > remainders[j];
+    });
+    for (std::size_t j = 0; j < maximum - allotted; j++) counts[order[j]]++;
+
+    for (std::size_t i = 0; i < chains.size(); i++)
+    {
+        auto& chain = chains[i];
+        auto count = counts[i];
+        for (std::size_t j = 0; j < count; j++)
+        {
+            auto source = ((2 * std::uint64_t(j) + 1) * chain.size()) / (2 * count);
+            // Source indices increase and are at least j, so moving in place cannot destroy a later sample.
+            if (source != j) chain[j] = std::move(chain[source]);
+        }
+        chain.resize(count);
+    }
+}
+
 }
 
 joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
@@ -146,8 +181,12 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
         }
     }
 
-    int factor = 1;
-    vector<pair<string,string>> A_T_strings;
+    std::uint64_t factor = 1;
+    vector<std::uint64_t> positions(N, 0);
+    vector<vector<pair<string,string>>> A_T_strings(N);
+    std::size_t retained = 0;
+    if (max and *max <= 0)
+        throw myexception()<<"Maximum sample count must be positive.";
 
     bool done = false;
     while(not done)
@@ -159,10 +198,16 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
             if (not readers[i]->done() and (not last or tree_positions[i] <= *last))
             {
                 done = false;
-                A_T_strings.push_back(readers[i]->read());
-                // Thin from each chain's first eligible pair. The adaptive sample cap adds
-                // its own stride; track every advance so the upper bound remains inclusive.
-                std::uint64_t stride = std::uint64_t(thin)*factor;
+                // Positions count pairs after the user's per-chain thinning. The shared grid
+                // remains anchored at zero when the adaptive factor changes between rounds.
+                if (positions[i] % factor == 0)
+                {
+                    A_T_strings[i].push_back(readers[i]->read());
+                    retained++;
+                }
+                positions[i]++;
+                // Advance whole pairs to preserve alignment/tree correspondence and bounds.
+                std::uint64_t stride = thin;
                 for(std::uint64_t j=0; j<stride and not readers[i]->done(); j++)
                 {
                     readers[i]->next();
@@ -172,20 +217,29 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
             }
         }
 
-        if (max and A_T_strings.size() > (*max)*2)
+        // Each chain can contribute one rounding remainder when halved. Allow N records
+        // of slack so singleton chains cannot cause repeated halvings without freeing space.
+        if (max and retained > 2 * std::size_t(*max) + N)
         {
-            int old_size = A_T_strings.size();
-            thin_by_half(A_T_strings);
+            auto old_size = retained;
+            retained = 0;
+            for (auto& chain: A_T_strings)
+            {
+                vector<pair<string,string>> thinned;
+                thinned.reserve((chain.size() + 1) / 2);
+                for (std::size_t j = 0; j < chain.size(); j += 2)
+                    thinned.push_back(std::move(chain[j]));
+                chain.swap(thinned);
+                retained += chain.size();
+            }
+            // Retained positions are precisely multiples of the new factor in each chain.
             factor *= 2;
             if (log_verbose)
-            {
-                std::cerr<<"Halving: Shrinking from "<<old_size<<" to "<<A_T_strings.size()<<" samples.\n";
-                std::cerr<<"  Increasing subsampling from "<<factor/2<<" to "<<factor<<".\n";
-            }
+                std::cerr<<"Halving: Shrinking from "<<old_size<<" to "<<retained<<" samples.\n";
         }
     }
     if (max)
-        thin_down_to(A_T_strings, *max);
+        thin_joint_samples(A_T_strings, *max);
 
     vector<alignment> A;
     vector<SequenceTree> T;
@@ -239,8 +293,9 @@ joint_A_T get_multiple_joint_A_T(const variables_map& args,bool internal)
             T.push_back(*tt);
         };
 
-    for(auto& at: A_T_strings)
-        f(at);
+    for(auto& chain: A_T_strings)
+        for(auto& at: chain)
+            f(at);
 
     joint_A_T J;
     J.load(A,T,internal);
