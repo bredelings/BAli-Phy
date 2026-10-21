@@ -98,7 +98,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // positional options
     positional_options_description p;
     p.add("alignment1", 1);
-    p.add("alignment2", 2);
+    p.add("alignment2", 1);
 
     variables_map args;
     store(command_line_parser(argc, argv).
@@ -342,9 +342,13 @@ int main(int argc,char* argv[])
 
 		if (c1 == -1) continue;
 
-		bool any_different = (c2 != 1);
+		bool any_different = (c2 == -1);
 		for(int k=0;k<A1.n_sequences();k++)
 		{
+		    // Ruler agreement includes gaps, even though only characters receive colors.
+		    if (c2 != -1 and M1(c1,k) != M2(c2,k))
+			any_different = true;
+
 		    // 0. Skip if there's not a letter at A1(c1,k)
 		    if (M1(c1,k) < 0) continue;
 		    
