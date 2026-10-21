@@ -56,6 +56,7 @@ libcommon_sources = [
   'tools/distance-report.cc',
   'tools/inverse.cc',
   'tools/joint-A-T.cc',
+  'tools/ancestor-queries.cc',
   'tools/distance-methods.cc',
   'tools/consensus-tree.cc']
 
