@@ -122,7 +122,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("labels",value<string>()->default_value("horizontal"),"Are the names horizontal or angled?")
 	("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
 	("layout",value<string>()->default_value("graph"),"Layout method: graph, equal-angle, equal-daylight")
-	("greedy","For equal-daylight layout: take as much daylight as possible?")
+	("greedy","For equal-daylight layout: redistribute all angular gaps equally at each node")
 	("tree-layout-initial","Start an energy layout with positions from the equal-angle layout - only for multifurcating trees")
 	("no-shade","For equal-daylight layout: reject rotations that shade other groups?")
 	("draw-clouds",value<string>(),"Draw wandering-ranges in MC trees as clouds.")
@@ -754,28 +754,49 @@ int descendant_tip_count(const Tree& T,int b)
 }
 
 
-void equal_angle_layout(tree_layout& L,int parent,double min_a,double max_a)
+// Allocate the same tip-count angular widths while alternating the smaller child's side
+// along unequal binary continuations. Only drawing order changes, not the tree's topology.
+void equal_angle_layout(tree_layout& L, int parent, double min_a, double max_a, bool smaller_last)
 {
     SequenceTree& T = L.T;
-
     if (T.directed_branch(parent).target().is_leaf_node()) return;
 
-    double a1 = min_a;
-    for(out_edges_iterator b = T.directed_branch(parent).branches_after();b;b++) 
+    vector<int> children;
+    for (out_edges_iterator b = T.directed_branch(parent).branches_after(); b; b++)
+        children.push_back(*b);
+    int continuing = -1;
+    if (children.size() == 2)
     {
-	double a2 = a1 + (max_a - min_a) * descendant_tip_count(T,*b)/descendant_tip_count(T,parent);
-	double a = (a1+a2)/2.0;
+        int n0 = descendant_tip_count(T, children[0]);
+        int n1 = descendant_tip_count(T, children[1]);
+        if (n0 != n1)
+        {
+            continuing = children[n0 > n1 ? 0 : 1];
+            if (n0 > n1) std::swap(children[0], children[1]);
+            if (smaller_last) std::swap(children[0], children[1]);
+        }
+    }
 
-	int n1 = (*b).source();
-	int n2 = (*b).target();
-	double length = (*b).length();
+    double a1 = min_a;
+    for (int b: children)
+    {
+        double a2 = a1 + (max_a-min_a)*descendant_tip_count(T,b)/descendant_tip_count(T,parent);
+        double a = (a1+a2)/2.0;
+        auto branch = T.directed_branch(b);
+        int n1 = branch.source();
+        int n2 = branch.target();
+        double length = branch.length();
+        L.node_positions[n2] = L.node_positions[n1];
+        L.node_positions[n2].x += length*cos(a);
+        L.node_positions[n2].y += length*sin(a);
 
-	L.node_positions[n2] = L.node_positions[n1];
-	L.node_positions[n2].x += length*cos(a);
-	L.node_positions[n2].y += length*sin(a);
-
-	equal_angle_layout(L,*b,a1,a2);
-	a1=a2;
+        // Switching sides reverses the larger child's turn by half the smaller angular width.
+        // Carry alternation down that child, so equal-tip caterpillar turns cancel in pairs.
+        // Other subtrees restart independently; ties/multifurcations retain iterator order.
+        // A unary node makes no ordering choice, so it passes the state through unchanged.
+        bool next_side = children.size() == 1 ? smaller_last : (b == continuing and not smaller_last);
+        equal_angle_layout(L, b, a1, a2, next_side);
+        a1 = a2;
     }
 }
 
@@ -885,7 +906,7 @@ tree_layout equal_angle_layout(SequenceTree MF,vector<double> node_radius)
 	L.node_positions[n2].y += length*sin(a);
 
 	// cerr<<"edge target = "<<n2<<"   a1 = "<<a1*180/M_PI<<" a = "<<a*360/(2*M_PI)<<" a2 = "<<a2*180/M_PI<<"   length = "<<length<<"  x = "<<    L.node_positions[n2].x<<" y = "<<L.node_positions[n2].x<<endl;
-	equal_angle_layout(L,*b,a1,a2);
+	equal_angle_layout(L,*b,a1,a2,false);
 	a1 = a2;
     }
     return L;
@@ -1303,11 +1324,20 @@ double equalize_daylight_greedy(tree_layout& L,int n)
     const Tree& T = L.T;
 
     // get outwards branches - which point to subtrees
-    vector<const_branchview> branches;
+    vector<int> branches;
     for(const_out_edges_iterator i = T.node(n).branches_out();i;i++) {
 	branches.push_back(*i);
     }
   
+
+    // The initializer can reorder children without changing topology iterator order. Sort by
+    // current direction, but retain the old first branch as the fixed reference. Coincident
+    // directions use branch index; zero-length attachments retain get_angle's convention.
+    int reference = branches.front();
+    std::sort(branches.begin(), branches.end(), [&](int a, int b) {
+        return std::pair(get_angle(L,a), a) < std::pair(get_angle(L,b), b);
+    });
+    std::rotate(branches.begin(), std::find(branches.begin(), branches.end(), reference), branches.end());
 
     //get the circular ranges for branch subtree
     vector<circular_range> angles;
@@ -1317,6 +1347,11 @@ double equalize_daylight_greedy(tree_layout& L,int n)
 	total_occlusion += angles.back().measure();
     }
 
+    // Pack rigid covering arcs in geometric cyclic order, leaving g=(2pi-sum(widths))/k
+    // between each pair. The final wrap gap is also g because widths+k*g=2pi. Initial arcs
+    // may overlap: summed widths describe space required after packing, not initial occupancy.
+    // Each nonzero attachment lies in its arc, so positive final gaps preserve cyclic order.
+    // Evaluate crossings only after the complete pivot update; intermediate arcs may overlap.
     if (total_occlusion < 2*M_PI)
     {
 	double daylight_per_subtree = (2*M_PI - total_occlusion)/branches.size();
@@ -1324,12 +1359,12 @@ double equalize_daylight_greedy(tree_layout& L,int n)
 	for(int b=1; b<branches.size(); b++) 
 	{
 	    double theta = circular_minus(angles[b].min(), angles[b-1].max());
-	    double delta = daylight_per_subtree - theta;
+	    double delta = std::remainder(daylight_per_subtree - theta, 2*M_PI);
 
 	    if (delta != 0) {
 		L.rotate_subtree(branches[b], delta);
-                // Use the shorter equivalent turn, as in the ordinary pivot update.
-                movement = std::max(movement, std::abs(std::remainder(delta, 2*M_PI)));
+                // The applied rotation is already the shorter equivalent turn.
+                movement = std::max(movement, std::abs(delta));
 		angles[b].shift(delta);
 	    }
 	}

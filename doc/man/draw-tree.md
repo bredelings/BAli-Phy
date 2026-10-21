@@ -67,13 +67,17 @@ and may overlap. Page fitting includes labels and leader lines.
 : Give node lengths evenly to neighboring branches and zero the node lengths.
 
 **--layout** _arg_ (=graph)
-: Layout method: graph, equal-angle, equal-daylight. Equal-daylight balances angular gaps between
+: Layout method: graph, equal-angle, equal-daylight. Equal-angle alternates smaller subtrees
+  between sides along unequal binary splits to reduce curling in unbalanced trees.
+  Equal-daylight starts from this arrangement and balances angular gaps between
   subtrees, including the space occupied by node bubbles. It stops when every accepted rotation
   in a sweep is smaller than 0.001 radians, or after 50 sweeps. Labels are placed afterward.
   The former `fr` placeholder is not implemented.
 
 **--greedy**
-: For equal-daylight layout: take as much daylight as possible?
+: For equal-daylight layout: redistribute angular gaps equally at each node, preserving
+  the cyclic order of its subtrees. Includes branches and node bubbles; skips nodes whose
+  summed angular widths fill the circle. Labels are placed afterward.
 
 **--tree-layout-initial**
 : Start an energy layout with positions from the equal-angle layout - only for multifurcating trees
