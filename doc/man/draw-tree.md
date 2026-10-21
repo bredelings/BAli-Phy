@@ -66,7 +66,9 @@ follow terminal branches and may overlap. Page fitting includes labels and leade
 : Give node lengths evenly to neighboring branches and zero the node lengths.
 
 **--layout** _arg_ (=graph)
-: Layout method: graph, equal-angle, equal-daylight. The former `fr` placeholder is not implemented.
+: Layout method: graph, equal-angle, equal-daylight. Equal-daylight balances angular gaps between
+  subtrees, including the space occupied by node bubbles. Labels are placed afterward.
+  The former `fr` placeholder is not implemented.
 
 **--greedy**
 : For equal-daylight layout: take as much daylight as possible?
@@ -75,7 +77,8 @@ follow terminal branches and may overlap. Page fitting includes labels and leade
 : Start an energy layout with positions from the equal-angle layout - only for multifurcating trees
 
 **--no-shade**
-: For equal-daylight layout: reject rotations that shade other groups?
+: For equal-daylight layout: reject rotations that leave subtrees overlapping in angle, including
+  their node bubbles.
 
 **--draw-clouds** _arg_
 : Draw wandering-ranges in MC trees as clouds.

@@ -1198,6 +1198,27 @@ circular_range get_angles(const tree_layout& L,int b,int n)
         R.extend_to_cover(A2);
     }
 
+    // Each target belongs to this component, including the first branch's target; the pivot
+    // does not. Accumulate circles after segments to preserve the existing arc-extension order.
+    // Tangents to a disk at distance d give half-width asin(r/d). A pivot inside the disk sees
+    // every direction; at d == r the disk occupies a semicircle.
+    for (const auto& branch: branches)
+    {
+        int target = branch.target();
+        double radius = L.node_radius[target];
+        if (radius == 0) continue;
+        const auto& p = L.node_positions[target];
+        double distance = std::hypot(p.x-c.x, p.y-c.y);
+        if (distance < radius)
+        {
+            R.set_full_circle();
+            break;
+        }
+        double angle = std::atan2(p.y-c.y, p.x-c.x);
+        double half_width = std::asin(std::min(1.0, radius/distance));
+        R.extend_to_cover(circular_range(angle-half_width, angle+half_width));
+    }
+
     return R;
 }
 
