@@ -19,10 +19,13 @@ Extract and name ancestral sequences according to node- and branch- queries.
 : produces help message
 
 **-V**, **--verbose**
-: \[=arg(=1)\]   Show more log messages on stderr.
+: Set diagnostic verbosity on stderr; omitted value means 1.
 
 
 # INPUT OPTIONS:
+**--alphabet** _name_
+: Sequence alphabet; inferred from input when omitted.
+
 **-A** _arg_, **--alignments** _arg_
 : File of alignment samples
 

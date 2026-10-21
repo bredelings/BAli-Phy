@@ -17,6 +17,7 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
+#include <CLI/CLI.hpp>
 #include <fstream>
 #include <string>
 #include <cmath>
@@ -25,7 +26,6 @@
 #include "util/log-level.hh"
 #include "util/rng.hh"
 #include "util/io.hh"
-#include "util/cmdline.hh"
 #include "alignment/alignment.hh"
 #include "alignment/index-matrix.hh"
 #include "tree-align/link.hh"
@@ -55,8 +55,6 @@ using std::map;
 using boost::dynamic_bitset;
 //using namespace optimize;
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 //TODO: add flag to affect gap_must_be_half.
 
@@ -143,83 +141,47 @@ void extract_and_name_ancestors(const joint_A_T& samples,
     }
 }
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // invisible options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-        ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
-        ;
-    // named options
-    options_description general("General options");
-    general.add_options()
-        ("help,h", "produces help message")
-        ("verbose,V",value<int>()->implicit_value(1),"Show more log messages on stderr.")
-        ;
-
-    options_description input("Input options");
-    input.add_options()
-        ("alignments,A", value<vector<string>>()->composing(),"File of alignment samples")
-        ("trees,T", value<vector<string>>()->composing(), "File of corresponding tree samples")
-        ("subsample,x",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
-        ;
-
-    options_description ancestors("Ancestor query options");
-    ancestors.add_options()
-        ("nodes,n",value<string>(),"Newick tree with labelled ancestors")
-        ("groups,g",value<string>(),"File with named groups")
-        ;
-
-    options_description all("All options");
-    all.add(invisible).add(general).add(input).add(ancestors);
-
-    options_description visible("All options");
-    visible.add(general).add(input).add(ancestors);
-
-    variables_map args;     
-    store(command_line_parser(argc, argv).options(all).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
-    notify(args);    
-
-    if (args.count("help")) {
-        cout<<"Extract and name ancestral sequences according to node- and branch- queries.\n\n";
-        cout<<"Usage: extract-ancestors [OPTIONS]\n";
-
-        cout<<visible<<"\n";
-        cout<<"Examples:\n\n";
-        cout<<" Add named ancestral sequences to alignments where they are present:\n";
-        cout<<"   % extract-ancestors -A C1.P1.fastas -T C1.trees --nodes query.tree --groups query.tree\n\n";
-        exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = args["verbose"].as<int>();
-
-    if (not args.count("alignments"))
-        throw myexception()<<"No alignments given! (Use -A alignments_file)";
-
-    if (not args.count("trees"))
-        throw myexception()<<"No trees given! (Use -T trees_file)";
-
-    return args;
-}
-
 int main(int argc,char* argv[])
 {
     myrand_init();
 
     try {
-        variables_map args = parse_cmd_line(argc,argv);
-        //Arguments args;
-        //args.read(argc,argv);
-        //args.print(cerr);
+        CLI::App app{"Extract named ancestral sequences from sampled alignments and trees.", "extract-ancestors"};
+        app.usage("Usage: extract-ancestors [OPTIONS]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        vector<string> alignment_files, tree_files;
+        string alphabet_name;
+        optional<string> nodes_file, groups_file;
+        unsigned tree_stride = 10;
+        app.add_option("-A,--alignments", alignment_files, "File of alignment samples; repeat for each chain")
+            ->type_name("FILE")->type_size(1)->expected(1)->allow_extra_args(false)->take_all()->required();
+        app.add_option("-T,--trees", tree_files, "Corresponding tree samples; repeat in alignment-file order")
+            ->type_name("FILE")->type_size(1)->expected(1)->allow_extra_args(false)->take_all()->required();
+        app.add_option("--alphabet", alphabet_name, "Sequence alphabet (default: infer from input)")->type_name("ALPHABET");
+        app.add_option("-x,--subsample", tree_stride, "Tree stride used to match alignment records (1 for paired files)")
+            ->capture_default_str();
+        app.add_option("-n,--nodes", nodes_file, "Newick tree with labelled ancestors")->type_name("FILE");
+        app.add_option("-g,--groups", groups_file, "File with named groups")->type_name("FILE");
+        auto* verbosity = app.add_option("-V,--verbose", log_verbose, "Diagnostic verbosity (1 if no value is given)")
+            ->type_name("LEVEL")->expected(0, 1);
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        // CLI11 represents a value-less optional argument as an empty result; -V means level 1.
+        if (verbosity->count() and verbosity->results().front().empty())
+            log_verbose = 1;
 
         // 1. Load alignment and tree samples
         if (log_verbose) cerr<<"extract-ancestors: Loading alignments and trees...\n";
         joint_A_T samples = get_multiple_joint_A_T(
-            args["alignments"].as<vector<string>>(), args["trees"].as<vector<string>>(),
-            get_alphabet_name(args), true, args["subsample"].as<unsigned>(), 0, {}, 1, {});
+            alignment_files, tree_files,
+            alphabet_name, true, tree_stride, 0, {}, 1, {});
 
         if (samples.size() == 0)
             throw myexception()<<"No (A,T) read in!";
@@ -227,8 +189,8 @@ int main(int argc,char* argv[])
             if (log_verbose) cerr<<"read "<<samples.size()<<" (A,T) pairs.\n\n";
 
         // 2. Load queries to find ancestor nodes on the tree
-        auto node_queries = get_node_queries(get_arg<string>(args, "nodes"), samples.leaf_names());
-        auto branch_queries = get_branch_queries(get_arg<string>(args, "groups"), samples.leaf_names());
+        auto node_queries = get_node_queries(nodes_file, samples.leaf_names());
+        auto branch_queries = get_branch_queries(groups_file, samples.leaf_names());
         if (not node_queries and not branch_queries)
             std::cerr<<"WARNING: no ancestors defined!\n";
         
