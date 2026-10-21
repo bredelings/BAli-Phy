@@ -49,7 +49,6 @@ using std::ifstream;
 using namespace colors;
 
 // some scale functions
-double identity(double x) {return x;}
 double invert(double x) {return 1.0-x;}
 double square(double x) {return x*x;}
 double cube(double x) {return x*x*x;}
@@ -218,25 +217,6 @@ public:
 	:n_blocks(i),start(s),end(e),gaps_different(g)
 	{ }
 };
-
-RGB AA_color_old(char aa) {
-
-    if (strchr("GPST",aa))
-	return orange;
-    else if (strchr("HKR",aa))
-	return red;
-    else if (strchr("FWY",aa))
-	return blue;
-    else if (strchr("ILMVJ",aa))
-	return green;
-    else if (strchr("ACDENQZB",aa))
-	return yellow;
-    else if (strchr("-*+X ",aa))
-	return grey;
-  
-    throw myexception()<<"Letter '"<<aa<<"' does not appear to be an amino acid";
-}
-
 
 RGB AA_color(char aa)
 {
@@ -460,18 +440,6 @@ string getstyle(double d,const string& s,const ColorScheme& color_scheme)
     return style;
 }
 
-string latex_rgb(const vector<int>& RGB) {
-    string color = "{rgb}{";
-
-    color += convertToString(double(RGB[0])/256.0) + ",";
-    color += convertToString(double(RGB[1])/256.0) + ",";
-    color += convertToString(double(RGB[2])/256.0) + "}";
-
-    return string("c2");
-    return color;
-}
-
-
 matrix<double> read_alignment_certainty(const vector<sequence>& S, int alignment_length, const string& filename)
 {
     checked_ifstream colorfile(filename,"alignment annotation file");
@@ -561,17 +529,6 @@ bool match(vector<string>& sstack,const string& s,string& arg) {
 	sstack.pop_back();
     return success;
 }
-
-/// Take something off the string stack, if its present
-bool match2(vector<string>& sstack,const string& s) {
-    bool m = false;
-    if (sstack.size() and sstack.back() == s) {
-	m = true;
-	sstack.pop_back();
-    }
-    return m;
-}
-
 
 std::function<double(double)> get_scale(const variables_map& args)
 {
@@ -745,7 +702,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("width",value<int>(),"The number of columns per line")
 	("start",value<int>(),"The first column to plot")
 	("end",value<int>(),"The last column to plot")
-	("format",value<string>()->default_value("HTML"),"produce a plot in this format")
 	("min",value<double>(),"Minimum value of scale function")
 	("max",value<double>(),"Maximum value of scale function")
 	("color-scheme",value<string>(),"Include a length of how certainties map to colors")
@@ -758,7 +714,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // positional options
     positional_options_description p;
     p.add("file", 1);
-    p.add("AU", 2);
+    p.add("AU", 1);
   
     variables_map args;     
     store(command_line_parser(argc, argv).
@@ -1058,8 +1014,6 @@ int main(int argc,char* argv[])
 	const auto* codons = alph ? dynamic_cast<const Codons*>(alph.get()) : nullptr;
 	if (args.count("properties") and not alph)
 	    throw myexception()<<"Option '--alphabet' is required when '--properties' is supplied.";
-	if (args.count("properties") and args["format"].as<string>() != "HTML")
-	    throw myexception()<<"Character properties are currently supported only for HTML output.";
 
 	auto tokens = character_properties::tokenize_alignment(S, alph.get());
         int L = tokens[0].size();
@@ -1089,6 +1043,8 @@ int main(int argc,char* argv[])
 	int width = 2*L;
 	if (args.count("width"))
 	    width = args["width"].as<int>();
+	if (args.count("width") and width <= 0)
+	    throw myexception()<<"--width must be positive.";
 
 	//-------------------- Get start -----------------------//
 	int start=0;
@@ -1112,40 +1068,7 @@ int main(int argc,char* argv[])
 		throw myexception()<<"Parameter 'end' must be >= than parameter 'start'"<<L<<").";
 	}
 
-	if (args["format"].as<string>() == "latex") {
-	    std::cout<<"\\documentclass[10pt]{article}\n\
-\\usepackage{colortbl}\n\
-\\begin{document}\n\
-\\definecolor{c2}{rgb}{1.0,0.5,0.0}\n";
-
-	    /*-------------------- Print the alignment ------------------------*/
-	    int pos=start;
-	    while(pos<=end) {
-		cout<<"\\begin{tabular}{";
-		for(int i=0;i<width;i++)
-		    cout<<"c";
-		cout<<"}\n";
-	
-		for(int i=0;i<S.size();i++) {
-		    int s = i;
-
-		    for(int column=pos;column<pos+width and column <= end; column++) {
-			std::string_view c(static_cast<const string&>(S[s]).data()
-			                   + column*tokens.token_width, tokens.token_width);
-			string latexcolor = "";//latex_get_bgcolor(colors(column,s),sscale,color);
-			if (column != pos)
-			    cout<<"& ";
-			cout<<"\\multicolumn{1}{>{\\columncolor{"<<latexcolor<<"}}c}{"<<c<<"}"<<"\n";
-		    }
-		    cout<<"\\\\\n";
-		}
-		cout<<"\\end{tabular}\n";
-		pos += width;
-	    }
-      
-	}
-	else {
-
+	{
 	    cout<<"\
 <!doctype html>\n\
 <html lang=\"en\">\n\

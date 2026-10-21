@@ -115,9 +115,6 @@ number of model-character columns as the displayed alignment.
 **--end** _arg_
 : The last column to plot
 
-**--format** _arg_ (=HTML)
-: produce a plot in this format
-
 **--min** _arg_
 : Minimum value of scale function
 
