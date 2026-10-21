@@ -1,0 +1,3 @@
+# Profiles must compare ambiguity meanings across samples, not their local integer codes.
+# Selection tests use exact letters; this case is needed while profiles encode ambiguous observations.
+template.fasta -A samples.fastas -T samples.trees -n query.tree --subsample=1 --alphabet DNA

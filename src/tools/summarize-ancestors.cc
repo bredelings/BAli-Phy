@@ -288,22 +288,27 @@ struct profile
 {
     const alignment& template_A;
     vector<vector<int>> observations; // observations[site][i]
+    ambiguity_database ambiguities;
     int count = 0;
 
     void count_alignment(const alignment& A, int row, const vector<pair<int,int>>& corresponding_columns);
     int max_for_position(int i, bool gap_must_be_half=true) const;
-    profile(const alignment& A): template_A(A), observations(A.length()) {}
+    profile(const alignment& A): template_A(A), observations(A.length()),
+        ambiguities(A.get_alphabet().n_letters()) {}
 };
 
 
-int argmax(const map<int,int>& counts)
+// Choose the most frequent observation; ambiguity ties use state sets, not local code assignment.
+int argmax(const map<int,int>& counts, const ambiguity_database& ambiguities)
 {
     auto max_x = counts.begin()->first;
     auto max_count = counts.begin()->second;
 
     for(auto& [x,count]: counts)
     {
-        if (count > max_count)
+        if (count > max_count or
+            (count == max_count and alphabet::is_ambiguity(x) and alphabet::is_ambiguity(max_x) and
+             ambiguities.mask(x) < ambiguities.mask(max_x)))
         {
             max_x = x;
             max_count = count;
@@ -345,15 +350,19 @@ int profile::max_for_position(int pos, bool gap_must_be_half) const
         return alphabet::gap;
 
     // 3. Otherwise return the most frequent letter.
-    return argmax(counts);
+    return argmax(counts, ambiguities);
 }
 
+// Translate alignment-local ambiguities into this profile's database before counting observations.
 void profile::count_alignment(const alignment& A, int row, const vector<pair<int,int>>& corresponding_columns)
 {
     count++;
     for(auto [template_c, sample_c]: corresponding_columns)
     {
-        observations[template_c].push_back( A(sample_c,row) );
+        int code = A(sample_c,row);
+        if (alphabet::is_ambiguity(code))
+            code = ambiguities.encode_mask(A.get_ambiguities().mask(code));
+        observations[template_c].push_back(code);
     }
 }
 
@@ -744,7 +753,7 @@ int main(int argc,char* argv[])
 
                 std::cout<<">"<<name<<"\n";
                 for(int col=0; col<template_A.length(); col++)
-                    std::cout<<a.lookup(node_profiles[node].max_for_position(col));
+                    std::cout<<node_profiles[node].ambiguities.decode(a, node_profiles[node].max_for_position(col)).first;
                 std::cout<<"\n";
             }
         }
@@ -761,7 +770,7 @@ int main(int argc,char* argv[])
 
                 std::cout<<">"<<name<<"\n";
                 for(int col=0; col<template_A.length(); col++)
-                    std::cout<<a.lookup(branch_profiles[i].max_for_position(col));
+                    std::cout<<branch_profiles[i].ambiguities.decode(a, branch_profiles[i].max_for_position(col)).first;
                 std::cout<<"\n";
             }
         }
