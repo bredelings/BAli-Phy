@@ -1,156 +1,186 @@
 % alignment-draw(1)
 % Benjamin Redelings
-% Feb 2018
+% October 2026
 
 # NAME
 
-**alignment-draw** - Draw an alignment and interactively inspect character properties.
+**alignment-draw** - Display an alignment in HTML with optional uncertainty and character properties.
 
 # SYNOPSIS
 
-**alignment-draw** _alignment_ [_AU file_] [OPTIONS]
+**alignment-draw** \[OPTIONS\] _ALIGNMENT_ \[_ANNOTATIONS_\]
 
 # DESCRIPTION
 
-Draw an alignment to HTML, optionally coloring cells by alignment uncertainty
-(AU). With **--properties**, the output is a self-contained interactive page:
-it embeds the scientific data, styles, and JavaScript and does not require a
-network connection.
+Draw an alignment as an HTML page for viewing in a web browser. Color letters by nucleotide or
+amino-acid identity, or use alignment annotations to show which residue placements are uncertain
+or differ from another alignment. A residue is a sequence unit, such as a nucleotide or amino acid.
 
-The property selector supports linear, log10, and empirical-rank color scales.
-Linear and log10 scales can use the full range, a robust 2--98% range, or custom
-bounds. A property initially uses log10 only when it has enough nonnegative,
-distinct observations and logarithmic normalization uses the color range
-materially more evenly; otherwise it uses linear. **posSelection** remains
-linear because it is a probability. Names ending in **-posSelection**, such as
-**foreground-posSelection**, receive the same treatment. Positive-selection
-probabilities initially use the full probability domain from 0 to 1; choosing
-Robust or Custom overrides those bounds. Reset restores the initial defaults.
+With **--properties**, inspect posterior character properties alongside the alignment: color cells
+by a selected property, examine estimates and their uncertainty, and locate columns with high
+values. Property summaries describe individual sequence characters, whereas alignment annotations
+describe their placement in this particular alignment.
 
-Zero is valid on a log10 property scale. It is clipped to the positive lower
-bound, while its tooltip continues to report zero and the legend identifies
-that the lower color includes zero. Negative values cannot use log10.
+The HTML is written to standard output. Redirect it to a file and open that file in a browser.
+The page includes its data, styles, and scripts and can be used without a network connection.
+Diagnostics go to standard error.
 
-The default blue-to-light-gray-to-red diverging palette maps 0 to blue, 0.5 to
-gray, and 1 to red for positive-selection probabilities. For other properties
-it maps the median to gray and normalizes the lower and upper halves
-independently. The palette selector also provides Viridis and a blue-to-red
-sequential palette. Palette and scale choices are retained separately for each
-property.
+# INPUT
 
-The legend and cell colors update together. Pointing at or focusing a non-gap
-cell shows its posterior mean, posterior standard deviation, median, scale, and
-palette. The page displays the shared number of retained samples once rather
-than repeating it for every character.
+ALIGNMENT is a required positional filename containing one alignment. Use `-` to read standard
+input.
 
-The ranked panel selects one representative observed character per nonempty
-template-alignment column. Generic properties can be ordered by column, mean,
-or posterior standard deviation. Positive-selection properties can be filtered
-at probabilities 0.5, 0.95, and 0.99 and include the matching **dNdS** summary
-when available. Selecting a row highlights the complete template column and
-opens the representative character's tooltip.
+ANNOTATIONS is an optional positional filename containing an alignment annotation table, such as
+one produced by **alignment-gild**, **alignment-compare**, or **alignments-diff**. The format is also
+called AU, for alignment uncertainty. The header lists sequence names, separated by spaces. Each
+subsequent row describes one alignment column, with one value per sequence in header order and a
+final, unlabelled value for the whole column. A `-` denotes a missing value.
 
-The stored identity of a property value is the sequence name and zero-based
-ungapped character index. The displayed one-based column is only a way to
-locate related characters in the chosen template alignment; it does not imply
-that the column has a fixed identity across sampled alignments.
+Sequence names must match the displayed alignment, though their order may differ. The table must
+have exactly one row per model-character column: for a codon alphabet, one codon is one column.
+Probability annotations express certainty, with larger values indicating better-supported
+placements. Comparison categories from **alignments-diff** instead need **--scale identity** and
+a **diff[N]** color scheme.
 
-The **Original colors** checkbox restores alphabet colors without removing the
-active property or its tooltips. Compound symbols occupy one logical table
-cell. Codons show three nucleotide-colored spans, and their report rows use the
-configured genetic code for amino-acid translation.
+**--properties** reads a JSON summary produced by **character-properties summarize** and requires
+**--alphabet**. Property values are associated with a sequence name and ungapped character
+position. Displayed column numbers locate those characters in the chosen alignment; they do not
+identify a column shared by all sampled alignments.
 
-When an AU file and **--properties** are supplied together, the viewer can fade
-the property color toward white according to posterior alignment certainty.
-The light-gray center of the diverging palette remains distinguishable from
-this white uncertainty limit.
-Property values use ungapped sequence-character coordinates; AU values use
-alignment-grid coordinates. The AU file must therefore have exactly the same
-number of model-character columns as the displayed alignment.
+# COLOR SCHEMES
 
-# ARGUMENTS
+**--color-scheme** takes a base scheme followed by optional modifiers joined with `+`, for example
+`DNA+contrast+fade`. The default is `plain` without annotations and `Rainbow+fade` with annotations.
 
-_alignment_
-: Alignment file; use `-` to read standard input.
+Base schemes are:
 
-_AU file_
-: Optional alignment annotation file.
+- `plain`: black letters on white.
+- `DNA`, `RNA`, `AA`: colors based on nucleotide or amino-acid identity.
+- `bw`: certainty shown in grayscale.
+- `Rainbow`, `RedBlue`, `BlueRed`: certainty shown by a progression of colors.
+- `diff[N]`: white for matching residues and N colors for difference categories from
+  **alignments-diff**. Use the same N as that program's **--classes** value.
 
-# GENERAL OPTIONS:
+Modifiers apply in the order written: `switch` exchanges foreground and background colors;
+`contrast` selects black or white letters for contrast with the background; `fade` fades colors
+toward white as certainty decreases. Modifiers can be repeated.
+
+**--scale** transforms annotation values before applying the color scheme. `identity` passes
+values through unchanged, including comparison categories. The other choices transform a
+probability p, clip it to the chosen bounds, and rescale that interval to 0–1:
+
+- `invert`: 1 − p; default bounds 0 and 1.
+- `square`: p²; default bounds 0 and 1.
+- `cube`: p³; default bounds 0 and 1.
+- `LOD`: log10(p / (1 − p)); default bounds −0.5 and 2. This is the default scale.
+
+**--min** and **--max** override bounds in these transformed coordinates. They do not affect
+`identity`. These command-line scales apply to alignment annotations; property color scales
+are selected separately in the browser.
+
+# PROPERTY VIEWER
+
+Choose a property to color the alignment by its posterior estimates. Point at or focus a non-gap
+cell to see its mean, standard deviation, and median. The legend follows the active scale and
+palette. The page also shows the number of retained samples.
+
+Property scales include linear, log10, and empirical rank. Linear and log10 scales offer the full
+range, a robust 2–98% range, or custom bounds. Scale and palette selections are retained separately
+for each property; Reset restores the initial settings.
+
+The default diverging palette runs from blue through light gray to red. For positive-selection
+probabilities, it initially maps 0, 0.5, and 1 to those colors on a linear scale. For other
+properties, gray marks the median. Viridis and a blue-to-red sequential palette are also available.
+
+The ranked panel selects one representative observed character per nonempty alignment column.
+Order generic properties by column, mean, or standard deviation. Positive-selection properties
+can be filtered at probabilities 0.5, 0.95, and 0.99, with the corresponding **dNdS** summary when
+available. Selecting a row highlights its alignment column and opens the character's tooltip.
+
+**Original colors** restores alphabet colors while keeping property tooltips available. Codons
+occupy one logical cell with three nucleotide-colored parts; their report rows use the selected
+genetic code for amino-acid translation. When annotations and properties are both supplied, the
+viewer can fade property colors toward white according to alignment certainty.
+
+# OPTIONS
+
 **-h**, **--help**
-: produce help message
+: Print help and exit.
+
+**--alphabet** _ALPHABET_
+: Alphabet used to interpret model characters, for example `DNA`, `Amino-Acids`, or
+  `Codons(DNA,standard)`. Required with **--properties**.
+
+**--properties** _FILE_
+: JSON posterior character-property summary from **character-properties summarize**.
+
+**--color-scheme** _SCHEME_
+: Base color scheme and optional modifiers. Default: `Rainbow+fade` with annotations,
+  `plain` otherwise. See COLOR SCHEMES.
+
+**--scale** _SCALE_
+: Annotation transform: `identity`, `invert`, `square`, `cube`, or `LOD`. Default: `LOD`.
+
+**--min** _VALUE_, **--max** _VALUE_
+: Lower and upper bounds in transformed annotation coordinates. Defaults depend on **--scale**.
 
 **--legend**
-: Print a legend showing how color-scheme indicates uncertainty.
+: Show how the color scheme represents alignment certainty.
 
 **--show-ruler**
-: Print a ruler to show column numbers
+: Show column numbers above the alignment.
 
 **--column-colors**
-: Color-code column ticks by column certainty
+: Color ruler ticks using the whole-column annotation values.
 
-**--properties** _arg_
-: JSON property summary produced by **character-properties summarize**
+**--show-gaps** _BOOL_
+: Show gap symbols. Default: `yes`; use `no` to hide them.
 
-**--alphabet** _arg_
-: alphabet used to tokenize and color model characters; required with
-  **--properties**
+**--show-letters** _BOOL_
+: Show sequence letters. Default: `yes`; use `no` to show colors without letters.
 
-**--show-gaps** _arg_ (=yes)
-: Show gaps
+**--show-names** _BOOL_
+: Show sequence names. Default: `yes`.
 
-**--show-letters** _arg_ (=yes)
-: Show letters
+**--gaps-different** _BOOL_
+: Use gray for gaps in schemes that distinguish them. Default: `yes`.
 
-**--show-names** _arg_ (=yes)
-: Show names
+**--width** _N_
+: Model-character columns per line. Default: twice the alignment length, displaying the
+  alignment on one line.
 
-**--gaps-different** _arg_ (=yes)
-: Color gaps in grey.
+**--start** _N_, **--end** _N_
+: First and last columns to display, inclusive and zero-based. Default: the entire alignment.
+  Displayed ruler labels are one-based.
 
-**--width** _arg_
-: The number of columns per line
+# EXAMPLES
 
-**--start** _arg_
-: The first column to plot
+Create an HTML alignment with nucleotide colors:
 
-**--end** _arg_
-: The last column to plot
+    alignment-draw alignment.fasta --color-scheme DNA+contrast --show-ruler > alignment.html
 
-**--min** _arg_
-: Minimum value of scale function
+Color an alignment using certainty annotations from **alignment-gild**:
 
-**--max** _arg_
-: Maximum value of scale function
+    alignment-draw alignment.fasta alignment-AU.prob --legend --show-ruler > uncertainty.html
 
-**--color-scheme** _arg_
-: Include a length of how certainties map to colors
+Create a property summary and view it alongside a DNA alignment:
 
-**--scale** _arg_ (=LOD)
-: scale for the uncertainties
+    character-properties summarize run1/C1.P1.site-property-samples.jsonl \
+      run2/C1.P1.site-property-samples.jsonl --skip 1000 > properties.json
+    alignment-draw alignment.fasta --alphabet DNA \
+      --properties properties.json > properties.html
 
+Combine property colors with alignment certainty:
 
-# EXAMPLES:
+    alignment-draw alignment.fasta alignment-AU.prob --alphabet DNA \
+      --properties properties.json > properties-AU.html
 
-Create a property summary and an interactive DNA alignment:
+# SEE ALSO
 
-```
-character-properties summarize run-1/C1.P1.site-property-samples.jsonl run-2/C1.P1.site-property-samples.jsonl \
-  --skip=1000 > P1.site-property-summary.json
+**alignment-gild**(1), **alignment-compare**(1), **alignments-diff**(1), **character-properties**(1)
 
-alignment-draw P1.initial.fasta --alphabet DNA \
-  --properties P1.site-property-summary.json > P1.initial.html
-```
+# REPORTING BUGS
 
-Add posterior alignment uncertainty to the same interactive page:
-
-```
-alignment-draw P1.initial.fasta P1.initial-AU.prob --alphabet DNA \
-  --properties P1.site-property-summary.json \
-  > P1.initial-AU.html
-```
-
-# REPORTING BUGS:
- BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
+BAli-Phy online help: <https://www.bali-phy.org/docs.php>.
 
 Please send bug reports to <bali-phy-users@googlegroups.com>.
