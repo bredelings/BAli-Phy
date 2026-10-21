@@ -17,6 +17,7 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
+#include <CLI/CLI.hpp>
 #include <fstream>
 #include <string>
 #include <cmath>
@@ -25,7 +26,6 @@
 #include "util/log-level.hh"
 #include "util/rng.hh"
 #include "util/io.hh"
-#include "util/cmdline.hh"
 #include "alignment/alignment.hh"
 #include "alignment/index-matrix.hh"
 #include "tree-align/link.hh"
@@ -56,8 +56,6 @@ using std::map;
 using boost::dynamic_bitset;
 //using namespace optimize;
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 //TODO: add flag to affect gap_must_be_half.
 
@@ -296,107 +294,70 @@ pair<vector<profile>,vector<profile>> extract_sequence(const joint_A_T& samples,
     return {node_profiles,group_profiles};
 }
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // invisible options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-        ("template-alignment,a", value<string>(), "File with template alignment")
-        ;
-
-    // named options
-    options_description general("General options");
-    general.add_options()
-        ("help,h", "produces help message")
-        ("verbose,V",value<int>()->implicit_value(1),"Show more log messages on stderr.")
-        ;
-
-    options_description input("Input options");
-    input.add_options()
-        ("alignments,A", value<vector<string>>()->composing(),"File of alignment samples")
-        ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
-        ("trees,T", value<vector<string>>()->composing(), "File of corresponding tree samples")
-        ("subsample,x",value<unsigned>()->default_value(10),"Tree stride used to match alignment records (1 for already-paired files)")
-        ("skip",value<std::int64_t>()->default_value(0),"First original tree-record position to retain (zero-based, inclusive)")
-        ("until",value<std::int64_t>(),"Last original tree-record position to retain (zero-based, inclusive)")
-        ("thin",value<int>()->default_value(1),"Keep every kth eligible alignment/tree pair, independently per input chain")
-        ("max,m",value<unsigned>()->default_value(500),"Thin (alignment,tree) pairs down to this number of samples.")
-        ;
-
-    options_description ancestors("Ancestor query options");
-    ancestors.add_options()
-        ("nodes,n",value<string>(),"Newick tree with labelled ancestors")
-        ("groups,g",value<string>(),"File with named groups")
-        ("nodes-min",value<double>()->default_value(0.34,"0.34"),"Minimum fraction to include a node.")
-        ("groups-min",value<double>()->default_value(0.34,"0.34"),"Minimum fraction to include a group.")
-        ;
-
-    options_description all("All options");
-    all.add(invisible).add(general).add(input).add(ancestors);
-
-    options_description visible("All options");
-    visible.add(general).add(input).add(ancestors);
-
-    // positional options
-    positional_options_description p;
-    p.add("template-alignment", 1);
-
-    variables_map args;     
-    store(command_line_parser(argc, argv).options(all).positional(p).run(), args);
-    notify(args);    
-
-    if (args.count("help")) {
-        cout<<"Construct alignments with internal sequences for labeled nodes in query tree.\n\n";
-        cout<<"Usage: summarize-ancestors <alignment> -A <fastas1> -T <trees1> [OPTIONS]\n";
-
-        cout<<visible<<"\n";
-        cout<<"Examples:\n\n";
-        cout<<" Add ancestral sequences to summary alignment:\n";
-        cout<<"   % summarize-ancestors summary.fasta -A C1.P1.fastas -T C1.trees --nodes query.tree --groups query.tree\n\n";
-        exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = args["verbose"].as<int>();
-
-    if (not args.count("template-alignment"))
-        throw myexception()<<"No template alignment given!";
-
-    if (not args.count("alignments"))
-        throw myexception()<<"No alignment samples given! (Use -A alignments_file)";
-
-    if (not args.count("trees"))
-        throw myexception()<<"No tree sampls given! (Use -T trees_file)";
-
-    if (args["subsample"].as<unsigned>() == 0 or args["thin"].as<int>() <= 0)
-        throw myexception()<<"--subsample and --thin must be positive.";
-    if (args["skip"].as<std::int64_t>() < 0 or
-        (args.count("until") and args["until"].as<std::int64_t>() < 0))
-        throw myexception()<<"--skip and --until must be non-negative.";
-    if (args.count("until") and args["until"].as<std::int64_t>() < args["skip"].as<std::int64_t>())
-        throw myexception()<<"--until must be at least --skip.";
-
-    return args;
-}
-
 int main(int argc,char* argv[])
 {
     myrand_init();
 
     try {
-        variables_map args = parse_cmd_line(argc,argv);
-        //Arguments args;
-        //args.read(argc,argv);
-        //args.print(cerr);
+        CLI::App app{"Summarize ancestral sequences on a template alignment.", "summarize-ancestors"};
+        app.usage("Usage: summarize-ancestors [OPTIONS] TEMPLATE");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        vector<string> alignment_files, tree_files;
+        string alphabet_name, template_file;
+        optional<string> nodes_file, groups_file;
+        unsigned tree_stride = 10;
+        std::int64_t first = 0;
+        optional<std::int64_t> last;
+        int thin = 1;
+        unsigned maximum = 500;
+        double nodes_min = 0.34, groups_min = 0.34;
+        app.add_option("TEMPLATE", template_file, "Template alignment")->required()->type_name("");
+        app.add_option("-A,--alignments", alignment_files, "File of alignment samples; repeat for each chain")
+            ->type_name("FILE")->type_size(1)->expected(1)->allow_extra_args(false)->take_all()->required();
+        app.add_option("-T,--trees", tree_files, "Corresponding tree samples; repeat in alignment-file order")
+            ->type_name("FILE")->type_size(1)->expected(1)->allow_extra_args(false)->take_all()->required();
+        app.add_option("--alphabet", alphabet_name, "Sequence alphabet (default: infer from input)")->type_name("ALPHABET");
+        app.add_option("-x,--subsample", tree_stride, "Tree stride used to match alignment records (1 for paired files)")
+            ->capture_default_str();
+        app.add_option("-n,--nodes", nodes_file, "Newick tree with labelled ancestors")->type_name("FILE");
+        app.add_option("-g,--groups", groups_file, "File with named groups")->type_name("FILE");
+        app.add_option("--skip", first, "First original tree-record position to retain (zero-based, inclusive)")
+            ->capture_default_str();
+        app.add_option("--until", last, "Last original tree-record position to retain (zero-based, inclusive)");
+        app.add_option("--thin", thin, "Keep every kth eligible pair independently in each chain")->capture_default_str();
+        app.add_option("-m,--max", maximum, "Maximum samples retained across all chains by thinning")->capture_default_str();
+        app.add_option("--nodes-min", nodes_min, "Minimum sample fraction to include a queried node")->capture_default_str();
+        app.add_option("--groups-min", groups_min, "Minimum sample fraction to include a queried group")->capture_default_str();
+        auto* verbosity = app.add_option("-V,--verbose", log_verbose, "Diagnostic verbosity (1 if no value is given)")
+            ->type_name("LEVEL")->expected(0, 1);
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        // CLI11 represents a value-less optional argument as an empty result; -V means level 1.
+        if (verbosity->count() and verbosity->results().front().empty())
+            log_verbose = 1;
+        if (tree_stride == 0 or thin <= 0)
+            throw myexception()<<"--subsample and --thin must be positive.";
+        if (first < 0 or
+            (last and *last < 0))
+            throw myexception()<<"--skip and --until must be non-negative.";
+        if (last and *last < first)
+            throw myexception()<<"--until must be at least --skip.";
+
 
         // 1. Load alignment and tree samples
         if (log_verbose) cerr<<"summarize-ancestors: Loading alignments and trees...\n";
         joint_A_T samples = get_multiple_joint_A_T(
-            args["alignments"].as<vector<string>>(), args["trees"].as<vector<string>>(),
-            get_alphabet_name(args), true, args["subsample"].as<unsigned>(),
-            args["skip"].as<std::int64_t>(), get_arg<std::int64_t>(args, "until"),
-            args["thin"].as<int>(), args["max"].as<unsigned>());
+            alignment_files, tree_files,
+            alphabet_name, true, tree_stride,
+            first, last,
+            thin, maximum);
 
         if (samples.size() == 0)
             throw myexception()<<"No usable alignment/tree pairs remain after sample selection.";
@@ -404,24 +365,16 @@ int main(int argc,char* argv[])
             if (log_verbose) cerr<<"read "<<samples.size()<<" (A,T) pairs.\n\n";
 
         // 2. Load template alignment
-        alignment template_A;
-        if (auto filename = get_arg<string>(args,"template-alignment"))
-        {
-            if (log_verbose) cerr<<"summarize-ancestors: Loading template alignment...\n";
-
-            vector<sequence> sequences = sequence_format::load_from_file(*filename);
-            auto a_name = get_arg_default<string>(args,"alphabet", "");
-            // Preserve the supplied columns, including those without an ancestral anchor.
-            template_A = load_alignment(sequences, a_name, false);
-
-            template_A = remap_A_indices(template_A, samples.leaf_names(), samples.T(0).n_leaves(), samples.T(0).n_nodes());
-
-            if (log_verbose) cerr<<"done.\n";
-        }
+        if (log_verbose) cerr<<"summarize-ancestors: Loading template alignment...\n";
+        vector<sequence> sequences = sequence_format::load_from_file(template_file);
+        // Preserve the supplied columns, including those without an ancestral anchor.
+        alignment template_A = load_alignment(sequences, alphabet_name, false);
+        template_A = remap_A_indices(template_A, samples.leaf_names(), samples.T(0).n_leaves(), samples.T(0).n_nodes());
+        if (log_verbose) cerr<<"done.\n";
 
         // 3. Load queries to find ancestor nodes on the tree
-        auto node_queries = get_node_queries(get_arg<string>(args, "nodes"), samples.leaf_names());
-        auto branch_queries = get_branch_queries(get_arg<string>(args, "groups"), samples.leaf_names());
+        auto node_queries = get_node_queries(nodes_file, samples.leaf_names());
+        auto branch_queries = get_branch_queries(groups_file, samples.leaf_names());
         if (not node_queries and not branch_queries)
             std::cerr<<"WARNING: no ancestors defined!\n";
         
@@ -436,7 +389,6 @@ int main(int argc,char* argv[])
 
         if (node_queries)
         {
-            double nodes_min = args["nodes-min"].as<double>();
             for(int node=node_queries->n_leaves();node<node_queries->n_nodes();node++)
             {
                 auto name = node_queries->get_label(node);
@@ -455,7 +407,6 @@ int main(int argc,char* argv[])
 
         if (branch_queries)
         {
-            double groups_min = args["groups-min"].as<double>();
             for(int i=0;i < branch_queries->size(); i++)
             {
                 auto& [name,_] = (*branch_queries)[i];
