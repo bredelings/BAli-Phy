@@ -1587,7 +1587,7 @@ double rectangle_radius(const cairo_rectangle_t& box, const point_position& orig
 // Minimum degree preserves choices for other labels; ties prefer the original position, then
 // candidate order and leaf index. The quadratic work/storage is confined to this drawing pass.
 vector<cairo_rectangle_t> place_horizontal_labels(const vector<tip_label>& labels, const common_layout& layout,
-    const vector<std::pair<point_position,point_position>>& edges, double pt, double font_height)
+    const vector<std::pair<point_position,point_position>>& edges, double pt)
 {
     const double line_width = 2*pt;
     const int count = labels.size();
@@ -1664,7 +1664,8 @@ vector<cairo_rectangle_t> place_horizontal_labels(const vector<tip_label>& label
             if (assigned[j] and labels[j].extents.width > 0 and labels[j].extents.height > 0)
                 radius = std::max(radius, rectangle_radius(placed[j], label.tip));
         double limit = radius + rectangle_radius(initial, label.tip) + pt;
-        double distance = std::min(std::max(font_height, pt), limit);
+        // Sample from the original position in physical one-point steps, without skipping gaps.
+        double distance = 0;
         while (true)
         {
             auto box = initial;
@@ -1676,7 +1677,7 @@ vector<cairo_rectangle_t> place_horizontal_labels(const vector<tip_label>& label
                     blocked = rectangles_intersect(box, placed[j]);
             if (not blocked) { placed[i] = box; assigned[i] = true; break; }
             assert(distance < limit);
-            distance = std::min(2*distance, limit);
+            distance = std::min(distance+pt, limit);
         }
     }
 #ifndef NDEBUG
@@ -1696,9 +1697,9 @@ vector<cairo_rectangle_t> place_horizontal_labels(const vector<tip_label>& label
 // Draw displaced labels' leaders before the text. Leaders are graphical annotations, with
 // a thinner dashed gray stroke; their crossings and cloud intersections are not optimized.
 void draw_horizontal_labels(cairo_t* cr, const vector<tip_label>& labels, const common_layout& layout,
-    const vector<std::pair<point_position,point_position>>& edges, double pt, double font_height)
+    const vector<std::pair<point_position,point_position>>& edges, double pt)
 {
-    auto placed = place_horizontal_labels(labels, layout, edges, pt, font_height);
+    auto placed = place_horizontal_labels(labels, layout, edges, pt);
     cairo_save(cr);
     const double dashes[] = {2*pt, 2*pt};
     cairo_set_dash(cr, dashes, 2, 0);
@@ -1791,7 +1792,7 @@ void tree_plotter::operator()(cairo_t* cr)
         vector<std::pair<point_position,point_position>> edges;
         for (int b=0; b<L.T.n_branches(); ++b)
             edges.emplace_back(L.node_positions[L.T.branch(b).source()], L.node_positions[L.T.branch(b).target()]);
-        draw_horizontal_labels(cr, labels, L, edges, pt, font_size()/scale);
+        draw_horizontal_labels(cr, labels, L, edges, pt);
     }
     else
 	for(int l=0;l<L.T.n_leaves();l++)
@@ -3229,7 +3230,7 @@ void graph_plotter::operator()(cairo_t* cr)
     for (const auto& edge: L.MC.edges)
         if (edge.type != 2 or draw_type_2_edges)
             edges.emplace_back(L.node_positions[edge.from], L.node_positions[edge.to]);
-    draw_horizontal_labels(cr, labels, L, edges, pt, font_size()/scale);
+    draw_horizontal_labels(cr, labels, L, edges, pt);
 }
 
 
