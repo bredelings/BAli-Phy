@@ -23,9 +23,10 @@ adding whitespace rather than distorting the image. Explicit resizing also scale
 and margins. When both dimensions are supplied, they also guide initial tree scaling and rotation.
 
 Horizontal labels are positioned to avoid branches, node bubbles, and other labels. Crowded labels
-move outward to nearby available space, with thin gray dashed lines connecting them to their tips. These leader
-lines do not represent evolutionary distances and may cross other drawing elements. Angled labels
-follow terminal branches and may overlap. Page fitting includes labels and leader lines.
+move outward, with thin gray dashed lines connecting them to their tips. Placement favors connectors
+with fewer branch crossings, even when this moves the text farther away. Crossings may remain, and
+these leader lines do not represent evolutionary distances. Angled labels follow terminal branches
+and may overlap. Page fitting includes labels and leader lines.
 
 # INPUT OPTIONS:
 **-h**, **--help**
