@@ -415,19 +415,20 @@ vector<pair<int,int>> get_characters(const matrix<int>& template_m, int c)
 
     vector<pair<int,int>> characters;
     for(int i=0; i<template_m.size2(); i++)
-        if (int x = template_m(c,i); x!= -1)
+        if (int x = template_m(c,i); x >= 0)
             characters.push_back({i,x});
 
     return characters;
 }
 
-pair<int,int> choose_representative_character(const matrix<int>& template_m, int c)
+// Choose a character that anchors the column; missing-only columns have no anchor.
+optional<pair<int,int>> choose_representative_character(const matrix<int>& template_m, int c)
 {
     assert(template_m.size2() > 0);
 
     auto characters = get_characters(template_m, c);
 
-    assert(not characters.empty());
+    if (characters.empty()) return {};
 
     int n = characters.size();
 
@@ -445,7 +446,9 @@ vector<pair<int,int>> map_columns_random(const alignment& template_A, const alig
     vector<pair<int,int>> columns;
     for(int c=0; c<template_A.length(); c++)
     {
-        auto [seq,index] = choose_representative_character(template_m, c);
+        auto representative = choose_representative_character(template_m, c);
+        if (not representative) continue;
+        auto [seq,index] = *representative;
 
         int c2 = sample_m.column(seq,index);
         columns.push_back({c,c2});
@@ -717,7 +720,8 @@ int main(int argc,char* argv[])
 
             vector<sequence> sequences = sequence_format::load_from_file(*filename);
             auto a_name = get_arg_default<string>(args,"alphabet", "");
-            template_A = load_alignment(sequences, a_name);
+            // Preserve the supplied columns, including those without an ancestral anchor.
+            template_A = load_alignment(sequences, a_name, false);
 
             template_A = remap_A_indices(template_A, samples.leaf_names(), samples.T(0).n_leaves(), samples.T(0).n_nodes());
 
