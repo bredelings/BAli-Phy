@@ -1736,7 +1736,7 @@ class Analysis(object):
 
         if not more_recent_than_all_of(self.outdir / "partitions.bs",self.get_trees_files()):
             cmd = ['trees-bootstrap',
-                   '--pred',self.outdir / 'partitions.pred',
+                   '--predicates',self.outdir / 'partitions.pred',
                    '--LOD-table',self.outdir / 'LOD-table',
                    '--pseudocount=1']
             cmd += self.get_trees_files()
