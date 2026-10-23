@@ -1,0 +1,3 @@
+# Reject ineffective group comparisons before reading files; the positive test covers resampling.
+# Retire if separation itself always computes its required bootstrap distributions.
+a :: b --separation=1

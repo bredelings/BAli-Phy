@@ -636,6 +636,9 @@ int main(int argc,char* argv[])
 		filenames.push_back(vector<string>());
 	}
 
+        if (compare_dx > 0 and filenames.size() > 1 and not bootstrapped)
+            throw myexception()<<"--separation with multiple groups requires --bootstrap";
+
 	tree_sample_collection tree_dists(filenames, read_skip, last,
 	                                  skip_fraction ? 1 : subsample, skip_fraction ? optional<int>{} : max);
 
