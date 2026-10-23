@@ -216,8 +216,10 @@ int main(int argc,char* argv[])
 		double y1 = 0;
 		for(int j=0;j<plots[i].size();j++) 
 		{
+		    // Thin in normalized coordinates regardless of displayed units. A zero total
+		    // in a cumulative curve means every ordinate is zero, so it stays flat.
 		    double x2 = double(j)/(plots[i].size()-1);
-		    double y2 = plots[i][j]/(plots[i].back());
+		    double y2 = plots[i].back() ? double(plots[i][j])/plots[i].back() : 0;
 	  
 		    if ((x2-x1 > delta or y2-y1 > delta) or j==0 or j==plots[i].size()-1) {
 			cout<<j/scale_x<<"   "<<plots[i][j]/scale_y<<endl;

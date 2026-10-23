@@ -1,0 +1,3 @@
+# Protect normalized curve thinning, which values-mode tests do not exercise.
+# Retire when shared plotting tests cover zero totals and vertical increments.
+results/files/pred results/files/trees --skip=0 --max-points=2
