@@ -41,7 +41,8 @@
 #include "mctree.hh"
 #include "util/rng.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
+#include <optional>
 
 extern int log_verbose;
 
@@ -61,8 +62,6 @@ extern int log_verbose;
 /// 3b. This approach would capture correlations and anti-correlations, as well...
 
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 using boost::dynamic_bitset;
 
@@ -232,95 +231,7 @@ vector<unsigned> get_Ml_levels(const vector<pair<partition,unsigned> >& sp,unsig
     return levels2;
 }
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
 
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-	("files",value<vector<string> >()->composing(),"tree samples to examine")
-	("seed", value<unsigned long>(),"Random seed")
-	;
-
-    options_description input("Input options");
-    input.add_options()
-	("help,h", "Produce help message.")
-	("verbose,V","Output more log messages on stderr.")
-	("skip,s",value<string>()->default_value("10%"),
-         "Burn-in count for every run, or percent of the shortest run before thinning.")
-	("until,u",value<int>(),"Read until this number of trees.")
-	("max,m",value<int>(),"Thin tree samples down to this number of trees.")
-	("subsample,x",value<int>()->default_value(1),"Factor by which to subsample.")
-	("ignore,i", value<string>(),"Comma-separated list of taxa to ignore.")
-	;
-  
-    options_description reporting("Reporting options");
-    reporting.add_options()
-	("map-trees",value<int>()->default_value(1),"Only report the top <arg> trees per file.")
-	("min-support",value<double>()->default_value(0.25),"Minimum threshold PP for splits.")
-	("report",value<string>(),"Write supported partitions to file <arg>.")
-	("map-tree",value<string>(),"Write out the map tree to file <arg>.")
-	("consensus",value<string>(),"Write out consensus trees.")
-	("greedy-consensus",value<string>(),"Write out greedy consensus trees.")
-	("extended-consensus-L",value<string>(),"Write out extended consensus trees + lengths.")
-	("extended-consensus",value<string>(),"Write out extended consensus trees.")
-	("support-levels",value<string>(),"Write #branches versus LOD to file <arg>.")
-	("extended-support-levels",value<string>(),"Write #sub-branches versus LOD to file <arg>.")
-	;
-    
-    options_description search("Search options");
-    search.add_options()
-	("sub-partitions","Search for partial splits.")
-	("depth",value<int>()->default_value(1),"Depth at which to look for partial splits.")
-	("rooting",value<double>()->default_value(0.9,"0.9"),"Threshold in search for partial splits.")
-	("odds-ratio",value<double>()->default_value(1.5),"Report partial-splits only if removing taxa improves the odds by at least this ratio.")
-	;
-
-    options_description visible("All options");
-    visible.add(input).add(reporting).add(search);
-
-    options_description all("All options");
-    all.add(visible).add(invisible);
-
-    // positional options
-    positional_options_description p;
-    p.add("files", -1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv). options(all).positional(p).run(), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Find consensus trees and supported splits.\n\n";
-	cout<<"Usage: trees-consensus [OPTIONS] <sampled-trees> [<sampled-trees> ... <sampled-trees>]\n\n";
-	cout<<input<<"\n";
-	cout<<reporting<<"\n";
-	cout<<search<<"\n";
-	cout<<"Examples:\n\n";
-	cout<<" Compute the majority consensus tree, skipping the first 10% of trees:\n";
-	cout<<"   % trees-consensus newick.trees > c50.tree\n";
-	cout<<"   % trees-consensus newick.trees --skip=10% > c50.tree\n\n";
-	cout<<" Skip the first 100 trees:\n";
-	cout<<"   % trees-consensus newick.trees --skip=100 > c50.tree\n\n";
-	cout<<" Skip the first 20% of trees and take every 10th tree thereafter:\n";
-	cout<<"   % trees-consensus newick.trees --skip=20% -x10 > c50.tree\n\n";
-	cout<<" Compute the 50% (majority) and 80% consensus trees:\n";
-	cout<<"   % trees-consensus newick.trees --consensus=0.5:c50.tree,0.8:c80.tree\n";
-	cout<<"   % trees-consensus newick.trees --consensus=0.5,0.8:c80.tree > c50.tree\n\n";
-	cout<<" Compute the MAP tree and write a summary of supported partitions:\n";
-	cout<<"   % trees-consensus --map-tree=MAP.tree --report=partitions.txt\n\n";
-	cout<<" Compute the MAP tree and write it to the standard output:\n";
-	cout<<"   % trees-consensus --map-tree=- --report=partitions.txt\n\n";
-	exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = 1;
-
-    if (not args.count("files") or args["files"].as<vector<string>>().empty())
-	throw myexception()<<"No filenames for trees specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
-    return args;
-}
 
 /// A simple ordering operator to sort pair<partition,unsigned> by the order of the partition
 struct count_more {
@@ -331,19 +242,16 @@ struct count_more {
 
 /// \brief Create a file containing the LOD, #of supported partitions, and PP in 3 tab-separated columsn
 ///
-/// \param args Command-line arguments
+/// \param filename Output filename
 /// \param all_partitions The count for each partition
 /// \param N The total number of sampled trees
-void write_support_level_graph(variables_map& args, const vector<pair<partition,unsigned> >& all_partitions, unsigned N)
+void write_support_level_graph(const string& filename, const vector<pair<partition,unsigned> >& all_partitions, unsigned N)
 {
-    auto filename = get_arg<string>(args, "support-levels");
-    if (not filename) return;
-
     vector<unsigned> levels = get_Ml_levels(all_partitions, N, 0.5);
 
-    ofstream file(filename->c_str());
+    ofstream file(filename);
     if (!file)
-	throw myexception()<<"Couldn't open file '"<<*filename<<"' for writing.";
+	throw myexception()<<"Couldn't open file '"<<filename<<"' for writing.";
   
     for(int j=0;j<levels.size();j++) 
     {
@@ -363,15 +271,12 @@ void write_support_level_graph(variables_map& args, const vector<pair<partition,
 /// Here, the # of partial splits report is reduced to the largest
 /// number of compatible partial splits.
 ///
-/// \param args Command-line arguments
+/// \param filename Output filename
 /// \param all_partitions The count for each partition
 /// \param N The total number of sampled trees
-void write_extended_support_level_graph(variables_map& args, const vector<pair<partition,unsigned> >& all_partitions, 
+void write_extended_support_level_graph(const string& filename, const vector<pair<partition,unsigned> >& all_partitions, 
 					tree_sample& tree_dist, unsigned N)
 {
-    if (!args.count("extended-support-levels")) return;
-    const string filename = args["extended-support-levels"].as<string>();
-
     vector<unsigned> levels = get_Ml_levels(all_partitions, N, 0.5);
 
     ofstream file(filename);
@@ -809,47 +714,115 @@ int main(int argc,char* argv[])
 	std::cout.setf(ios::fixed);
 
 	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Find consensus trees and supported splits.", "trees-consensus"};
+        app.usage("Usage: trees-consensus [OPTIONS] <sampled-trees> [<sampled-trees> ... <sampled-trees>]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        vector<string> files;
+        string skip = "10%", ignore;
+        std::optional<int> last, max;
+        int subsample = 1, map_trees = 1, depth = 1;
+        std::optional<unsigned long> seed;
+        bool verbose = false, sub_partitions = false;
+        double min_support = 0.25, min_rooting = 0.9, report_ratio = 1.5;
+        std::optional<string> report, map_tree, consensus, greedy_filename;
+        std::optional<string> extended_consensus, extended_consensus_L, support_levels, extended_support_levels;
+        app.add_option("--files,FILE", files, "tree samples to examine")->required();
+        app.add_option("--seed", seed, "Random seed")->group("Input options");
+        app.add_flag("-V,--verbose", verbose, "Output more log messages on stderr.")->group("Input options");
+        app.add_option("-s,--skip", skip,
+                       "Burn-in count for every run, or percent of the shortest run before thinning.")
+            ->capture_default_str()->group("Input options");
+        app.add_option("-u,--until", last, "Read until this number of trees.")->group("Input options");
+        app.add_option("-m,--max", max, "Thin tree samples down to this number of trees.")->group("Input options");
+        app.add_option("-x,--subsample", subsample, "Factor by which to subsample.")
+            ->capture_default_str()->group("Input options");
+        app.add_option("-i,--ignore", ignore, "Comma-separated list of taxa to ignore.")->group("Input options");
+        app.add_option("--map-trees", map_trees, "Only report the top <arg> trees per file.")
+            ->capture_default_str()->group("Reporting options");
+        app.add_option("--min-support", min_support, "Minimum threshold PP for splits.")
+            ->capture_default_str()->group("Reporting options");
+        app.add_option("--report", report, "Write supported partitions to file <arg>.")->group("Reporting options");
+        app.add_option("--map-tree", map_tree, "Write out the map tree to file <arg>.")->group("Reporting options");
+        app.add_option("--consensus", consensus, "Write out consensus trees.")->group("Reporting options");
+        app.add_option("--greedy-consensus", greedy_filename, "Write out greedy consensus trees.")
+            ->group("Reporting options");
+        app.add_option("--extended-consensus-L", extended_consensus_L, "Write out extended consensus trees + lengths.")
+            ->group("Reporting options");
+        app.add_option("--extended-consensus", extended_consensus, "Write out extended consensus trees.")
+            ->group("Reporting options");
+        app.add_option("--support-levels", support_levels, "Write #branches versus LOD to file <arg>.")
+            ->group("Reporting options");
+        app.add_option("--extended-support-levels", extended_support_levels,
+                       "Write #sub-branches versus LOD to file <arg>.")
+            ->group("Reporting options");
+        app.add_flag("--sub-partitions", sub_partitions, "Search for partial splits.")->group("Search options");
+        app.add_option("--depth", depth, "Depth at which to look for partial splits.")
+            ->capture_default_str()->group("Search options");
+        app.add_option("--rooting", min_rooting, "Threshold in search for partial splits.")
+            ->capture_default_str()->group("Search options");
+        app.add_option("--odds-ratio", report_ratio,
+                       "Report partial-splits only if removing taxa improves the odds by at least this ratio.")
+            ->capture_default_str()->group("Search options");
+        app.footer("Examples:\n\n"
+                   " Compute the majority consensus tree, skipping the first 10% of trees:\n"
+                   "   % trees-consensus newick.trees > c50.tree\n"
+                   "   % trees-consensus newick.trees --skip=10% > c50.tree\n\n"
+                   " Skip the first 100 trees:\n"
+                   "   % trees-consensus newick.trees --skip=100 > c50.tree\n\n"
+                   " Skip the first 20% of trees and take every 10th tree thereafter:\n"
+                   "   % trees-consensus newick.trees --skip=20% -x10 > c50.tree\n\n"
+                   " Compute the 50% (majority) and 80% consensus trees:\n"
+                   "   % trees-consensus newick.trees --consensus=0.5:c50.tree,0.8:c80.tree\n"
+                   "   % trees-consensus newick.trees --consensus=0.5,0.8:c80.tree > c50.tree\n\n"
+                   " Compute the MAP tree and write a summary of supported partitions:\n"
+                   "   % trees-consensus newick.trees --map-tree=MAP.tree --report=partitions.txt\n\n"
+                   " Compute the MAP tree and write it to the standard output:\n"
+                   "   % trees-consensus newick.trees --map-tree=- --report=partitions.txt\n\n");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        if (verbose) log_verbose = 1;
 
 	//--------------------- Initialize ---------------------//
-	if (args.count("seed")) {
-	    unsigned long seed = args["seed"].as<unsigned long>();
-	    myrand_init(seed);
+	if (seed) {
+	    myrand_init(*seed);
 	}
 	else
 	    myrand_init();
 
-	double min_support = args["min-support"].as<double>();
-
-	double report_ratio = args["odds-ratio"].as<double>();
-
-	bool show_sub = args.count("sub-partitions") or args.count("extended-consensus") or args.count("extended-consensus-L");
+	bool show_sub = sub_partitions or extended_consensus or extended_consensus_L;
 
 	// consensus levels 
-	vector<pair<double,string> > consensus_levels = get_consensus_levels( get_string_list(args, "consensus"));
-	vector<pair<double,string> > extended_consensus_levels = get_consensus_levels( get_string_list(args, "extended-consensus"));
-	vector<pair<double,string> > extended_consensus_L_levels = get_consensus_levels( get_string_list(args, "extended-consensus-L"));
-	auto greedy_filename = get_arg<string>(args, "greedy-consensus");
+	auto consensus_levels = get_consensus_levels(
+            consensus ? get_string_list(*consensus) : vector<string>{});
+	auto extended_consensus_levels = get_consensus_levels(
+            extended_consensus ? get_string_list(*extended_consensus) : vector<string>{});
+	auto extended_consensus_L_levels = get_consensus_levels(
+            extended_consensus_L ? get_string_list(*extended_consensus_L) : vector<string>{});
 
-	if (not args.count("consensus") 
-	    and not args.count("extended-consensus")
-	    and not args.count("map-tree")
-	    and not args.count("extended-consensus-L")
-	    and not args.count("greedy-consensus"))
+	if (not consensus 
+	    and not extended_consensus
+	    and not map_tree
+	    and not extended_consensus_L
+	    and not greedy_filename)
 	    consensus_levels.push_back(pair<double,string>(0.5,"-"));
 
 	ostream_or_ofstream report_file;
 
-	if (args.count("report"))
+	if (report)
 	{
-	    string filename = args["report"].as<string>();
+	    string filename = *report;
 	    report_file.open(cout,"-",filename,"report file");
 	}
 
 	//-------------- Read in tree distributions --------------//
-	auto tree_dist = read_trees(args["files"].as<vector<string>>(), args["skip"].as<string>(),
-                                    get_arg<int>(args, "until"), args["subsample"].as<int>(),
-                                    get_arg<int>(args, "max"), get_string_list(args, "ignore"));
+	auto tree_dist = read_trees(files, skip, last, subsample, max, get_string_list(ignore));
 
 	const unsigned N = tree_dist.size();
 
@@ -861,10 +834,6 @@ int main(int argc,char* argv[])
 
 	if (show_sub)
 	{
-	    int depth = args["depth"].as<int>();
-
-	    double min_rooting = args["rooting"].as<double>();
-
 	    all_partitions = get_Ml_sub_partitions_and_counts(tree_dist,min_support, ~ignore_mask,min_rooting,depth);
 	    //      std::cerr<<"n_sub_partitions = "<<all_partitions.size()<<"\n";
 	}
@@ -910,7 +879,7 @@ int main(int argc,char* argv[])
 	report_file<<"   Leaves = "<<L<<endl;
 
 	report_file<<"\nTopology support: \n\n";
-	for(int i=0;i < args["map-trees"].as<int>() ;i++) 
+	for(int i=0;i < map_trees ;i++) 
 	{
 	    if (i >= order.size()) continue;
 
@@ -967,16 +936,18 @@ int main(int argc,char* argv[])
 	}
 
 	//----------- display M[l] consensus levels ----------//
-	write_support_level_graph(args, all_partitions, N);
-	write_extended_support_level_graph(args, all_partitions, tree_dist, N);
+	if (support_levels)
+	    write_support_level_graph(*support_levels, all_partitions, N);
+	if (extended_support_levels)
+	    write_extended_support_level_graph(*extended_support_levels, all_partitions, tree_dist, N);
 
 	//----------- display M[l] consensus trees ----------//
 	std::cout.precision(4);
 
 	// write out the map tree
-	if (args.count("map-tree")) 
+	if (map_tree) 
 	{
-	    string filename = args["map-tree"].as<string>();
+	    string filename = *map_tree;
 
 	    SequenceTree map_tree = tree_dist.T(which_topology[order[0]]);
 
