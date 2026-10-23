@@ -119,21 +119,19 @@ public:
     const vector<tree_sample>& all_samples() const {return tree_dists;}
     vector<tree_sample>& all_samples() {return tree_dists;}
 
-    int add_sample(int d, const tree_sample& s) 
-	{
-	    int i = tree_dists.size();
-	    index_[d].push_back(i);
-	    tree_dists.push_back(s);
+    // Store each run in the group's common taxon order before updating its membership.
+    int add_sample(int d, const tree_sample& s)
+        {
+            if (leaf_names_.empty()) leaf_names_ = s.names();
+            tree_sample normalized(leaf_names_);
+            normalized.append_trees(s);
 
-	    n_samples_[d]++;
-
-	    if (not leaf_names_.size())
-		leaf_names_ = tree_dists.back().names();
-	    else if (tree_dists.back().names() != leaf_names_)
-		throw myexception()<<"Trees have different taxa than previous files.";
-
-	    return i;
-	}
+            int i = tree_dists.size();
+            tree_dists.push_back(std::move(normalized));
+            index_[d].push_back(i);
+            n_samples_[d]++;
+            return i;
+        }
 
     int add_sample_new_distribution(const tree_sample& s)
 	{
