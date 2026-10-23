@@ -1,8 +1,14 @@
    LogOddsModel [1]:  posterior-probability = 0.5     [log-odds = 0]
    LogOddsModel [2]:  posterior-probability = 0.75     [log-odds = 1.099]
    LogOddsModel:  posterior-probability = 0.625     [log-odds = 0.5108]
-   LogOddsModel = [increasing]
+   LogOddsModel [1] = 0
+   LogOddsModel [2] = 1.099
+   LogOddsModel     ~ 0.5493  (NA,NA) @ 95%
+              t @ 1   Ne = 4   burnin = Not Converged!
+       PSRF-80%CI = inf       PSRF-RCF = 2
 
+
+ Ne  >= 4    (LogOddsModel)
  min burnin <= Not Converged!    (LogOddsModel)
-
-Increasing: LogOddsModel
+ PSRF-80%CI <= inf    (LogOddsModel)
+ PSRF-RCF <= 2    (LogOddsModel)

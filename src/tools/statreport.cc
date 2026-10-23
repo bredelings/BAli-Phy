@@ -281,22 +281,31 @@ string burnin_value(int b, unsigned total, int subsample)
 	return "Not Converged!";
 }
 
+// Constant chains alone have no direction, even when their different levels make the
+// pooled values nonconstant. Require an actual change in at least one monotone chain.
 bool monotonic_increasing(const vector<stats_table>& tables, int index)
 {
-    bool increasing = true;
-    for(int i=0;i<tables.size();i++)
-	if (not monotonic_increasing(tables[i].column(index)))
-	    increasing = false;
-    return increasing;
+    bool changed = false;
+    for (const auto& table: tables)
+    {
+        const auto& values = table.column(index);
+        if (!monotonic_increasing(values)) return false;
+        changed |= values.front() != values.back();
+    }
+    return changed;
 }
 
+// Apply the same requirement for decreasing chains without altering the burn-in predicates.
 bool monotonic_decreasing(const vector<stats_table>& tables, int index)
 {
-    bool increasing = true;
-    for(int i=0;i<tables.size();i++)
-	if (not monotonic_decreasing(tables[i].column(index)))
-	    increasing = false;
-    return increasing;
+    bool changed = false;
+    for (const auto& table: tables)
+    {
+        const auto& values = table.column(index);
+        if (!monotonic_decreasing(values)) return false;
+        changed |= values.front() != values.back();
+    }
+    return changed;
 }
 
 
