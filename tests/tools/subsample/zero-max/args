@@ -1,0 +1,3 @@
+# Preserve fractional selection, header handling, and explicit data-line limits.
+# These small cases cover the line sampler directly; tree and table readers use different code.
+--header --max=0

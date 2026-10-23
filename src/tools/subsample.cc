@@ -17,6 +17,10 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
+#include <cmath>
+#include <cstdint>
+#include <optional>
+#include <stdexcept>
 #include <iostream>
 #include <string>
 #include "util/io.hh"
@@ -69,37 +73,36 @@ int main(int argc,char* argv[])
 	//---------- Parse command line  -------//
 	variables_map args = parse_cmd_line(argc,argv);
 
-	string line;
+        auto skip = args["skip"].as<unsigned>();
+        double subsample = args["factor"].as<double>();
+        if (!std::isfinite(subsample) || subsample <= 0)
+            throw std::invalid_argument("factor must be finite and positive");
+        optional<unsigned> max;
+        if (args.count("max")) max = args["max"].as<unsigned>();
 
-	if (args.count("header")) {
-	    // print header
-	    portable_getline(cin,line);
-	    cout<<line<<endl;
-	}
+        string line;
+        if (args.count("header") && portable_getline(cin, line))
+            cout<<line<<'\n';
 
-	int skip = args["skip"].as<unsigned>();
-	double subsample = args["factor"].as<double>();
-	int max = -1;
-	if (args.count("max"))
-	    max = args["max"].as<unsigned>();
-
-	// print selected lines
-	int lines=0;
-	int count=0;
-	while(portable_getline(cin,line)) 
-	{
-	    if (skip > 0)
-		skip--;
-	    else if (max > 0 and count >= max)
-		break;
-	    else {
-		if (int(lines/subsample) > (count-1)) {
-		    cout<<line<<endl;
-		    count++;
-		}
-		lines++;
-	    }
-	}
+        std::uint64_t lines = 0;
+        std::uint64_t count = 0;
+        while ((!max || count < *max) && portable_getline(cin, line))
+        {
+            if (skip > 0)
+                --skip;
+            else
+            {
+                // For nonnegative indices, floor(lines/factor) >= count is equivalent to
+                // this comparison. Avoid narrowing the quotient to int, preserving fractional
+                // spacing and keeping every line for factors below one.
+                if (lines/subsample >= count)
+                {
+                    cout<<line<<'\n';
+                    ++count;
+                }
+                ++lines;
+            }
+        }
     }
     catch (exception& e) {
 	cerr<<"bpy-subsample: Error! "<<e.what()<<std::endl;

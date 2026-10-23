@@ -19,16 +19,18 @@ Subsample lines in a file.
 : produce help message
 
 **-x** _arg_ (=1), **--factor** _arg_ (=1)
-: Factor by which to subsample.
+: Factor by which to subsample. Must be finite and positive; fractional factors are allowed.
+  Factors below 1 retain every line.
 
 **--skip** _arg_ (=0)
 : Throw out some lines at the beginning.
 
 **--max** _arg_
-: Maximum number of samples to keep
+: Maximum number of data lines to keep. Zero keeps no data lines; omission means no limit.
+  A header preserved with **--header** does not count toward this limit.
 
 **--header**
-: This file has a header - don't throw it out.
+: Preserve the first line as a header, before skipping or subsampling data lines.
 
 
 # REPORTING BUGS:
