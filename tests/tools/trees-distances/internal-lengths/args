@@ -1,0 +1,3 @@
+# Protect branch-metric identity and split matching, absent from existing topology tests.
+# Retire if equivalent shared distance tests cover this CLI calculation.
+matrix - --metric=internal-branch
