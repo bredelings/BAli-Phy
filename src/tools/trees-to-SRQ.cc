@@ -26,6 +26,7 @@
 #include <cmath>
 
 #include "util/myexception.hh"
+#include "util/mapping.hh"
 #include "tree/sequencetree.hh"
 #include "tree-dist.hh"
 #include "tree/tree-util.hh"
@@ -113,6 +114,33 @@ variables_map parse_cmd_line(int argc,char* argv[])
     return args;
 }
 
+// Match predicate bit positions to sample taxa, retaining taxa excluded from both split groups.
+static void match_predicate_taxa(PTree& predicate, const vector<string>& sample_names)
+{
+    if (predicate.names == sample_names) return;
+
+    vector<int> mapping;
+    try {
+	mapping = compute_mapping(predicate.names, sample_names);
+    }
+    catch (const bad_mapping<string>& b) {
+	throw myexception()<<"Predicate and sample taxa differ at '"<<b.missing<<"'";
+    }
+
+    for (auto& p: predicate.partitions)
+    {
+	boost::dynamic_bitset<> group1(sample_names.size()), group2(sample_names.size());
+	for (int i=0;i<mapping.size();i++)
+	{
+	    group1[mapping[i]] = p.group1[i];
+	    group2[mapping[i]] = p.group2[i];
+	}
+	p.group1 = std::move(group1);
+	p.group2 = std::move(group2);
+    }
+    predicate.names = sample_names;
+}
+
 int main(int argc,char* argv[]) 
 { 
     try {
@@ -138,6 +166,7 @@ int main(int argc,char* argv[])
 	vector<vector<int> > plots(trees.size());
 	for(int i=0;i<trees.size();i++) 
 	{
+	    match_predicate_taxa(trees[i], tree_dist.names());
 	    valarray<bool> support = tree_dist.support(trees[i].partitions);
 
 	    if (args.count("invert")) support = not support;

@@ -1,0 +1,3 @@
+# Protect named full and partial splits against index-based evaluation; values tests lacked reordered taxa.
+# Retire when shared predicate evaluation tests cover name permutations and masks.
+results/files/pred results/files/trees --skip=0 --mode=values
