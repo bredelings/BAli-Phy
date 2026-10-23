@@ -626,7 +626,8 @@ int main(int argc,char* argv[])
         bool show_mean = false, show_median = false, show_minmax = false;
         bool leaves_only = false, topology_only = false;
         app.add_option("--analysis,ANALYSIS", analysis,
-                       "Analysis: matrix, autocorrelation, diameter, compare, closest, convergence, converged.")
+                       "Analysis: matrix, autocorrelation, diameter, compare, closest, convergence, converged, "
+                       "leaf-dist-matrix, node-dist-cvars.")
             ->capture_default_str()->group("Analysis options");
         app.add_option("--files,FILE", files, "tree samples to examine");
         app.add_option("-s,--skip", skip, "number of tree samples to skip")
@@ -636,7 +637,7 @@ int main(int argc,char* argv[])
         app.add_option("-x,--subsample", subsample, "factor by which to subsample")
             ->capture_default_str()->group("Input options");
         app.add_flag("-V,--verbose", verbose, "Output more log messages on stderr.")->group("Input options");
-        app.add_option("--metric", metric, "Tree distance: topology, branch, internal-branch.")
+        app.add_option("--metric", metric, "Tree distance: topology, branch, internal-branch, matching.")
             ->capture_default_str()->group("Analysis options");
         app.add_flag("--remove-duplicates", remove_duplicates_requested,
                        "[matrix]: disallow zero distances  between points.")

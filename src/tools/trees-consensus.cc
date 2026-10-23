@@ -737,7 +737,7 @@ int main(int argc,char* argv[])
         app.add_option("-x,--subsample", subsample, "Factor by which to subsample.")
             ->capture_default_str()->group("Input options");
         app.add_option("-i,--ignore", ignore, "Comma-separated list of taxa to ignore.")->group("Input options");
-        app.add_option("--map-trees", map_trees, "Only report the top <arg> trees per file.")
+        app.add_option("--map-trees", map_trees, "Report at most this many topologies in the pooled report.")
             ->capture_default_str()->group("Reporting options");
         app.add_option("--min-support", min_support, "Minimum threshold PP for splits.")
             ->capture_default_str()->group("Reporting options");
