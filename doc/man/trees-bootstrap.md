@@ -124,7 +124,9 @@ changing histories, is the bootstrap standard deviation of the support estimate.
 For groups with at least two runs, **ASDSF** is the average standard deviation of
 split frequencies between runs, considering splits above **--min-support** in at
 least one member. **MSDSF** is the maximum standard deviation over the available
-splits. These use observed frequencies without pseudocount smoothing. **min Ne**
+splits. These use observed frequencies without pseudocount smoothing. ASDSF is
+reported as `NA` when no splits pass the group's cutoff; MSDSF is `NA` when the
+split collection is empty. **min Ne**
 identifies the smallest available effective sample-size estimate among the group's
 analyzed predicates. No single cutoff for these diagnostics establishes convergence.
 

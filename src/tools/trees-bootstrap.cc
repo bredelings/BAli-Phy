@@ -461,7 +461,7 @@ double fraction(const vector<int>& indices, const valarray<bool>& results,unsign
 // .. and what is the scenario underlying confidence intervals, anyway?
 
 /// Compute the average standard deviation of split frequencies
-pair<double,double> 
+pair<optional<double>,optional<double>>
 am_sdsf(const tree_sample_collection& tree_dists, int d, const map<dynamic_bitset<>, p_counts>& counts, double min_f)
 {
     double msdsf = 0;
@@ -525,10 +525,10 @@ am_sdsf(const tree_sample_collection& tree_dists, int d, const map<dynamic_bitse
 	msdsf = std::max(msdsf,f);
     }
 
-    // Divide the sum by the total number to compute the average
-    asdsf /= n_partitions;
-
-    return pair<double,double>(asdsf,msdsf);
+    // An empty qualifying set has no average; an empty split collection has no maximum.
+    // Keep these independent because MSDSF includes splits below the ASDSF cutoff.
+    return {n_partitions ? optional<double>{asdsf/n_partitions} : std::nullopt,
+            counts.empty() ? std::nullopt : optional<double>{msdsf}};
 }
 
 int main(int argc,char* argv[]) 
@@ -762,7 +762,7 @@ int main(int argc,char* argv[])
 
 	// generate a bootstrap sample for each g,d,s : but all the p share the same bootstrap sample.
 
-	if (bootstrapped)
+	if (bootstrapped and not partitions.empty())
 	    for(int g=0;g<tree_dists.n_dists();g++)
 		for(int d=0;d<D[g];d++) 
 		{
@@ -827,8 +827,12 @@ int main(int argc,char* argv[])
 
 	for(int d=0;d<tree_dists.n_dists();d++) {
 	    if (tree_dists.n_samples(d) >= 2) {
-		pair<double,double> p = am_sdsf(tree_dists, d, counts, min_support);
-		cout<<"ASDSF[min="<<min_support<<"] = "<<p.first<<"     MSDSF = "<<p.second<<endl;
+		auto [asdsf, msdsf] = am_sdsf(tree_dists, d, counts, min_support);
+		cout<<"ASDSF[min="<<min_support<<"] = ";
+                if (asdsf) cout<<*asdsf; else cout<<"NA";
+                cout<<"     MSDSF = ";
+                if (msdsf) cout<<*msdsf; else cout<<"NA";
+                cout<<endl;
 	    }
 	    index_value<double> worst_Ne;
 	    int T = tree_dists.summary_index(d);

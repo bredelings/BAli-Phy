@@ -1,0 +1,3 @@
+# Protect empty selections and independent group diagnostics; existing bootstrap tests require selected splits.
+# Retire if shared reporting tests cover empty sets and per-group cutoffs.
+results/files/a results/files/a --skip=0 --seed=1 --bootstrap --samples=20 --blocksize=10000 --min-support=1
