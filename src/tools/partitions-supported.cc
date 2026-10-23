@@ -104,7 +104,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     if (args.count("help")) {
 	cout<<"Select only partitions with support in the specified range.\n\n";
-	cout<<"Usage: trees-bootstrap <partitions-file> <trees-file> [OPTIONS]\n\n";
+	cout<<"Usage: partitions-supported <partitions-file> <trees-file> [OPTIONS]\n\n";
 	cout<<input<<reporting<<"\n";
 	exit(0);
     }
@@ -165,17 +165,9 @@ int main(int argc,char* argv[])
 	tree_sample trees = load_tree_file(args,filename);
 
 	//--------- compute upper and lower bounds -----------------//
-	unsigned S = trees.size();
-	unsigned upper = S;
-	unsigned lower = S;
-	if (args.count("below")) {
-	    upper = (unsigned)floor(S * args["below"].as<double>());
-	    upper = std::min(upper,S);
-	}
-	if (args.count("above")) {
-	    lower = (unsigned) ceil(S * args["above"].as<double>());
-//	    lower = std::max(lower,0U);
-	}
+	optional<double> below, above;
+	if (args.count("below")) below = args["below"].as<double>();
+	if (args.count("above")) above = args["above"].as<double>();
 
 	//----------- Load Partitions ---------------//
 	auto predicates = load_partitions(args["predicates"].as<string>());
@@ -193,7 +185,9 @@ int main(int argc,char* argv[])
 
 	for(int p=0;p<predicates.size();p++) 
 	{
-	    bool match = (lower <= support[p] and support[p] <= upper);
+	    const double probability = double(support[p])/trees.size();
+	    bool match = (not above or probability > *above)
+	             and (not below or probability < *below);
 	    if (flip) match = not match;
 	    if (match) {
 		for(int i=0;i<predicates[p].partitions.size();i++) 

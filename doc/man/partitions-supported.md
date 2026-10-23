@@ -1,18 +1,21 @@
-% trees-bootstrap(1)
+% partitions-supported(1)
 % Benjamin Redelings
 % Feb 2018
 
 # NAME
 
-**trees-bootstrap** - Select only partitions with support in the specified range.
+**partitions-supported** - Select only partitions with support in the specified range.
 
 # SYNOPSIS
 
-**trees-bootstrap** _partitions-file_ _trees-file_ [OPTIONS]
+**partitions-supported** _partitions-file_ _trees-file_ [OPTIONS]
 
 # DESCRIPTION
 
-Select only partitions with support in the specified range.
+Select only partitions with support in the specified range. Bounds are strict:
+a partition exactly on a bound is excluded. An omitted bound imposes no
+restriction; with neither bound, all supplied predicates are selected.
+**--not** selects the complement of this condition.
 
 # INPUT OPTIONS:
 **-h**, **--help**

@@ -1,0 +1,3 @@
+# Protect optional strict bounds and inversion; existing tests only check tree operations.
+# Retire if the filter moves into an independently tested shared API.
+results/files/pred - --below=.8
