@@ -1,0 +1,5 @@
+varying fields:
+  model/aux
+  model/pi
+  weights
+  z[2]

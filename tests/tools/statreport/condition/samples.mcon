@@ -1,0 +1,6 @@
+{"format":"MCON","version":"0.2","nested":true}
+{"iter":0,"parameters//":{"model/":{"hypothesis":1,"omega":100,"pi":{"A":0.3}}},"label":"a"}
+{"label":"b","parameters//":{"model/":{"pi":{"A":0.4,"T":0.6},"omega":8,"hypothesis":0}},"iter":1}
+{"iter":2,"parameters//":{"model/":{"hypothesis":1,"omega":2,"pi":{"A":0.4,"T":0.6}}},"label":"c"}
+{"label":"d","parameters//":{"model/":{"pi":{"A":0.4,"T":0.6},"omega":9,"hypothesis":0}},"iter":3}
+{"iter":4,"parameters//":{"model/":{"hypothesis":1,"omega":4,"pi":{"A":0.4,"T":0.6}}},"label":"e"}

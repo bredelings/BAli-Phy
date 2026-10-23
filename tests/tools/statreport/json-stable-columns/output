@@ -1,0 +1,7 @@
+   rate = 2
+
+   flag = 1
+
+   z[1] = 1
+
+ min burnin <= 1    (rate)

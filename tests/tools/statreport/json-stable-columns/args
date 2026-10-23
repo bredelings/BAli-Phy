@@ -1,0 +1,3 @@
+# JSON grouping must preserve independent fields while structured values change shape.
+# Existing TSV cases cannot detect positional JSON reads or invalidation of an entire group.
+--skip=0 --mean -

@@ -1,0 +1,5 @@
+{"format":"MCON","version":"0.2","nested":true,"fields":["model/rate"]}
+{"model/":{"rate":2,"pi":{"A":0.3},"aux":8},"flag":true,"text":"a","weights":[0.3,0.7],"z":[1,{"a":2,"b":3}]}
+{"text":"b","flag":true,"model/":{"pi":{"A":0.4,"T":0.6},"rate":2},"weights":[0.2,0.3,0.5],"z":[1,{"a":4}]}
+{"flag":true,"model/":{"rate":2,"pi":{"A":0.3}},"text":"c","weights":[0.2,0.3,0.5],"z":[1,{"a":4}]}
+{"model/":{"pi":{"T":0.6,"A":0.4},"rate":2},"text":"d","flag":true,"weights":[0.2,0.3,0.5],"z":[1,{"a":4}]}

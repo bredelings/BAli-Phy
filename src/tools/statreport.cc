@@ -732,27 +732,40 @@ int main(int argc,char* argv[])
 
             if (condition)
             {
-                // Resolve selection against the original header, but convert only output fields and
-                // the condition to numbers. Unselected fields may legitimately contain text.
-                TableReader reader(f,0,subsample,last,{},{});
-                auto indices = get_indices_for_names(reader.names(), ignore, select);
+                // JSON columns can disappear as later records change shape, so finish loading
+                // before selecting them. TSV has a fixed header; convert only selected fields so
+                // unselected text columns remain usable.
+                optional<stats_table> json_table;
+                optional<TableReader> reader;
+                if (f.peek() == '{')
+                    json_table.emplace(f, 0, subsample, last, vector<string>{}, vector<string>{});
+                else
+                    reader.emplace(f, 0, subsample, last, vector<string>{}, vector<string>{});
+                const TableBase& source = json_table ? static_cast<const TableBase&>(*json_table) : *reader;
+                auto indices = get_indices_for_names(source.names(), ignore, select);
                 if (condition_output_count != -1 and condition_output_count != indices.size())
                     throw myexception()<<filename<<": Selected column counts differ.";
                 condition_output_count = indices.size();
-                auto index = reader.maybe_find_column_index(condition->first);
+                auto index = source.maybe_find_column_index(condition->first);
                 if (not index)
-                    throw myexception()<<filename<<": Missing condition field '"<<condition->first<<"'.";
+                    throw myexception()<<filename<<": Condition field '"<<condition->first
+                                       <<"' is missing or is not a stable numerical column.";
                 if (std::find(indices.begin(), indices.end(), *index) == indices.end())
                     indices.push_back(*index);
-                tables.emplace_back(apply_indices(reader.names(), indices));
-                while (auto row = reader.get_row())
+                tables.emplace_back(apply_indices(source.names(), indices));
+                if (json_table)
+                {
+                    for (int i = 0; i < indices.size(); ++i)
+                        tables.back().column(i) = std::move(json_table->column(indices[i]));
+                }
+                else while (auto row = reader->get_row())
                 {
                     vector<double> values;
                     for (int col: indices)
                     {
                         auto value = can_be_converted_to<double>((*row)[col]);
                         if (not value)
-                            throw myexception()<<filename<<": Non-numeric value in '"<<reader.names()[col]<<"'.";
+                            throw myexception()<<filename<<": Non-numeric value in '"<<source.names()[col]<<"'.";
                         values.push_back(*value);
                     }
                     tables.back().add_row(values);

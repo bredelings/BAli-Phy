@@ -16,6 +16,13 @@
 logs. It accepts tab-delimited files with a header row of column names, or BAli-Phy JSON logs.
 Use **-** as a filename to read standard input. Results are written to the terminal.
 
+For JSON logs, structured values are expanded into numerical columns. Fields that are missing
+or change structure are dropped. A change in an array's length or an object-valued parameter's
+keys drops that entire value, since its remaining components may no longer have the same meaning.
+MCON groups organize separate fields, so a change in one field does not discard its siblings.
+Structure is checked across records retained by **--until** and **--subsample**, before burn-in
+removal or conditional filtering. Column selection uses the surviving numerical columns.
+
 Supply multiple files to summarize independent runs of the same analysis. The selected columns
 must have matching names and order. Retained samples are pooled, so longer retained runs
 contribute more samples to the combined summaries.
@@ -180,8 +187,9 @@ estimate establish convergence on their own.
 ## Conditional summaries
 
 **`--condition`** filters samples after endpoint limiting, subsampling, and burn-in removal.
-The condition field is read even when it is not selected for output. Matching sample counts are
-reported for each chain and pooled. No matching samples is reported explicitly and is not an error.
+The condition field is read even when it is not selected for output. In JSON input it must survive
+the structural checks as a numerical column. Matching sample counts are reported for each chain
+and pooled. No matching samples is reported explicitly and is not an error.
 
 Conditional reports omit autocorrelation times, effective sample sizes, burn-in estimates, and
 PSRF measures: filtering changes the time sequence to which those diagnostics apply.

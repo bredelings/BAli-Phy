@@ -24,7 +24,6 @@
 #include "util/io.hh"
 #include "util/string/split.hh"
 #include "util/string/convert.hh"
-#include "util/file-readers.hh"
 #include "models/path.hh"
 #include "mcon/mcon.hh"
 
@@ -410,30 +409,33 @@ bool has_children(const string& s)
 template <>
 Table<double>::Table(std::istream& file, int skip, int subsample, int last, const std::vector<std::string>& ignore, const std::vector<std::string>& select)
 {
-    using namespace ranges::views;
     bool is_json = (file.peek() == '{');
 
     // FIXME: check if JSON by trying to parse the header line.
-    // FIXME: implement "ignore" and "select" for json by constructing a list of fields to keep.
-    // FIXME: how can we write out "field: string" or "field: varying" for fields that we don't analyze?
-
+    // FIXME: report fields omitted because their values are not numeric.
     if (is_json)
     {
-        // Get the header
-        std::string header_line;
-        portable_getline(file, header_line);
-        auto header = MCON::parse(header_line);
-
-        // Get the samples
-        if (last < 0) last = INT_MAX;
-        auto samples = lines(file) | take(last) | drop(skip) | stride(subsample) | ranges::views::transform(MCON::parse) | ranges::to<vector>();
-
-        auto table = MCON::Log(header, samples).dump_numeric_table();
-
-        for(auto& [field, values]: table)
+        auto table = MCON::read_numeric_table(file, skip, subsample, last);
+        if (!table.varying_fields.empty())
         {
-            names_.push_back(field);
-            data_.push_back( std::move(values) );
+            std::cerr<<"varying fields:\n";
+            for (const auto& field: table.varying_fields) std::cerr<<"  "<<field<<'\n';
+        }
+        if (!table.n_samples)
+            throw myexception()<<"No MCON samples remain after record selection.";
+        if (table.columns.empty())
+            throw myexception()<<"No stable numerical columns remain in MCON input.";
+
+        vector<string> names;
+        for (const auto& [field, values]: table.columns) names.push_back(field);
+        auto indices = get_indices_for_names(names, ignore, select);
+        if (indices.empty())
+            throw myexception()<<"No numerical columns selected.";
+        for (int index: indices)
+        {
+            auto& [field, values] = table.columns[index];
+            names_.push_back(std::move(field));
+            data_.push_back(std::move(values));
         }
     }
     else
