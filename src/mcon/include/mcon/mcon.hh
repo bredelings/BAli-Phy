@@ -1,3 +1,8 @@
+#pragma once
+
+#include <cstddef>
+#include <tuple>
+#include <vector>
 #include <set>
 #include <string>
 #include <optional>
@@ -42,6 +47,21 @@ std::vector<std::string> get_row(const std::map<std::string,int>& all_fields, co
 json::object parse(const std::string&);
 
 std::string serialize(const json::value&);
+
+// A completed numerical table, including the sample count when no columns survive.
+struct NumericTable
+{
+    std::size_t n_samples = 0;
+    std::vector<std::tuple<std::string, std::vector<double>>> columns;
+    std::vector<std::string> varying_fields;
+};
+
+// Read an MCON header and accumulate stable numerical columns without retaining JSON records.
+// Limit to the first last records (negative means unlimited), drop skip, then subsample.
+// Only retained records determine stability. Names are shortened after classification;
+// varying_fields always contains full logical names. No diagnostics are printed here.
+NumericTable read_numeric_table(std::istream& input, int skip = 0, int subsample = 1,
+                               int last = -1, bool translate_bool = true, bool short_names = true);
 
 class Log
 {

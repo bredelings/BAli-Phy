@@ -1,5 +1,6 @@
 libmcon_sources = [
-  'mcon.cc']
+  'mcon.cc',
+  'numeric-table.cc']
 
 libmcon_inc = include_directories('include')
 

@@ -1,4 +1,5 @@
 #include "mcon/mcon.hh"
+#include "table-fields.hh"
 #include <tuple>
 #include <optional>
 #include <sstream>
@@ -642,8 +643,8 @@ vector<string> sort_fields(const vector<string>& specified_fields, const set<str
     {
 	if (not constantFields.count(specified_field))
 	{
-	    std::cerr<<"Error: Header: field '"<<specified_field<<"' is missing or does not have a fixed structure!\n";
-	    exit(1);
+            throw std::runtime_error("Header: field '"+specified_field+
+                                     "' is missing or does not have a fixed structure!");
 	}
     }
 
@@ -722,33 +723,6 @@ vector<tuple<string,vector<json::value>>> Log::dump_json_table(std::optional<boo
     }
 
     return json_table;
-}
-
-vector<tuple<string, vector<double>>> Log::dump_numeric_table(bool translate_bool, std::optional<bool> short_names) const
-{
-    auto json_table = dump_json_table(short_names);
-
-    vector<tuple<string, vector<double>>> numeric_table;
-    for(auto& [field,values]: json_table)
-    {
-        if (values[0].is_number())
-        {
-            vector<double> numeric_values;
-            for(auto& value: values)
-                numeric_values.push_back( value.to_number<double>() );
-            numeric_table.push_back({field, std::move(numeric_values) });
-        }
-
-        if (values[0].is_bool() and translate_bool)
-        {
-            vector<double> numeric_values;
-            for(auto& value: values)
-                numeric_values.push_back( value.as_bool() );
-            numeric_table.push_back({field, std::move(numeric_values) });
-        }
-    }
-
-    return numeric_table;
 }
 
 // TODO: Extract generic infrastructure to get out in-memory tables.
