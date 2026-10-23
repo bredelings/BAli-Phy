@@ -126,7 +126,7 @@ void cut_range(std::istream& in, std::ostream& out,
 	}
 
 	if (in_interval)
-	    out<<line<<std::endl;
+	    out<<line<<'\n';
     }
 }
 
