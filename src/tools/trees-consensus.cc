@@ -1081,7 +1081,7 @@ int main(int argc,char* argv[])
 
 	for(int i=0,n=0;i<topology_counts.size();i++) 
 	{
-	    n += topology_counts[i];
+	    n += topology_counts[order[i]];
 	    double PP = double(n)/N;
 
 	    if (PP >= 0.95) {
