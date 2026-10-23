@@ -165,6 +165,9 @@ bool valid(const partition& p);
 /// load a collection of partition sets from a file
 std::vector<PTree> load_partitions(const std::string& filename);
 
+// Reorder a predicate to match the same declared taxa in the sample.
+void match_predicate_taxa(PTree&, const std::vector<std::string>& sample_names);
+
 void write_partitions(std::ostream& o, const std::vector<std::string>& names, const std::vector<partition>& partitions);
 
 bool merge_partition(std::vector<partition>& partitions,const partition& delta);

@@ -1,0 +1,6 @@
+#NEXUS
+begin trees;
+translate 1 E, 2 C, 3 A, 4 D, 5 B;
+tree t = ((3,5),1,2,4);
+tree u = ((3,1),5,(2,4));
+end;

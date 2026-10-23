@@ -1,0 +1,19 @@
+# Loading trees from 'results/files/trees'...
+# [ seed = 1    pseudocount = 1    blocksize = 1 ]
+
+Support for the different predicates: 
+
+1/2:
+A B | E C D 
+   PP1 = 0.500       (1=1  0=1)  [1 !!!]
+
+  LOD1 = 0.000
+
+
+2/2:
+A B | C D  [ E ]
+   PP1 = 0.750       (1=2  0=0)  [0 !!!]
+
+  LOD1 = 0.477
+
+

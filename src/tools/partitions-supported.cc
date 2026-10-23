@@ -119,6 +119,8 @@ int main(int argc,char* argv[])
 	auto predicates = load_partitions(predicates_file);
 
 	predicates = remove_duplicates(predicates);
+        for (auto& predicate: predicates)
+            match_predicate_taxa(predicate, trees.names());
 
 	//------- evaluate/cache predicate for each topology -------//
 	vector<unsigned> support;

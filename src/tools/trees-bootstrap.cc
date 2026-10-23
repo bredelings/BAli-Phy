@@ -668,6 +668,8 @@ int main(int argc,char* argv[])
 	if (predicates_file) {
 	    partitions = load_partitions(*predicates_file);
 	    partitions = remove_duplicates(partitions);
+            for (auto& predicate: partitions)
+                match_predicate_taxa(predicate, tree_dists.leaf_names());
 	}
 	else {
 	    // Get minimum counts

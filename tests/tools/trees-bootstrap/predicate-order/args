@@ -1,0 +1,3 @@
+# Protect named partial predicates; ordinary samples do not expose index-based evaluation.
+# Retire when shared predicate tests cover masks and each CLI evaluation path.
+results/files/trees --predicates=results/files/pred --skip=0 --seed=1

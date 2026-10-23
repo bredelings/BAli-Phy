@@ -764,6 +764,33 @@ vector<PTree> load_partitions(const string& filename)
     return trees;
 }
 
+// Match predicate bit positions to sample taxa, retaining taxa excluded from both split groups.
+void match_predicate_taxa(PTree& predicate, const vector<string>& sample_names)
+{
+    if (predicate.names == sample_names) return;
+
+    vector<int> mapping;
+    try {
+	mapping = compute_mapping(predicate.names, sample_names);
+    }
+    catch (const bad_mapping<string>& b) {
+	throw myexception()<<"Predicate and sample taxa differ at '"<<b.missing<<"'";
+    }
+
+    for (auto& p: predicate.partitions)
+    {
+	boost::dynamic_bitset<> group1(sample_names.size()), group2(sample_names.size());
+	for (int i=0;i<mapping.size();i++)
+	{
+	    group1[mapping[i]] = p.group1[i];
+	    group2[mapping[i]] = p.group2[i];
+	}
+	p.group1 = std::move(group1);
+	p.group2 = std::move(group2);
+    }
+    predicate.names = sample_names;
+}
+
 void write_partitions(std::ostream& o, const PTree& tree)
 {
     auto& partitions = tree.partitions;
