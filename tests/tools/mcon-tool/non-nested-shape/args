@@ -1,0 +1,3 @@
+# In non-nested MCON slash-suffixed keys hold ordinary values, not independent fields.
+# Nested cases cannot detect invalidation at the wrong structural level.
+-O TSV

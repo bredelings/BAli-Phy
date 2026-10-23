@@ -1,1 +1,3 @@
+# Group siblings are independent; missing fields and changing arrays must not erase the group.
+# This also checks the shared classifier through TSV output rather than numerical loading.
 -O TSV

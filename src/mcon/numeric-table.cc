@@ -62,7 +62,7 @@ struct FieldNode
     }
 
     // Groups tolerate new/missing siblings; structured objects must keep the same keys.
-    void append_object(const json::object& object, bool translate_bool)
+    void append_object(const json::object& object, bool translate_bool, bool store_values)
     {
         if (!group && object.size() != children.size())
         {
@@ -72,7 +72,7 @@ struct FieldNode
         for (auto& child: children)
         {
             if (const auto* value = object.if_contains(child.key))
-                child.append(*value, translate_bool);
+                child.append(*value, translate_bool, store_values);
             else if (group)
                 child.invalidate();
             else
@@ -84,7 +84,7 @@ struct FieldNode
     }
 
     // Check shape and append directly as doubles, avoiding JSON/string table intermediates.
-    void append(const json::value& value, bool translate_bool)
+    void append(const json::value& value, bool translate_bool, bool store_values)
     {
         if (varying) return;
         if (group && !value.is_object())
@@ -96,7 +96,7 @@ struct FieldNode
             return;
         }
         if (auto object = value.if_object())
-            append_object(*object, translate_bool);
+            append_object(*object, translate_bool, store_values);
         else if (auto array = value.if_array())
         {
             if (array->size() != children.size())
@@ -105,10 +105,10 @@ struct FieldNode
                 return;
             }
             for (std::size_t i = 0; i < array->size(); ++i)
-                children[i].append((*array)[i], translate_bool);
+                children[i].append((*array)[i], translate_bool, store_values);
         }
-        else if (value.is_number()) values.push_back(value.to_number<double>());
-        else if (value.is_bool() && translate_bool) values.push_back(value.as_bool());
+        else if (store_values && value.is_number()) values.push_back(value.to_number<double>());
+        else if (store_values && value.is_bool() && translate_bool) values.push_back(value.as_bool());
     }
 
     // Include stable nonnumeric leaves for naming; report varying containers only once.
@@ -125,14 +125,14 @@ struct FieldNode
 
 // Initialize on the first retained sample, then reuse the same tree for every record.
 void append_sample(std::optional<FieldNode>& root, const json::object& sample,
-                   bool nested, bool translate_bool)
+                   bool nested, bool translate_bool, bool store_values = true)
 {
     if (!root)
     {
         std::set<std::string> logical_fields;
         root.emplace(json::value(sample), "", true, nested, logical_fields);
     }
-    root->append_object(sample, translate_bool);
+    root->append_object(sample, translate_bool, store_values);
 }
 
 // Order and shorten all stable leaf names before selecting numerical columns, as in Log.
@@ -162,6 +162,21 @@ NumericTable finish_table(std::optional<FieldNode>& root, std::size_t n_samples,
 }
 
 } // namespace
+
+// Classify JSON-valued tables with the same grouping and shape rules as numerical loading,
+// but retain no numerical samples. The caller still owns the input records for TSV output.
+std::tuple<std::set<std::string>, std::set<std::string>>
+classifyFields(const std::vector<json::object>& samples, bool nested)
+{
+    std::optional<FieldNode> root;
+    for (const auto& sample: samples) append_sample(root, sample, nested, false, false);
+    std::map<std::string, FieldNode*> stable;
+    std::set<std::string> variable;
+    if (root) root->collect(stable, variable);
+    std::set<std::string> names;
+    for (const auto& [name, node]: stable) names.insert(name);
+    return {std::move(names), std::move(variable)};
+}
 
 // Apply record limits before parsing samples. Only retained samples affect column stability.
 NumericTable read_numeric_table(std::istream& input, int skip, int subsample, int last,

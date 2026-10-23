@@ -214,60 +214,6 @@ vector<string> short_fields(const vector<string>& fields)
     return fields2;
 }
 
-json::kind collapse_kind(json::kind k)
-{
-    if (k == json::kind::int64 or k == json::kind::uint64)
-	k = json::kind::double_;
-    return k;
-}
-
-void findConstantFields(json::value& j1, const json::value& j2)
-{
-    if (j1.is_null())
-	return;
-
-    else if (collapse_kind(j1.kind()) != collapse_kind(j2.kind()))
-    {
-	j1.emplace_null();
-	return;
-    }
-    
-    else if (j1.is_object())
-    {
-	auto& o1 = j1.as_object();
-	auto& o2 = j2.as_object();
-	if (o1.size() != o2.size())
-	{
-	    j1.emplace_null();
-	    return;
-	}
-	for(auto& [key,v1]: o1)
-	{
-	    if (not o2.count(key))
-	    {
-		j1.emplace_null();
-		return;
-	    }
-	    findConstantFields(v1, o2.at(key));
-	}
-    }
-
-    else if (j1.is_array())
-    {
-	auto& a1 = j1.as_array();
-	auto& a2 = j2.as_array();
-	if (a1.size() != a2.size())
-	{
-	    j1.emplace_null();
-	    return;
-	}
-	for(int i=0;i<a1.size();i++)
-	{
-	    findConstantFields(a1[i], a2[i]);
-	}
-    }
-}
-
 void write_shape(std::ostream& o, const json::value& j)
 {
     if (j.is_null())
@@ -401,44 +347,6 @@ void Log::add_time_field(const string& time_field)
 Log::Log(bool n, bool a, const std::optional<std::vector<std::string>>& f, std::vector<json::object>&& s)
     :fields(f),nested(n),atomic(a),samples(std::move(s))
 {
-}
-
-tuple<set<string>, set<string>> classifyFields(const vector<json::object>& samples)
-{
-    if (samples.empty()) return {{},{}};
-
-    auto fields = samples[0];
-
-    for(auto& sample: samples)
-    {
-	json::object fields2;
-	for(auto& [key, v1]: fields)
-	{
-	    if (v1.is_null()) continue;
-
-	    if (not sample.count(key))
-		v1.emplace_null();
-	    else
-		findConstantFields(v1, sample.at(key));
-	}
-    }
-    
-    // Maybe the top level, we should keep all the common fields, instead of dropping
-    // everything if something changes?
-    auto fields2 = atomize(unnest(fields), false);
-
-    set<string> constant_fields;
-    set<string> varying_fields;
-
-    for(auto& [key,_]: fields2)
-    {
-	if (fields2.at(key).is_null())
-	    varying_fields.insert(key);
-	else
-	    constant_fields.insert(key);
-    }
-
-    return {constant_fields, varying_fields};
 }
 
 std::ostream& Log::dump_MCON(std::ostream& o) const
@@ -678,7 +586,7 @@ vector<tuple<string,vector<json::value>>> Log::dump_json_table(std::optional<boo
 
     // This seems a bit wasteful if we are already non-nested and atomic.
     // However... does non-nested and atomic mean that the top-level fields are fixed?
-    auto [constantFields, varyingFields] = classifyFields(samples);
+    auto [constantFields, varyingFields] = classifyFields(samples, nested);
 
     if (not varyingFields.empty())
     {
@@ -712,7 +620,8 @@ vector<tuple<string,vector<json::value>>> Log::dump_json_table(std::optional<boo
 
     for(int sample_index=0;sample_index<samples.size(); sample_index++)
     {
-        auto sample = MCON::atomize(MCON::unnest(samples[sample_index]), false);
+        auto sample = nested ? MCON::atomize(MCON::unnest(samples[sample_index]), false)
+                             : MCON::atomize(samples[sample_index], false);
 
         auto row = get_json_row(all_fields_map, sample, sample_index);
 
