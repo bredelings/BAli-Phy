@@ -27,9 +27,6 @@
 #include <cmath>
 #include <fstream>
 #include <sstream>
-#include <map>
-#include <set>
-#include <list>
 
 #include "tree/sequencetree.hh"
 #include "util/string/split.hh"
@@ -90,22 +87,6 @@ using std::optional;
 // What if everything in 'split' is true, but 1 taxa?
 //  These are true by definition...
 
-double getsum(const valarray<double>& v) {
-    return v.sum();
-}
-
-
-unsigned changes(const valarray<bool>& sample,bool value) 
-{
-    unsigned count=0;
-    for(int i=0;i<sample.size()-1;i++) {
-	if (sample[i] == value and sample[i+1] != value)
-	    count++;
-    }
-    return count;
-}
-
-
 struct consensus_level_order
 {
     bool operator()(const pair<double,string>& p1, const pair<double,string>& p2) const
@@ -140,13 +121,6 @@ vector<pair<double, string> > get_consensus_levels(const vector<string>& levels)
     std::sort(parsed_levels.begin(), parsed_levels.end(), consensus_level_order());
 
     return parsed_levels;
-}
-
-/// Add partitions in 'delta' if none of them are IDENTICAL to any partition in 'partitions'
-void add_unique_partitions(vector<partition>& partitions,const vector<partition>& delta) {
-    for(int j=0;j<delta.size();j++)
-	if (not includes(partitions,delta[j]))
-	    partitions.push_back(delta[j]);
 }
 
 double odds_ratio(const vector<pair<partition,unsigned> >& partitions, const pair<partition,unsigned>& delta,
@@ -220,45 +194,6 @@ thin(const vector<pair<partition,unsigned> >& partitions, unsigned N, double rat
     return thinned;
 }
 
-vector<partition> strip(const vector<pair<partition,unsigned> >& partitions) 
-{
-    vector<partition> stripped;
-    for(int i=0;i<partitions.size();i++)
-	stripped.push_back(partitions[i].first);
-
-    return stripped;
-}
-
-
-/// Merge the lists in 'partition_sets' while removing duplicates
-vector<partition> merge(const vector<vector<partition> >& partition_sets) 
-{
-    vector<partition> partitions;
-    for(int i=0;i<partition_sets.size();i++) 
-	add_unique_partitions(partitions,partition_sets[i]);
-    return partitions;
-}
-
-vector< vector<partition> >
-get_sub_partitions(const tree_sample& tree_dist,const vector<double>& levels,int depth=1) 
-{
-    vector< vector<partition> > partition_sets(levels.size());
-    for(int i=0;i<partition_sets.size();i++)
-	partition_sets[i] = get_Ml_sub_partitions(tree_dist,levels[i],depth);
-
-    return partition_sets;
-}
-
-vector< vector<partition> >
-get_full_partitions(const tree_sample& tree_dist,const vector<double>& levels) 
-{
-    vector< vector<partition> > partition_sets(levels.size());
-    for(int i=0;i<partition_sets.size();i++)
-	partition_sets[i] = get_Ml_partitions(tree_dist,levels[i]);
-
-    return partition_sets;
-}
-
 vector<partition> 
 get_Ml_partitions(const vector<pair<partition,unsigned> >& sp, unsigned min_count)
 {
@@ -296,96 +231,6 @@ vector<unsigned> get_Ml_levels(const vector<pair<partition,unsigned> >& sp,unsig
     copy(levels.begin(),levels.end(),levels2.begin());
     return levels2;
 }
-
-unsigned
-get_partition_count(const vector<pair<partition,unsigned> >& sp, const partition& p)
-{
-    for(int i=0;i<sp.size();i++) {
-	if (sp[i].first == p)
-	    return sp[i].second;
-    }
-
-    throw myexception()<<"Can't find partition ";
-}
-
-
-
-// FIXME - we use all full parition in 'sub'
-//   - only do exhaustive search on partial partitions?
-//   - divide into connected components?
-
-// This is a greedy search.
-// It would be nice to also pick which branches are "least informative".
-
-vector<partition> Ml_min_Hull(const vector<partition>& full,const vector<partition>& sub)
-{
-    // compute full partitions to keep
-    dynamic_bitset<> keep(full.size());
-    dynamic_bitset<> covered(sub.size());
-
-    while (covered.count() < covered.size()) 
-    {
-	// how many UNCOVERED subs does each UNKEPT full branch imply?
-	vector<int> covers(full.size(),0);
-
-	for(int i=0;i<sub.size();i++) {
-	    if (covered[i]) continue;
-	    for(int j=0;j<full.size();j++)
-		if (implies(full[j],sub[i])) {
-		    assert(not keep[j]);
-		    covers[j]++;
-		}
-	}
-
-	// only do the argmax if there are args to max over!
-	if (not covers.size())
-	    break;
-
-	// choose full branch to keep
-	int best = argmax(covers);    // all KEPT branches cover 0 uncovered branches.
-
-	if (covers[best] == 0) 
-	    break;
-
-	keep[best] = true;
-
-	// mark its covered sub-branches as covered
-	for(int i=0;i<sub.size();i++)
-	    if (not covered[i] and implies(full[best],sub[i]))
-		covered[i] = true;
-    }
-
-    // collect the full partitions that have been chosen
-    vector<partition> hull;
-    for(int i=0;i<full.size();i++)
-	if (keep[i])
-	    hull.push_back(full[i]);
-
-    return hull;
-}
-
-// Is there a way to choose branches that would imply sub-partitions that are
-// not in sub because other full branches imply them?  
-
-// That might be best...
-
-vector<partition> Ml_max_Hull(const vector<partition>& full,const vector<partition>& sub)
-{
-    vector<partition> hull;
-
-    for(int i=0;i<full.size();i++) 
-    {
-	bool ok = false;
-	for(int j=0;j<sub.size() and not ok;j++)
-	    if (implies(full[i],sub[j])) 
-		ok = true;
-   
-	if (ok) hull.push_back(full[i]);
-    }
-
-    return hull;
-}
-
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
@@ -543,8 +388,6 @@ void write_extended_support_level_graph(variables_map& args, const vector<pair<p
 
 	// const vector<partition> full = select(sub,&partition::full);
 
-	//  vector<partition> full_hull = Ml_min_Hull(full_skeleton,sub);
-	//  vector<partition> sub_hull = Ml_min_Hull(skeleton,sub);
 
 	file<<LOD<<"\t"<<count(get_moveable_tree(sub),informative)<<"\t"<<fraction<<"\n";
     }

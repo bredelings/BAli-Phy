@@ -30,8 +30,6 @@
 #include <cmath>
 #include <fstream>
 #include <sstream>
-#include <map>
-#include <list>
 
 #include <boost/program_options.hpp>
 

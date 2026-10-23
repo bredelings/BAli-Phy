@@ -41,8 +41,6 @@
 #include <cmath>
 #include <fstream>
 #include <sstream>
-#include <map>
-#include <list>
 
 #include "tree/sequencetree.hh"
 #include "util/string/join.hh"
@@ -167,24 +165,6 @@ public:
 };
 
 
-bool operator==(const vector<Partition>& p1,const vector<Partition>& p2)
-{
-    if (p1.size() != p2.size())
-	return false;
-
-    for(int i=0;i<p1.size();i++)
-	if (not includes(p2,p1[i]))
-	    return false;
-
-    return true;
-}
-
-
-double getsum(const valarray<double>& v) {
-    return v.sum();
-}
-
-
 unsigned changes(const valarray<bool>& sample,bool value) 
 {
     unsigned count=0;
@@ -260,7 +240,6 @@ struct var_stats
     std::optional<pair<double,double>> CI;
     std::optional<pair<double,double>> log_CI;
 
-    std::optional<double> Var_perfect;
     std::optional<double> Var_bootstrap;
     std::optional<double> stddev_bootstrap;
     std::optional<double> Ne;
@@ -282,13 +261,6 @@ void var_stats::calculate(double pseudocount, double confidence)
     nchanges = changes(results,true) + changes(results,false);
     nchanges_ave = (nchanges + 1)/2;
 
-    if (N > 10)
-        Var_perfect = P*(1.0-P)/N;
-
-    //----------------- Variances ---------------//
-
-    // Ne = P*(1.0-P)/Var_bootstrap;
-  
     //---------- Autocorrelation times ----------//
     vector<double> scratch(N);
     for(int j=0;j<scratch.size();j++)
@@ -412,8 +384,6 @@ bool report_sample(std::ostream& o,
     o<<endl;
 
 
-    vector<double> sum_tau(tree_dists.n_dists(), 0);
-    vector<double> sum_CI(tree_dists.n_dists(), 0);
 
     for(int g=0;g<tree_dists.n_dists();g++) 
     {
@@ -434,15 +404,9 @@ bool report_sample(std::ostream& o,
 		o<<"  in  ("<<vs.log_CI->first<<","<<vs.log_CI->second<<")";
 
 	    if (vs.tau) {
-		//      o<<"    [Var]x = "<<vs.Var_bootstrap/vs.Var_perfect<<"          Ne = "<<vs.Ne<<endl;
 		o<<"       ACT = "<<(*vs.tau)<<"          Ne = "<<vs.N/(*vs.tau);
 	    }
 	    o<<endl;
-	    if (d < D[g]-1 and vs.CI) {
-		sum_CI[g] += std::abs(vs.CI->second - vs.CI->first);
-	    }
-            if (vs.tau)
-                sum_tau[g] += (*vs.tau);
 	}
     }
 

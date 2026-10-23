@@ -100,14 +100,6 @@ matrix<double> remove_duplicates(const matrix<double>& D)
     return D2;
 }
 
-SequenceTree unit_branch_tree(const SequenceTree& T1)
-{
-    SequenceTree T2 = T1;
-    for(int i=0;i<T2.n_branches();i++)
-	T2.branch(i).set_length(1.0);
-    return T2;
-}
-
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
     using namespace po;
