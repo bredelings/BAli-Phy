@@ -216,7 +216,7 @@ double greater_than(const valarray<double>& d1,const valarray<double>d2,double d
     vector<double> F2(D1.size());
 
     for(int i=0,j=0;i<D1.size();i++) {
-	while((D2[j] + dx < D1[i]) and j < D2.size()) j++;
+	while(j < D2.size() and D2[j] + dx < D1[i]) j++;
 
 	F2[i] = double(j)/D2.size();
     }
@@ -365,7 +365,8 @@ bool report_sample(std::ostream& o,
     {
 	for(int i=0;i<tree_dists.n_dists();i++)
 	    for(int j=0;j<i;j++) {
-		if (separated_by(VS[i][D[i]][p].LOD_distributions,VS[j][D[j]][p].LOD_distributions,dx) >= confidence)
+		if (separated_by(VS[i][tree_dists.summary_index(i)][p].LOD_distributions,
+		                 VS[j][tree_dists.summary_index(j)][p].LOD_distributions,dx) >= confidence)
 		    different = true;
 	    }
     }

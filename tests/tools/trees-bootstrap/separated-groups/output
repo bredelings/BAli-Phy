@@ -1,0 +1,24 @@
+# Loading trees from 'results/files/a'...
+# Loading trees from 'results/files/a'...
+# Loading trees from 'results/files/b'...
+# [ seed = 1    pseudocount = 1    blocksize = 10000 ]
+
+Support for the different predicates: 
+
+1/1:
+A B | C D 
+   PP1-1 = 0.917  in  (0.917,0.917)       (1=10  0=0)  [0 !!!]
+   PP1-2 = 0.917  in  (0.917,0.917)       (1=10  0=0)  [0 !!!]
+   PP1   = 0.917  in  (0.917,0.917)       (1=20  0=0)  [0 !!!]
+
+   PP2   = 0.083  in  (0.083,0.083)       (1=0  0=10)  [0 !!!]
+
+  LOD1-1 = 1.041  in  (1.041,1.041)
+  LOD1-2 = 1.041  in  (1.041,1.041)
+  LOD1   = 1.041  in  (1.041,1.041)
+
+  LOD2   = -1.041  in  (-1.041,-1.041)
+
+
+
+ASDSF[min=0.100] = 0.000     MSDSF = 0.000
