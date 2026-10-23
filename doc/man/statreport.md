@@ -1,6 +1,6 @@
 % statreport(1)
 % Benjamin Redelings
-% Feb 2018
+% October 2026
 
 # NAME
 
@@ -14,7 +14,7 @@
 
 **statreport** computes summary statistics and sampling diagnostics for numeric fields in MCMC
 logs. It accepts tab-delimited files with a header row of column names, or BAli-Phy JSON logs.
-Use **-** as a filename to read standard input. Results are written to the terminal.
+Use **-** as a filename to read standard input. Results are written to standard output.
 
 For JSON logs, structured values are expanded into numerical columns. Fields that are missing
 or change structure are dropped. A change in an array's length or an object-valued parameter's
@@ -22,6 +22,9 @@ keys drops that entire value, since its remaining components may no longer have 
 MCON groups organize separate fields, so a change in one field does not discard its siblings.
 Structure is checked across records retained by **--until** and **--subsample**, before burn-in
 removal or conditional filtering. Column selection uses the surviving numerical columns.
+Array elements use one-based names such as `rates[1]`; object components use names such as `parameter[component]`. Group prefixes
+separated by `/` are shortened where unambiguous. Use these resulting column names for selection
+and conditions.
 
 Supply multiple files to summarize independent runs of the same analysis. The selected columns
 must have matching names and order. Retained samples are pooled, so longer retained runs
@@ -49,9 +52,13 @@ Show both means and medians:
 
     statreport --mean --median run-1/C1.log
 
-Analyze only columns 2 through 4:
+Analyze columns 2 through 4 and the named field `omega`:
 
-    statreport --select=2:4 run-1/C1.log
+    statreport --select=2:4 --select=omega run-1/C1.log
+
+Summarize `omega` only when the logged `hypothesis` field equals 1:
+
+    statreport --condition=hypothesis=1 --select=omega run-1/C1.log
 
 Row counts exclude the header. They correspond to MCMC iterations only when one row was logged
 per iteration.
@@ -59,6 +66,9 @@ per iteration.
 # OPTIONS
 
 ## Sample selection
+
+**`--filenames`** _FILE_ ...
+: Named form of the positional input list. Use **-** for standard input.
 
 **`-s`** _COUNT|PERCENT_, **`--skip`** _COUNT|PERCENT_
 : Discard initial samples as burn-in. Accepts a data-row count or a percentage such as `10%`
@@ -85,6 +95,7 @@ per iteration.
 : Analyze only the specified field name or inclusive column range, such as `2:4`.
   Column numbers start at 1. Repeat the option to select multiple fields or ranges.
   Without this option, analyze all fields not excluded by **`--ignore`**.
+  Selected columns remain in input order, regardless of option order.
 
 **`-I`** _FIELD|RANGE_, **`--ignore`** _FIELD|RANGE_
 : Exclude a field name or column range. Repeat to exclude multiple fields or ranges.
@@ -148,8 +159,9 @@ standard error of the mean. With **`--mode`**, `parameter ^ ... [+- ...]` gives 
 full width of a narrow sample interval used to estimate the mode. This width is a resolution
 measure, not a credible interval or standard error. The mode is `NA` with fewer than 20 samples.
 
-Constant fields are reported as single values. In ordinary reports, fields that only increase
-or only decrease are marked accordingly instead of receiving the usual summaries.
+Fields constant across all pooled samples are reported as single values. If individual chains
+are constant at different values, the pooled distribution is still summarized. In ordinary reports,
+fields that only increase or only decrease are marked accordingly instead of receiving the usual summaries.
 
 ## Sampling and convergence diagnostics
 
@@ -205,6 +217,14 @@ Fields whose final name component begins with `LogOdds`, ignoring case, also rec
 The summary converts each sampled natural-log odds to a probability, averages those probabilities,
 and reports both the average probability and its log odds. This differs from converting the
 average log odds to a probability. Ordinary summaries of the sampled log odds are retained.
+
+# EXIT STATUS
+
+Returns 0 on success (including help) and 1 on an error.
+
+# SEE ALSO
+
+**bpy-summarize**(1), **mcon-tool**(1), **stats-select**(1), **bpy-subsample**(1)
 
 # REPORTING BUGS
 
