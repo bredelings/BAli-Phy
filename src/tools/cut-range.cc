@@ -26,70 +26,13 @@
 #include "util/io.hh"
 #include "util/log-level.hh"
 
-#include <boost/program_options.hpp>
-
-namespace po = boost::program_options;
-using po::variables_map;
+#include <CLI/CLI.hpp>
+#include <optional>
 
 using std::string;
 using std::vector;
 using std::cout;
 using std::optional;
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-	("filenames", value<vector<string>>()->composing(),"Filenames to read")
-	;
-
-    options_description visible("All options");
-    visible.add_options()
-	("help,h", "produce help message")
-	("key", value<string>()->default_value("iterations"),"cut based on values of <key>=value")
-	("skip",value<int>(),"minimum key value to retain (inclusive)")
-	("until",value<int>(),"maximum key value to retain (inclusive)")
-	("subsample",value<int>()->default_value(1),"keep only every NUM eligible samples")
-	("size",value<int>(),"maximum number of samples to use")
-	("verbose","Output more log messages on stderr.")
-	;
-
-    options_description all("All options");
-    all.add(invisible).add(visible);
-
-    // positional options
-    positional_options_description p;
-    p.add("filenames", -1);
-
-    variables_map args;     
-    store(command_line_parser(argc, argv).options(all).positional(p).run(), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Select lines from multiple input files based on lines containing `key = value`.\n\n";
-	cout<<"Usage: cut-range filename1.fastas [filename2.fastas ...] [OPTIONS]\n\n";
-	cout<<visible;
-        cout<<"\n";
-        cout<<"The selection options (e.g. --skip) apply to each input file separately.\n";
-        cout<<"\n";
-	cout<<"Examples:\n";
-	cout<<"\n";
-	cout<<" Select alignments after the first 100 iterations from two different runs:\n";
-        cout<<"   % cut-range --skip=100 run-1/C1.P1.fastas run-2/C1.P1.fastas > P1.fastas\n\n";
-	exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = 1;
-
-    if (not args.count("key")) 
-	throw myexception()<<"argument 'key' not set.";
-
-    return args;
-}
-
 
 // Copy selected keyed records, applying the stride independently to each input stream.
 void cut_range(std::istream& in, std::ostream& out,
@@ -139,35 +82,40 @@ int main(int argc,char* argv[])
 {
     try {
 
-	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Select lines from files based on lines containing 'key = value'.", "cut-range"};
+        app.usage("Usage: cut-range [FILE ...] [OPTIONS]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        app.footer("The selection options apply to each input file separately.\n"
+                   "Example: cut-range --skip=100 run-1/C1.P1.fastas run-2/C1.P1.fastas > P1.fastas");
+        vector<string> filenames;
+        string key = "iterations";
+        optional<int> min, max, size;
+        int subsample = 1;
+        bool verbose = false;
+        app.add_option("--filenames,FILE", filenames, "Filenames to read ('-' for STDIN)");
+        app.add_option("--key", key, "cut based on values of key = value")->capture_default_str();
+        app.add_option("--skip", min, "minimum key value to retain (inclusive)");
+        auto until_option = app.add_option("--until", max, "maximum key value to retain (inclusive)");
+        app.add_option("--subsample", subsample, "keep only every NUM eligible samples")->capture_default_str();
+        app.add_option("--size", size, "maximum number of samples to use")
+            ->excludes(until_option);
+        app.add_flag("--verbose", verbose, "Output more log messages on stderr.");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        if (verbose) log_verbose = 1;
+        if (filenames.empty()) filenames = {"-"};
 
-	vector<string> filenames;
-	if (args.count("filenames"))
-	    filenames = args["filenames"].as<vector<string>>();
-	else
-	    filenames = {"-"};
-
-	auto key = args["key"].as<string>();
-	optional<int> min;
-	if (args.count("skip"))
-	    min = args["skip"].as<int>();
-
-	optional<int> max;
-	if (args.count("until"))
-	    max = args["until"].as<int>();
-
-	optional<int> size;
-	if (args.count("size"))
-	    size = args["size"].as<int>();
-
-	int subsample = args["subsample"].as<int>();
 	if (subsample < 1)
 	    throw myexception()<<"subsample must be at least 1";
 
-	if (args.count("size") and args.count("until"))
-	    throw myexception()<<"cannot set both arguments 'size' and 'until'.";
-	else if (size)
+	if (size)
 	    max = (min?*min:0) + *size;
 
 	if (min and max and *max < *min)
