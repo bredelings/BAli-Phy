@@ -33,7 +33,6 @@
 #include "util/string/join.hh"
 #include "util/string/convert.hh"
 #include "util/cmdline.hh"
-#include "util/mapping.hh"
 #include "tree/tree-util.hh"
 #include "tree-dist.hh"
 #include "util/rng.hh"
@@ -600,30 +599,12 @@ tree_sample tree_sample_from_all_files(const vector<string>& files, unsigned ski
     return all_trees;
 }
 
-// Match reference taxa to query indices before comparing their split bitsets. NEXUS
-// translation tables may order the same taxa differently; reordering the reconstructed
-// trees preserves both splits and branch lengths when rebuilding the sorted records.
+// Read the full reference sample in query taxon order, preserving splits and branch lengths.
 static tree_sample read_reference(const string& filename, const vector<string>& names)
 {
-    tree_sample reference(filename);
-    if (reference.names() == names) return reference;
-
-    vector<int> mapping;
-    try {
-        mapping = compute_mapping(reference.names(), names);
-    }
-    catch (const bad_mapping<string>&) {
-        throw myexception()<<"Reference trees have different taxa than the query trees.";
-    }
-
-    tree_sample reordered(names);
-    for (int i=0; i<reference.size(); ++i)
-    {
-        auto tree = reference.T(i);
-        tree.standardize(mapping);
-        reordered.add_tree(tree);
-    }
-    return reordered;
+    tree_sample reference(names);
+    reference.load_file(filename);
+    return reference;
 }
 
 int main(int argc,char* argv[]) 
