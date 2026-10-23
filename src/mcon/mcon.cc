@@ -214,6 +214,8 @@ vector<string> short_fields(const vector<string>& fields)
     return fields2;
 }
 
+// Encode scalar types and array positions recursively. Sorting object keys removes insertion
+// order; JSON quoting and ':' delimit keys so their contents cannot imitate shape syntax.
 void write_shape(std::ostream& o, const json::value& j)
 {
     if (j.is_null())
@@ -237,19 +239,15 @@ void write_shape(std::ostream& o, const json::value& j)
     else if (j.is_object())
     {
 	o<<'{';
-	for(auto& [k,v]: j.as_object())
-	{
-	    // escape : as :: to ensure that the final : separator doesn't come FROM the key.
-	    for(int j=0;j<k.size();j++)
-	    {
-		char c = k[j];
-		if (c == ':')
-		    o<<':';
-		o<<c;
-	    }
-	    write_shape(o,v);
-	    o<<',';
-	}
+        vector<string_view> keys;
+        for (const auto& entry: j.as_object()) keys.push_back(entry.key());
+        std::sort(keys.begin(), keys.end());
+        for (auto key: keys)
+        {
+            o<<json::serialize(json::string(key))<<':';
+            write_shape(o, j.as_object().at(key));
+            o<<',';
+        }
 	o<<'}';
     }
     else
@@ -293,7 +291,10 @@ std::vector<vector<int>> get_shapes(const vector<json::object>& samples)
     for(int i=0;i<n_shapes;i++)
 	indices.push_back(i);
 
-    std::sort(indices.begin(), indices.end(), [&](int i, int j) { return samples_for_shape_array[i].size() > samples_for_shape_array[j].size();});
+    // Equal-sized groups keep the order in which their shapes first appeared.
+    std::stable_sort(indices.begin(), indices.end(), [&](int i, int j) {
+        return samples_for_shape_array[i].size() > samples_for_shape_array[j].size();
+    });
 
     vector<vector<int>> results(n_shapes);
     for(int i=0;i<n_shapes;i++)

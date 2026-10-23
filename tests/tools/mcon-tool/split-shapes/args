@@ -1,0 +1,3 @@
+# Split grouping must ignore object order but distinguish key text and array positions.
+# Ordinary TSV tests do not exercise shape encoding; expected files also check stable tie order.
+--split=results/files/part
