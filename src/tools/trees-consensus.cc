@@ -847,7 +847,9 @@ int main(int argc,char* argv[])
 	}
 
 	//-------------- Read in tree distributions --------------//
-	auto tree_dist = read_trees(args);
+	auto tree_dist = read_trees(args["files"].as<vector<string>>(), args["skip"].as<string>(),
+                                    get_arg<int>(args, "until"), args["subsample"].as<int>(),
+                                    get_arg<int>(args, "max"), get_string_list(args, "ignore"));
 
 	const unsigned N = tree_dist.size();
 

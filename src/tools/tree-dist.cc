@@ -23,7 +23,6 @@
 #include "read-trees.hh"
 #include "util/mapping.hh"
 #include "util/string/convert.hh"
-#include "util/cmdline.hh"
 #include "util/range.hh"
 
 extern int log_verbose;
@@ -40,7 +39,6 @@ using std::istream;
 using boost::dynamic_bitset;
 using std::shared_ptr;
 using std::optional;
-using boost::program_options::variables_map;
 
 int cmp(const tree_record& t1, const tree_record& t2)
 {
@@ -424,14 +422,15 @@ void scan_trees(istream& file,int skip,optional<int> last,int subsample,
     scan_trees(file,skip,last,subsample,vector<string>(),op);
 }
 
-tree_sample read_trees(variables_map& args, const vector<string>& leaf_labels)
+// Read each run before percentage burn-in so the shortest run determines a common skip count.
+// Apply thinning afterward, then concatenate with matching taxon indices.
+tree_sample read_trees(const vector<string>& filenames, const string& s, optional<int> last,
+                       int subsample, optional<int> max, const vector<string>& ignore)
 {
     int read_skip = 0;
     optional<int> skip;
     optional<double> skip_fraction;
-    if (args.count("skip"))
     {
-	string s = args["skip"].as<string>();
 	if (not s.empty() and s[s.size()-1] == '%')
 	{
 	    if (auto d = can_be_converted_to<double>(s.substr(0,s.size()-1)))
@@ -455,26 +454,7 @@ tree_sample read_trees(variables_map& args, const vector<string>& leaf_labels)
 	    throw myexception()<<"Argument to '--skip="<<s<<"' is neither an integer nor a percent";
     }
 
-    int subsample=args["subsample"].as<int>();
-
-    optional<int> last;
-    if (args.count("until"))
-	last = args["until"].as<int>();
-
-    optional<int> max;
-    if (args.count("max"))
-	max = args["max"].as<int>();
-
-    // leaf taxa to ignore
-    vector<string> ignore = get_string_list(args, "ignore");
-
-    vector<string> filenames;
-    if (args.count("files"))
-	filenames = args["files"].as<vector<string> >();
-
     tree_sample tree_dist;
-    if (not leaf_labels.empty())
-	tree_dist = tree_sample(leaf_labels);
 
     // Percentage burn-in needs the unthinned run lengths before any selection.
     vector<tree_sample> tree_samples(filenames.size());
@@ -490,10 +470,4 @@ tree_sample read_trees(variables_map& args, const vector<string>& leaf_labels)
 	tree_dist.append_trees(sample);
     
     return tree_dist;
-}
-
-
-tree_sample read_trees(variables_map& args)
-{
-    return read_trees(args,{});
 }

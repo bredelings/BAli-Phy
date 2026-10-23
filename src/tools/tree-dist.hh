@@ -25,7 +25,7 @@
 #include <string>
 #include <iostream>
 #include <map>
-#include <boost/program_options.hpp>
+#include <optional>
 
 #include "partition.hh"
 #include "tree/tree.hh"
@@ -114,6 +114,8 @@ void scan_trees(std::istream&, int skip, std::optional<int> last, int subsample,
 // Apply common percentage burn-in before thinning samples already limited by --until.
 void select_after_burnin(std::vector<tree_sample>&, double fraction, int subsample, std::optional<int> max);
 
-tree_sample read_trees(boost::program_options::variables_map& args);
-tree_sample read_trees(boost::program_options::variables_map& args, const std::vector<std::string>& leaf_labels);
+// Load runs with a common burn-in count, then thin and concatenate in matching taxon order.
+tree_sample read_trees(const std::vector<std::string>& files, const std::string& skip,
+                       std::optional<int> last, int subsample, std::optional<int> max,
+                       const std::vector<std::string>& ignore = {});
 #endif

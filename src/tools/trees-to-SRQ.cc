@@ -132,7 +132,12 @@ int main(int argc,char* argv[])
 
 	int max_points = args["max-points"].as<int>();
 
-	auto tree_dist = read_trees(args);
+	std::optional<int> last;
+	if (args.count("until")) last = args["until"].as<int>();
+	vector<string> files;
+	if (args.count("files")) files = args["files"].as<vector<string>>();
+	auto tree_dist = read_trees(files, args["skip"].as<string>(), last,
+                                    args["subsample"].as<int>(), {});
 
 	const int L = tree_dist.size();
 
