@@ -48,7 +48,8 @@ Compare support for partitions between different files.
 : Number of bootstrap samples.
 
 **--pseudocount** _arg_ (=1)
-: Extra 0/1 to add to bootstrap samples.
+: Add this many absent and present observations per run when estimating support
+  and resampling. A pooled group uses the sum of its runs' pseudocounts.
 
 **--blocksize** _arg_
 : Block size to use in block boostrap.

@@ -102,6 +102,17 @@ public:
 
     int n_samples() const {return tree_dists.size();}
 
+    bool has_pool(int g) const {return n_samples(g) > 1;}
+    int entry_count(int g) const {return n_samples(g) + int(has_pool(g));}
+    int summary_index(int g) const {return has_pool(g) ? n_samples(g) : 0;}
+
+    // Each run contributes one pair of pseudocounts to its pooled summary.
+    // A singleton summary is its run, so it retains the ordinary pseudocount.
+    int effective_pseudocount(int g, int entry, int pseudocount) const
+    {
+        return pseudocount * (has_pool(g) and entry == summary_index(g) ? n_samples(g) : 1);
+    }
+
     const tree_sample& sample(int d,int i) const {return tree_dists[index(d,i)];}
     tree_sample& sample(int d,int i)       {return tree_dists[index(d,i)];}
 
@@ -338,19 +349,14 @@ bool report_sample(std::ostream& o,
 
     vector<int> D(tree_dists.n_dists());
     for(int d=0;d<D.size();d++) {
-	D[d] = tree_dists.n_samples(d);
-	if (D[d] > 1) {
-	    D[d]++;
-	    any_mixing=true;
-	}
+	D[d] = tree_dists.entry_count(d);
+	any_mixing = any_mixing or tree_dists.has_pool(d);
     }
 
     //---------- Basic statistics -------------//
     for(int g=0; g<tree_dists.n_dists(); g++) 
 	for(int d=0; d<D[g] ;d++) {
-	    int pseudo = pseudocount;
-	    if (any_mixing and d == D[g]-1)
-		pseudo *= (D[g]-1);
+	    int pseudo = tree_dists.effective_pseudocount(g, d, pseudocount);
 	    VS[g][d][p].calculate(pseudo, confidence);
 	}
 
@@ -713,9 +719,7 @@ int main(int argc,char* argv[])
 
 	vector<int> D(tree_dists.n_dists());
 	for(int d=0;d<D.size();d++) {
-	    D[d] = tree_dists.n_samples(d);
-	    if (D[d] > 1)
-		D[d]++;
+	    D[d] = tree_dists.entry_count(d);
 	}
 
 	//----------  Skip some fraction of trees, if asked ----------//
@@ -833,7 +837,7 @@ int main(int argc,char* argv[])
 	    }
 
 	    // Analyze the group total
-	    if (D[g] > 1) 
+	    if (tree_dists.has_pool(g)) 
 	    {
 		int T = tree_dists.n_samples(g);
 		VS[g][T].resize(partitions.size());
@@ -862,11 +866,12 @@ int main(int argc,char* argv[])
 		    for(int p=0; p<partitions.size(); p++)
 			VS[g][d][p].distributions.resize(n_samples);
 
+		    const int pseudo = tree_dists.effective_pseudocount(g, d, pseudocount);
 		    for(int s=0; s<n_samples; s++) {
-			vector<int> resample = bootstrap_sample_indices(VS[g][d][0].results.size() + 2*pseudocount, blocksize);
+			vector<int> resample = bootstrap_sample_indices(VS[g][d][0].results.size() + 2*pseudo, blocksize);
 
 			for(int p=0; p<partitions.size(); p++) {
-			    VS[g][d][p].distributions[s] = fraction(resample, VS[g][d][p].results, pseudocount);
+			    VS[g][d][p].distributions[s] = fraction(resample, VS[g][d][p].results, pseudo);
 			}
 		    }
 		}
@@ -923,7 +928,7 @@ int main(int argc,char* argv[])
 		cout<<"ASDSF[min="<<min_support<<"] = "<<p.first<<"     MSDSF = "<<p.second<<endl;
 	    }
 	    index_value<double> worst_Ne;
-	    int T = VS[d].size()-1;
+	    int T = tree_dists.summary_index(d);
 	    for(int p=0;p<partitions.size();p++) {
 		if (VS[d][T][p].Ne)
 		    worst_Ne.check_min(p, *VS[d][T][p].Ne);

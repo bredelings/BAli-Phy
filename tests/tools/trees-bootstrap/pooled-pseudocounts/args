@@ -1,0 +1,3 @@
+# Pooled and singleton estimates must agree with whole-sequence bootstrap intervals.
+# No existing test exercises grouped reports; retire if equivalent shared statistics tests replace it.
+results/files/a results/files/a :: results/files/a --skip=0 --seed=1 --bootstrap --blocksize=10000 --samples=20

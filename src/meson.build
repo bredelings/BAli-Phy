@@ -254,7 +254,7 @@ if host_machine.system() == 'windows' and meson.is_cross_build()
   python_tool_wrapper_args = ['--wrapper'] + windows_test_wrapper
 endif
 
-declarative_tool_tests = ['trees-consensus', 'partitions-supported']
+declarative_tool_tests = ['trees-consensus', 'partitions-supported', 'trees-bootstrap']
 declarative_tool_tests += ['alignment-info', 'alignment-draw', 'character-properties', 'cut-range', 'mcon-tool', 'statreport']
 declarative_tool_tests += ['joint-indels', 'tree-mean-lengths', 'trees-distances', 'summarize-ancestors']
 declarative_tool_tests += ['alignment-cat', 'alignment-translate', 'alignment-find', 'alignment-chop-internal']
