@@ -892,7 +892,7 @@ int main(int argc,char* argv[])
 	    check_supplied_filenames(2,files);
 
 	    tree_sample trees1(files[0],skip,last,subsample,max);
-	    tree_sample trees2(files[1],0,0,-1);
+	    tree_sample trees2(files[1]);
 
 	    for(int i=0;i<trees1.size();i++)
 		cout<<distance(trees1[i],trees2,metric_fn)<<"\n";
@@ -908,8 +908,11 @@ int main(int argc,char* argv[])
 	    check_supplied_filenames(2,files);
       
 	    tree_sample trees1(files[0],skip,last,subsample,max);
-	    tree_sample trees2(files[1],0,0,-1);
+	    tree_sample trees2(files[1]);
       
+	    // Within-reference means exclude self-distances, so their denominator is N-1.
+	    if (trees2.size() < 2)
+		throw myexception()<<"converged: need at least two reference trees.";
 	    matrix<double> D2 = distances(trees2,metric_fn);
 	    valarray<double> distances(0.0, trees2.size());
 	    for(int i=0;i<D2.size1();i++)

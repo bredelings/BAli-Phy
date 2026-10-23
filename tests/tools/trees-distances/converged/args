@@ -1,0 +1,3 @@
+# Protect reference loading and the distance-based stopping path, absent from matrix tests.
+# Retire if these analyses are removed or exercised by broader full-program tests.
+converged results/files/query results/files/ref
