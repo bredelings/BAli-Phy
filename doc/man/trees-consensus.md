@@ -76,9 +76,6 @@ Find consensus trees and supported splits.
 **--sub-partitions**
 : Search for partial splits.
 
-**--depth** _arg_ (=1)
-: Depth at which to look for partial splits.
-
 **--rooting** _arg_ (=0.9)
 : Threshold in search for partial splits.
 

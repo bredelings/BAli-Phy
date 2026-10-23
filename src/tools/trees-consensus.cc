@@ -720,7 +720,7 @@ int main(int argc,char* argv[])
         vector<string> files;
         string skip = "10%", ignore;
         std::optional<int> last, max;
-        int subsample = 1, map_trees = 1, depth = 1;
+        int subsample = 1, map_trees = 1;
         std::optional<unsigned long> seed;
         bool verbose = false, sub_partitions = false;
         double min_support = 0.25, min_rooting = 0.9, report_ratio = 1.5;
@@ -756,8 +756,6 @@ int main(int argc,char* argv[])
                        "Write #sub-branches versus LOD to file <arg>.")
             ->group("Reporting options");
         app.add_flag("--sub-partitions", sub_partitions, "Search for partial splits.")->group("Search options");
-        app.add_option("--depth", depth, "Depth at which to look for partial splits.")
-            ->capture_default_str()->group("Search options");
         app.add_option("--rooting", min_rooting, "Threshold in search for partial splits.")
             ->capture_default_str()->group("Search options");
         app.add_option("--odds-ratio", report_ratio,
@@ -834,7 +832,7 @@ int main(int argc,char* argv[])
 
 	if (show_sub)
 	{
-	    all_partitions = get_Ml_sub_partitions_and_counts(tree_dist,min_support, ~ignore_mask,min_rooting,depth);
+	    all_partitions = get_Ml_sub_partitions_and_counts(tree_dist,min_support, ~ignore_mask,min_rooting);
 	    //      std::cerr<<"n_sub_partitions = "<<all_partitions.size()<<"\n";
 	}
 	else

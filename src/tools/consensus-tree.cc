@@ -349,7 +349,7 @@ vector<int> match(const vector<pair<partition,unsigned> >& full_splits,
 
 vector<pair<partition,unsigned> > 
 get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynamic_bitset<>& mask,
-				 double min_rooting,int depth) 
+				 double min_rooting) 
 {
     // get list of branches to consider cutting
     //   FIXME - consider 4n-12 most probable partitions, here?
@@ -377,7 +377,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
     {
 	vector<pair<partition,unsigned> > full_splits = splits;
 
-	if (log_verbose) cerr<<"iteration: "<<iterations<<"   depth: "<<depth<<"   new_masks: "<<new_masks.size()<<endl;
+	if (log_verbose) cerr<<"iteration: "<<iterations<<"   new_masks: "<<new_masks.size()<<endl;
 	list<dynamic_bitset<> > new_good_masks;
 	list<dynamic_bitset<> > new_unit_masks;
 
@@ -451,8 +451,6 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 	// 3. unit_masks += new_unit_masks
 	add_unique(unit_masks, {}, new_unit_masks);
 
-	if (depth == 0) break;
-
 	// 4. good_masks += (good_masks + new_good_masks) * new_good_masks
 	// Rationale: pull out every combination of masks known to be "good"
 	new_masks = new_unit_masks;
@@ -470,18 +468,18 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 }
 
 vector<pair<partition,unsigned> > 
-get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,double min_rooting,int depth) 
+get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,double min_rooting) 
 {
     dynamic_bitset<> mask(sample.names().size());
     mask.flip();
-    return get_Ml_sub_partitions_and_counts(sample,l,mask,min_rooting,depth);
+    return get_Ml_sub_partitions_and_counts(sample,l,mask,min_rooting);
   
 }
 
 vector<partition> 
-get_Ml_sub_partitions(const tree_sample& sample,double l,double min_rooting,int depth) 
+get_Ml_sub_partitions(const tree_sample& sample,double l,double min_rooting) 
 {
-    return remove_counts(get_Ml_sub_partitions_and_counts(sample,l,min_rooting,depth));
+    return remove_counts(get_Ml_sub_partitions_and_counts(sample,l,min_rooting));
 }
 
 

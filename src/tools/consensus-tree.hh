@@ -54,13 +54,13 @@ get_Ml_partitions_and_counts(const tree_sample& sample,double l);
 std::map<boost::dynamic_bitset<>,count_and_length>
 get_partition_counts_and_lengths(const tree_sample& sample);
 
-std::vector<partition> get_Ml_sub_partitions(const tree_sample& sample,double l,double,int search=1);
+std::vector<partition> get_Ml_sub_partitions(const tree_sample& sample,double l,double);
 
 std::vector<std::pair<partition,unsigned> >
-get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,double,int search=1);
+get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,double);
 
 std::vector<std::pair<partition,unsigned> >
 get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const boost::dynamic_bitset<>&,
-				 double,int search=1);
+				 double);
 
 #endif
