@@ -133,7 +133,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, autocorrelation, diameter, compare, closest, convergence, converged.")
 	("metric", value<string>()->default_value("topology"),"Tree distance: topology, branch, internal-branch.")
 	("remove-duplicates","[matrix]: disallow zero distances  between points.")
-	("max-lag",value<int>(),"[autocorrelation]: max lag to consider.")
+	("max-lag",value<int>(),"[autocorrelation]: largest lag to include (at most half the sample size).")
 	("CI",value<double>()->default_value(0.95,"0.95"),"Confidence interval size.")
 	("converged",value<double>()->default_value(0.05,"0.05"),"Comma-separated quantiles of distance required for converged? (smaller is more strict).")
 	("mean", "Show mean and standard deviation")
@@ -774,17 +774,15 @@ int main(int argc,char* argv[])
 
 	    matrix<double> D = distances(trees,metric_fn);
       
-	    // set the window size
-	    int max_lag = int( double(trees.size()/10.0 + 1.0 ) );
+	    // Preserve the default lag range, but an explicit option names the largest lag,
+	    // inclusive. The half-sample cap leaves enough pairs to average at each lag.
+	    const int N = trees.size();
+	    int largest_lag = std::min(int(N/10.0 + 1), N/2) - 1;
 	    if (args.count("max-lag"))
-		max_lag = std::min(max_lag,args["max-lag"].as<int>());
-      
-	    // bound the max_lag
-	    if (max_lag >= trees.size()/2)
-		max_lag = trees.size()/2;
+		largest_lag = std::min({args["max-lag"].as<int>(), N/2, N-1});
 
 	    // write out the average distances
-	    valarray<double> distances(0.0,max_lag);
+	    valarray<double> distances(0.0,std::max(0, largest_lag+1));
 	    for(int d=0;d<distances.size();d++) {
 		double dd = 0;
 		for(int i=0;i+d<trees.size();i++)

@@ -1,0 +1,3 @@
+# An explicit lag may exceed the default; matrix tests do not check the averaging range.
+# Retire if a shared lag-statistics test covers this behavior.
+autocorrelation - --max-lag=6

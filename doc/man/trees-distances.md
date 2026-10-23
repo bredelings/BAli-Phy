@@ -50,7 +50,7 @@ the retained first sample, not original MCMC iteration numbers.
 : \[matrix\]: disallow zero distances  between points.
 
 **--max-lag** _arg_
-: \[autocorrelation\]: max lag to consider.
+: \[autocorrelation\]: Largest lag to include, counting lag zero, capped at half the sample size.
 
 **--CI** _arg_ (=0.95)
 : Confidence interval size.
