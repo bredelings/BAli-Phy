@@ -286,19 +286,19 @@ int tree_sample::load_file(istream& file, int skip, optional<int> last, int subs
 
     if (not leaf_names.size())
 	leaf_names = trees_in->names();
-    else 
+    else if (leaf_names != trees_in->names())
     {
-	vector<string> leaf_names2 = trees_in->names();
-	if (leaf_names2.size() != leaf_names.size())
-	    throw myexception()<<"New trees with "<<leaf_names2.size()<<" leaves conflict with current trees with "<<leaf_names.size()<<" leaves.";
+        if (trees_in->names().size() != leaf_names.size())
+            throw myexception()<<"New trees with "<<trees_in->names().size()
+                               <<" leaves conflict with current trees with "<<leaf_names.size()<<" leaves.";
 
-	try {
-	    compute_mapping(leaf_names, leaf_names2);
-	}
-	catch (bad_mapping<string>& b) {
-	    throw myexception()<<"New trees are missing leaf '"<<b.missing<<"'";
-	}
-
+        // Match leaf indices before constructing records so splits and lengths keep their taxa.
+        try {
+            trees_in = shared_ptr<reader_t>(new ReorderLeaves(leaf_names, *trees_in));
+        }
+        catch (const bad_mapping<string>& b) {
+            throw myexception()<<"New trees contain unexpected leaf '"<<b.missing<<"'";
+        }
     }
 
     //------------------- Process Trees --------------------//

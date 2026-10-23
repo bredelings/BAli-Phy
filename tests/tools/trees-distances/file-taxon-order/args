@@ -1,0 +1,3 @@
+# Protect taxon and branch-length identity across files; single-file distances miss this path.
+# Retire when shared reader tests exercise equivalent trees with different translation orders.
+matrix results/files/a results/files/b --metric=branch
