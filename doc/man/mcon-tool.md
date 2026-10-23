@@ -19,10 +19,10 @@ Convert MCON files
 : produce help message
 
 **--unnest**
-: file with alignment to annotate
+: Flatten nested field names.
 
 **--atomize**
-: file with tree
+: Expand structured values into scalar fields.
 
 **--split** _arg_
 : split and write to filenames with prefix=arg

@@ -2,6 +2,7 @@
 
 #include <boost/program_options.hpp>
 #include <fstream>
+#include <stdexcept>
 #include <filesystem>
 
 namespace po = boost::program_options;
@@ -23,8 +24,8 @@ po::variables_map parse_cmd_line(int argc,char* argv[])
     options_description visible("Allowed options");
     visible.add_options()
 	("help,h", "produce help message")
-	("unnest", "file with alignment to annotate")
-	("atomize","file with tree")
+	("unnest", "flatten nested field names")
+	("atomize","expand structured values into scalar fields")
 	("split",value<string>(),"split and write to filenames with prefix=arg")
 	("drop",value<vector<string>>()->multitoken(),"paths to drop")
 	("add-time-field,T",value<string>(),"add field indicating the record number")
@@ -92,7 +93,10 @@ int main(int argc,char* argv[])
 	if (args.count("atomize"))
 	    logfile.atomize();
 
-	auto output = args.at("output").as<string>();
+        auto output = args.at("output").as<string>();
+        bool output_mcon = output == "mcon" || output == "MCON";
+        if (!output_mcon && output != "tsv" && output != "TSV")
+            throw std::runtime_error("Unrecognized output format '"+output+"'");
 
 	if (args.count("split"))
 	{
@@ -105,34 +109,26 @@ int main(int argc,char* argv[])
 
 		auto tmp_filename = split_filename;
 		tmp_filename += "." + std::to_string(i+1);
-		if (output == "mcon" or output=="MCON")
-		{
-		    tmp_filename += ".json";
-		    std::ofstream outfile(tmp_filename);
-		    logs[i].dump_MCON(outfile);
-		    outfile.close();
-		}
-		else if (output == "tsv" or output == "TSV")
-		{
-		    tmp_filename += ".tsv";
-		    std::ofstream outfile(tmp_filename);
-		    logs[i].dump_TSV(outfile);
-		    outfile.close();
-		}
+                tmp_filename += output_mcon ? ".json" : ".tsv";
+                std::ofstream outfile(tmp_filename);
+                if (!outfile)
+                    throw std::runtime_error("Cannot open split output '"+tmp_filename.string()+"'");
+                if (output_mcon)
+                    logs[i].dump_MCON(outfile);
+                else
+                    logs[i].dump_TSV(outfile);
+                outfile.close();
+                if (!outfile)
+                    throw std::runtime_error("Error writing split output '"+tmp_filename.string()+"'");
 	    }
 	}
 
 	if (args.count("add-time-field"))
 	    logfile.add_time_field(args["add-time-field"].as<string>());
-	if (output == "mcon" or output == "MCON")
-	    logfile.dump_MCON(std::cout);
-	else if (output == "tsv" or output == "TSV")
-	    logfile.dump_TSV(std::cout);
-	else
-	{
-	    std::cerr<<"Error: Unrecognized output format '"<<output<<"'"<<std::endl;
-	    exit(1);
-	}
+        if (output_mcon)
+            logfile.dump_MCON(std::cout);
+        else
+            logfile.dump_TSV(std::cout);
     }
     catch (std::exception& e) {
 	std::cerr<<"mcon-tool: Error! "<<e.what()<<std::endl;
