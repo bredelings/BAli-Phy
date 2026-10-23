@@ -336,22 +336,31 @@ int tree_sample::append_trees(const tree_sample& trees)
 {
     if (not leaf_names.size())
 	leaf_names = trees.names();
-    else 
+    if (leaf_names == trees.names())
+    {
+	for (int i=0;i<trees.size();i++)
+	    add_tree(trees[i]);
+    }
+    else
     {
 	if (trees.names().size() != leaf_names.size())
 	    throw myexception()<<"New trees with "<<trees.names().size()<<" leaves conflict with current trees with "<<leaf_names.size()<<" leaves.";
 
+	vector<int> mapping;
 	try {
-	    compute_mapping(leaf_names, trees.names());
+	    mapping = compute_mapping(trees.names(), leaf_names);
 	}
 	catch (bad_mapping<string>& b) {
-	    throw myexception()<<"New trees are missing leaf '"<<b.missing<<"'";
+	    throw myexception()<<"New trees contain unexpected leaf '"<<b.missing<<"'";
 	}
 
-    }
-
-    for(int i=0;i<trees.size();i++) {
-	add_tree(trees[i]);
+	// Rebuild records so reordered splits retain their corresponding branch lengths.
+	for (int i=0;i<trees.size();i++)
+	{
+	    auto tree = trees.T(i);
+	    tree.standardize(mapping);
+	    add_tree(tree);
+	}
     }
 
     return trees.size();
