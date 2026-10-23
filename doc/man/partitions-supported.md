@@ -8,7 +8,7 @@
 
 # SYNOPSIS
 
-**partitions-supported** _partitions-file_ _trees-file_ [OPTIONS]
+**partitions-supported** _partitions-file_ [_trees-file_] [OPTIONS]
 
 # DESCRIPTION
 

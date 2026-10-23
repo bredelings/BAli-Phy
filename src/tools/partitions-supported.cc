@@ -31,7 +31,8 @@
 #include <fstream>
 #include <sstream>
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
+#include <optional>
 
 #include "tree/sequencetree.hh"
 #include "util/set.hh"
@@ -41,8 +42,6 @@
 
 extern int log_verbose;
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 using std::cin;
 using std::cout;
@@ -59,78 +58,11 @@ using namespace statistics;
 // What if everything in 'split' is true, but 1 taxa?
 //  These are true by definition...
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
 
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-	("predicates",value<string>(),"predicates to examine")
-	("file",value<string>(),"tree samples to examine");
 
-    options_description input("Input options");
-    input.add_options()
-	("help,h", "produce help message")
-	("skip",value<unsigned>()->default_value(0),"Number of trees to skip.")
-	("until",value<unsigned>(),"Read until this number of trees.")
-	("max",value<unsigned>(),"Thin down to this number of trees.")
-	("subsample",value<unsigned>(),"Factor by which to sub-sample.")
-	("verbose","Output more log messages on stderr.")
-	;
-  
-    options_description reporting("Reporting options");
-    reporting.add_options()
-	("not,n", "invert the results")
-	("below,b", value<double>(),"only report partitions with PP < arg")
-	("above,a",value<double>(), "only report partitions with PP > arg")
-	;
-  
-    options_description all("All options");
-    all.add(invisible).add(input).add(reporting);
-
-    // positional options
-    positional_options_description p;
-    p.add("predicates", 1);
-    p.add("file", 2);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Select only partitions with support in the specified range.\n\n";
-	cout<<"Usage: partitions-supported <partitions-file> <trees-file> [OPTIONS]\n\n";
-	cout<<input<<reporting<<"\n";
-	exit(0);
-    }
-
-    if (not args.count("predicates"))
-	throw myexception()<<"No predicates supplied.";
-
-    if (args.count("verbose")) log_verbose = 1;
-
-    return args;
-}
-
-tree_sample load_tree_file(const variables_map& args, const string& filename)
+// Load the selected trees from a file or stdin, keeping the existing selection order.
+tree_sample load_tree_file(const string& filename, int skip, optional<int> last, int subsample, optional<int> max)
 {
-    int skip = args["skip"].as<unsigned>();
-
-    optional<int> max;
-    if (args.count("max"))
-	max = args["max"].as<unsigned>();
-
-    optional<int> last;
-    if (args.count("until"))
-	last = args["until"].as<unsigned>();
-
-    int subsample=1;
-    if (args.count("subsample"))
-	subsample = args["subsample"].as<unsigned>();
-
     if (filename == "-") {
 	if (log_verbose) cerr<<"partitions-supported: Loading trees from STDIN...\n";
 	return tree_sample(cin,skip,last,subsample,max);
@@ -150,25 +82,41 @@ int main(int argc,char* argv[])
 	cout.setf(ios::fixed);
 
 	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
-
-	bool flip = false;
-	if (args.count("not")) flip = true;
+        CLI::App app{"Select partitions with support in the specified range.", "partitions-supported"};
+        app.usage("Usage: partitions-supported <partitions-file> [trees-file] [OPTIONS]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string predicates_file, filename = "-";
+        unsigned skip = 0, subsample = 1;
+        optional<unsigned> last, max;
+        optional<double> below, above;
+        bool flip = false, verbose = false;
+        app.add_option("--predicates,PREDICATES", predicates_file, "predicates to examine")->required();
+        app.add_option("--file,FILE", filename, "tree samples to examine")->capture_default_str();
+        app.add_option("--skip", skip, "Number of trees to skip.")->capture_default_str()->group("Input options");
+        app.add_option("--until", last, "Read until this number of trees.")->group("Input options");
+        app.add_option("--max", max, "Thin down to this number of trees.")->group("Input options");
+        app.add_option("--subsample", subsample, "Factor by which to sub-sample.")
+            ->capture_default_str()->group("Input options");
+        app.add_flag("--verbose", verbose, "Output more log messages on stderr.")->group("Input options");
+        app.add_flag("-n,--not", flip, "invert the results")->group("Reporting options");
+        app.add_option("-b,--below", below, "only report partitions with PP < arg")->group("Reporting options");
+        app.add_option("-a,--above", above, "only report partitions with PP > arg")->group("Reporting options");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        if (verbose) log_verbose = 1;
 
 	//-------------- Read in tree distribution --------------//
-	string filename = "-";
-	if (args.count("file"))
-	    filename = args["file"].as<string>();
-
-	tree_sample trees = load_tree_file(args,filename);
-
-	//--------- compute upper and lower bounds -----------------//
-	optional<double> below, above;
-	if (args.count("below")) below = args["below"].as<double>();
-	if (args.count("above")) above = args["above"].as<double>();
+	tree_sample trees = load_tree_file(filename, skip, last, subsample, max);
 
 	//----------- Load Partitions ---------------//
-	auto predicates = load_partitions(args["predicates"].as<string>());
+	auto predicates = load_partitions(predicates_file);
 
 	predicates = remove_duplicates(predicates);
 
