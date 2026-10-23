@@ -28,6 +28,8 @@
 
 #include <CLI/CLI.hpp>
 #include <optional>
+#include <cstdint>
+#include <limits>
 
 using std::string;
 using std::vector;
@@ -97,7 +99,7 @@ int main(int argc,char* argv[])
         app.add_option("--skip", min, "minimum key value to retain (inclusive)");
         auto until_option = app.add_option("--until", max, "maximum key value to retain (inclusive)");
         app.add_option("--subsample", subsample, "keep only every NUM eligible samples")->capture_default_str();
-        app.add_option("--size", size, "maximum number of samples to use")
+        app.add_option("--size", size, "Key-value span: retain up to skip + size, inclusive (skip defaults to zero).")
             ->excludes(until_option);
         app.add_flag("--verbose", verbose, "Output more log messages on stderr.");
         try
@@ -116,7 +118,12 @@ int main(int argc,char* argv[])
 	    throw myexception()<<"subsample must be at least 1";
 
 	if (size)
-	    max = (min?*min:0) + *size;
+        {
+            const auto endpoint = std::int64_t(min.value_or(0)) + *size;
+            if (endpoint < std::numeric_limits<int>::min() || endpoint > std::numeric_limits<int>::max())
+                throw myexception()<<"skip + size is outside the supported integer range";
+            max = static_cast<int>(endpoint);
+        }
 
 	if (min and max and *max < *min)
 	    throw myexception()<<"error: maximum value ("<<*max<<") < minimum value ("<<*min<<")";

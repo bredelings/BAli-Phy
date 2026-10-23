@@ -28,7 +28,9 @@ Select lines from multiple input files based on lines containing `key = value`.
 : Maximum key value to retain, inclusive.
 
 **--size** _arg_
-: maximum number of samples to use
+: Key-value span to retain. The inclusive upper bound is _skip_ + _size_, using zero
+  when **--skip** is omitted. This limits the range of key values, not the number of
+  samples. Cannot be combined with **--until**.
 
 **--verbose**
 : Output more log messages on stderr.
