@@ -38,76 +38,26 @@
 #include "util/math/logsum.hh"
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
+#include <optional>
 #include <boost/dynamic_bitset.hpp>
 
 extern int log_verbose;
 
 using namespace std;
 
-namespace po = boost::program_options;
-using po::variables_map;
-
 using boost::dynamic_bitset;
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-	("filenames", value<vector<string> >()->composing(),"Filenames to analyze ('-' for STDIN')")
-	;
-
-    options_description visible("All options");
-    visible.add_options()
-	("help,h", "Produce help message.")
-	("verbose,V","Output more log messages on stderr.")
-
-	("skip,s",value<string>()->default_value("10%"),"Number of initial lines to skip.")
-	("subsample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
-	("until,u",value<int>(),"Read up to this iteration.")
-	("ignore,I", value<vector<string> >()->composing(),"Do not analyze these fields.")
-	("select,S", value<vector<string> >()->composing(),"Analyze only these fields.")
-        ("condition", value<string>(), "Summarize samples matching key=value, without time-series diagnostics.")
-
-	("individual,i","Show results for individual files separately also.")
-	("truth",value<double>(),"True value")
-
-	("min",value<int>(),"Required minimum number of lines to read.")
-	("mean", "Show mean and standard deviation.")
-	("mode", "Show mode (with precision)")
-	("median", "Show median and confidence level.")
-
-	("confidence",value<string>()->default_value("0.95"),"Confidence interval levels (colon-separated).")
-	("BCI", value<string>()->default_value("HPD"),"Type of Bayesian Credible Interval (BCI): HPD or central")
-	("precision,p", value<unsigned>()->default_value(4),"Number of significant figures.")
-	;
-
-    options_description all("All options");
-    all.add(invisible).add(visible);
-
-    // positional options
-    positional_options_description p;
-    p.add("filenames", -1);
-
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    notify(args);
-
-    if (args.count("help")) {
-	cout<<"Compute summary statistics for tab-delimited data files.\n\n";
-	cout<<"Usage: statreport [OPTIONS] file1 [file2 file3 ... ] \n\n";
-	cout<<visible<<"\n";
-	cout<<"Default: Report the median and 95% credible interval for each column.\n\n";
-	exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = 1;
-
-    return args;
+namespace
+{
+    // Settings shared by the ordinary and conditioned summary printers.
+    struct SummaryOptions
+    {
+        bool mean = false, median = false, mode = false, individual = false;
+        optional<double> truth;
+        string confidence = "0.95", BCI = "HPD";
+        unsigned precision = 4;
+    };
 }
 
 bool constant(const vector<double>& values)
@@ -362,17 +312,17 @@ void show_mode(const string& name, const vector<stats_table>& /*tables*/, int /*
 const double compare_level=0.8;
 
 
-void show_median(variables_map& args, const string& name, const vector<stats_table>& tables, int index, const vector<double>& total,
-		 bool show_individual, bool show_summary, double& sum_CI, double& total_CI,
+void show_median(const SummaryOptions& options, const string& name, const vector<stats_table>& tables, int index,
+                 const vector<double>& total, bool show_individual, bool show_summary, double& sum_CI, double& total_CI,
 		 double& sum_fraction_contained)
 {
     using namespace statistics;
 
     // Print out median and confidence interval
-    vector<double> Ps = convertTo<double>(split(args["confidence"].as<string>(),':'));
+    vector<double> Ps = convertTo<double>(split(options.confidence,':'));
     sort(Ps.begin(), Ps.end());
   
-    bool HPD = (args["BCI"].as<string>() == "HPD");
+    bool HPD = (options.BCI == "HPD");
 
     if (tables.size() > 1)
 	for(int i=0;i<tables.size();i++) {
@@ -430,7 +380,7 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
 	if (i==0)
 	{
 	    std::ostringstream o;
-	    o.precision(args["precision"].as<unsigned>());
+	    o.precision(options.precision);
 	    if (show_individual)
 		o<<"   "<<name<<"     ~ "<<median(values);
 	    else
@@ -450,9 +400,10 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
     }
 }
 
-void show_error(variables_map& args, const string& /*name*/, const vector<stats_table>& /*tables*/, int /*index*/, const vector<double>& total)
+void show_error(const SummaryOptions& options, const string& /*name*/, const vector<stats_table>& /*tables*/,
+                int /*index*/, const vector<double>& total)
 {
-    double truth = args["truth"].as<double>();
+    double truth = *options.truth;
 
     using namespace statistics;
 
@@ -522,14 +473,14 @@ double multi_chain_autocorrelation_time(const vector<stats_table>& tables, int i
     return 1.0 + 2.0*covariance_sum/variance;
 }
 
-var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int index,
+var_stats show_stats(const SummaryOptions& options, const vector<stats_table>& tables, int index,
 		     const vector<vector<int> >& burnin, const vector<unsigned>& sample_counts, int subsample)
 {
     const string& name = tables[0].names()[index];
 
     using namespace statistics;
 
-    bool show_individual = (args.count("individual")>0) and (tables.size() >1);
+    bool show_individual = options.individual and (tables.size() >1);
 
     vector<double> total;
     for(int i=0;i<tables.size();i++)
@@ -573,22 +524,22 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int
 	}
 
     // Print out mean and standard deviation
-    if (args.count("mode"))
+    if (options.mode)
 	show_mode(name, tables, index, total, show_individual);
 
-    if (args.count("mean"))
+    if (options.mean)
 	show_mean(name, tables, index, total, show_individual);
 
     // Print out median and confidence interval
     double sum_CI=0;
     double total_CI=0;
     double sum_fraction_contained=0;
-    bool show_median_summary = args.count("median") or not args.count("mean");
-    show_median(args, name, tables, index, total, show_individual, show_median_summary, sum_CI, total_CI,
+    bool show_median_summary = options.median or not options.mean;
+    show_median(options, name, tables, index, total, show_individual, show_median_summary, sum_CI, total_CI,
 		sum_fraction_contained);
 
-    if (args.count("truth"))
-	show_error(args, name, tables, index, total);
+    if (options.truth)
+	show_error(options, name, tables, index, total);
 
     // Print out autocorrelation times, Ne, and minimum burn-in
     int maximum_burnin = 0;
@@ -655,7 +606,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int
 
 // Conditional draws retain their descriptive distribution, but not a regularly sampled timeline.
 // Reuse the ordinary summary functions with no chain diagnostics; never pass them an empty sample.
-void show_conditioned_stats(variables_map& args, const string& name, const vector<double>& values)
+void show_conditioned_stats(const SummaryOptions& options, const string& name, const vector<double>& values)
 {
     if (values.empty())
     {
@@ -669,12 +620,12 @@ void show_conditioned_stats(variables_map& args, const string& name, const vecto
         cout<<"   "<<name<<" = "<<values[0]<<"\n";
         return;
     }
-    if (args.count("mode")) show_mode(name, {}, 0, values, false);
-    if (args.count("mean")) show_mean(name, {}, 0, values, false);
+    if (options.mode) show_mode(name, {}, 0, values, false);
+    if (options.mean) show_mean(name, {}, 0, values, false);
     double sum_CI = 0, total_CI = 0, fraction = 0;
-    show_median(args, name, {}, 0, values, false, args.count("median") or not args.count("mean"),
+    show_median(options, name, {}, 0, values, false, options.median or not options.mean,
                 sum_CI, total_CI, fraction);
-    if (args.count("truth")) show_error(args, name, {}, 0, values);
+    if (options.truth) show_error(options, name, {}, 0, values);
 }
 
 /// FIXME - reduce the numbers of quantile/median/confidence_interval calls?
@@ -690,33 +641,55 @@ int main(int argc,char* argv[])
     std::ios::sync_with_stdio(false);
 
     try {
-	//----------- Parse command line  -----------//
-	variables_map args = parse_cmd_line(argc,argv);
-
-	cout.precision(args["precision"].as<unsigned>());
-
-	int subsample=args["subsample"].as<int>();
-
-	int last = -1;
-	if (args.count("until"))
-	    last = args["until"].as<int>();
-
-	int min_rows = -1;
-	if (args.count("min"))
-	    min_rows = args["min"].as<int>();
-    
-	vector<string> ignore;
-	if (args.count("ignore"))
-	    ignore = args["ignore"].as<vector<string> >();
-
-	vector<string> select;
-	if (args.count("select"))
-	    select = args["select"].as<vector<string> >();
+        CLI::App app{"Summarize numeric samples from MCMC logs.", "statreport"};
+        app.usage("Usage: statreport [OPTIONS] FILE [FILE ...]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        app.footer("Default: Report the median and 95% credible interval for each column.");
+        SummaryOptions options;
+        vector<string> filenames, ignore, select;
+        string skip_text = "10%";
+        optional<string> condition_expression;
+        int subsample = 1, last = -1, min_rows = -1;
+        bool verbose = false;
+        app.add_option("--filenames,FILE", filenames, "Filenames to analyze ('-' for STDIN)")->required();
+        app.add_flag("-V,--verbose", verbose, "Output more log messages on stderr.");
+        app.add_option("-s,--skip", skip_text, "Number or percentage of initial samples to skip.")->capture_default_str();
+        app.add_option("-x,--subsample", subsample, "Factor by which to sub-sample.")->capture_default_str();
+        app.add_option("-u,--until", last, "Read up to this iteration.");
+        // Each occurrence takes one field specification so that following filenames remain positional.
+        app.add_option("-I,--ignore", ignore, "Do not analyze these fields.")
+            ->type_name("FIELD")->type_size(1)->expected(1)->allow_extra_args(false)->take_all();
+        app.add_option("-S,--select", select, "Analyze only these fields.")
+            ->type_name("FIELD")->type_size(1)->expected(1)->allow_extra_args(false)->take_all();
+        app.add_option("--condition", condition_expression,
+                       "Summarize samples matching key=value, without time-series diagnostics.");
+        app.add_flag("-i,--individual", options.individual, "Show results for individual files separately also.");
+        app.add_option("--truth", options.truth, "True value");
+        app.add_option("--min", min_rows, "Required minimum number of lines to read.");
+        app.add_flag("--mean", options.mean, "Show mean and standard deviation.");
+        app.add_flag("--mode", options.mode, "Show mode (with precision)");
+        app.add_flag("--median", options.median, "Show median and confidence level.");
+        app.add_option("--confidence", options.confidence, "Confidence interval levels (colon-separated).")
+            ->capture_default_str();
+        app.add_option("--BCI", options.BCI, "Type of Bayesian Credible Interval (BCI): HPD or central")
+            ->capture_default_str();
+        app.add_option("-p,--precision", options.precision, "Number of significant figures.")->capture_default_str();
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        if (verbose) log_verbose = 1;
+        cout.precision(options.precision);
 
         optional<pair<string, double>> condition;
-        if (args.count("condition"))
+        if (condition_expression)
         {
-            const auto& expression = args["condition"].as<string>();
+            const auto& expression = *condition_expression;
             auto equals = expression.rfind('=');
             if (equals == string::npos or equals == 0)
                 throw myexception()<<"Expected --condition key=value.";
@@ -728,13 +701,8 @@ int main(int argc,char* argv[])
 
 	//------------ Read Data ---------------//
 	vector<stats_table> tables;
-	vector<string> filenames;
         int condition_output_count = -1;
 
-	if (not args.count("filenames"))
-	    throw myexception()<<"No filenames specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
-
-	filenames = args["filenames"].as< vector<string> >();
 	for(auto& filename: filenames)
         {
             istream_or_ifstream f(std::cin, "-", filename, "statistics_file");
@@ -807,7 +775,7 @@ int main(int argc,char* argv[])
 	//------------- Determine burnin ---------------//
 	int skip = 0;
 	{
-	    string s = args["skip"].as<string>();
+	    const string& s = skip_text;
 	    if (auto arg_skip = can_be_converted_to<int>(s))
             {
                 if (*arg_skip < 0) throw myexception()<<"skip must be nonnegative";
@@ -856,7 +824,7 @@ int main(int argc,char* argv[])
         if (condition)
         {
             int condition_index = tables[0].find_column_index(condition->first);
-            cout<<"Condition: "<<args["condition"].as<string>()<<"\n";
+            cout<<"Condition: "<<*condition_expression<<"\n";
             int total_count = 0;
             for(int chain=0; chain<tables.size(); chain++)
             {
@@ -882,10 +850,10 @@ int main(int argc,char* argv[])
                 {
                     const auto& values = tables[chain].column(col);
                     pooled.insert(pooled.end(), values.begin(), values.end());
-                    if (args.count("individual"))
-                        show_conditioned_stats(args, field_names[col]+" ["+to_string(chain+1)+"]", values);
+                    if (options.individual)
+                        show_conditioned_stats(options, field_names[col]+" ["+to_string(chain+1)+"]", values);
                 }
-                show_conditioned_stats(args, field_names[col], pooled);
+                show_conditioned_stats(options, field_names[col], pooled);
                 cout<<"\n";
             }
             return 0;
@@ -901,7 +869,7 @@ int main(int argc,char* argv[])
 	vector<string> decreasing_names;
 	for(int i=0;i<n_columns;i++) 
 	{
-	    var_stats S = show_stats(args, tables, i, burnin, sample_counts, subsample);
+	    var_stats S = show_stats(options, tables, i, burnin, sample_counts, subsample);
 	    cout<<endl;
 
 	    if (not S.ignored) {
