@@ -1,18 +1,32 @@
-% tree-to-srq(1)
+% trees-to-SRQ(1)
 % Benjamin Redelings
 % Feb 2018
 
 # NAME
 
-**tree-to-srq** - Generate Scaled Regeneration Quantile (SRQ) plot
+**trees-to-SRQ** - Generate Scaled Regeneration Quantile (SRQ) plot
 
 # SYNOPSIS
 
-**tree-to-srq** _predicates-file_ _sampled-trees_ [_sampled-trees_ ...]
+**trees-to-SRQ** _predicates-file_ _sampled-trees_ [_sampled-trees_ ...]
 
 # DESCRIPTION
 
-Generate Scaled Regeneration Quantile (SRQ) plot
+Generate coordinates for Scaled Regeneration Quantile (SRQ) plots, showing when a sampled
+sequence of trees returns to an event described in the predicates file. Each curve is written
+as two columns, with a blank line between curves.
+
+In **SRQ** mode, the horizontal axis numbers the returns to the event and the vertical axis
+gives their positions in the tree sample. The curve also includes the start and end of the
+sample. In **sum** mode, the horizontal axis is the number of trees examined and the vertical
+axis counts how many satisfy the event. By default, each axis is divided by its final value;
+a cumulative count of zero remains zero throughout the curve.
+
+Point selection uses these normalized coordinates even when output scaling is disabled.
+**--max-points** controls the approximate density of points, rather than imposing a strict
+limit. The first and last points are always retained. In **values** mode, the program instead
+writes one row per sampled tree, with a column of zeros and ones for each predicate;
+point selection and axis scaling do not apply.
 
 # ALLOWED OPTIONS:
 **-h**, **--help**
@@ -44,10 +58,10 @@ Generate Scaled Regeneration Quantile (SRQ) plot
 : consider the inverse of each event instead
 
 **--no-scale-x**
-: don't scale X
+: Show the horizontal axis in counts rather than as a fraction of its final value.
 
 **--no-scale-y**
-: don't scale Y
+: Show the vertical axis in counts rather than as a fraction of its final value.
 
 
 # REPORTING BUGS:

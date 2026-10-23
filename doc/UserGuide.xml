@@ -4279,10 +4279,15 @@ The stabilization criterion is the same one described above for numerical values
 	and with plots separated by a blank line.</para>
 
       <para>If <userinput>--mode sum </userinput> is specified, then a "sum"
-	plot is produced instead of an SRQ plot.  In this plot, the slope of
-	the curve corresponds to the posterior probability of the event.  If the
-	<userinput>--invert</userinput> option is used then the slope of the
-	curve correspond to the probability of the inverse event.  This is
+	plot is produced instead of an SRQ plot. With both
+	<userinput>--no-scale-x</userinput> and <userinput>--no-scale-y</userinput>,
+	the axes show the number of trees examined and the cumulative count of the event.
+	The average slope is then the observed event frequency, an estimate of its posterior
+	probability. By default, the axes are normalized independently, so a nonzero sum
+	curve ends at (1,1); its average slope no longer estimates the event probability. If the
+	<userinput>--invert</userinput> option is used, the curve counts trees in which
+	the event is absent instead. With raw axes, its average slope estimates the
+	probability of this inverse event. This is
 	recommended if the probability of the event is near 1.0, because the
 	sum plot does not distinguish variation in probabilities near 1.0 well.
       </para>

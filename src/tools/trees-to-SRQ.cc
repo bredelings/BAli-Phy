@@ -18,18 +18,12 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include <iostream>
-#include <algorithm>
 #include <string>
 #include <vector>
-#include <list>
-#include <map>
-#include <cmath>
 
 #include "util/myexception.hh"
 #include "util/mapping.hh"
-#include "tree/sequencetree.hh"
 #include "tree-dist.hh"
-#include "tree/tree-util.hh"
 #include "statistics.hh"
 #include "util/string/join.hh"
 #include "util/string/convert.hh"
@@ -40,25 +34,11 @@ namespace po = boost::program_options;
 using po::variables_map;
 
 using std::cout;
-using std::cerr;
 using std::endl;
 
 using std::string;
 using std::vector;
 using std::valarray;
-
-using std::optional;
-
-string topology(const string& t) {
-    SequenceTree T = standardized(t);
-    return T.write(false);
-}
-
-string topology(const SequenceTree& T) {
-    SequenceTree T2 = T;
-    standardize(T2);
-    return T2.write(false);
-}
 
 vector<int> convert_bitvector(const valarray<bool>& b)
 {
@@ -106,7 +86,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     if (args.count("help")) {
 	cout<<"Generate Scaled Regeneration Quantile (SRQ) plot\n";
-	cout<<"Usage: tree-to-srq <predicates-file> <sampled-trees> [<sampled-trees> ...]\n\n";
+	cout<<"Usage: trees-to-SRQ <predicates-file> <sampled-trees> [<sampled-trees> ...]\n\n";
 	cout<<all<<"\n";
 	exit(0);
     }
@@ -149,10 +129,6 @@ int main(int argc,char* argv[])
 
 	// Load the partitions that we are considering
 	auto trees = load_partitions(args["predicates"].as<string>());
-
-	optional<int> last;
-	if (args.count("until"))
-	    last = args["until"].as<int>();
 
 	int max_points = args["max-points"].as<int>();
 
