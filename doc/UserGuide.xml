@@ -4251,8 +4251,8 @@ The stabilization criterion is the same one described above for numerical values
     <section><info><title>trees-bootstrap</title></info>
       
       <para>Usage: trees-bootstrap <replaceable>file1</replaceable>
-	[<replaceable>file2</replaceable> ... ] --predicates
-	<replaceable>predicate-file</replaceable> [OPTIONS] </para>
+	[<replaceable>file2</replaceable> ... ] [--predicates
+	<replaceable>predicate-file</replaceable>] [OPTIONS] </para>
       <para>This program summarizes the tree samples contained in
 	<replaceable>file1</replaceable>, <replaceable>file2</replaceable>,
 	etc.  It gives the support of each tree sample for each predicate in

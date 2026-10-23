@@ -55,12 +55,11 @@
 #include "tree-dist.hh"
 #include "consensus-tree.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
+#include <optional>
 
 extern int log_Verbose;
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 using std::cout;
 using std::cerr;
@@ -442,71 +441,7 @@ double fraction(const vector<int>& indices, const valarray<bool>& results,unsign
 
 
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
 
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-	("files",value<vector<string> >(),"Tree files to examine.")
-	;
-
-    // named options
-    options_description input("Input options");
-    input.add_options()
-	("help,h", "Produce help message.")
-	("skip,s",value<string>()->default_value("10%"),
-         "Burn-in count for every run, or percent of the shortest run before thinning.")
-	("until,u",value<int>(),"Read until this number of trees.")
-	("max,m",value<int>(),"Thin tree samples down to this number of trees.")
-	("subsample,x",value<int>(),"Factor by which to sub-sample.")
-	("predicates",value<string>(),"Predicates to examine.")
-	("min-support",value<double>()->default_value(0.1,"0.1"),"Minimum value of predicates to consider interesting..")
-	("verbose,V","Output more log messages on stderr.")
-	;
-  
-    options_description bootstrap("Block bootstrap options");
-    bootstrap.add_options()
-	("bootstrap","Do block bootstrapping to get a CI on the posterior probabilities.")
-	("samples",value<int>()->default_value(10000U),"Number of bootstrap samples.")
-	("pseudocount",value<int>()->default_value(1U),"Extra 0/1 to add to bootstrap samples.")
-	("blocksize",value<int>(),"Block size to use in block boostrap.")
-	("seed", value<unsigned long>(),"Random seed.")
-	;
-    
-    options_description reporting("Reporting options");
-    reporting.add_options()
-	("separation",value<double>()->default_value(0),"Only report trees/partitions if they differ by this many LODs")
-	("confidence",value<double>()->default_value(0.95,"0.95"),"Width of confidence intervals")
-	("LOD-table",value<string>(),"Write the partitions LOD10's to a file.")
-	;
-    
-    options_description all("All options");
-    all.add(invisible).add(input).add(bootstrap).add(reporting);
-
-    options_description visible("All options");
-    visible.add(input).add(bootstrap).add(reporting);
-
-    // positional options
-    positional_options_description p;
-    p.add("files", -1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).options(all).positional(p).run(), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Compare support for partitions between different files.\n\n";
-	cout<<"Usage: trees-bootstrap <file1> [<file2> ... ] --predicates <predicate file> [OPTIONS]\n";
-	cout<<visible<<"\n";
-	exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = 1;
-
-    return args;
-}
 
 /*
  * How can we compute the ASDSF values?  How can we compute over convergence values?
@@ -606,31 +541,68 @@ int main(int argc,char* argv[])
 	cout.setf(ios::fixed);
 
 	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Compare support for partitions between different files.", "trees-bootstrap"};
+        app.usage("Usage: trees-bootstrap <file1> [<file2> ... ] [--predicates <predicate file>] [OPTIONS]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        vector<string> files;
+        string skip_arg = "10%";
+        optional<int> last, max, supplied_blocksize;
+        int subsample = 1, pseudocount = 1, n_samples = 10000;
+        optional<string> predicates_file, LOD_table;
+        optional<unsigned long> supplied_seed;
+        double min_support = 0.1, compare_dx = 0, confidence = 0.95;
+        bool verbose = false, bootstrapped = false;
+        app.add_option("--files,FILE", files, "Tree files to examine.")->required();
+        app.add_option("-s,--skip", skip_arg,
+                       "Burn-in count for every run, or percent of the shortest run before thinning.")
+            ->capture_default_str()->group("Input options");
+        app.add_option("-u,--until", last, "Read until this number of trees.")->group("Input options");
+        app.add_option("-m,--max", max, "Thin tree samples down to this number of trees.")->group("Input options");
+        app.add_option("-x,--subsample", subsample, "Factor by which to sub-sample.")
+            ->capture_default_str()->group("Input options");
+        app.add_option("--predicates", predicates_file, "Predicates to examine.")->group("Input options");
+        app.add_option("--min-support", min_support, "Minimum value of predicates to consider interesting..")
+            ->capture_default_str()->group("Input options");
+        app.add_flag("-V,--verbose", verbose, "Output more log messages on stderr.")->group("Input options");
+        app.add_flag("--bootstrap", bootstrapped, "Do block bootstrapping to get a CI on the posterior probabilities.")
+            ->group("Block bootstrap options");
+        app.add_option("--samples", n_samples, "Number of bootstrap samples.")
+            ->capture_default_str()->group("Block bootstrap options");
+        app.add_option("--pseudocount", pseudocount, "Extra 0/1 to add to bootstrap samples.")
+            ->capture_default_str()->group("Block bootstrap options");
+        app.add_option("--blocksize", supplied_blocksize, "Block size to use in block boostrap.")
+            ->group("Block bootstrap options");
+        app.add_option("--seed", supplied_seed, "Random seed.")->group("Block bootstrap options");
+        app.add_option("--separation", compare_dx, "Only report trees/partitions if they differ by this many LODs")
+            ->capture_default_str()->group("Reporting options");
+        app.add_option("--confidence", confidence, "Width of confidence intervals")
+            ->capture_default_str()->group("Reporting options");
+        app.add_option("--LOD-table", LOD_table, "Write the partitions LOD10's to a file.")->group("Reporting options");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        if (verbose) log_verbose = 1;
 
 	//--------------------- Initialize ---------------------//
 	unsigned long seed = 0;
-	if (args.count("seed")) {
-	    seed = args["seed"].as<unsigned long>();
+	if (supplied_seed) {
+	    seed = *supplied_seed;
 	    myrand_init(seed);
 	}
 	else
 	    seed = myrand_init();
-    
-	int pseudocount = args["pseudocount"].as<int>();
-
-	double compare_dx = args["separation"].as<double>();
-    
-	double confidence = args["confidence"].as<double>();
-
-	double min_support = args["min-support"].as<double>();
 
 	int read_skip = 0;
 	optional<int> skip;
 	optional<double> skip_fraction;
-	if (args.count("skip"))
 	{
-	    string s = args["skip"].as<string>();
+	    const string& s = skip_arg;
 	    if (not s.empty() and s[s.size()-1] == '%')
 	    {
 		if (auto d = can_be_converted_to<double>(s.substr(0,s.size()-1)))
@@ -655,24 +627,8 @@ int main(int argc,char* argv[])
 		throw myexception()<<"Argument to '--skip="<<s<<"' is neither an integer nor a percent";
 	}
 
-
-	optional<int> last;
-	if (args.count("until"))
-	    last = args["until"].as<int>();
-    
-	optional<int> max;
-	if (args.count("max"))
-	    max = args["max"].as<int>();
-
-	int subsample=1;
-	if (args.count("subsample"))
-	    subsample = args["subsample"].as<int>();
-
 	//-------------- Read in tree distributions --------------//
-	if (not args.count("files"))
-	    throw myexception()<<"Tree files not specified!";
 
-	vector<string> files = args["files"].as< vector<string> >();
 	vector< vector<string> > filenames(1);
 	for(int i=0; i < files.size(); i++)
 	{
@@ -701,20 +657,18 @@ int main(int argc,char* argv[])
 	//----------  Determine block size ----------//
 	unsigned blocksize = min_trees/50+1;
 
-	if (args.count("blocksize"))
-	    blocksize = args["blocksize"].as<int>();
-	bool bootstrapped = (args.count("bootstrap") > 0);
+	if (supplied_blocksize)
+	    blocksize = *supplied_blocksize;
 
 	cout<<"# [ seed = "<<seed<<"    pseudocount = "<<pseudocount<<"    blocksize = "<<blocksize<<" ]"<<endl<<endl;
 
 	//-------- Scan the full partitions ----------//
 	map< dynamic_bitset<>, p_counts> counts = get_multi_partitions_and_counts(tree_dists.all_samples());
 
-
 	//----------- Load Partitions ---------------//
 	vector<PTree> partitions;
-	if (args.count("predicates")) {
-	    partitions = load_partitions(args["predicates"].as<string>());
+	if (predicates_file) {
+	    partitions = load_partitions(*predicates_file);
 	    partitions = remove_duplicates(partitions);
 	}
 	else {
@@ -755,8 +709,6 @@ int main(int argc,char* argv[])
 		partitions.push_back({tree_dists.leaf_names(),{splits[order[i]]}});
 	    if (log_verbose) cerr<<n_splits<<" total splits        "<<order.size()<<" splits with PP > "<<min_support<<endl;
 	}
-
-
 
 	// FIXME - there is a faster way to bootstrap resample
 	// -- Compute the cumulative sums, and then when we choose a block we know
@@ -807,8 +759,6 @@ int main(int argc,char* argv[])
 
 	// generate a bootstrap sample for each g,d,s : but all the p share the same bootstrap sample.
 
-	const int n_samples = args["samples"].as<int>();
-      
 	if (bootstrapped)
 	    for(int g=0;g<tree_dists.n_dists();g++)
 		for(int d=0;d<D[g];d++) 
@@ -869,8 +819,8 @@ int main(int argc,char* argv[])
 	    cout<<endl<<endl;
 	}
 
-	if (args.count("LOD-table"))
-	    write_LODs(args["LOD-table"].as<string>(), VS[0]);
+	if (LOD_table)
+	    write_LODs(*LOD_table, VS[0]);
 
 	for(int d=0;d<tree_dists.n_dists();d++) {
 	    if (tree_dists.n_samples(d) >= 2) {

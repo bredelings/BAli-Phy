@@ -8,7 +8,7 @@
 
 # SYNOPSIS
 
-**trees-bootstrap** _file1_ [_file2_ ... ] --predicates _predicate file_ [OPTIONS]
+**trees-bootstrap** _file1_ [_file2_ ... ] [--predicates _predicate file_] [OPTIONS]
 
 # DESCRIPTION
 
