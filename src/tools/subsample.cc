@@ -25,63 +25,40 @@
 #include <string>
 #include "util/io.hh"
 
-#include <boost/program_options.hpp>
-
-namespace po = boost::program_options;
-using po::variables_map;
+#include <CLI/CLI.hpp>
 
 using namespace std;
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description all("Allowed options");
-    all.add_options()
-	("help,h", "produce help message")
-	("factor,x",value<double>()->default_value(1.0),"Factor by which to subsample.")
-	("skip",value<unsigned>()->default_value(0),"Throw out some lines at the beginning.")
-	("max",value<unsigned>(),"Maximum number of samples to keep")
-	("header","This file has a header - don't throw it out.")
-	;
-
-    // positional options
-    positional_options_description p;
-    p.add("factor", 1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Subsample lines in a file.\n\n";
-	cout<<"Usage: bpy-subsample [OPTIONS] < in-file\n\n";
-	cout<<all<<"\n";
-	exit(0);
-    }
-
-    return args;
-}
 
 int main(int argc,char* argv[]) 
 { 
     try {
 
-	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Subsample lines in a file.", "bpy-subsample"};
+        app.usage("Usage: bpy-subsample [OPTIONS] [FACTOR] < in-file");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        unsigned skip = 0;
+        double subsample = 1.0;
+        optional<unsigned> max;
+        bool header = false;
+        app.add_option("-x,--factor,FACTOR", subsample, "Factor by which to subsample.")->capture_default_str();
+        app.add_option("--skip", skip, "Throw out some lines at the beginning.")->capture_default_str();
+        app.add_option("--max", max, "Maximum number of samples to keep");
+        app.add_flag("--header", header, "This file has a header - don't throw it out.");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
 
-        auto skip = args["skip"].as<unsigned>();
-        double subsample = args["factor"].as<double>();
         if (!std::isfinite(subsample) || subsample <= 0)
             throw std::invalid_argument("factor must be finite and positive");
-        optional<unsigned> max;
-        if (args.count("max")) max = args["max"].as<unsigned>();
 
         string line;
-        if (args.count("header") && portable_getline(cin, line))
+        if (header && portable_getline(cin, line))
             cout<<line<<'\n';
 
         std::uint64_t lines = 0;
