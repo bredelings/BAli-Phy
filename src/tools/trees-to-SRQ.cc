@@ -28,10 +28,9 @@
 #include "util/string/join.hh"
 #include "util/string/convert.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
+#include <optional>
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 using std::cout;
 using std::endl;
@@ -52,47 +51,7 @@ vector<int> convert_bitvector(const valarray<bool>& b)
 }
 
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
 
-    // named options
-    options_description all("Allowed options");
-    all.add_options()
-	("help,h", "produce help message")
-	("files",value<vector<string> >()->composing(),"tree samples to examine")
-	("predicates",value<string>(),"predicates to examine")
-	("skip,s",value<string>()->default_value("10%"),"Number of trees to skip.")
-	("subsample,x",value<int>()->default_value(1),"factor by which to sub-sample")
-	("until,u",value<int>(),"Read until this number of trees.")
-	("max-points",value<int>()->default_value(1000),"Approximate number of points per curve.")
-	("mode", value<string>()->default_value("SRQ"),"SRQ, sum, or values")
-	("invert","consider the inverse of each event instead")
-	("no-scale-x","don't scale X")
-	("no-scale-y","don't scale Y")
-	;
-    // MIN REVERSALS!
-
-
-    // positional options
-    positional_options_description p;
-    p.add("predicates", 1);
-    p.add("files", -1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Generate Scaled Regeneration Quantile (SRQ) plot\n";
-	cout<<"Usage: trees-to-SRQ <predicates-file> <sampled-trees> [<sampled-trees> ...]\n\n";
-	cout<<all<<"\n";
-	exit(0);
-    }
-
-    return args;
-}
 
 // Match predicate bit positions to sample taxa, retaining taxa excluded from both split groups.
 static void match_predicate_taxa(PTree& predicate, const vector<string>& sample_names)
@@ -125,19 +84,38 @@ int main(int argc,char* argv[])
 { 
     try {
 	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Generate Scaled Regeneration Quantile (SRQ) plots.", "trees-to-SRQ"};
+        app.usage("Usage: trees-to-SRQ <predicates-file> <sampled-trees> [<sampled-trees> ...]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string predicates_file, skip = "10%", mode = "SRQ";
+        vector<string> files;
+        std::optional<int> last;
+        int subsample = 1, max_points = 1000;
+        bool invert = false, no_scale_x = false, no_scale_y = false;
+        app.add_option("--predicates,PREDICATES", predicates_file, "predicates to examine")->required();
+        app.add_option("--files,FILE", files, "tree samples to examine")->required();
+        app.add_option("-s,--skip", skip, "Number of trees to skip.")->capture_default_str();
+        app.add_option("-x,--subsample", subsample, "factor by which to sub-sample")->capture_default_str();
+        app.add_option("-u,--until", last, "Read until this number of trees.");
+        app.add_option("--max-points", max_points, "Approximate number of points per curve.")->capture_default_str();
+        app.add_option("--mode", mode, "SRQ, sum, or values")->capture_default_str();
+        app.add_flag("--invert", invert, "consider the inverse of each event instead");
+        app.add_flag("--no-scale-x", no_scale_x, "don't scale X");
+        app.add_flag("--no-scale-y", no_scale_y, "don't scale Y");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
 
 	// Load the partitions that we are considering
-	auto trees = load_partitions(args["predicates"].as<string>());
+	auto trees = load_partitions(predicates_file);
 
-	int max_points = args["max-points"].as<int>();
-
-	std::optional<int> last;
-	if (args.count("until")) last = args["until"].as<int>();
-	vector<string> files;
-	if (args.count("files")) files = args["files"].as<vector<string>>();
-	auto tree_dist = read_trees(files, args["skip"].as<string>(), last,
-                                    args["subsample"].as<int>(), {});
+	auto tree_dist = read_trees(files, skip, last, subsample, {});
 
 	const int L = tree_dist.size();
 
@@ -148,18 +126,18 @@ int main(int argc,char* argv[])
 	    match_predicate_taxa(trees[i], tree_dist.names());
 	    valarray<bool> support = tree_dist.support(trees[i].partitions);
 
-	    if (args.count("invert")) support = not support;
+	    if (invert) support = not support;
 
-	    if (args["mode"].as<string>() == "SRQ")
+	    if (mode == "SRQ")
 		plots[i] = statistics::regeneration_times(support);
-	    else if (args["mode"].as<string>() == "sum")
+	    else if (mode == "sum")
 		plots[i] = statistics::total_times(support);
 	    else
 		plots[i] = convert_bitvector(support);
 	}
 
 
-	if (args["mode"].as<string>() == "values") 
+	if (mode == "values") 
 	{
 	    vector<string> names(plots.size());
 	    for(int i=0;i<names.size();i++)
@@ -187,10 +165,10 @@ int main(int argc,char* argv[])
 		double scale_y = plots[i].back();
 		if (scale_y == 0) scale_y = 1;
 	
-		if (args.count("no-scale-x"))
+		if (no_scale_x)
 		    scale_x = 1;
 	
-		if (args.count("no-scale-y"))
+		if (no_scale_y)
 		    scale_y = 1;
 	
 		double x1 = 0;
