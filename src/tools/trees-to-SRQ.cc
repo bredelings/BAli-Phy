@@ -85,7 +85,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("skip,s",value<string>()->default_value("10%"),"Number of trees to skip.")
 	("subsample,x",value<int>()->default_value(1),"factor by which to sub-sample")
 	("until,u",value<int>(),"Read until this number of trees.")
-	("max-points",value<int>(),"maximum number of points to record")
+	("max-points",value<int>()->default_value(1000),"Approximate number of points per curve.")
 	("mode", value<string>()->default_value("SRQ"),"SRQ, sum, or values")
 	("invert","consider the inverse of each event instead")
 	("no-scale-x","don't scale X")
@@ -154,9 +154,7 @@ int main(int argc,char* argv[])
 	if (args.count("until"))
 	    last = args["until"].as<int>();
 
-	optional<int> max_points;
-	if (args.count("max-points"))
-	    max_points = args["max-points"].as<int>();
+	int max_points = args["max-points"].as<int>();
 
 	auto tree_dist = read_trees(args);
 
@@ -200,7 +198,9 @@ int main(int argc,char* argv[])
 	{
 	    // write out plots
 
-	    const double delta = 1.0/(*max_points);
+	    if (max_points <= 0)
+		throw myexception()<<"--max-points must be positive";
+	    const double delta = 1.0/max_points;
 	    for(int i=0;i<plots.size();i++) {
 		double scale_x = plots[i].size()-1;
 		double scale_y = plots[i].back();

@@ -1,0 +1,3 @@
+# Protect ordinary plotting without an explicit point target, absent from values-mode tests.
+# Retire when shared CLI plotting coverage checks the default invocation.
+results/files/pred results/files/trees --skip=0 --mode=sum

@@ -34,8 +34,8 @@ Generate Scaled Regeneration Quantile (SRQ) plot
 **-u** _arg_, **--until** _arg_
 : Read until this number of trees.
 
-**--max-points** _arg_
-: maximum number of points to record
+**--max-points** _arg_ (=1000)
+: Approximate number of points per curve.
 
 **--mode** _arg_ (=SRQ)
 : SRQ, sum, or values
