@@ -120,6 +120,7 @@ public:
     tree_sample& sample(int i)       {return tree_dists[i];}
 
     const vector<tree_sample>& all_samples() const {return tree_dists;}
+    vector<tree_sample>& all_samples() {return tree_dists;}
 
     int add_sample(int d, const tree_sample& s) 
 	{
@@ -491,7 +492,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description input("Input options");
     input.add_options()
 	("help,h", "Produce help message.")
-	("skip,s",value<string>()->default_value("10%"),"Number of trees to skip.")
+	("skip,s",value<string>()->default_value("10%"),
+         "Burn-in count for every run, or percent of the shortest run before thinning.")
 	("until,u",value<int>(),"Read until this number of trees.")
 	("max,m",value<int>(),"Thin tree samples down to this number of trees.")
 	("subsample,x",value<int>(),"Factor by which to sub-sample.")
@@ -716,38 +718,21 @@ int main(int argc,char* argv[])
 		filenames.push_back(vector<string>());
 	}
 
-	tree_sample_collection tree_dists(filenames,read_skip,last,subsample,max);
+	tree_sample_collection tree_dists(filenames, read_skip, last,
+	                                  skip_fraction ? 1 : subsample, skip_fraction ? optional<int>{} : max);
 
 	vector<int> D(tree_dists.n_dists());
 	for(int d=0;d<D.size();d++) {
 	    D[d] = tree_dists.entry_count(d);
 	}
 
-	//----------  Skip some fraction of trees, if asked ----------//
-	int min_trees = tree_dists.sample(0).size();
-
-	for(int i=1;i<tree_dists.n_samples();i++) 
-	    min_trees = std::min<int>( min_trees, tree_dists.sample(i).size());
-
-	optional<int> min_skip;
+	// Use the same burn-in count for every run, before either thinning operation.
 	if (skip_fraction)
-	    min_skip = (int)(skip_fraction.value() * min_trees);
+	    select_after_burnin(tree_dists.all_samples(), *skip_fraction, subsample, max);
 
-	if (log_verbose and min_skip)
-	    cerr<<"Skipping "<<skip_fraction.value()*100<<"% of "<<min_trees<<" = "<<min_skip.value()<<endl;
-
-	for(int i=0;i<tree_dists.n_samples();i++) 
-	{
-	    tree_sample& trees = tree_dists.sample(i);
-	    if (min_skip) {
-		int my_skip = std::min<int>(*min_skip, trees.trees.size());
-		trees.trees.erase(trees.trees.begin(), trees.trees.begin() + my_skip);
-	    }
-	}
-
-	min_trees = tree_dists.sample(0).size();
-	for(int i=1;i<tree_dists.n_samples();i++) 
-	    min_trees = std::min<int>( min_trees, tree_dists.sample(i).size());
+	int min_trees = tree_dists.sample(0).size();
+	for(int i=1;i<tree_dists.n_samples();i++)
+	    min_trees = std::min<int>(min_trees, tree_dists.sample(i).size());
 
 	//----------  Determine block size ----------//
 	unsigned blocksize = min_trees/50+1;

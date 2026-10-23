@@ -1,5 +1,6 @@
 #include "tree/sequencetree.hh"
 #include "tools/read-trees.hh"
+#include "tools/tree-dist.hh"
 #include <sstream>
 #include "tools/distance-methods.hh"
 
@@ -18,6 +19,57 @@ void require(bool condition, const char* message)
 // cases can move to tool tests if those tools expose the same operations and results.
 int main()
 {
+    // Protect common burn-in and selected tree identities, which tool summaries cannot expose.
+    // Integer loading is the independent reference for selection order; retire this group if
+    // both loading paths are replaced by one tested selection implementation.
+    {
+        // Encode original ordinals in a pendant length so thinning mistakes remain observable.
+        auto sample = [](int n, int skip=0, std::optional<int> last={}, int stride=1,
+                         std::optional<int> max={})
+        {
+            std::ostringstream text;
+            for (int i=1; i<=n; ++i) text<<"((A:"<<i<<",B:1):1,C:1,D:1);\n";
+            std::istringstream input(text.str());
+            return tree_sample(input, skip, last, stride, max);
+        };
+        for (auto last: {std::optional<int>{}, std::optional<int>{30}})
+            for (int stride: {1, 3})
+                for (auto max: {std::optional<int>{}, std::optional<int>{1},
+                                std::optional<int>{5}, std::optional<int>{20}})
+                {
+                    std::vector<tree_sample> runs{sample(40,0,last), sample(100,0,last)};
+                    select_after_burnin(runs, .1, stride, max);
+                    const int skip = last ? 3 : 4;
+                    for (int r=0; r<2; ++r)
+                    {
+                        auto expected = sample(r == 0 ? 40 : 100, skip, last, stride, max);
+                        require(runs[r].size() == expected.size(), "Selected run size");
+                        for (int i=0; i<expected.size(); ++i)
+                            require(runs[r][i].branch_lengths[0] == expected[i].branch_lengths[0],
+                                    "Percentage and integer burn-in select the same original trees");
+                    }
+                }
+        std::vector<tree_sample> runs{sample(10), sample(100)};
+        select_after_burnin(runs, .1, 1, {});
+        require(runs[0].size() == 9 and runs[1].size() == 99, "Common burn-in count");
+        require(runs[0][0].branch_lengths[0] == 2 and runs[1][0].branch_lengths[0] == 2,
+                "Both runs start after the same burn-in");
+        runs = {sample(1), sample(100)};
+        select_after_burnin(runs, .1, 1, {});
+        require(runs[0].size() == 1 and runs[1].size() == 100, "Preserve the shortest run");
+        runs = {sample(100)};
+        select_after_burnin(runs, .1, 1, 20);
+        require(runs[0].size() == 20, "Cap after burn-in");
+        require(runs[0][0].branch_lengths[0] == 11 and runs[0][19].branch_lengths[0] == 100,
+                "Maximum-size thinning preserves survivor endpoints");
+        // Loading another capped file must not resample trees already accumulated.
+        auto combined = sample(4);
+        std::istringstream extra("((A:5,B:1):1,C:1,D:1);\n((A:6,B:1):1,C:1,D:1);\n");
+        combined.load_file(extra, 0, {}, 1, 1);
+        require(combined.size() == 5 and combined[0].branch_lengths[0] == 1
+                and combined[4].branch_lengths[0] == 5, "Cap only the appended run");
+    }
+
     // Reader boundaries and adapter order must retain the last selected tree. Tool tests
     // cannot inspect exhaustion directly; retire this group if this reader API is replaced.
     for (bool rooted_input: {false, true})

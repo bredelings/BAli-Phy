@@ -22,7 +22,9 @@ Find consensus trees and supported splits.
 : Output more log messages on stderr.
 
 **-s** _arg_ (=10%), **--skip** _arg_ (=10%)
-: Number of trees to skip.
+: Number of initial trees to discard from every run. A percentage uses the
+  shortest run to determine one common count for all runs, preserving short runs.
+  Apply **--until** first, then burn-in, **--subsample**, and finally **--max**.
 
 **-u** _arg_, **--until** _arg_
 : Read until this number of trees.

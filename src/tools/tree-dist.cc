@@ -215,6 +215,56 @@ void tree_sample::add_tree(RootedTree& T)
 
 
 
+// Thin only the newly loaded suffix, preserving earlier files. Equally spaced
+// positions include both endpoints; rounding half upward selects the nearest tree.
+// A one-tree cap retains the first tree without dividing by zero.
+static void thin_sample(vector<tree_record>& trees, int first, int max)
+{
+    if (max < 1) throw myexception()<<"The maximum number of trees must be positive.";
+    const int n = trees.size() - first;
+    if (n <= max) return;
+
+    vector<tree_record> selected;
+    selected.reserve(max);
+    for (int i=0; i<max; ++i)
+    {
+        int index = first + (max == 1 ? 0 : int(floor(0.5 + double(i)*(n-1)/(max-1))));
+        selected.push_back(std::move(trees[index]));
+    }
+    if (first == 0)
+        trees = std::move(selected);
+    else
+    {
+        trees.erase(trees.begin()+first, trees.end());
+        trees.insert(trees.end(), make_move_iterator(selected.begin()), make_move_iterator(selected.end()));
+    }
+}
+
+// All samples have already been limited by --until, but not thinned. Use the
+// shortest run to remove the same burn-in count everywhere; fractions below one
+// retain part of every nonempty run. Subsampling starts at the first survivor,
+// then the cap selects evenly spaced survivors, just as for integer burn-in.
+void select_after_burnin(vector<tree_sample>& samples, double fraction, int subsample, optional<int> max)
+{
+    if (samples.empty()) return;
+    unsigned shortest = samples.front().size();
+    for (const auto& sample: samples) shortest = std::min(shortest, sample.size());
+    const unsigned skip = floor(fraction * shortest);
+    if (log_verbose) cerr<<"Skipping "<<fraction*100<<"% of "<<shortest<<" = "<<skip<<endl;
+
+    for (auto& sample: samples)
+    {
+        vector<tree_record> selected;
+        const int stride = std::max(1, subsample);
+        selected.reserve((sample.size()-skip + stride-1)/stride);
+        for (size_t i=skip; i<sample.size(); i+=stride)
+            selected.push_back(std::move(sample.trees[i]));
+        sample.trees = std::move(selected);
+        if (max) thin_sample(sample.trees, 0, *max);
+        if (sample.trees.empty()) throw myexception()<<"No trees remain after burn-in.";
+    }
+}
+
 int tree_sample::load_file(istream& file, int skip, optional<int> last, int subsample, optional<int> max, const vector<string>& prune)
 {
     using namespace trees_format;
@@ -262,25 +312,7 @@ int tree_sample::load_file(istream& file, int skip, optional<int> last, int subs
 	t++;
     }
 
-    if (max and t > *max)
-    {
-	assert(trees.size() == old_size + t);
-
-	double N = t;
-	double n = *max;
-	double inc = double((N-1)/(n-1));
-	assert(inc > 1.0);
-	vector<tree_record> trees2;
-	for(int i=0;i<n;i++)
-	{
-	    int i2 = floor(old_size + 0.5 + i*inc);
-	    trees2.push_back(std::move(trees[i2]));
-	}
-	trees.erase(trees.begin()+old_size,trees.end());
-	assert(trees.size() == old_size);
-	trees.insert(trees.end(), make_move_iterator(trees2.begin()), make_move_iterator(trees2.end()));
-	assert(trees.size() == old_size + n);
-    }
+    if (max) thin_sample(trees, old_size, *max);
 
     if (size() == 0)
 	throw myexception()<<"No trees were read in!";
@@ -435,32 +467,14 @@ tree_sample read_trees(variables_map& args, const vector<string>& leaf_labels)
     if (not leaf_labels.empty())
 	tree_dist = tree_sample(leaf_labels);
 
-    // Load the tree samples and compute the number of trees in the smallest sample.
+    // Percentage burn-in needs the unthinned run lengths before any selection.
     vector<tree_sample> tree_samples(filenames.size());
-    optional<int> min_trees;
-    for(int i=0;i<filenames.size();i++) 
-    {
-	int count = tree_samples[i].load_file(filenames[i],read_skip,last,subsample,max,ignore);
+    for(int i=0;i<filenames.size();i++)
+        tree_samples[i].load_file(filenames[i], read_skip, last,
+                                 skip_fraction ? 1 : subsample, skip_fraction ? optional<int>{} : max, ignore);
 
-	if (not min_trees)
-	    min_trees = count;
-	else
-	    min_trees = std::min(*min_trees, count);
-    }
-
-    // If we are skipping a percent, chop off the extra initial trees that we read in.
-    if (skip_fraction and min_trees)
-    {
-	int min_skip = (int)(skip_fraction.value() * min_trees.value());
-
-	if (log_verbose) cerr<<"Skipping "<<skip_fraction.value()*100<<"% of "<<*min_trees<<" = "<<min_skip<<endl;
-
-	for(auto& sample: tree_samples)
-	{
-	    int my_skip = std::min<int>(min_skip, sample.trees.size());
-	    sample.trees.erase(sample.trees.begin(), sample.trees.begin() + my_skip);
-	}
-    }
+    if (skip_fraction)
+        select_after_burnin(tree_samples, *skip_fraction, subsample, max);
 
     // Concatenate the tree samples
     for(auto& sample: tree_samples)

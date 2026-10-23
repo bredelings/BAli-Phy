@@ -1,0 +1,3 @@
+# Exercise shared-reader integration; ordinal selection is covered by tree-operations tests.
+# Retire when the CLI uses one directly tested loading pipeline. Survivors are 3, 7, 12, 16, 20.
+--max=5 -

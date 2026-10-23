@@ -1,0 +1,3 @@
+# Protect the remaining shared-reader caller with percentage burn-in and subsampling.
+# Retire if SRQ loading is removed or replaced by the same directly tested complete loader.
+results/files/pred results/files/a results/files/b --mode=values --subsample=3

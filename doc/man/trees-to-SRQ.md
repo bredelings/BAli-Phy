@@ -25,7 +25,8 @@ Generate Scaled Regeneration Quantile (SRQ) plot
 : predicates to examine
 
 **-s** _arg_ (=10%), **--skip** _arg_ (=10%)
-: Number of trees to skip.
+: Number of initial trees to discard from every run. A percentage of the
+  shortest run determines one common count, after **--until** and before **--subsample**.
 
 **-x** _arg_ (=1), **--subsample** _arg_ (=1)
 : factor by which to sub-sample
