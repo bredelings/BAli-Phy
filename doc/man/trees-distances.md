@@ -14,6 +14,9 @@
 
 Compute autocorrelations or other functions of tree distances.
 
+The node-dist-cvars analysis reports distances between every pair of nodes.
+Internal node numbers need not refer to corresponding nodes in different topologies.
+
 # INPUT OPTIONS:
 **-h**, **--help**
 : produce help message
@@ -68,10 +71,10 @@ the retained first sample, not original MCMC iteration numbers.
 : Show minimum and maximum distances
 
 **--leaves-only**
-: Show minimum and maximum distances
+: For node-dist-cvars, report pendant branch lengths instead of all node-pair distances.
 
 **--topology-only**
-: Show minimum and maximum distances
+: For node-dist-cvars and leaf-dist-matrix, assign length one to every branch.
 
 **--jitter** _arg_
 : Amount of noise to add to distances

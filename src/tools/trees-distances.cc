@@ -139,8 +139,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("mean", "Show mean and standard deviation")
 	("median", "Show median and confidence interval")
 	("minmax", "Show minimum and maximum distances")
-	("leaves-only", "Show minimum and maximum distances")
-	("topology-only", "Show minimum and maximum distances")
+	("leaves-only", "[node-dist-cvars]: report pendant branch lengths.")
+	("topology-only", "[node-dist-cvars, leaf-dist-matrix]: use unit branch lengths.")
 	("jitter",value<double>(),"Amount of noise to add to distances")
 	;
 
@@ -641,7 +641,7 @@ void write_distance_cvars_header(const SequenceTree& T,bool leaves) {
 	    names.push_back(string("L")+convertToString(n1));
     }
     else {
-	for(int n1=0;n1<T.n_nodes()-1;n1++)
+	for(int n1=0;n1<T.n_nodes();n1++)
 	    for(int n2=0;n2<n1;n2++) {
 		string field = string("D")+convertToString(n1)+"-"+convertToString(n2);
 		names.push_back(field);
@@ -660,7 +660,7 @@ void write_distance_cvars_out(const SequenceTree& T,bool leaves) {
 	    lengths.push_back(convertToString(T.branch(n1).length()));
     }
     else {
-	for(int n1=0;n1<T.n_nodes()-1;n1++)
+	for(int n1=0;n1<T.n_nodes();n1++)
 	    for(int n2=0;n2<n1;n2++)
 		lengths.push_back(convertToString(T.distance(n1,n2)));
     }

@@ -1,0 +1,3 @@
+# Protect complete node-pair enumeration and labels, absent from tree-to-tree matrix tests.
+# Retire if this output mode is removed or replaced by a tested shared table writer.
+node-dist-cvars -
