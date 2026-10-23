@@ -64,7 +64,8 @@ per iteration.
 : Discard initial samples as burn-in. Accepts a data-row count or a percentage such as `10%`
   (the default). A percentage is calculated from the shortest input after endpoint limiting and
   subsampling; the same number of retained rows is then removed from each file. With subsampling,
-  an integer count is divided by the subsampling factor and rounded down before rows are removed.
+  an integer count is divided by the subsampling factor and rounded up before rows are removed,
+  so no retained row precedes the requested cutoff.
 
 **`-u`** _NUM_, **`--until`** _NUM_
 : Use only the first NUM data rows of each file, before subsampling and burn-in removal.

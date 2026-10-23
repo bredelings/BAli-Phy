@@ -809,7 +809,12 @@ int main(int argc,char* argv[])
 	{
 	    string s = args["skip"].as<string>();
 	    if (auto arg_skip = can_be_converted_to<int>(s))
-		skip = *arg_skip/subsample; //FIXME!  This is a side-effect of passing in 0 below.
+            {
+                if (*arg_skip < 0) throw myexception()<<"skip must be nonnegative";
+                // Retained rows have original indices 0, subsample, 2*subsample, ... .
+                // Ceiling division removes every retained row whose index is below the cutoff.
+                skip = *arg_skip/subsample + (*arg_skip % subsample != 0);
+            }
 	    else 
 	    {
 		if (not s.size() or s[s.size()-1] != '%')

@@ -1,0 +1,3 @@
+# Retained original rows 0, 2, 4 with skip=3 must leave only row 4.
+# Existing burn-in unit checks use skip=0 and cannot detect rounding down.
+--skip=3 --subsample=2 --condition=hypothesis=1 --select=omega --mean ../condition/samples.tsv
