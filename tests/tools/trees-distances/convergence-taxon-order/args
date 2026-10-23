@@ -1,0 +1,3 @@
+# Matching taxa in a NEXUS translation order must preserve topology and pendant lengths.
+# Existing matching-order tests miss this; retire with a tested shared cross-sample loader.
+convergence - results/files/ref --metric=branch

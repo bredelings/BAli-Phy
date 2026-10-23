@@ -42,8 +42,9 @@ Internal node numbers need not refer to corresponding nodes in different topolog
 : Analysis: matrix, autocorrelation, diameter, compare, closest, convergence, converged.
 
 The convergence and converged analyses use all trees in the second file as the
-reference sample; sampling options apply to the first file. The converged analysis
-requires at least two reference trees. Its iteration labels refer to positions in
+reference sample; sampling options apply to the first file. Both files must contain
+the same taxa, but their leaf orders may differ. The converged analysis requires
+at least two reference trees. Its iteration labels refer to positions in
 the retained first sample, not original MCMC iteration numbers.
 
 **--metric** _arg_ (=topology)

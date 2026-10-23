@@ -1,0 +1,3 @@
+# Protect taxon identity across files; matching-taxon convergence tests cannot detect index aliasing.
+# Retire if both modes delegate to a tested shared cross-sample loader.
+converged - results/files/ref
