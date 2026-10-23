@@ -1,0 +1,3 @@
+# Protect partial progress reporting; the success case does not execute this branch.
+# Retire together with the convergence analysis tests if the heuristic is removed.
+converged results/files/query results/files/ref

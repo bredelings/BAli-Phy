@@ -952,7 +952,7 @@ int main(int argc,char* argv[])
 	    if (not required_hits)
 		cout<<"Stabilized ["<<alpha<<"] at iteration "<<t<<endl;
 	    else
-		cout<<"Did not converge! (Hit "<<(required_hits-4)<<" boundaries.)";
+		cout<<"Did not converge! (Hit "<<(4-required_hits)<<" boundaries.)\n";
 
 	    cout<<"The closest we got to the equilibrium was "<<closest<<endl;
 	}
