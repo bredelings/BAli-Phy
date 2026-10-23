@@ -1,0 +1,3 @@
+# Protect support selection and ranking at the CLI boundary, absent from existing tree tests.
+# Retire when equivalent coverage is provided by a shared selection API test.
+results/files/trees --skip=0 --report=- --consensus=1

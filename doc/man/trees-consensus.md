@@ -51,7 +51,8 @@ Find consensus trees and supported splits.
 : Write out the map tree to file _arg_.
 
 **--consensus** _arg_
-: Write out consensus trees.
+: Write out consensus trees. Retain splits with support strictly greater than
+  the requested level and greater than 50%. A level of 1 retains unanimous splits.
 
 **--greedy-consensus** _arg_
 : Write out greedy consensus trees.

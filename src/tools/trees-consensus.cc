@@ -649,12 +649,17 @@ void write_consensus_trees(const tree_sample& tree_dist, const map<dynamic_bitse
     {
 	const string& filename = consensus_levels[k].second;
 
-	container_t partitions = select_splits(c50_partitions, N*consensus_levels[k].first);
+	const double level = consensus_levels[k].first;
 
 	// construct the consensus topology
 	SequenceTree consensus = star_tree(tree_dist.names());
-	for(container_t::const_iterator i = partitions.begin(); i != partitions.end(); i++)
+	for(auto i = c50_partitions.begin(); i != c50_partitions.end(); ++i)
 	{
+	    // Compare probabilities directly: truncating N*level admits splits below the cutoff.
+	    // Strict majorities ensure compatibility; level 1 denotes unanimous support.
+	    const unsigned count = i->second.count;
+	    if (level == 1 ? count != N : double(count)/N <= level)
+		continue;
 	    if (informative(i->first)) {
 		int b = consensus.induce_partition(i->first);
 		consensus.branch(b).set_length(i->second.length);
