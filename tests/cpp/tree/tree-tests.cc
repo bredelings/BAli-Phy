@@ -19,6 +19,24 @@ void require(bool condition, const char* message)
 // cases can move to tool tests if those tools expose the same operations and results.
 int main()
 {
+    // Protect the shared burn-in parser and its reusable fraction output; tool summaries cannot
+    // detect stale parser state. Retire if burn-in parsing moves into a directly tested CLI parser.
+    {
+        std::optional<double> fraction;
+        require(parse_tree_burnin("10%", fraction) == 0 and fraction == .1, "Percentage burn-in");
+        require(parse_tree_burnin("12", fraction) == 12 and not fraction, "Integer clears percentage");
+        require(parse_tree_burnin("0%", fraction) == 0 and fraction == 0, "Zero percentage stays engaged");
+        require(parse_tree_burnin("0", fraction) == 0 and not fraction, "Zero integer burn-in");
+        require(parse_tree_burnin("100%", fraction) == 0 and fraction == 1, "Percentage upper bound");
+        for (const auto* text: {"invalid", "-1%", "101%"})
+        {
+            bool rejected = false;
+            try { parse_tree_burnin(text, fraction); }
+            catch (const std::exception&) { rejected = true; }
+            require(rejected, "Reject malformed or out-of-range burn-in");
+        }
+    }
+
     // Protect common burn-in and selected tree identities, which tool summaries cannot expose.
     // Integer loading is the independent reference for selection order; retire this group if
     // both loading paths are replaced by one tested selection implementation.

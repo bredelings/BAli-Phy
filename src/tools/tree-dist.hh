@@ -111,6 +111,9 @@ void scan_trees(std::istream&, int skip, std::optional<int> last, int subsample,
 void scan_trees(std::istream&, int skip, std::optional<int> last, int subsample, const std::vector<std::string>& prune, accumulator<SequenceTree>& op);
 void scan_trees(std::istream&, int skip, std::optional<int> last, int subsample, const std::vector<std::string>& prune, const std::vector<std::string>& leaf_order, accumulator<SequenceTree>& op);
 
+// Parse --skip as a read-time count or a fraction to apply after loading all runs.
+int parse_tree_burnin(const std::string&, std::optional<double>& fraction);
+
 // Apply common percentage burn-in before thinning samples already limited by --until.
 void select_after_burnin(std::vector<tree_sample>&, double fraction, int subsample, std::optional<int> max);
 

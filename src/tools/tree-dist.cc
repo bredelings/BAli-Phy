@@ -422,37 +422,34 @@ void scan_trees(istream& file,int skip,optional<int> last,int subsample,
     scan_trees(file,skip,last,subsample,vector<string>(),op);
 }
 
+// Return the count to discard while reading, or defer percentage burn-in until run lengths
+// are known. Reset the fraction so callers can reuse it when parsing an integer count.
+int parse_tree_burnin(const string& text, optional<double>& fraction)
+{
+    fraction.reset();
+    if (not text.empty() and text.back() == '%')
+    {
+        if (auto percent = can_be_converted_to<double>(text.substr(0, text.size()-1)))
+        {
+            fraction = *percent/100;
+            if (*fraction < 0 or *fraction > 1)
+                throw myexception()<<"Argument to '--skip="<<text<<"' is an invalid percent";
+            return 0;
+        }
+    }
+    else if (auto count = can_be_converted_to<int>(text))
+        return *count;
+
+    throw myexception()<<"Argument to '--skip="<<text<<"' is neither an integer nor a percent";
+}
+
 // Read each run before percentage burn-in so the shortest run determines a common skip count.
 // Apply thinning afterward, then concatenate with matching taxon indices.
 tree_sample read_trees(const vector<string>& filenames, const string& s, optional<int> last,
                        int subsample, optional<int> max, const vector<string>& ignore)
 {
-    int read_skip = 0;
-    optional<int> skip;
     optional<double> skip_fraction;
-    {
-	if (not s.empty() and s[s.size()-1] == '%')
-	{
-	    if (auto d = can_be_converted_to<double>(s.substr(0,s.size()-1)))
-	    {
-		skip_fraction = d.value()/100;
-		if (*skip_fraction < 0 or *skip_fraction > 1)
-		    throw myexception()<<"Argument to '--skip="<<s<<"' is an invalid percent";
-
-		// We have to read the whole file to know how much to skip.
-		read_skip = 0;
-	    }
-	}
-	else if (auto skip_int = can_be_converted_to<int>(s))
-	{
-	    skip = skip_int.value();
-	    // We can discard as we read the file.
-	    read_skip = *skip;
-	}
-
-	if (not skip and not skip_fraction)
-	    throw myexception()<<"Argument to '--skip="<<s<<"' is neither an integer nor a percent";
-    }
+    const int read_skip = parse_tree_burnin(s, skip_fraction);
 
     tree_sample tree_dist;
 

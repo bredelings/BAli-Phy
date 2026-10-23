@@ -44,7 +44,6 @@
 
 #include "tree/sequencetree.hh"
 #include "util/string/join.hh"
-#include "util/string/convert.hh"
 #include "util/set.hh"
 #include "util/range.hh"
 #include "util/mapping.hh"
@@ -596,34 +595,8 @@ int main(int argc,char* argv[])
 	else
 	    seed = myrand_init();
 
-	int read_skip = 0;
-	optional<int> skip;
-	optional<double> skip_fraction;
-	{
-	    const string& s = skip_arg;
-	    if (not s.empty() and s[s.size()-1] == '%')
-	    {
-		if (auto d = can_be_converted_to<double>(s.substr(0,s.size()-1)))
-		{
-		    skip_fraction = d.value()/100;
-		    if (*skip_fraction < 0 or *skip_fraction > 1)
-			throw myexception()<<"Argument to '--skip="<<s<<"' is an invalid percent";
-
-		    // We have to read the whole file to know how much to skip.
-		    read_skip = 0;
-		}
-	    }
-	    else if (auto skip_int = can_be_converted_to<int>(s))
-	    {
-		// We can discard as we read the file.
-		skip = skip_int.value();
-
-		read_skip = skip_int.value();
-	    }
-
-	    if (not skip and not skip_fraction)
-		throw myexception()<<"Argument to '--skip="<<s<<"' is neither an integer nor a percent";
-	}
+        optional<double> skip_fraction;
+        const int read_skip = parse_tree_burnin(skip_arg, skip_fraction);
 
 	//-------------- Read in tree distributions --------------//
 
