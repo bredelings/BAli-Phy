@@ -60,7 +60,7 @@ the retained first sample, not original MCMC iteration numbers.
 : Confidence interval size.
 
 **--converged** _arg_ (=0.05)
-: Comma-separated quantiles of distance required for converged? (smaller is more strict).
+: Distance quantile required for convergence (smaller is more strict).
 
 **--mean**
 : Show mean and standard deviation

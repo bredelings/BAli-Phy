@@ -38,13 +38,12 @@
 #include "tree-dist.hh"
 #include "util/rng.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
+#include <optional>
 #include "distance-report.hh"
 
 extern int log_verbose;
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 using namespace statistics;
 
@@ -101,92 +100,7 @@ matrix<double> remove_duplicates(const matrix<double>& D)
     return D2;
 }
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
 
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-	("files",value<vector<string> >()->composing(),"tree samples to examine")
-	;
-
-    options_description input("Input options");
-    input.add_options()
-	("help,h", "produce help message")
-	("skip,s",value<unsigned>()->default_value(0),"number of tree samples to skip")
-	("until,u",value<int>(),"Read until this number of trees.")
-	("max,m",value<int>(),"Thin tree samples down to this number of trees.")
-	("subsample,x",value<int>()->default_value(1),"factor by which to subsample")
-	("verbose,V","Output more log messages on stderr.")
-	;
-
-    options_description analysis("Analysis options");
-    analysis.add_options()
-	("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, autocorrelation, diameter, compare, closest, convergence, converged.")
-	("metric", value<string>()->default_value("topology"),"Tree distance: topology, branch, internal-branch.")
-	("remove-duplicates","[matrix]: disallow zero distances  between points.")
-	("max-lag",value<int>(),"[autocorrelation]: largest lag to include (at most half the sample size).")
-	("CI",value<double>()->default_value(0.95,"0.95"),"Confidence interval size.")
-	("converged",value<double>()->default_value(0.05,"0.05"),"Comma-separated quantiles of distance required for converged? (smaller is more strict).")
-	("mean", "Show mean and standard deviation")
-	("median", "Show median and confidence interval")
-	("minmax", "Show minimum and maximum distances")
-	("leaves-only", "[node-dist-cvars]: report pendant branch lengths.")
-	("topology-only", "[node-dist-cvars, leaf-dist-matrix]: use unit branch lengths.")
-	("jitter",value<double>(),"Amount of noise to add to distances")
-	;
-
-    options_description visible("All options");
-    visible.add(input).add(analysis);
-
-    options_description all("All options");
-    all.add(invisible).add(input).add(analysis);
-
-    // positional options
-    positional_options_description p;
-    p.add("analysis", 1);
-    p.add("files", -1);
-  
-    variables_map args;
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
-    notify(args);    
-
-    if (args.count("help"))
-    {
-	cout<<"Compute autocorrelations or other functions of tree distances.\n\n";
-	cout<<"Usage: trees-distances <analysis> trees-file1 [trees-file2 ...]\n\n";
-	cout<<visible<<"\n";
-
-	cout<<"Example:\n\n";
-
-	cout<<" Compute distance matrix between all pairs of trees in all files:\n";
-	cout<<"   % trees-distances matrix file1.trees ... fileN.trees\n\n";
-
-	cout<<" Compute average distances at increasing separation:\n";
-	cout<<"   % trees-distances autocorrelation file1.trees\n\n";
-
-	cout<<" Summarize distances within one group of trees:\n";
-	cout<<"   % trees-distances diameter file1.trees --mean --median --minmax\n\n";
-
-	cout<<" Summarize distances within and between two groups of trees:\n";
-	cout<<"   % trees-distances compare file1.trees file2.trees --mean --median --minmax\n\n";
-
-	cout<<" Summarize distances within and between two groups of trees:\n";
-	cout<<"   % trees-distances closest file1.trees file2.trees\n\n";
-
-	cout<<" Summarize distances within and between two groups of trees:\n";
-	cout<<"   % trees-distances leaf-dist-matrix file1.trees\n\n";
-
-	exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = 1;
-
-    return args;
-}
 
 typedef double (*tree_metric_fn)(const tree_record&,const tree_record&);
 
@@ -660,24 +574,10 @@ void write_distance_cvars_out(const SequenceTree& T,bool leaves) {
     std::cout<<join(lengths,',')<<endl;
 }
 
-tree_sample tree_sample_from_all_files(const variables_map& args)
+// Combine selected trees from each input file, preserving file order and verbose counts.
+tree_sample tree_sample_from_all_files(const vector<string>& files, unsigned skip, optional<int> last,
+                                       int subsample, optional<int> max)
 {
-    unsigned skip = args["skip"].as<unsigned>();
-
-    optional<int> last;
-    if (args.count("until"))
-	last = args["until"].as<int>();
-
-    int subsample=args["subsample"].as<int>();
-
-    optional<int> max;
-    if (args.count("max"))
-	max = args["max"].as<int>();
-
-    vector<string> files;
-    if (args.count("files"))
-	files = args["files"].as<vector<string> >();
-
     check_supplied_filenames(1,files,false);
 
     tree_sample all_trees;
@@ -731,24 +631,74 @@ int main(int argc,char* argv[])
     try 
     {
 	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
-
-	string analysis = args["analysis"].as<string>();
-
-	unsigned skip = args["skip"].as<unsigned>();
-
-	int subsample=args["subsample"].as<int>();
-
-	optional<int> last;
-	if (args.count("until"))
-	    last = args["until"].as<int>();
-
-	optional<int> max;
-	if (args.count("max"))
-	    max = args["max"].as<int>();
+        CLI::App app{"Compute autocorrelations or other functions of tree distances.", "trees-distances"};
+        app.usage("Usage: trees-distances <analysis> trees-file1 [trees-file2 ...]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string analysis = "matrix", metric = "topology";
+        vector<string> files;
+        unsigned skip = 0;
+        int subsample = 1;
+        std::optional<int> last, max, max_lag;
+        std::optional<double> jitter;
+        double CI = 0.95, converged = 0.05;
+        bool verbose = false, remove_duplicates_requested = false;
+        bool show_mean = false, show_median = false, show_minmax = false;
+        bool leaves_only = false, topology_only = false;
+        app.add_option("--analysis,ANALYSIS", analysis,
+                       "Analysis: matrix, autocorrelation, diameter, compare, closest, convergence, converged.")
+            ->capture_default_str()->group("Analysis options");
+        app.add_option("--files,FILE", files, "tree samples to examine");
+        app.add_option("-s,--skip", skip, "number of tree samples to skip")
+            ->capture_default_str()->group("Input options");
+        app.add_option("-u,--until", last, "Read until this number of trees.")->group("Input options");
+        app.add_option("-m,--max", max, "Thin tree samples down to this number of trees.")->group("Input options");
+        app.add_option("-x,--subsample", subsample, "factor by which to subsample")
+            ->capture_default_str()->group("Input options");
+        app.add_flag("-V,--verbose", verbose, "Output more log messages on stderr.")->group("Input options");
+        app.add_option("--metric", metric, "Tree distance: topology, branch, internal-branch.")
+            ->capture_default_str()->group("Analysis options");
+        app.add_flag("--remove-duplicates", remove_duplicates_requested,
+                       "[matrix]: disallow zero distances  between points.")
+            ->group("Analysis options");
+        app.add_option("--max-lag", max_lag,
+                       "[autocorrelation]: largest lag to include (at most half the sample size).")
+            ->group("Analysis options");
+        app.add_option("--CI", CI, "Confidence interval size.")->capture_default_str()->group("Analysis options");
+        app.add_option("--converged", converged, "Distance quantile required for convergence (smaller is more strict).")
+            ->capture_default_str()->group("Analysis options");
+        app.add_flag("--mean", show_mean, "Show mean and standard deviation")->group("Analysis options");
+        app.add_flag("--median", show_median, "Show median and confidence interval")->group("Analysis options");
+        app.add_flag("--minmax", show_minmax, "Show minimum and maximum distances")->group("Analysis options");
+        app.add_flag("--leaves-only", leaves_only, "[node-dist-cvars]: report pendant branch lengths.")
+            ->group("Analysis options");
+        app.add_flag("--topology-only", topology_only, "[node-dist-cvars, leaf-dist-matrix]: use unit branch lengths.")
+            ->group("Analysis options");
+        app.add_option("--jitter", jitter, "Amount of noise to add to distances")->group("Analysis options");
+        app.footer("Example:\n\n"
+                   " Compute distance matrix between all pairs of trees in all files:\n"
+                   "   % trees-distances matrix file1.trees ... fileN.trees\n\n"
+                   " Compute average distances at increasing separation:\n"
+                   "   % trees-distances autocorrelation file1.trees\n\n"
+                   " Summarize distances within one group of trees:\n"
+                   "   % trees-distances diameter file1.trees --mean --median --minmax\n\n"
+                   " Summarize distances within and between two groups of trees:\n"
+                   "   % trees-distances compare file1.trees file2.trees --mean --median --minmax\n\n"
+                   " Summarize distances within and between two groups of trees:\n"
+                   "   % trees-distances closest file1.trees file2.trees\n\n"
+                   " Summarize distances within and between two groups of trees:\n"
+                   "   % trees-distances leaf-dist-matrix file1.trees\n\n");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        if (verbose) log_verbose = 1;
 
 	tree_metric_fn metric_fn = NULL;
-	string metric = args["metric"].as<string>();
 	if (metric == "topology" or metric == "RF")
 	    metric_fn = &robinson_foulds_distance2;
 	else if (metric == "branch" or metric == "branches")
@@ -760,24 +710,19 @@ int main(int argc,char* argv[])
 	else
 	    throw myexception()<<"Metric '"<<metric<<"' not implemented.";
       
-	//----------- read in trees ------------//
-	vector<string> files;
-	if (args.count("files"))
-	    files = args["files"].as<vector<string> >();
-
 	//----------- task "matrix" ------------//
 	if (analysis == "matrix") 
 	{
-	    auto all_trees = tree_sample_from_all_files(args);
+	    auto all_trees = tree_sample_from_all_files(files, skip, last, subsample, max);
 
 	    matrix<double> D = distances(all_trees,metric_fn);
 
-	    if (args.count("remove-duplicates"))
+	    if (remove_duplicates_requested)
 		D = remove_duplicates(D);
 
-	    if (args.count("jitter"))
+	    if (jitter)
 	    {
-		double sigma = args["jitter"].as<double>();
+		double sigma = *jitter;
 		myrand_init();
 		for(int i=0;i<D.size1();i++)
 		    for(int j=0;j<D.size2();j++)
@@ -797,8 +742,8 @@ int main(int argc,char* argv[])
 	    // inclusive. The half-sample cap leaves enough pairs to average at each lag.
 	    const int N = trees.size();
 	    int largest_lag = std::min(int(N/10.0 + 1), N/2) - 1;
-	    if (args.count("max-lag"))
-		largest_lag = std::min({args["max-lag"].as<int>(), N/2, N-1});
+	    if (max_lag)
+		largest_lag = std::min({*max_lag, N/2, N-1});
 
 	    // write out the average distances
 	    valarray<double> distances(0.0,std::max(0, largest_lag+1));
@@ -823,13 +768,11 @@ int main(int argc,char* argv[])
 
 	    matrix<double> D = distances(trees,metric_fn);
       
-	    diameter(D,"1", args["CI"].as<double>(), args.count("mean"), args.count("median"), args.count("minmax"));
+	    diameter(D,"1", CI, show_mean, show_median, show_minmax);
 	}
 
 	else if (analysis == "node-dist-cvars") 
 	{
-	    bool leaves_only = args.count("leaves-only");
-	    bool topology_only = args.count("topology-only");
 
 	    check_supplied_filenames(1,files);
 	    tree_sample trees(files[0],skip,last,subsample,max);
@@ -847,7 +790,6 @@ int main(int argc,char* argv[])
 	}
 	else if (analysis == "leaf-dist-matrix") 
 	{
-	    bool topology_only = args.count("topology-only");
 
 	    check_supplied_filenames(1,files);
 	    tree_sample trees(files[0],skip,last,subsample,max);
@@ -901,7 +843,7 @@ int main(int argc,char* argv[])
 	    }
 	    else
 		report_compare(D, trees1.size(), trees2.size(),
-                               args["CI"].as<double>(), args.count("mean"), args.count("median"), args.count("minmax"));
+                               CI, show_mean, show_median, show_minmax);
 	}
 
 	else if (analysis == "convergence") 
@@ -916,7 +858,7 @@ int main(int argc,char* argv[])
 	}
 	else if (analysis == "converged") 
 	{
-	    double alpha = args["converged"].as<double>();
+	    double alpha = converged;
 	    if (alpha <= 0 or alpha >= 1)
 		throw myexception()<<"Converged quartile "<<alpha<<" is not between 0 and 1";
 
