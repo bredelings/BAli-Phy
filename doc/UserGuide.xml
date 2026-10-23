@@ -4241,10 +4241,10 @@ The stabilization criterion is the same one described above for numerical values
     
     <section><info><title>trees-consensus</title></info>
       
-      <para>This program summarizes the tree sample contained in
-	<replaceable>file</replaceable>.  It reports the MAP topology, the
-	supported taxa partitions (including partial partitions), and the
-	majority consensus topology.
+      <para>This program summarizes one or more tree samples. By default it writes the
+	majority consensus topology, retaining relationships present in more than half the
+	trees. Options select the MAP topology, supported partial partitions, and a detailed
+	support report.
       </para> 
     </section>
 
@@ -4255,9 +4255,10 @@ The stabilization criterion is the same one described above for numerical values
 	<replaceable>predicate-file</replaceable>] [OPTIONS] </para>
       <para>This program summarizes the tree samples contained in
 	<replaceable>file1</replaceable>, <replaceable>file2</replaceable>,
-	etc.  It gives the support of each tree sample for each predicate in
-	<replaceable>predicate-file</replaceable>, and reports a confidence
-	interval based on the block bootstrap.
+	etc. It reports support for splits selected from the samples, or for predicates
+	supplied in <replaceable>predicate-file</replaceable>. With
+	<userinput>--bootstrap</userinput>, it also estimates uncertainty in support using
+	a block bootstrap of the sampled history.
       </para> 
 
       <para>Each predicate is the intersection of a set of partitions, and
