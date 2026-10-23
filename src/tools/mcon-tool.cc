@@ -1,72 +1,47 @@
 #include "mcon/mcon.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
+#include <optional>
 #include <fstream>
 #include <stdexcept>
 #include <filesystem>
 
-namespace po = boost::program_options;
-
 using std::string;
 using std::vector;
-
-po::variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-	("filename",value<string>(),"file to convert")
-	;
-
-    // named options
-    options_description visible("Allowed options");
-    visible.add_options()
-	("help,h", "produce help message")
-	("unnest", "flatten nested field names")
-	("atomize","expand structured values into scalar fields")
-	("split",value<string>(),"split and write to filenames with prefix=arg")
-	("drop",value<vector<string>>()->multitoken(),"paths to drop")
-	("add-time-field,T",value<string>(),"add field indicating the record number")
-	("output,O",value<string>()->default_value("MCON"),"output format (TSV or MCON)")
-	;
-
-    options_description all("All options");
-    all.add(invisible).add(visible);
-
-    // positional options
-    positional_options_description p;
-    p.add("filename", -1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	std::cout<<"Convert MCON files\n\n";
-	std::cout<<"Usage: mcon-tool <infile> [OPTIONS]\n\n";
-	std::cout<<visible<<"\n";
-	exit(0);
-    }
-
-    return args;
-}
 
 int main(int argc,char* argv[])
 {
     try {
-	//---------- Parse command line  -------//
-	auto args = parse_cmd_line(argc,argv);
+        CLI::App app{"Convert MCON files.", "mcon-tool"};
+        app.usage("Usage: mcon-tool [FILE] [OPTIONS]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        std::optional<string> input, split, time_field;
+        string output = "MCON";
+        vector<string> drop;
+        bool unnest = false, atomize = false;
+        app.add_option("--filename,FILE", input, "file to convert (default: STDIN)");
+        app.add_flag("--unnest", unnest, "flatten nested field names");
+        app.add_flag("--atomize", atomize, "expand structured values into scalar fields");
+        app.add_option("--split", split, "split and write to filenames with this prefix");
+        app.add_option("--drop", drop, "paths to drop");
+        app.add_option("-T,--add-time-field", time_field, "add field indicating the record number");
+        app.add_option("-O,--output", output, "output format (TSV or MCON)")->capture_default_str();
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
 
 	std::istream* instream = nullptr;
 	std::filesystem::path filename;
 	std::ifstream infile;
-	if (args.count("filename"))
+	if (input)
 	{
-	    filename = args.at("filename").as<string>();
+	    filename = *input;
 	    infile.open(filename);
 	    if (not infile)
 	    {
@@ -83,29 +58,27 @@ int main(int argc,char* argv[])
 
 	auto logfile = MCON::read_logfile(*instream, filename);
 
-	if (args.count("drop"))
-	    for(auto& name: args.at("drop").as<vector<string>>())
-		logfile.drop(name);
+	for (const auto& name: drop)
+            logfile.drop(name);
 
-	if (args.count("unnest"))
+	if (unnest)
 	    logfile.unnest();
 
-	if (args.count("atomize"))
+	if (atomize)
 	    logfile.atomize();
 
-        auto output = args.at("output").as<string>();
         bool output_mcon = output == "mcon" || output == "MCON";
         if (!output_mcon && output != "tsv" && output != "TSV")
             throw std::runtime_error("Unrecognized output format '"+output+"'");
 
-	if (args.count("split"))
+	if (split)
 	{
-	    std::filesystem::path split_filename = args.at("split").as<string>();
+	    std::filesystem::path split_filename = *split;
 	    auto logs = logfile.split();
 	    for(int i=0;i<logs.size();i++)
 	    {
-		if (args.count("add-time-field"))
-		    logs[i].add_time_field(args["add-time-field"].as<string>());
+		if (time_field)
+		    logs[i].add_time_field(*time_field);
 
 		auto tmp_filename = split_filename;
 		tmp_filename += "." + std::to_string(i+1);
@@ -123,8 +96,8 @@ int main(int argc,char* argv[])
 	    }
 	}
 
-	if (args.count("add-time-field"))
-	    logfile.add_time_field(args["add-time-field"].as<string>());
+	if (time_field)
+	    logfile.add_time_field(*time_field);
         if (output_mcon)
             logfile.dump_MCON(std::cout);
         else
