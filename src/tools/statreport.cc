@@ -651,7 +651,7 @@ int main(int argc,char* argv[])
         optional<string> condition_expression;
         int subsample = 1, last = -1, min_rows = -1;
         bool verbose = false;
-        app.add_option("--filenames,FILE", filenames, "Filenames to analyze ('-' for STDIN)")->required();
+        app.add_option("FILE", filenames, "Filenames to analyze ('-' for STDIN)")->required()->type_name("");
         app.add_flag("-V,--verbose", verbose, "Output more log messages on stderr.");
         app.add_option("-s,--skip", skip_text, "Number or percentage of initial samples to skip.")->capture_default_str();
         app.add_option("-x,--subsample", subsample, "Factor by which to sub-sample.")->capture_default_str();

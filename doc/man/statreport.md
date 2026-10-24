@@ -67,9 +67,6 @@ per iteration.
 
 ## Sample selection
 
-**`--filenames`** _FILE_ ...
-: Named form of the positional input list. Use **-** for standard input.
-
 **`-s`** _COUNT|PERCENT_, **`--skip`** _COUNT|PERCENT_
 : Discard initial samples as burn-in. Accepts a data-row count or a percentage such as `10%`
   (the default). A percentage is calculated from the shortest input after endpoint limiting and
