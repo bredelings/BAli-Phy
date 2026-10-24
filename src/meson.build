@@ -260,6 +260,7 @@ declarative_tool_tests += ['joint-indels', 'tree-mean-lengths', 'trees-distances
 declarative_tool_tests += ['alignment-cat', 'alignment-translate', 'alignment-find', 'alignment-chop-internal']
 declarative_tool_tests += ['stats-cat', 'stats-select', 'stats-merge']
 declarative_tool_tests += ['alignment-consensus', 'alignment-gild']
+declarative_tool_tests += ['joint-parsimony']
 declarative_tool_tests += ['draw-tree', 'trees-pair-distances', 'tree-tool', 'tree-reroot']
 tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
 

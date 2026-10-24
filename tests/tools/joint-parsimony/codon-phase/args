@@ -1,0 +1,3 @@
+# Phase must follow nucleotide units and be omitted for non-nucleotide alphabets.
+# Help tests do not cover these counts; retain while alphabet-dependent phase is reported.
+../../joint-indels/codons/test.fastas ../../joint-indels/codons/test.trees --alphabet Codons

@@ -1,0 +1,3 @@
+# Phase must follow nucleotide units and be omitted for non-nucleotide alphabets.
+# Help tests do not cover these counts; retain while alphabet-dependent phase is reported.
+../../joint-indels/example1/test.fastas ../../joint-indels/example1/test.trees --alphabet Amino-Acids

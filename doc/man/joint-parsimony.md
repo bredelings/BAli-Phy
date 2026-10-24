@@ -12,7 +12,12 @@
 
 # DESCRIPTION
 
-Usage: joint-parsimony <alignments file> <trees file> [OPTIONS]
+Indel lengths count alphabet symbols, so a codon counts as one symbol.
+For DNA/RNA and nucleotide triplet/codon alphabets, phase counts classify indels
+by the two ungapped sequence positions modulo three, measured in nucleotides.
+An event is counted in `phase0`, `phase1`, or `phase2` when those positions agree
+modulo three, or in `no-phase` otherwise. Reading-frame interpretation assumes
+coding sequences beginning at a codon boundary. Other alphabets omit these fields.
 
 # ALL OPTIONS:
 **-h**, **--help**

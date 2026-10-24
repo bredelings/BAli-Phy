@@ -26,8 +26,7 @@
 #include "util/myexception.hh"
 #include "alignment/alignment.hh"
 
-#include "optimize.hh"
-#include "findroot.hh"
+#include "sequence/triplets.hh"
 
 #include "alignment/alignment-util.hh"
 #include "tree/tree-util.hh"
@@ -100,6 +99,9 @@ vector<unsigned> n_indels_with_phase(const alignment& A,const Tree& T, int b)
     vector<int> pairwiseA = get_path(A, T.branch(b).target(), T.branch(b).source());
 
     int last_state = states::M;
+    // Each emitted triplet is three nucleotides. Phase is measured from the sequence start,
+    // which must be a codon boundary for these counts to describe a biological reading frame.
+    int nucleotide_width = A.get_alphabet().width();
 
     for(unsigned i=0,i1=0,i2=0; i<pairwiseA.size(); i++) 
     {
@@ -119,10 +121,10 @@ vector<unsigned> n_indels_with_phase(const alignment& A,const Tree& T, int b)
         last_state = current_state;
 
         if (current_state == states::M or current_state == states::G2)
-            i1++;
+            i1 += nucleotide_width;
 
         if (current_state == states::M or current_state == states::G1)
-            i2++;
+            i2 += nucleotide_width;
     }
 
     return indels;
@@ -145,24 +147,6 @@ vector<unsigned> n_indels_with_phase(const alignment& A,const Tree& T)
     return indels;
 }
 
-unsigned total_length_indels2(const alignment& A,const Tree& T)
-{
-    unsigned total=0;
-    for(int c=0;c<A.length();c++)
-    {
-        for(int b=0;b<T.n_branches();b++) {
-            int t = T.branch(b).target();
-            int s = T.branch(b).source();
-            if (A.gap(c,t) and not A.gap(c,s))
-                total++;
-            if (A.gap(c,s) and not A.gap(c,t))
-                total++;
-        }
-    }
-    return total;
-}
-
-
 int main(int argc,char* argv[]) { 
     try {
         variables_map args = parse_cmd_line(argc,argv);
@@ -175,13 +159,16 @@ int main(int argc,char* argv[]) {
       
             cout<<" #indels = "<<n_indels(A,T)<<"   ";
 
-            cout<<" |indels| = "<<total_length_indels2(A,T)<<"   ";
+            cout<<" |indels| = "<<total_length_indels(A,T)<<"   ";
 
-            vector<unsigned> indels = n_indels_with_phase(A,T);
-
-            for(int i=0;i<3;i++)
-                cout<<" phase"<<i<<" = "<<indels[i];
-            cout<<" no-phase = "<<indels[3];
+            const auto& a = A.get_alphabet();
+            if (dynamic_cast<const Nucleotides*>(&a) or dynamic_cast<const Triplets*>(&a))
+            {
+                vector<unsigned> indels = n_indels_with_phase(A,T);
+                for(int i=0;i<3;i++)
+                    cout<<" phase"<<i<<" = "<<indels[i];
+                cout<<" no-phase = "<<indels[3];
+            }
             cout<<endl;
         }
     }
