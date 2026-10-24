@@ -21,6 +21,7 @@
 #include <list>
 #include <utility>
 #include <optional>
+#include <cmath>
 #include "tree/tree.hh"
 #include "tree/sequencetree.hh"
 #include "tree/tree-util.hh"
@@ -164,9 +165,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("prune",value<string>(),"Comma-separated taxa to remove")
 	("subsample,x",value<int>()->default_value(1),"factor by which to subsample")
 	("var","report standard deviation of branch lengths instead of mean")
-	("no-node-lengths","ignore branches not in the specified topology")
+	("no-node-lengths","omit node-length records")
 	("safe","Don't die if no trees match the topology")
-	("drop-partial","Remove partial branches")
+	("drop-partial","Remove partial partitions before matching trees")
 	("seed", value<unsigned long>(),"random seed")
 	("verbose,V","Output more log messages on stderr.")
 	;
@@ -205,6 +206,8 @@ struct accum_branch_lengths: public accumulator<SequenceTree>
 
     valarray<double> m1;
     valarray<double> n1;
+    valarray<double> branch_m2;
+    valarray<double> node_m2;
 
     void operator()(const SequenceTree&);
 
@@ -216,8 +219,6 @@ struct accum_branch_lengths: public accumulator<SequenceTree>
 	    if (n_matches == 0)
 		throw myexception()<<"No trees matched the specified topology!";
 
-	    m1 /= n_matches;
-	    n1 /= n_matches;
 	}
 
     accum_branch_lengths(const MC_tree& T);
@@ -229,7 +230,9 @@ accum_branch_lengths::accum_branch_lengths(const MC_tree& T)
     n_matches(0),
     Q(T),
     m1(0.0, Q.n_branches()),
-    n1(0.0, Q.n_nodes())
+    n1(0.0, Q.n_nodes()),
+    branch_m2(0.0, Q.n_branches()),
+    node_m2(0.0, Q.n_nodes())
 {
     // compute node masks
     for(int n=0;n<Q.n_nodes();n++)
@@ -304,8 +307,25 @@ accum_branch_lengths::accum_branch_lengths(const MC_tree& T)
 void accum_branch_lengths::operator()(const SequenceTree& T)
 {
     n_samples++;
-    if (update_lengths(Q,T,node_masks,partitions2,m1,n1))
-	n_matches++;
+    valarray<double> branches(0.0, Q.n_branches()), nodes(0.0, Q.n_nodes());
+    if (not update_lengths(Q,T,node_masks,partitions2,branches,nodes)) return;
+    n_matches++;
+
+    // Each observation is a matching tree's total contribution, including zeros. Welford's
+    // update keeps the mean and sum of squared deviations from it without subtracting large
+    // nearly equal moments. The product uses deviations from the old and new means.
+    for (int b = 0; b < branches.size(); b++)
+    {
+        double delta = branches[b] - m1[b];
+        m1[b] += delta / n_matches;
+        branch_m2[b] += delta * (branches[b] - m1[b]);
+    }
+    for (int n = 0; n < nodes.size(); n++)
+    {
+        double delta = nodes[n] - n1[n];
+        n1[n] += delta / n_matches;
+        node_m2[n] += delta * (nodes[n] - n1[n]);
+    }
 }
 
 int main(int argc,char* argv[]) 
@@ -334,7 +354,13 @@ int main(int argc,char* argv[])
 	vector<string> prune = get_string_list(args, "prune");
       
 	//----------- Read the topology -----------//
-	MC_tree Q = load_MC_tree(args["tree"].as<string>());
+        auto queries = load_partitions(args["tree"].as<string>());
+        if (queries.empty())
+            throw myexception()<<"No query topology was read!";
+        auto& query = queries.front();
+        if (args.count("drop-partial"))
+            std::erase_if(query.partitions, [](const partition& p) { return not p.full(); });
+        MC_tree Q(check_MC_partitions(query));
 
 	//-------- Read in the tree samples --------//
 	accum_branch_lengths A(Q);
@@ -354,24 +380,33 @@ int main(int argc,char* argv[])
 	if (log_verbose) std::cerr<<"mctree-mean-lengths: "<<A.n_matches<<" out of "<<A.n_samples<<" trees matched the topology";
 	if (log_verbose) std::cerr<<"mctree-mean-lengths: "<<" ("<<double(A.n_matches)/A.n_samples*100<<"%)"<<std::endl;
 
-	//------- Merge lengths and topology -------//
-	for(int b=0;b<Q.T.n_branches();b++)
-	    Q.T.branch(b).set_length(A.m1[b]);
+        // Divide by the number of matching trees to describe their empirical distribution.
+        valarray<double> branch_lengths = A.m1;
+        valarray<double> node_lengths = A.n1;
+        if (args.count("var"))
+        {
+            branch_lengths = std::sqrt(A.branch_m2 / A.n_matches);
+            node_lengths = std::sqrt(A.node_m2 / A.n_matches);
+        }
+
+        // Full partitions come first in branch_order, in the ordinary tree's branch order.
+        for(int b=0;b<Q.T.n_branches();b++)
+            Q.T.branch(b).set_length(branch_lengths[b]);
 	cout<<Q.T<<endl;
 
 	for(int i=0;i<Q.branch_order.size();i++)
 	{
 	    int b = Q.branch_order[i];
 	    if (not Q.partitions[b].full()) {
-		cout<<"branch "<<A.m1[i]<<endl;
+		cout<<"branch "<<branch_lengths[i]<<endl;
 		cout<<Partition(Q.names(), Q.partitions[b])<<endl;
 	    }
 	}
 
 	for(int n=0;n<Q.n_nodes();n++) 
 	{
-	    if (A.n1[n] > 0) {
-		cout<<"node "<<A.n1[n]<<endl;
+	    if (not args.count("no-node-lengths") and A.n1[n] > 0) {
+		cout<<"node "<<node_lengths[n]<<endl;
 		int b = Q.branch_to_node(n);
 		cout<<Partition(Q.names(), Q.partitions[b])<<endl;
 	    }

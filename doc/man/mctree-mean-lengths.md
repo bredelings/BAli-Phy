@@ -34,17 +34,18 @@ Compute the mean lengths for branches in the given topology.
 : factor by which to subsample
 
 **--var**
-: report standard deviation of branch lengths instead of mean
+: Report standard deviations instead of means for branch and node lengths,
+  using the empirical distribution of matching trees. One match gives zero deviation.
 
 **--no-node-lengths**
-: ignore branches not in the specified topology
+: Omit node-length records; branch estimates and the matching criterion are unchanged.
 
 **--safe**
 : If trees were read but none matched, print the query topology without estimated
   lengths and exit successfully. Empty input and other failures remain errors.
 
 **--drop-partial**
-: Remove partial branches
+: Remove partial partitions from the query before matching and estimating lengths.
 
 **--seed** _arg_
 : random seed
