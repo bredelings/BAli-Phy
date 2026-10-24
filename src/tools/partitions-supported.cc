@@ -90,8 +90,8 @@ int main(int argc,char* argv[])
         optional<unsigned> last, max;
         optional<double> below, above;
         bool flip = false, verbose = false;
-        app.add_option("--predicates,PREDICATES", predicates_file, "predicates to examine")->required();
-        app.add_option("--file,FILE", filename, "tree samples to examine")->capture_default_str();
+        app.add_option("PREDICATES", predicates_file, "predicates to examine")->required()->type_name("");
+        app.add_option("FILE", filename, "tree samples to examine")->capture_default_str()->type_name("");
         app.add_option("--skip", skip, "Number of trees to skip.")->capture_default_str()->group("Input options");
         app.add_option("--until", last, "Read until this number of trees.")->group("Input options");
         app.add_option("--max", max, "Thin down to this number of trees.")->group("Input options");

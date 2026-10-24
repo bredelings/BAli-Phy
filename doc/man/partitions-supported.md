@@ -92,12 +92,6 @@ reused as a predicate file. File-loading messages go to standard error.
 **-h**, **--help**
 : Print help and exit.
 
-**--predicates** _FILE_
-: Named form of the required positional predicate file.
-
-**--file** _FILE_
-: Named form of the tree-sample file. Default: **-**, standard input.
-
 **--skip** _N_
 : Discard _N_ initial trees. Default: 0.
 
