@@ -230,7 +230,7 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
     if (output_details)
         std::cout << "Sample\tStart1\tStart2\tEnd1\tEnd2\tType\tLength\tLen1\tLen2\tSequence" << endl;
     else
-        std::cout << "Iter\tPart\tLen\tIndels" << endl;
+        std::cout << "Len\tIndels" << endl;
 
     int consistentsamples = 0;
     int numindels = 0;
@@ -266,6 +266,7 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
             auto groups = group_consecutive(pairwiseA);
 
             int uniqueindels = 0;
+            int pairwise_length = 0;
             int pos1 = 0;  // symbols emitted in sequence 1
             int pos2 = 0;  // symbols emitted in sequence 2
 
@@ -275,6 +276,8 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
             {
                 int state = group[0];
                 int length = group.size();
+                if (state == states::M or state == states::G1 or state == states::G2)
+                    pairwise_length += length;
 
                 if (state == states::G1 or state == states::G2)
                 {
@@ -327,7 +330,7 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
             }
 
             if (not output_details)
-                std::cout << pairwiseA.size() << "\t" <<  uniqueindels << endl;
+                std::cout << pairwise_length << "\t" <<  uniqueindels << endl;
         } else {
             if (output_details)
                 std::cout << sample_num << "\tNA" << endl;

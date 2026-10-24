@@ -1,0 +1,3 @@
+# Counts need a matching header and must exclude non-emitting path states. Detailed-output
+# tests do not exercise this format; retain while the ordinary two-column report exists.
+../example1/test.fastas ../example1/test.trees --partition seq1
