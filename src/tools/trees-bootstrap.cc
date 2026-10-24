@@ -549,7 +549,7 @@ int main(int argc,char* argv[])
         optional<unsigned long> supplied_seed;
         double min_support = 0.1, compare_dx = 0, confidence = 0.95;
         bool verbose = false, bootstrapped = false;
-        app.add_option("--files,FILE", files, "Tree files to examine.")->required();
+        app.add_option("FILE", files, "Tree files to examine.")->required()->type_name("");
         app.add_option("-s,--skip", skip_arg,
                        "Burn-in count for every run, or percent of the shortest run before thinning.")
             ->capture_default_str()->group("Input options");

@@ -135,9 +135,6 @@ analyzed predicates. No single cutoff for these diagnostics establishes converge
 **-h**, **--help**
 : Print help and exit.
 
-**--files** _FILE_ ...
-: Named form of the positional input list, including any **::** separators.
-
 **-s**, **--skip** _COUNT-OR-PERCENT_
 : Discard this initial count per run, or use a common percentage-derived count.
   Default: **10%**. Use **0** for already trimmed runs.
