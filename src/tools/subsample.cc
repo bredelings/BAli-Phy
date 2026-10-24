@@ -40,7 +40,7 @@ int main(int argc,char* argv[])
         double subsample = 1.0;
         optional<unsigned> max;
         bool header = false;
-        app.add_option("-x,--factor,FACTOR", subsample, "Factor by which to subsample.")->capture_default_str();
+        app.add_option("FACTOR", subsample, "Factor by which to subsample.")->capture_default_str()->type_name("");
         app.add_option("--skip", skip, "Throw out some lines at the beginning.")->capture_default_str();
         app.add_option("--max", max, "Maximum number of samples to keep");
         app.add_flag("--header", header, "This file has a header - don't throw it out.");

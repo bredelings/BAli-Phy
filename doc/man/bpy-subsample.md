@@ -21,13 +21,13 @@ Selection proceeds in this order: preserve an optional header, skip initial data
 lines, subsample the remaining lines, and stop at the output limit. The first data
 line after skipping is always selected unless the output limit is zero.
 
-# OPTIONS
+# ARGUMENTS AND OPTIONS
 
 **-h**, **--help**
 : Print help and exit.
 
-**-x**, **--factor** _FACTOR_
-: Subsampling factor; also accepted as the positional argument. Default: 1.
+**_FACTOR_**
+: Optional positional subsampling factor. Default: 1.
   An integer factor N keeps data lines 1, 1+N, 1+2N, and so on after skipping.
   Fractional factors are allowed: 1.5 keeps lines 1, 3, 4, 6, 7, 9, and so on.
   The factor must be finite and positive. Factors below 1 keep every line.
@@ -53,7 +53,7 @@ Keep the first tree and every tenth tree thereafter from a one-tree-per-line fil
 Preserve a table header, skip 100 data rows, then keep at most 500 rows spaced five
 rows apart:
 
-    bpy-subsample --header --skip=100 --factor=5 --max=500 < C1.tsv > selected.tsv
+    bpy-subsample 5 --header --skip=100 --max=500 < C1.tsv > selected.tsv
 
 # EXIT STATUS
 
