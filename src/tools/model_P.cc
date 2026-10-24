@@ -27,10 +27,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util/math/logsum.hh"
 #include "util/log-level.hh"
 
-#include <boost/program_options.hpp>
-
-namespace po = boost::program_options;
-using po::variables_map;
+#include <CLI/CLI.hpp>
+#include <optional>
 
 using namespace std;
 
@@ -131,38 +129,6 @@ double Pr_smoothed(const valarray<double>& v) {
   return Pdata;
 }
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-  using namespace po;
-
-  // named options
-  options_description all("Allowed options");
-  all.add_options()
-    ("help,h", "produce help message")
-    ("seed", value<unsigned long>(),"random seed")
-    ("verbose","Output more log messages on stderr.")
-    ;
-
-  variables_map args;     
-  store(parse_command_line(argc, argv, all), args);
-  notify(args);    
-
-  if (args.count("help")) {
-    cout<<"Compute marginal likelihoods using stabilized harmonic mean estimator\n";
-    cout<<"Usage: model_P < in-file\n";
-    cout<<"Input: natural-log likelihoods; output: log marginal likelihood and bootstrap standard deviation.\n";
-    cout<<all<<"\n";
-    exit(0);
-  }
-
-  if (args.count("verbose")) log_verbose = 1;
-
-  return args;
-}
-
-
-
-
 int main(int argc,char* argv[]) 
 { 
 
@@ -171,13 +137,30 @@ int main(int argc,char* argv[])
     std::cout.precision(3);
     std::cout.setf(ios::fixed);
 
-    //---------- Parse command line  -------//
-    variables_map args = parse_cmd_line(argc,argv);
+    CLI::App app{"Compute marginal likelihoods using the stabilized harmonic mean estimator.", "model_P"};
+    app.usage("Usage: model_P [OPTIONS] < in-file");
+    app.get_formatter()->long_option_alignment_ratio(0.2f);
+    app.footer("Input: natural-log likelihoods; output: log marginal likelihood and bootstrap standard deviation.");
+    optional<unsigned long> requested_seed;
+    bool verbose = false;
+    app.add_option("--seed", requested_seed, "Random seed");
+    app.add_flag("--verbose", verbose, "Output more log messages on stderr");
+    try
+    {
+      app.parse(argc, argv);
+    }
+    catch (const CLI::ParseError& error)
+    {
+      app.exit(error);
+      return error.get_exit_code() == 0 ? 0 : 1;
+    }
+    if (verbose) log_verbose = 1;
 
     //---------- Initialize random seed -----------//
-    unsigned long seed = 0;
-    if (args.count("seed")) {
-      seed = args["seed"].as<unsigned long>();
+    unsigned long seed;
+    if (requested_seed)
+    {
+      seed = *requested_seed;
       myrand_init(seed);
     }
     else

@@ -8,7 +8,7 @@
 
 # SYNOPSIS
 
-**model_P** < in-file
+**model_P** [OPTIONS] < in-file
 
 # DESCRIPTION
 
