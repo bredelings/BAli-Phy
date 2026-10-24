@@ -20,7 +20,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <vector>
 #include <valarray>
-#include <algorithm>
 #include <cmath>
 
 #include "bootstrap.hh"

@@ -17,9 +17,7 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include <fstream>
 #include <string>
-#include <cmath>
 #include <vector>
 #include "util/myexception.hh"
 #include "util/log-level.hh"
@@ -61,18 +59,14 @@ std::vector<std::vector<T>> group_consecutive(const std::vector<T>& items)
     return groups;
 }
 
-using std::cin;
 using std::cout;
 using std::cerr;
-using std::istream;
-using std::ifstream;
 using std::vector;
 using std::string;
 using std::endl;
 using std::optional;
 using std::map;
 using boost::dynamic_bitset;
-//using namespace optimize;
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -104,7 +98,6 @@ map<dynamic_bitset<>,int> get_splits(const Tree& T)
 
 vector<optional<int>> get_partial_branches_map(const Tree& Q, const Tree& T)
 {
-    auto Q_splits = get_splits(Q);
     auto T_splits = get_splits(T);
 
     vector<optional<int>> Q_to_T_branches(2*Q.n_branches());
@@ -384,7 +377,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     variables_map args;
     store(command_line_parser(argc, argv).
           options(all).positional(p).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
     notify(args);
 
     if (args.count("help")) {
@@ -402,9 +394,6 @@ int main(int argc,char* argv[])
 {
     try {
         variables_map args = parse_cmd_line(argc,argv);
-        //Arguments args;
-        //args.read(argc,argv);
-        //args.print(cerr);
 
         if (log_verbose) cerr<<"joint-indels: Loading alignments and trees...\n";
         joint_A_T J = get_joint_A_T(args,true);
@@ -412,7 +401,7 @@ int main(int argc,char* argv[])
         if (J.size() == 0)
             throw myexception()<<"No (A,T) read in!";
         else
-            if (log_verbose) cerr<<"joint-indels: Loaded "<<J.size()<<" (A,T) pairs."<<endl;;
+            if (log_verbose) cerr<<"joint-indels: Loaded "<<J.size()<<" (A,T) pairs."<<endl;
 
         if (args.count("extract-sequences"))
             extract_sequence(args,J);

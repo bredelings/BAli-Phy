@@ -18,8 +18,6 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include <iostream>
-#include <list>
-#include <utility>
 #include <optional>
 #include <cmath>
 #include "tree/tree.hh"
@@ -43,20 +41,9 @@ using boost::dynamic_bitset;
 using std::cout;
 using std::cerr;
 using std::endl;
-using std::ostream;
 using std::string;
 using std::vector;
-using std::list;
 using std::valarray;
-using std::pair;
-
-ostream& show_name_set(ostream& o,const vector<string>& names, const dynamic_bitset<>& mask)
-{
-    for(int i=0;i<mask.size();i++)
-	if (mask[i])
-	    o<<names[i]<<" ";
-    return o;
-}
 
 bool update_lengths(const MC_tree& Q,const SequenceTree& T,
 		    const vector<dynamic_bitset<> >& node_masks,
@@ -116,16 +103,6 @@ bool update_lengths(const MC_tree& Q,const SequenceTree& T,
 	    }
 	}
 
-	/*
-	  cerr<<"Branch: "<<P<<endl;
-	  cerr<<"  - maps to "<<branches.size()<<" branches."<<endl;
-	  if (nodes.size()) {
-	  cerr<<"  - inside node(s):"<<endl;
-	  cerr<<P<<endl;
-	  for(int i=0;i<nodes.size();i++)
-	  cerr<<"    "<<Q.partitions[Q.branch_to_node(nodes[i])]<<endl;
-	  }
-	*/
 
 	// This branch should be inside only one node, if any.
 	assert(nodes.size() < 2);
@@ -164,7 +141,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("until,u",value<int>(),"Read until this number of trees.")
 	("prune",value<string>(),"Comma-separated taxa to remove")
 	("subsample,x",value<int>()->default_value(1),"factor by which to subsample")
-	("var","report standard deviation of branch lengths instead of mean")
+	("var","report standard deviations of branch and node lengths instead of means")
 	("no-node-lengths","omit node-length records")
 	("safe","Don't die if no trees match the topology")
 	("drop-partial","Remove partial partitions before matching trees")
@@ -211,15 +188,13 @@ struct accum_branch_lengths: public accumulator<SequenceTree>
 
     void operator()(const SequenceTree&);
 
-    void finalize() 
-	{
-	    if (n_samples == 0)
-		throw myexception()<<"No trees were read in!";
-  
-	    if (n_matches == 0)
-		throw myexception()<<"No trees matched the specified topology!";
-
-	}
+    void finalize() override
+    {
+        if (n_samples == 0)
+            throw myexception()<<"No trees were read in!";
+        if (n_matches == 0)
+            throw myexception()<<"No trees matched the specified topology!";
+    }
 
     accum_branch_lengths(const MC_tree& T);
 };
@@ -237,8 +212,6 @@ accum_branch_lengths::accum_branch_lengths(const MC_tree& T)
     // compute node masks
     for(int n=0;n<Q.n_nodes();n++)
     {
-	//    cerr<<"node "<<Q.partitions[Q.branch_to_node(n)]<<endl;
-	//    cerr<<"degree = "<<Q.degree(n)<<endl;
 	dynamic_bitset<> mask(Q.n_leaves()); mask.flip();
 
 	for(int i=0;i<2*Q.n_branches();i++)
@@ -249,17 +222,12 @@ accum_branch_lengths::accum_branch_lengths(const MC_tree& T)
 		mask &= Q.partitions[i].mask();
 	}
 	node_masks.push_back(mask);
-	//    cerr<<"mask = ";
-	//    show_name_set(cerr,Q.names(),mask);
-	//    cerr<<endl<<endl;
     }
 
     // incorporate lengths of branches that map to Q
     for(int i=0;i<Q.branch_order.size();i++) 
     {
 	int b = Q.branch_order[i];
-	//    int n1 = Q.mapping[b];
-	//    int n2 = Q.mapping[Q.reverse(b)];
 
 	auto P = Q.partitions[b];
 	dynamic_bitset<> mask = P.mask();
@@ -296,8 +264,6 @@ accum_branch_lengths::accum_branch_lengths(const MC_tree& T)
 	P.group1 &= mask;
 	P.group2 &= mask;
 
-	//    cerr<<"Branch: "<<P<<endl;
-	//    cerr<<"   mask = ";show_name_set(cerr,P.names,P.mask())<<endl;
 
 	partitions2.push_back(P);
     }

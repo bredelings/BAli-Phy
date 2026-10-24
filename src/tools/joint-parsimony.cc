@@ -17,9 +17,7 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include <fstream>
 #include <string>
-#include <cmath>
 #include <vector>
 #include <boost/program_options.hpp>
 
@@ -37,11 +35,7 @@
 #include "dp/A2_states.hh"
 using namespace A2;
 
-using std::cin;
 using std::cout;
-using std::cerr;
-using std::istream;
-using std::ifstream;
 using std::vector;
 using std::string;
 using std::endl;
@@ -78,7 +72,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     variables_map args;     
     store(command_line_parser(argc, argv).
           options(all).positional(p).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
     notify(args);    
 
     if (args.count("help")) {
