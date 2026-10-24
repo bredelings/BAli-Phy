@@ -19,7 +19,7 @@
 
 #include <string>
 #include <vector>
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
 #include "util/myexception.hh"
 #include "alignment/alignment.hh"
@@ -40,48 +40,6 @@ using std::vector;
 using std::string;
 using std::endl;
 
-namespace po = boost::program_options;
-using po::variables_map;
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-        ("alignments", value<string>(),"file of alignment samples")
-        ("trees", value<string>(), "file of corresponding tree samples")
-        ;
-
-    options_description visible("All options");
-    visible.add_options()
-        ("help,h", "produces help message")
-        ("subsample",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
-        ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
-        ;
-
-    options_description all("All options");
-    all.add(visible).add(invisible);
-
-    // positional options
-    positional_options_description p;
-    p.add("alignments", 1);
-    p.add("trees", 2);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-          options(all).positional(p).run(), args);
-    notify(args);    
-
-    if (args.count("help")) {
-        cout<<"Usage: joint-parsimony <alignments file> <trees file> [OPTIONS]\n";
-        cout<<visible<<"\n";
-        exit(0);
-    }
-
-    return args;
-}
 
 // If we could read back in the indel-model state we could
 // estimate the number of indels in an indel block.
@@ -142,9 +100,26 @@ vector<unsigned> n_indels_with_phase(const alignment& A,const Tree& T)
 
 int main(int argc,char* argv[]) { 
     try {
-        variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Summarize parsimony and indel counts from joint alignment and tree samples.", "joint-parsimony"};
+        app.usage("Usage: joint-parsimony ALIGNMENTS TREES [OPTIONS]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string alignment_file, tree_file, alphabet_name;
+        unsigned subsample = 10;
+        app.add_option("ALIGNMENTS", alignment_file, "File of alignment samples")->required()->type_name("");
+        app.add_option("TREES", tree_file, "File of corresponding tree samples")->required()->type_name("");
+        app.add_option("--subsample", subsample, "Factor by which to subsample trees")->capture_default_str();
+        app.add_option("--alphabet", alphabet_name, "Alphabet to use (e.g. Codons)");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
 
-        joint_A_T J = get_joint_A_T(args,true);
+        joint_A_T J = get_joint_A_T(alignment_file, tree_file, alphabet_name, true, subsample);
 
         for(auto& [A,T]: J)
         {

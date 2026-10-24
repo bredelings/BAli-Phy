@@ -33,9 +33,6 @@
 #include "util/log-level.hh"
 #include "util/io.hh"
 
-namespace po = boost::program_options;
-using po::variables_map;
-
 using std::vector;
 using std::pair;
 using std::shared_ptr;
@@ -84,16 +81,15 @@ joint_A_T::joint_A_T(const vector<alignment>& A,const vector<SequenceTree>& T,bo
 }
 
 
-joint_A_T get_joint_A_T(const variables_map& args,bool internal)
+// Load alignments and the corresponding thinned tree samples, then link their sequence indices.
+joint_A_T get_joint_A_T(const string& alignment_file, const string& tree_file,
+                       const string& alphabet_name, bool internal, unsigned tree_stride)
 {
-    checked_ifstream a_file(args["alignments"].as<string>(), "alignment samples file");
+    checked_ifstream a_file(alignment_file, "alignment samples file");
+    checked_ifstream t_file(tree_file, "tree samples file");
 
-    checked_ifstream t_file(args["trees"].as<string>(), "tree samples file");
-
-    unsigned subsample = args["subsample"].as<unsigned>();
-
-    vector<alignment> A = load_alignments(a_file, get_alphabet_name(args));
-    vector<SequenceTree> T = load_trees(t_file, 0, subsample);
+    vector<alignment> A = load_alignments(a_file, alphabet_name);
+    vector<SequenceTree> T = load_trees(t_file, 0, tree_stride);
 
     return joint_A_T(A,T,internal);
 }

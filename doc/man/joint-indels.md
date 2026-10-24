@@ -8,9 +8,12 @@
 
 # SYNOPSIS
 
-**joint-indels** _alignments file_ _trees file_ [OPTIONS]
+**joint-indels** _ALIGNMENTS_ _TREES_ [OPTIONS]
 
 # DESCRIPTION
+
+_ALIGNMENTS_ and _TREES_ are required positional filenames containing alignment
+samples and corresponding tree samples, respectively.
 
 Usage: joint-indels <alignments file> <trees file> [OPTIONS]
 
@@ -28,7 +31,7 @@ Usage: joint-indels <alignments file> <trees file> [OPTIONS]
 : set to 'Codons' to prefer codon alphabets
 
 **-V**, **--verbose**
-: \[=arg(=1)\] Show more log messages on stderr.
+: Show more log messages on stderr. Repeat the flag or use `--verbose=2` for more detail.
 
 **--extract-sequences** _arg_
 : Extract sequences corresponding to tree

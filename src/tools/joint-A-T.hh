@@ -24,7 +24,6 @@
 #include <string>
 #include <vector>
 #include <optional>
-#include <boost/program_options.hpp>
 #include "util/file-readers.hh"
 #include "alignment/load.hh"
 #include "tree/sequencetree.hh"
@@ -47,7 +46,8 @@ public:
     joint_A_T(const std::vector<alignment>& A1,const std::vector<SequenceTree>& T1,bool internal);
 };
 
-joint_A_T get_joint_A_T(const boost::program_options::variables_map& args,bool internal);
+joint_A_T get_joint_A_T(const std::string& alignment_file, const std::string& tree_file,
+                       const std::string& alphabet_name, bool internal, unsigned tree_stride);
 
 joint_A_T get_multiple_joint_A_T(const std::vector<std::string>& alignment_files,
                                const std::vector<std::string>& tree_files, const std::string& alphabet_name,

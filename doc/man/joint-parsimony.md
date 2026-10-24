@@ -8,9 +8,12 @@
 
 # SYNOPSIS
 
-**joint-parsimony** _alignments file_ _trees file_ [OPTIONS]
+**joint-parsimony** _ALIGNMENTS_ _TREES_ [OPTIONS]
 
 # DESCRIPTION
+
+_ALIGNMENTS_ and _TREES_ are required positional filenames containing alignment
+samples and corresponding tree samples, respectively.
 
 Indel lengths count alphabet symbols, so a codon counts as one symbol.
 For DNA/RNA and nucleotide triplet/codon alphabets, phase counts classify indels

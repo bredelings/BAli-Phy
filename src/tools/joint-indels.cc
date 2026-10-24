@@ -32,6 +32,7 @@
 #include "dp/A2_states.hh"
 #include <optional>
 #include <map>
+#include <CLI/CLI.hpp>
 
 #include <boost/dynamic_bitset.hpp>
 
@@ -68,8 +69,6 @@ using std::optional;
 using std::map;
 using boost::dynamic_bitset;
 
-namespace po = boost::program_options;
-using po::variables_map;
 using namespace A2;
 
 // OK, what does a complete conflict analysis look like?
@@ -145,9 +144,9 @@ vector<optional<int>> get_nodes_map(const Tree& Q, const Tree& T)
     return Q_to_T_nodes;
 }
 
-void extract_sequence(const variables_map& args, const joint_A_T& J)
+void extract_sequence(const string& query_file, const joint_A_T& J)
 {
-    auto Q = load_tree_from_file(args["extract-sequences"].as<string>());
+    auto Q = load_tree_from_file(query_file);
 
     remap_T_leaf_indices(Q, J.leaf_names());
 
@@ -199,14 +198,9 @@ void extract_sequence(const variables_map& args, const joint_A_T& J)
     }
 }
 
-void run_analysis(const variables_map& args, const joint_A_T& J) {
+void run_analysis(const string& partition_name, bool output_details, const joint_A_T& J) {
 
-    // Handle Partition name
-    if (not args.count("partition"))
-        throw myexception() << "Must specify a unique partition of taxa by name.\n";
-    vector<string> pnames = split(args["partition"].as<string>(),':');
-
-    bool output_details = args.count("details");
+    vector<string> pnames = split(partition_name, ':');
 
     // Struct to collect indel info
     // Start1/Start2: symbols emitted in each sequence BEFORE the indel
@@ -343,70 +337,51 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
     }
 }
 
-variables_map parse_cmd_line(int argc,char* argv[])
-{
-    using namespace po;
-
-    // named options
-    options_description invisible("Invisible options");
-    invisible.add_options()
-        ("alignments", value<string>(),"file of alignment samples")
-        ("trees", value<string>(), "file of corresponding tree samples")
-        ;
-
-    // named options
-    options_description visible("Allowed options");
-    visible.add_options()
-        ("help,h", "produces help message")
-        ("subsample",value<unsigned>()->default_value(10),"factor by which to sub-sample trees")
-        ("partition", value<string>(), "find indels along internal branch that bi-partitions given taxa (<taxa1>:<taxa2>:...)")
-        ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
-        ("verbose,V",value<int>()->implicit_value(1),"Show more log messages on stderr.")
-        ("extract-sequences",value<string>(),"Extract sequences corresponding to tree")
-        ("details", "output individual indel positions instead of counts")
-        ;
-
-    options_description all("All options");
-    all.add(visible).add(invisible);
-
-    // positional options
-    positional_options_description p;
-    p.add("alignments", 1);
-    p.add("trees", 2);
-
-    variables_map args;
-    store(command_line_parser(argc, argv).
-          options(all).positional(p).run(), args);
-    notify(args);
-
-    if (args.count("help")) {
-        cout<<"Usage: joint-indels <alignments file> <trees file> [OPTIONS]\n";
-        cout<<visible<<"\n";
-        exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = args["verbose"].as<int>();
-
-    return args;
-}
-
 int main(int argc,char* argv[])
 {
     try {
-        variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Summarize indels along a specified branch or extract ancestral sequences.", "joint-indels"};
+        app.usage("Usage: joint-indels ALIGNMENTS TREES [OPTIONS]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string alignment_file, tree_file, alphabet_name;
+        unsigned subsample = 10;
+        app.add_option("ALIGNMENTS", alignment_file, "File of alignment samples")->required()->type_name("");
+        app.add_option("TREES", tree_file, "File of corresponding tree samples")->required()->type_name("");
+        app.add_option("--subsample", subsample, "Factor by which to subsample trees")->capture_default_str();
+        app.add_option("--alphabet", alphabet_name, "Alphabet to use (e.g. Codons)");
+        string partition_name;
+        optional<string> extract_tree;
+        bool details = false;
+        int verbose = 0;
+        app.add_option("--partition", partition_name, "Branch identified by taxa on one side (taxon1:taxon2:...)");
+        app.add_option("--extract-sequences", extract_tree, "Extract sequences corresponding to this query tree");
+        app.add_flag("--details", details, "Output individual indel positions instead of counts");
+        app.add_flag("-V,--verbose", verbose, "Output more log messages (repeat or use --verbose=2 for more detail)");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        log_verbose = verbose;
+        if (not extract_tree and not app.count("--partition"))
+            throw myexception()<<"Must specify a unique partition of taxa by name.";
 
         if (log_verbose) cerr<<"joint-indels: Loading alignments and trees...\n";
-        joint_A_T J = get_joint_A_T(args,true);
+        joint_A_T J = get_joint_A_T(alignment_file, tree_file, alphabet_name, true, subsample);
 
         if (J.size() == 0)
             throw myexception()<<"No (A,T) read in!";
         else
             if (log_verbose) cerr<<"joint-indels: Loaded "<<J.size()<<" (A,T) pairs."<<endl;
 
-        if (args.count("extract-sequences"))
-            extract_sequence(args,J);
+        if (extract_tree)
+            extract_sequence(*extract_tree,J);
         else
-            run_analysis(args,J);
+            run_analysis(partition_name,details,J);
     }
     catch (std::exception& e) {
         cerr<<"joint-indels: Error! "<<e.what()<<endl;
