@@ -625,11 +625,11 @@ int main(int argc,char* argv[])
         bool verbose = false, remove_duplicates_requested = false;
         bool show_mean = false, show_median = false, show_minmax = false;
         bool leaves_only = false, topology_only = false;
-        app.add_option("--analysis,ANALYSIS", analysis,
+        app.add_option("ANALYSIS", analysis,
                        "Analysis: matrix, autocorrelation, diameter, compare, closest, convergence, converged, "
                        "leaf-dist-matrix, node-dist-cvars.")
-            ->capture_default_str()->group("Analysis options");
-        app.add_option("--files,FILE", files, "tree samples to examine");
+            ->capture_default_str()->group("Analysis options")->type_name("");
+        app.add_option("FILE", files, "tree samples to examine")->type_name("");
         app.add_option("-s,--skip", skip, "number of tree samples to skip")
             ->capture_default_str()->group("Input options");
         app.add_option("-u,--until", last, "Read until this number of trees.")->group("Input options");

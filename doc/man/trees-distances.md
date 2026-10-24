@@ -10,14 +10,15 @@
 
 **trees-distances** _ANALYSIS_ \[OPTIONS\] _FILE_ [_FILE_ ...]
 
-**trees-distances** **--analysis** _ANALYSIS_ \[OPTIONS\] _FILE_ [_FILE_ ...]
-
 # DESCRIPTION
 
 Measure how different sampled evolutionary trees are, summarize differences within
 or between runs, or examine how those differences change along a sampling history.
 These comparisons can help identify persistent differences between runs and slow
 movement through tree space.
+
+Specify the analysis before the input files, for example
+**trees-distances matrix sample.trees**.
 
 The default distance compares branching arrangements, ignoring branch lengths.
 Other metrics compare branch lengths or match similar splits. A *split* is the
@@ -158,13 +159,6 @@ trees, whereas within-file comparisons exclude self-pairs.
 
 **-h**, **--help**
 : Print help and exit.
-
-**--analysis** _NAME_
-: Named form of the positional analysis. Default: **matrix**. For example,
-  **trees-distances --files sample.trees** uses the default matrix analysis.
-
-**--files** _FILE_ ...
-: Named form of the positional sample files.
 
 **--metric** _NAME_
 : Whole-tree distance metric from the list above. Default: **topology**.
