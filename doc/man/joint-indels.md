@@ -35,6 +35,9 @@ Usage: joint-indels <alignments file> <trees file> [OPTIONS]
 
 **--details**
 : Output detailed indel information (Start/End positions, I/D type, lengths).
+  Positions and lengths count ungapped alphabet symbols (one symbol per codon with
+  a codon alphabet). Start counts symbols before the event; End counts symbols
+  through its end. The Sequence column prints the complete inserted or deleted sequence.
   See <https://github.com/bredelings/BAli-Phy/blob/master/tests/tools/joint-indels/README.md> for output format documentation.
 
 

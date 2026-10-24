@@ -19,6 +19,8 @@ Output columns:
 - `Sequence`: The actual nucleotide/amino acid sequence of the indel
 
 The indel length is `End - Start` for the sequence that received characters.
+Coordinates and lengths count alphabet symbols: a codon counts as one symbol,
+although its full three-nucleotide spelling appears in `Sequence`.
 
 For Type=I (insertion in Seq2): sequence is extracted from Seq2.
 For Type=D (insertion in Seq1): sequence is extracted from Seq1.

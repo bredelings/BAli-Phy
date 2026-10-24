@@ -216,11 +216,11 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
     bool output_details = args.count("details");
 
     // Struct to collect indel info
-    // Start1/Start2: chars emitted in each sequence BEFORE the indel
-    // End1/End2: chars emitted in each sequence AFTER the indel
+    // Start1/Start2: symbols emitted in each sequence BEFORE the indel
+    // End1/End2: symbols emitted in each sequence AFTER the indel
     struct IndelInfo {
-        int start1, start2;  // chars in seq1/seq2 before indel
-        int end1, end2;      // chars in seq1/seq2 after indel
+        int start1, start2;  // symbols in seq1/seq2 before indel
+        int end1, end2;      // symbols in seq1/seq2 after indel
         int type;
         int length;
         std::string sequence;  // the actual indel sequence
@@ -251,16 +251,23 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
             int node2 = T.directed_branch(b).source();
             vector<int> pairwiseA = get_path(A, node1, node2);
 
-            // Get sequences for extracting indel characters
-            std::string seq1 = A.get_sequence_for_row(node1);
-            std::string seq2 = A.get_sequence_for_row(node2);
+            // Coordinates count symbols, so retain their alignment columns until decoding.
+            vector<int> columns1, columns2;
+            if (output_details)
+            {
+                for (int c = 0; c < A.length(); c++)
+                {
+                    if (not A.gap(c, node1)) columns1.push_back(c);
+                    if (not A.gap(c, node2)) columns2.push_back(c);
+                }
+            }
 
             // Group consecutive identical states
             auto groups = group_consecutive(pairwiseA);
 
             int uniqueindels = 0;
-            int pos1 = 0;  // chars emitted in sequence 1
-            int pos2 = 0;  // chars emitted in sequence 2
+            int pos1 = 0;  // symbols emitted in sequence 1
+            int pos2 = 0;  // symbols emitted in sequence 2
 
             std::vector<IndelInfo> sample_indels;
 
@@ -276,19 +283,21 @@ void run_analysis(const variables_map& args, const joint_A_T& J) {
                     int start1 = pos1;
                     int start2 = pos2;
 
-                    std::string indel_seq;
-                    if (state == states::G1) {
-                        // G1: gap in seq1, chars in seq2
-                        indel_seq = seq2.substr(pos2, length);
+                    if (state == states::G1)
                         pos2 += length;
-                    } else {
-                        // G2: gap in seq2, chars in seq1
-                        indel_seq = seq1.substr(pos1, length);
+                    else
                         pos1 += length;
-                    }
 
                     if (output_details)
-                        sample_indels.push_back({start1, start2, pos1, pos2, state, length, indel_seq});
+                    {
+                        const auto& columns = state == states::G1 ? columns2 : columns1;
+                        int node = state == states::G1 ? node2 : node1;
+                        int start = state == states::G1 ? start2 : start1;
+                        string sequence;
+                        for (int i = start; i < start + length; i++)
+                            sequence += A.lookup(A(columns[i], node));
+                        sample_indels.push_back({start1, start2, pos1, pos2, state, length, std::move(sequence)});
+                    }
                 }
                 else if (state == states::M)
                 {

@@ -1,0 +1,12 @@
+iterations = 0
+
+>seq1
+AAA------CCC
+>seq2
+AAAGGNAARCCC
+>seq3
+AAAGGNAARCCC
+>A4
+AAAGGNAARCCC
+>A5
+AAAGGNAARCCC

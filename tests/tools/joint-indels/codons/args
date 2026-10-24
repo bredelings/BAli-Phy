@@ -1,0 +1,3 @@
+# Symbol coordinates must select whole codons, including ambiguity spellings; DNA cases cannot
+# detect text-offset mistakes. Keep this case while detailed output supports multi-base alphabets.
+test.fastas test.trees --partition seq1 --details --alphabet Codons
