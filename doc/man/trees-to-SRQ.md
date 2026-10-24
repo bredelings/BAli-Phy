@@ -119,12 +119,6 @@ Selection uses normalized coordinates even when one or both output axes are unsc
 **-h**, **--help**
 : Print help and exit.
 
-**--predicates** _FILE_
-: Named form of the required positional predicate file.
-
-**--files** _FILE_ ...
-: Named form of the required positional sample files.
-
 **-s**, **--skip** _COUNT-OR-PERCENT_
 : Discard an initial count from every run, or derive the common count from a
   percentage of the shortest run. Default: **10%**.

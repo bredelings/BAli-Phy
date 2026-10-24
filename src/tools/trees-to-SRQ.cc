@@ -64,8 +64,8 @@ int main(int argc,char* argv[])
         std::optional<int> last;
         int subsample = 1, max_points = 1000;
         bool invert = false, no_scale_x = false, no_scale_y = false;
-        app.add_option("--predicates,PREDICATES", predicates_file, "predicates to examine")->required();
-        app.add_option("--files,FILE", files, "tree samples to examine")->required();
+        app.add_option("PREDICATES", predicates_file, "predicates to examine")->required()->type_name("");
+        app.add_option("FILE", files, "tree samples to examine")->required()->type_name("");
         app.add_option("-s,--skip", skip, "Number of trees to skip.")->capture_default_str();
         app.add_option("-x,--subsample", subsample, "factor by which to sub-sample")->capture_default_str();
         app.add_option("-u,--until", last, "Read until this number of trees.");
