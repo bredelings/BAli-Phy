@@ -94,7 +94,7 @@ int main(int argc,char* argv[])
         optional<int> min, max, size;
         int subsample = 1;
         bool verbose = false;
-        app.add_option("--filenames,FILE", filenames, "Filenames to read ('-' for STDIN)");
+        app.add_option("FILE", filenames, "Filenames to read ('-' for STDIN)")->type_name("");
         app.add_option("--key", key, "cut based on values of key = value")->capture_default_str();
         app.add_option("--skip", min, "minimum key value to retain (inclusive)");
         auto until_option = app.add_option("--until", max, "maximum key value to retain (inclusive)");

@@ -31,9 +31,6 @@ With no filenames, read standard input; **-** also denotes standard input.
 **-h**, **--help**
 : Print help and exit.
 
-**--filenames** _FILE_ ...
-: Named form of the positional input list.
-
 **--key** _NAME_
 : Select using markers containing `NAME = ` followed by a number.
   Default: `iterations`.
