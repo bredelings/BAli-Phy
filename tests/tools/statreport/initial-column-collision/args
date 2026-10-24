@@ -1,0 +1,3 @@
+# Check initial expanded names even when the conflicting fields disappear later.
+# Final-column checks miss this; remove if expanded names gain unambiguous escaping.
+--skip=0 --mean -

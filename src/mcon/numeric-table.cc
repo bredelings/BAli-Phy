@@ -52,6 +52,17 @@ struct FieldNode
                 children.emplace_back((*array)[i], name+"["+std::to_string(i+1)+"]", false, nested, logical_fields);
     }
 
+    // Check every scalar name, including nulls and nonnumeric values, before any invalidation.
+    void check_column_names(std::set<std::string>& names) const
+    {
+        if (kind == json::kind::object || kind == json::kind::array)
+        {
+            for (const auto& child: children) child.check_column_names(names);
+        }
+        else if (!names.insert(name).second)
+            throw std::runtime_error("Multiple values project to table column '"+name+"'");
+    }
+
     // Release numerical storage while preserving the expected keys/lengths of ancestors.
     void invalidate()
     {
@@ -131,6 +142,10 @@ void append_sample(std::optional<FieldNode>& root, const json::object& sample,
     {
         std::set<std::string> logical_fields;
         root.emplace(json::value(sample), "", true, nested, logical_fields);
+        // Check only the first retained record. Later records rely on MCON's producer
+        // guarantee of stable physical paths; this is not full-file collision validation.
+        std::set<std::string> column_names;
+        root->check_column_names(column_names);
     }
     root->append_object(sample, translate_bool, store_values);
 }
