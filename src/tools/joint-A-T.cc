@@ -69,7 +69,10 @@ joint_A_T& joint_A_T::load(const vector<alignment>& A,const vector<SequenceTree>
     {
         remap_T_leaf_indices((*this)[i].second, *leaf_names_);
         link((*this)[i].first, (*this)[i].second, true);
-        link((*this)[i].first, (*this)[i].second, internal);
+        // The first link also labels and validates internal nodes. Preserve that validation
+        // before dropping internal sequences, but do not repeat it when keeping them.
+        if (not internal)
+            link((*this)[i].first, (*this)[i].second, false);
     }
 
     return *this;
