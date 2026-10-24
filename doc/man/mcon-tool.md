@@ -55,9 +55,6 @@ tables for different structures, retaining fields that a combined table omits.
 **-h**, **--help**
 : Print help and exit.
 
-**--filename** _FILE_
-: Named form of the optional input filename.
-
 **--unnest**
 : Flatten MCON groups into logical field names. Structured field values remain
   intact unless **--atomize** is also supplied.

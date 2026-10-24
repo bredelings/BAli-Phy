@@ -19,7 +19,7 @@ int main(int argc,char* argv[])
         string output = "MCON";
         vector<string> drop;
         bool unnest = false, atomize = false;
-        app.add_option("--filename,FILE", input, "file to convert (default: STDIN)");
+        app.add_option("FILE", input, "file to convert (default: STDIN)")->type_name("");
         app.add_flag("--unnest", unnest, "flatten nested field names");
         app.add_flag("--atomize", atomize, "expand structured values into scalar fields");
         app.add_option("--split", split, "split and write to filenames with this prefix");
