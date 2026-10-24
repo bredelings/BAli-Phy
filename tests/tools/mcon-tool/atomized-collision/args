@@ -1,0 +1,3 @@
+# Atomization must reject duplicate expanded names rather than overwrite a component.
+# Logical-group tests do not cover this; remove if expanded names gain unambiguous escaping.
+--atomize

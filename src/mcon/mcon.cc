@@ -77,19 +77,27 @@ set<string> get_keys_nested(const json::object& j)
     return keys;
 }
 
+// Merge expanded components without letting literal names overwrite another component.
+static void merge_atomized_fields(json::object& destination, json::object&& source)
+{
+    for (auto& [key, value]: source)
+        if (!destination.emplace(key, std::move(value)).second)
+            throw std::runtime_error("Multiple values project to table column '"+std::string(key)+"'");
+}
+
 json::object get_long_names_and_values_data(const std::string& prefix, const json::value& j)
 {
     json::object j2;
     if (j.is_object())
     {
 	for(auto& [key,value]: j.as_object())
-	    update( j2, get_long_names_and_values_data(prefix+'['+string(key)+']', value) );
+	    merge_atomized_fields( j2, get_long_names_and_values_data(prefix+'['+string(key)+']', value) );
     }
     else if (j.is_array())
     {
 	auto& array = j.as_array();
 	for(int i=0; i< array.size(); i++)
-	    update( j2, get_long_names_and_values_data(prefix+'['+std::to_string(i+1)+']', array[i]) );
+	    merge_atomized_fields( j2, get_long_names_and_values_data(prefix+'['+std::to_string(i+1)+']', array[i]) );
     }
     else
 	j2[prefix] = j;
@@ -110,7 +118,7 @@ json::object atomize(const json::object& j, bool nested)
 	    j2[key] = j3;
 	}
 	else
-	    update( j2, get_long_names_and_values_data(key,value) );
+	    merge_atomized_fields( j2, get_long_names_and_values_data(key,value) );
     }
     return j2;
 }
