@@ -20,6 +20,7 @@
 #include <iostream>
 #include <list>
 #include <utility>
+#include <optional>
 #include "tree/tree.hh"
 #include "tree/sequencetree.hh"
 #include "tree/tree-util.hh"
@@ -157,7 +158,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description all("Allowed options");
     all.add_options()
 	("help,h", "produce help message")
-	("tree", value<string>(),"tree to re-root")
+	("tree", value<string>(),"query topology file")
 	("skip,s",value<int>()->default_value(0),"number of tree samples to skip")
 	("until,u",value<int>(),"Read until this number of trees.")
 	("prune",value<string>(),"Comma-separated taxa to remove")
@@ -181,7 +182,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     if (args.count("help")) {
 	cout<<"Compute the mean lengths for branches in the given topology.\n\n";
-	cout<<"Usage: tree-mean-lengths <tree-file> < in-file\n\n";
+	cout<<"Usage: mctree-mean-lengths <tree-file> < in-file\n\n";
 	cout<<all<<"\n";
 	exit(0);
     }
@@ -324,7 +325,7 @@ int main(int argc,char* argv[])
 
 	int skip = args["skip"].as<int>();
 
-	int last = -1;
+	std::optional<int> last;
 	if (args.count("until"))
 	    last = args["until"].as<int>();
 
@@ -338,23 +339,23 @@ int main(int argc,char* argv[])
 	//-------- Read in the tree samples --------//
 	accum_branch_lengths A(Q);
 
-	try {
-	    scan_trees(std::cin,skip,last,subsample,prune,Q.T.get_leaf_labels(),A);
-	    A.finalize();
-	}
-	catch (std::exception& e) 
-	{
-	    if (args.count("safe"))
-		cout<<Q<<endl;
-	    std::cerr<<"mctree-mean-lengths: Error! "<<e.what()<<endl;
-	    exit(0);
-	}
+        scan_trees(std::cin,skip,last,subsample,prune,Q.T.get_leaf_labels(),A);
+        // The tree reader records parse failures in badbit rather than throwing them.
+        if (std::cin.bad())
+            throw myexception()<<"Failed to read tree samples.";
+        if (A.n_samples > 0 and A.n_matches == 0 and args.count("safe"))
+        {
+            cout<<Q<<endl;
+            cerr<<"mctree-mean-lengths: No trees matched; reporting topology without estimated lengths.\n";
+            return 0;
+        }
+        A.finalize();
 
 	if (log_verbose) std::cerr<<"mctree-mean-lengths: "<<A.n_matches<<" out of "<<A.n_samples<<" trees matched the topology";
 	if (log_verbose) std::cerr<<"mctree-mean-lengths: "<<" ("<<double(A.n_matches)/A.n_samples*100<<"%)"<<std::endl;
 
 	//------- Merge lengths and topology -------//
-	for(int b=0;b<Q.n_branches();b++)
+	for(int b=0;b<Q.T.n_branches();b++)
 	    Q.T.branch(b).set_length(A.m1[b]);
 	cout<<Q.T<<endl;
 

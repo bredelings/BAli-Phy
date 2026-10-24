@@ -1,14 +1,14 @@
-% tree-mean-lengths(1)
+% mctree-mean-lengths(1)
 % Benjamin Redelings
 % Feb 2018
 
 # NAME
 
-**tree-mean-lengths** - Compute the mean lengths for branches in the given topology.
+**mctree-mean-lengths** - Compute the mean lengths for branches in the given topology.
 
 # SYNOPSIS
 
-**tree-mean-lengths** _tree-file_ < in-file
+**mctree-mean-lengths** _tree-file_ < in-file
 
 # DESCRIPTION
 
@@ -19,7 +19,7 @@ Compute the mean lengths for branches in the given topology.
 : produce help message
 
 **--tree** _arg_
-: tree to re-root
+: query topology file
 
 **-s** _arg_ (=0), **--skip** _arg_ (=0)
 : number of tree samples to skip
@@ -40,7 +40,8 @@ Compute the mean lengths for branches in the given topology.
 : ignore branches not in the specified topology
 
 **--safe**
-: Don't die if no trees match the topology
+: If trees were read but none matched, print the query topology without estimated
+  lengths and exit successfully. Empty input and other failures remain errors.
 
 **--drop-partial**
 : Remove partial branches
