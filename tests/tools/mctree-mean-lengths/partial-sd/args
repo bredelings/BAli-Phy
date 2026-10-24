@@ -1,0 +1,3 @@
+# Standard deviation includes zero contributions and sums branches within each tree first.
+# Mean tests cannot check this; retain while --var reports the empirical distribution.
+../partial-mean/query --var

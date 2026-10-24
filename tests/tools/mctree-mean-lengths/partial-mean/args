@@ -1,0 +1,3 @@
+# Partial branches require separate output indices and complete per-tree contributions.
+# Help tests cover neither; retain while MC queries can contain partial partitions.
+query
