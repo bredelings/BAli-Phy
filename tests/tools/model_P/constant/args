@@ -1,0 +1,3 @@
+# Constant samples must give zero bootstrap uncertainty; help tests cannot detect cancellation.
+# Retain while model_P estimates bootstrap uncertainty on the log scale.
+--seed 1

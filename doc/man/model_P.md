@@ -12,7 +12,9 @@
 
 # DESCRIPTION
 
-Compute marginal likelihoods using stabilized harmonic mean estimator
+Compute marginal likelihoods using the stabilized harmonic mean estimator.
+Read whitespace-separated natural-log likelihoods from standard input. The estimate
+and its bootstrap standard deviation are reported on the natural-log scale.
 
 # ALLOWED OPTIONS:
 **-h**, **--help**

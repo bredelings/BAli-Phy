@@ -21,9 +21,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <valarray>
 #include <algorithm>
+#include <cmath>
 
-#include "statistics.hh"
 #include "bootstrap.hh"
+#include "util/myexception.hh"
 #include "util/math/logsum.hh"
 #include "util/log-level.hh"
 
@@ -150,6 +151,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   if (args.count("help")) {
     cout<<"Compute marginal likelihoods using stabilized harmonic mean estimator\n";
     cout<<"Usage: model_P < in-file\n";
+    cout<<"Input: natural-log likelihoods; output: log marginal likelihood and bootstrap standard deviation.\n";
     cout<<all<<"\n";
     exit(0);
   }
@@ -195,6 +197,9 @@ int main(int argc,char* argv[])
     if (log_verbose)
       cerr<<"model_P: OK. Read "<<data.size()<< " values."<<endl;
  
+    if (data.empty())
+      throw myexception()<<"No log-likelihood values were read!";
+
     // Translate vector to valarray...
     valarray<double> values(data.size());
     for(int i=0;i<values.size();i++)
@@ -202,8 +207,8 @@ int main(int argc,char* argv[])
 
     double PM = Pr_smoothed(values);
 
-    cout<<"P(data|M) = "<<PM<<"  ";
-    cout.flush();
+    if (not std::isfinite(PM))
+      throw myexception()<<"The log marginal likelihood estimate is not finite.";
 
     //---------- Get bootstrap sample --------------/
 
@@ -213,9 +218,28 @@ int main(int argc,char* argv[])
 
     valarray<double> values2 = bootstrap_apply<double,double>(values,Pr_smoothed,100,blocksize);
 
-    double stddev = sqrt( statistics::Var(values2) );
+    for (double value: values2)
+      if (not std::isfinite(value))
+        throw myexception()<<"A bootstrap log marginal likelihood estimate is not finite.";
 
-    std::cout<<"  +- "<<stddev<<endl;
+    // Translation does not change variance. Center on the first replicate before averaging
+    // to avoid losing small differences at a large common offset; then sum squared deviations
+    // instead of subtracting nearly equal moments. Divide by N for the empirical variance.
+    double mean_offset = 0;
+    for (double value: values2)
+      mean_offset += value - values2[0];
+    mean_offset /= values2.size();
+    double sum_squares = 0;
+    for (double value: values2)
+    {
+      double deviation = (value - values2[0]) - mean_offset;
+      sum_squares += deviation * deviation;
+    }
+    double stddev = sqrt(sum_squares / values2.size());
+    if (not std::isfinite(stddev))
+      throw myexception()<<"The bootstrap standard deviation is not finite.";
+
+    std::cout<<"log P(data|M) = "<<PM<<"    +- "<<stddev<<endl;
   }
   catch (std::exception& e) {
     std::cerr<<"model_P: Error! "<<e.what()<<endl;
