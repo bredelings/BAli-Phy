@@ -106,9 +106,6 @@ adds estimated lengths in the extended format read by **draw-tree**.
 **-h**, **--help**
 : Print help and exit.
 
-**--files** _FILE_ ...
-: Named form of the positional sample files.
-
 **-s**, **--skip** _COUNT-OR-PERCENT_
 : Initial trees to discard from every run. Default: **10%**, using the common
   count described above. Use **0** for an already trimmed sample.

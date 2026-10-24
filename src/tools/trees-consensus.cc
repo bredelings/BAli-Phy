@@ -726,7 +726,7 @@ int main(int argc,char* argv[])
         double min_support = 0.25, min_rooting = 0.9, report_ratio = 1.5;
         std::optional<string> report, map_tree, consensus, greedy_filename;
         std::optional<string> extended_consensus, extended_consensus_L, support_levels, extended_support_levels;
-        app.add_option("--files,FILE", files, "tree samples to examine")->required();
+        app.add_option("FILE", files, "tree samples to examine")->required()->type_name("");
         app.add_option("--seed", seed, "Random seed")->group("Input options");
         app.add_flag("-V,--verbose", verbose, "Output more log messages on stderr.")->group("Input options");
         app.add_option("-s,--skip", skip,
