@@ -77,9 +77,6 @@ matching and observation counts for every query; sampled trees are not retained.
 **--trees** _input_ _output_
 : Query and output filenames. Repeat for multiple queries; **-** as output means stdout.
 
-**--files** _arg_
-: tree samples to examine
-
 **-s** _arg_ (=0), **--skip** _arg_ (=0)
 : number of tree samples to skip
 

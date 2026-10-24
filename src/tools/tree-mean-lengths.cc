@@ -411,7 +411,7 @@ int main(int argc, char* argv[])
         // while disabling extra arguments leaves subsequent sample filenames positional.
         app.add_option("--trees", pairs, "Query and output filenames (repeatable; - outputs to stdout)")
             ->type_name("INPUT OUTPUT")->type_size(2)->expected(1)->allow_extra_args(false)->take_all();
-        app.add_option("--files,FILE", files, "Tree samples to examine")->required()->type_name("");
+        app.add_option("FILE", files, "Tree samples to examine")->required()->type_name("");
         app.add_option("-s,--skip", skip, "Number of tree samples to skip")->capture_default_str();
         app.add_option("-u,--until", last, "Read until this number of trees");
         app.add_option("--ignore", ignore, "Taxa to remove (comma-separated list or @filename)");
