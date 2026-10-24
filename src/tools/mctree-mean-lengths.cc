@@ -25,16 +25,13 @@
 #include "tree/tree-util.hh"
 #include "tree-dist.hh"
 #include "mctree.hh"
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "util/rng.hh"
 #include "util/myexception.hh"
 #include "util/cmdline.hh"
 
 extern int log_verbose;
-
-namespace po = boost::program_options;
-using po::variables_map;
 
 using boost::dynamic_bitset;
 
@@ -125,49 +122,6 @@ bool update_lengths(const MC_tree& Q,const SequenceTree& T,
     }
 
     return true;
-}
-
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description all("Allowed options");
-    all.add_options()
-	("help,h", "produce help message")
-	("tree", value<string>(),"query topology file")
-	("skip,s",value<int>()->default_value(0),"number of tree samples to skip")
-	("until,u",value<int>(),"Read until this number of trees.")
-	("prune",value<string>(),"Comma-separated taxa to remove")
-	("subsample,x",value<int>()->default_value(1),"factor by which to subsample")
-	("var","report standard deviations of branch and node lengths instead of means")
-	("no-node-lengths","omit node-length records")
-	("safe","Don't die if no trees match the topology")
-	("drop-partial","Remove partial partitions before matching trees")
-	("seed", value<unsigned long>(),"random seed")
-	("verbose,V","Output more log messages on stderr.")
-	;
-
-    // positional options
-    positional_options_description p;
-    p.add("tree", 1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Compute the mean lengths for branches in the given topology.\n\n";
-	cout<<"Usage: mctree-mean-lengths <tree-file> < in-file\n\n";
-	cout<<all<<"\n";
-	exit(0);
-    }
-
-    if (args.count("verbose")) log_verbose = 1;
-
-    return args;
 }
 
 
@@ -297,34 +251,50 @@ void accum_branch_lengths::operator()(const SequenceTree& T)
 int main(int argc,char* argv[]) 
 { 
     try {
-	//----------- Parse command line  ----------//
-	variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Compute branch and node lengths for a query topology.", "mctree-mean-lengths"};
+        app.usage("Usage: mctree-mean-lengths TREE [OPTIONS] < in-file");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string tree_file, prune_names;
+        int skip = 0, subsample = 1;
+        std::optional<int> last;
+        std::optional<unsigned long> seed;
+        bool var = false, no_node_lengths = false, safe = false, drop_partial = false, verbose = false;
+        app.add_option("TREE", tree_file, "Query topology file")->required()->type_name("");
+        app.add_option("-s,--skip", skip, "Number of tree samples to skip")->capture_default_str();
+        app.add_option("-u,--until", last, "Read until this number of trees");
+        app.add_option("--prune", prune_names, "Taxa to remove (comma-separated list or @filename)");
+        app.add_option("-x,--subsample", subsample, "Factor by which to subsample")->capture_default_str();
+        app.add_flag("--var", var, "Report standard deviations of branch and node lengths instead of means");
+        app.add_flag("--no-node-lengths", no_node_lengths, "Omit node-length records");
+        app.add_flag("--safe", safe, "Report topology without estimated lengths if no sampled trees match");
+        app.add_flag("--drop-partial", drop_partial, "Remove partial partitions before matching trees");
+        app.add_option("--seed", seed, "Random seed");
+        app.add_flag("-V,--verbose", verbose, "Output more log messages on stderr");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        if (verbose) log_verbose = 1;
 
-	//---------- Initialize random seed -----------//
-	unsigned long seed = 0;
-	if (args.count("seed")) {
-	    seed = args["seed"].as<unsigned long>();
-	    myrand_init(seed);
-	}
-	else
-	    seed = myrand_init();
+        //---------- Initialize random seed -----------//
+        if (seed)
+            myrand_init(*seed);
+        else
+            myrand_init();
 
-	int skip = args["skip"].as<int>();
+        vector<string> prune = get_string_list(prune_names);
 
-	std::optional<int> last;
-	if (args.count("until"))
-	    last = args["until"].as<int>();
-
-	int subsample = args["subsample"].as<int>();
-
-	vector<string> prune = get_string_list(args, "prune");
-      
 	//----------- Read the topology -----------//
-        auto queries = load_partitions(args["tree"].as<string>());
+        auto queries = load_partitions(tree_file);
         if (queries.empty())
             throw myexception()<<"No query topology was read!";
         auto& query = queries.front();
-        if (args.count("drop-partial"))
+        if (drop_partial)
             std::erase_if(query.partitions, [](const partition& p) { return not p.full(); });
         MC_tree Q(check_MC_partitions(query));
 
@@ -335,7 +305,7 @@ int main(int argc,char* argv[])
         // The tree reader records parse failures in badbit rather than throwing them.
         if (std::cin.bad())
             throw myexception()<<"Failed to read tree samples.";
-        if (A.n_samples > 0 and A.n_matches == 0 and args.count("safe"))
+        if (A.n_samples > 0 and A.n_matches == 0 and safe)
         {
             cout<<Q<<endl;
             cerr<<"mctree-mean-lengths: No trees matched; reporting topology without estimated lengths.\n";
@@ -349,7 +319,7 @@ int main(int argc,char* argv[])
         // Divide by the number of matching trees to describe their empirical distribution.
         valarray<double> branch_lengths = A.m1;
         valarray<double> node_lengths = A.n1;
-        if (args.count("var"))
+        if (var)
         {
             branch_lengths = std::sqrt(A.branch_m2 / A.n_matches);
             node_lengths = std::sqrt(A.node_m2 / A.n_matches);
@@ -371,7 +341,7 @@ int main(int argc,char* argv[])
 
 	for(int n=0;n<Q.n_nodes();n++) 
 	{
-	    if (not args.count("no-node-lengths") and A.n1[n] > 0) {
+	    if (not no_node_lengths and A.n1[n] > 0) {
 		cout<<"node "<<node_lengths[n]<<endl;
 		int b = Q.branch_to_node(n);
 		cout<<Partition(Q.names(), Q.partitions[b])<<endl;

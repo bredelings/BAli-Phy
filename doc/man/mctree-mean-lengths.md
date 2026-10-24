@@ -8,18 +8,17 @@
 
 # SYNOPSIS
 
-**mctree-mean-lengths** _tree-file_ < in-file
+**mctree-mean-lengths** _TREE_ [OPTIONS] < in-file
 
 # DESCRIPTION
 
 Compute the mean lengths for branches in the given topology.
+_TREE_ is the required positional query topology filename. Tree samples are read
+from standard input.
 
 # ALLOWED OPTIONS:
 **-h**, **--help**
 : produce help message
-
-**--tree** _arg_
-: query topology file
 
 **-s** _arg_ (=0), **--skip** _arg_ (=0)
 : number of tree samples to skip
