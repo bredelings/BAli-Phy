@@ -1,3 +1,4 @@
-# Exercise fixed-point convergence for varying, positive log likelihoods; constant samples need no updates.
-# Retain while model_P uses an iterative estimator and seeded bootstrap uncertainty.
+# Require convergence for varying log likelihoods; constant samples need no updates.
+# Check successful exit and empty stderr; seeded bootstrap values vary between standard libraries.
+# Retain while model_P uses an iterative estimator.
 --seed 1
