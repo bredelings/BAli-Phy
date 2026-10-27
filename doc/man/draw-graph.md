@@ -4,7 +4,7 @@
 
 # NAME
 
-**draw-graph** - Usage: draw-graph <file1>
+**draw-graph** - Write a multiconnected tree in Graphviz DOT format.
 
 # SYNOPSIS
 
@@ -12,14 +12,14 @@
 
 # DESCRIPTION
 
-Usage: draw-graph <file1>
+Write a multiconnected tree in Graphviz DOT format.
 
 # INPUT OPTIONS:
 **-h**, **--help**
 : produce help message
 
 **--file** _arg_
-: predicates to examine
+: File containing a Newick tree and/or taxon partitions.
 
 
 # REPORTING BUGS:

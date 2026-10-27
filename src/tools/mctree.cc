@@ -23,6 +23,7 @@
 #include "util/string/join.hh"
 #include "util/string/convert.hh"
 #include <filesystem>
+#include <iomanip>
 
 extern int log_verbose;
 
@@ -387,13 +388,13 @@ void draw_graph(const MC_tree& T,const string& name)
 {
     const int N = T.n_nodes();
 
-    cout<<"digraph "<<name<<" { \n\
+    cout<<"digraph "<<std::quoted(name)<<" { \n\
 \n\
       nodesep=1.0\n\
       ratio=auto\n\
 \n\
       edge[style=\"setlinewidth(2)\"]\n\
-      node[shape=plaintext,width=auto,fontname=Helvitica,fontsize=10]\n\n";
+      node[shape=plaintext,width=auto,fontname=Helvetica,fontsize=10]\n\n";
 
     // edges
     for(int i=0;i<T.edges.size();i++) {
@@ -432,12 +433,12 @@ void draw_graph(const MC_tree& T,const string& name)
     // leaf names
     vector<string> names = T.names();
     for(int i=0;i<names.size();i++)
-	cout<<"      N"<<T.leaf(i)<<" [label=\""<<names[i]<<"\"]\n";
+	cout<<"      N"<<T.leaf(i)<<" [label="<<std::quoted(names[i])<<"]\n";
     cout<<endl;
 
     for(int i=0;i<N;i++)
 	if (not T.is_leaf_node(i))
-	    cout<<"      N"<<i<<" [label=\"\",shape=circle,hight=0.02,width=0.02,fontsize=1]\n";
+	    cout<<"      N"<<i<<" [label=\"\",shape=circle,height=0.02,width=0.02,fontsize=1]\n";
     cout<<endl;
 
     cout<<"}\n";
@@ -451,6 +452,8 @@ MC_tree load_MC_tree(const std::string& filename)
 {
     //----------- Load Partitions ---------------//
     auto trees = load_partitions(filename);
+    if (trees.empty())
+        throw myexception()<<"No tree or partitions found in '"<<filename<<"'.";
 
     return MC_tree(check_MC_partitions(trees[0]));
 }

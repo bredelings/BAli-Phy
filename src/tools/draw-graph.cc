@@ -18,16 +18,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include <iostream>
-#include <algorithm>
 #include <string>
-#include <vector>
-#include <cmath>
-#include <fstream>
 
 #include "util/myexception.hh"
-#include "tree/sequencetree.hh"
-#include "bootstrap.hh"
-#include "tree-dist.hh"
 #include "mctree.hh"
 
 #include <boost/program_options.hpp>
@@ -46,7 +39,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description input("Input options");
   input.add_options()
     ("help,h", "produce help message")
-    ("file",value<string>(),"predicates to examine")
+    ("file",value<string>(),"file containing a tree and/or taxon partitions")
     ;
   
   options_description all("All options");
@@ -59,11 +52,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
   variables_map args;     
   store(command_line_parser(argc, argv).
 	    options(all).positional(p).run(), args);
-  // store(parse_command_line(argc, argv, desc), args);
   notify(args);    
 
   if (args.count("help")) {
-    cout<<"Usage: draw-graph <file1>\n";
+    cout<<"Write a multiconnected tree as Graphviz DOT on standard output.\n\n";
+    cout<<"Usage: draw-graph <file>\n";
     cout<<all<<"\n";
     exit(0);
   }
