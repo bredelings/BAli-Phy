@@ -42,7 +42,7 @@
 #include <cairo-pdf.h>
 #include <cairo-svg.h>
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -71,8 +71,6 @@ extern "C" {
 
 extern int log_verbose;
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 const double inch = 72.0;
 
@@ -102,63 +100,6 @@ public:
     cairo_plotter(double scale, double fs): scale_(scale), font_size_(fs) {}
     virtual ~cairo_plotter() = default;
 };
-
-variables_map parse_cmd_line(int argc,char* argv[])
-{ 
-    using namespace po;
-
-    // named options
-    options_description input("Input options");
-    input.add_options()
-	("help,h", "Produce help message")
-	("width,W",value<double>(),"Output width in inches; otherwise fit the drawing")
-	("height,H",value<double>(),"Output height in inches; otherwise fit the drawing")
-	("file",value<string>(),"predicates to examine")
-	("output",value<string>()->default_value("pdf"),"Type of output to write: tree, topology, mtree, lengths, dot, ps, pdf, svg")
-	("out",value<string>(),"Output filename (without extension)")
-	("full","Consider only full splits by collapsing any partial splits.")
-	("iterations",value<int>()->default_value(2),"Graph optimization rounds after initialization; draw once after both stages")
-	("font-size",value<double>()->default_value(10),"Font size in points before explicit output resizing")
-	("angle_iterations",value<int>()->default_value(0),"Additional graph optimization rounds with small-angle penalties")
-	("labels",value<string>()->default_value("horizontal"),"Are the names horizontal or angled?")
-	("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
-	("layout",value<string>()->default_value("graph"),"Layout method: graph, equal-angle, equal-daylight")
-	("greedy","For equal-daylight layout: redistribute all angular gaps equally at each node")
-	("tree-layout-initial","Start an energy layout with positions from the equal-angle layout - only for multifurcating trees")
-	("no-shade","For equal-daylight layout: reject rotations that shade other groups?")
-	("draw-clouds",value<string>(),"Draw wandering-ranges in MC trees as clouds.")
-	("seed", value<unsigned long>(),"Random seed")
-	("verbose","Output more log messages on stderr.")
-	;
-  
-    options_description all("All options");
-    all.add(input);
-
-    // positional options
-    positional_options_description p;
-    p.add("file", -1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Draw NEWICK (and some other) formatted files.\n\n";
-	cout<<"Usage: draw-tree [OPTIONS] <tree file>\n\n";
-	cout<<all<<"\n";
-	exit(0);
-    }
-
-    if (not args.count("file"))
-	throw myexception()<<"No file supplied.";
-
-    if (args.count("verbose")) log_verbose = 1;
-
-    return args;
-}
-
 
 /// FIXME - name collision!
 // Biological lengths: branch_lengths stores both directed orientations, while T stores the
@@ -3353,21 +3294,58 @@ int main(int argc,char* argv[])
 	feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
 #endif
 
-	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+        string filename, output = "pdf", layout_name = "graph", labels = "horizontal";
+        std::optional<string> output_basename, cloud_mode;
+        std::optional<double> width, height;
+        std::optional<unsigned long> seed;
+        int n_iterations = 2, a_iterations = 0;
+        double font_size = 10;
+        bool full = false, collapse = false, greedy = false, no_shade = false;
+        bool tree_layout_initial = false, verbose = false;
 
-	//---------- Initialize random seed -----------//
-	unsigned long seed = 0;
-	if (args.count("seed")) {
-	    seed = args["seed"].as<unsigned long>();
-	    myrand_init(seed);
-	}
-	else
-	    seed = myrand_init();
-    
-	std::optional<double> width, height;
-        if (args.count("width")) width = args["width"].as<double>();
-        if (args.count("height")) height = args["height"].as<double>();
+        CLI::App app{"Draw Newick and multiconnected trees.", "draw-tree"};
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        app.add_option("FILE", filename, "Input tree file")->required()->type_name("");
+        app.add_option("--width,-W", width, "Output width in inches; otherwise fit the drawing");
+        app.add_option("--height,-H", height, "Output height in inches; otherwise fit the drawing");
+        app.add_option("--output", output, "Output type: tree, topology, mtree, lengths, dot, ps, pdf, svg")
+            ->capture_default_str();
+        app.add_option("--out", output_basename, "Output filename (without extension)");
+        app.add_flag("--full", full, "Consider only full splits by collapsing any partial splits");
+        app.add_option("--iterations", n_iterations,
+                       "Graph optimization rounds after initialization; draw once after both stages")
+            ->capture_default_str();
+        app.add_option("--font-size", font_size, "Font size in points before explicit output resizing")
+            ->capture_default_str();
+        app.add_option("--angle_iterations", a_iterations,
+                       "Additional graph optimization rounds with small-angle penalties")->capture_default_str();
+        app.add_option("--labels", labels, "Label orientation: horizontal or angled")->capture_default_str();
+        app.add_flag("--collapse", collapse, "Give node lengths evenly to neighboring branches and zero node lengths");
+        app.add_option("--layout", layout_name, "Layout method: graph, equal-angle, equal-daylight")
+            ->capture_default_str();
+        app.add_flag("--greedy", greedy, "For equal-daylight layout: redistribute all angular gaps equally at each node");
+        app.add_flag("--tree-layout-initial", tree_layout_initial,
+                     "Start graph layout from equal-angle positions; only for multifurcating trees");
+        app.add_flag("--no-shade", no_shade, "For equal-daylight layout: reject rotations that shade other groups");
+        app.add_option("--draw-clouds", cloud_mode, "Draw wandering ranges as clouds; 'only' hides attachment edges");
+        app.add_option("--seed", seed, "Random seed");
+        app.add_flag("--verbose", verbose, "Output more log messages on stderr");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+
+        if (verbose) log_verbose = 1;
+        if (seed)
+            myrand_init(*seed);
+        else
+            myrand_init();
+
         if ((width and (not std::isfinite(*width) or *width <= 0)) or
             (height and (not std::isfinite(*height) or *height <= 0)))
             throw myexception()<<"Output dimensions must be finite and positive.";
@@ -3376,13 +3354,10 @@ int main(int argc,char* argv[])
         // A single requested dimension affects only final scaling, preserving the natural aspect.
         double xw = width and height ? *width : 8.5;
         double yw = width and height ? *height : 11;
-	double font_size = args["font-size"].as<double>();
 
-	string output = args["output"].as<string>();
 
 
 	//-------- Load MC Tree and lengths -----//
-	string filename = args["file"].as<string>();
 	string name = get_graph_name(filename);
 
 	MC_tree_with_lengths MC = get_MC_tree_with_lengths(filename);
@@ -3390,14 +3365,14 @@ int main(int argc,char* argv[])
 	    cerr<<"score = "<<MC.score()<<"    "<<double(MC.score())/MC.n_leaves()<<" / "<<MC.n_leaves()-3<<" branches\n";
 	}
 
-	if (args.count("full"))
+	if (full)
 	    MC = collapse_MC_tree(MC);
 
 	for(int i=0;i<MC.n_nodes();i++)
 	    assert(not std::isnan(MC.node_length(i)));
 
 
-	if (args.count("collapse"))
+	if (collapse)
 	    MC = collapse_nodes(MC);
 
 	if (output == "dot")
@@ -3444,7 +3419,6 @@ int main(int argc,char* argv[])
 
 
 
-        const string layout_name = args["layout"].as<string>();
         if (layout_name != "graph" and layout_name != "equal-angle" and layout_name != "equal-daylight")
             throw myexception()<<"Unrecognized layout '"<<layout_name
                                <<"'; use graph, equal-angle, or equal-daylight.";
@@ -3459,14 +3433,12 @@ int main(int argc,char* argv[])
 
         if (layout_name != "graph")
         {
-            bool greedy = args.count("greedy") > 0;
-            bool no_shade = args.count("no-shade") > 0;
             tree_layout L = layout_name == "equal-angle" ? equal_angle_layout(MC)
                                                        : equal_daylight_layout(MC,greedy,no_shade);
             L.rotate_for_aspect_ratio(xw,yw);
             tree_plotter tp(L, xw, yw, font_size);
-            tp.horizontal_names = args["labels"].as<string>() == "horizontal";
-            string filename = args.count("out") ? args["out"].as<string>() : name+"-tree";
+            tp.horizontal_names = labels == "horizontal";
+            string filename = output_basename.value_or(name+"-tree");
             draw(filename,output,tp,width,height);
             return 0;
         }
@@ -3475,7 +3447,7 @@ int main(int argc,char* argv[])
 	MC.scale(1.0/MC.total_length());
 	graph_layout layout = layout_on_circle(MC,2);
     
-	if (args.count("tree-layout-initial"))
+	if (tree_layout_initial)
 	{
 	    tree_layout LA = equal_angle_layout(MC);
 	    //cout<<"equal angle edge error = "<<LA.edge_length_error()<<endl;
@@ -3488,18 +3460,17 @@ int main(int argc,char* argv[])
 
 	double length_weight = 10000000;
 
-	int n_iterations = args["iterations"].as<int>();
 
 
 	double stretchy_weight = 1.0;
-	if (args.count("draw-clouds") and args["draw-clouds"].as<string>() == "only") {
+	if (cloud_mode and *cloud_mode == "only") {
 	    stretchy_weight = 0.1;
 
 	}
 
 
 	// FIXME - the repulsion should actually depend on the number of nodes!
-	if (not args.count("tree-layout-initial")) {
+	if (not tree_layout_initial) {
 	    energy_layout(layout,layout_energy(1,1000,stretchy_weight,0),400);
 	    energy_layout(layout,layout_energy(1,10000,stretchy_weight,0),400);
 	    energy_layout(layout,layout_energy(1,100000,stretchy_weight,0),400);
@@ -3513,7 +3484,6 @@ int main(int argc,char* argv[])
         }
 
         // Improve angular resolution without changing the preceding optimization sequence.
-        int a_iterations = args["angle_iterations"].as<int>();
         for(int i=0;i<a_iterations;i++)
         {
             energy_layout(layout,layout_energy(1,10000000,0.01,50));
@@ -3522,12 +3492,12 @@ int main(int argc,char* argv[])
 
         // Render the final layout once, including when neither loop has any iterations.
         graph_plotter gp(layout, xw, yw, font_size);
-        if (args.count("draw-clouds"))
+        if (cloud_mode)
         {
             gp.draw_clouds = true;
-            gp.draw_type_2_edges = args["draw-clouds"].as<string>() != "only";
+            gp.draw_type_2_edges = *cloud_mode != "only";
         }
-        string output_name = args.count("out") ? args["out"].as<string>() : name+"-mctree";
+        string output_name = output_basename.value_or(name+"-mctree");
         draw(output_name,output,gp,width,height);
     }
     catch (std::exception& e) {

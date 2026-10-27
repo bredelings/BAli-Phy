@@ -8,7 +8,7 @@
 
 # SYNOPSIS
 
-**draw-tree** [OPTIONS] _tree file_
+**draw-tree** _FILE_ [OPTIONS]
 
 # DESCRIPTION
 
@@ -44,8 +44,8 @@ lengths are all zero can be exported as text but cannot be drawn.
 **-H** _arg_, **--height** _arg_
 : Output height in inches; otherwise fit the drawing
 
-**--file** _arg_
-: Input tree file
+_FILE_
+: Required positional input tree file
 
 **--output** _arg_ (=pdf)
 : Type of output to write: tree, topology, mtree, lengths, dot, ps, pdf, svg.
