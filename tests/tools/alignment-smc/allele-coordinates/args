@@ -1,0 +1,3 @@
+# Check inclusive SNP windows and column-to-reference lookup with a gapped reference.
+# Retain while allele reports use reference coordinates but consensus uses alignment columns.
+alignment.fa --alphabet DNA --find-alleles 2:2::3

@@ -1275,31 +1275,23 @@ vector<pair<int,int>> get_snp_positions(const alignment& A, int i, int j)
     return positions;
 }
 
-vector<pair<int,int>> get_snps_versus_consensus(const alignment& A, const vector<int> consensus, int i)
+// Record differing exact letters by alignment column so consensus lookup remains unambiguous.
+vector<pair<int,int>> get_snps_versus_consensus(const alignment& A, const vector<int>& consensus, int i)
 {
     auto& a = A.get_alphabet();
-
     vector<pair<int,int>> positions;
-
-//    int i_pos=0;
-    int ref_pos=0;
     for(int c=0;c<A.length();c++)
     {
         int li = A(c,i);
         int lc = consensus[c];
         if (a.is_letter(li) and a.is_letter(lc) and li != lc)
-            positions.push_back({ref_pos, li});
-
-//        if (not A.gap(c,i))
-//            i_pos++;
-        if (not A.gap(c,0))
-            ref_pos++;
+            positions.push_back({c, li});
     }
-
     return positions;
 }
 
-vector<int> get_diff_columns(const alignment& A, const vector<int> consensus, int i)
+
+vector<int> get_diff_columns(const alignment& A, const vector<int>& consensus, int i)
 {
     vector<int> columns;
 
@@ -1447,7 +1439,8 @@ typedef vector<pair<int,int>> allele_t;
  * How about cases where we have >=n snps in L bases, but n UNIQUE snps in L bases?  Does thus make sense if looking for a count of (say) 2 for each base?
  * Possibly, we could just pass min_count and max_count in to get_n_snps_versus consensus?
  */
-vector<pair<allele_t,int>> find_alleles(const vector<int>& consensus, const alignment& A, int n_snps, int L_max, int min_count, int max_count, const vector<int>& seqs)
+vector<pair<allele_t,int>> find_alleles(const vector<int>& consensus, const alignment& A, int n_snps, int L_max, int min_count, int max_count, const vector<int>& seqs,
+                                        const vector<int>& reference_positions)
 {
     assert(consensus.size() == A.length());
     assert(n_snps > 1);
@@ -1459,12 +1452,13 @@ vector<pair<allele_t,int>> find_alleles(const vector<int>& consensus, const alig
     std::map<allele_t, int> allele_count;
     for(int seq_index: seqs)
     {
-        // The position here is versus the reference (sequence 0).
+        // Allele entries retain columns; window lengths use coordinates in sequence 0.
         auto snps = get_snps_versus_consensus(A, consensus, seq_index);
 
-        for(int snp_index=0; snp_index<(int)snps.size()-n_snps; snp_index++)
+        for(int snp_index=0; snp_index+n_snps <= (int)snps.size(); snp_index++)
         {
-            int L = snps[snp_index+n_snps-1].first - snps[snp_index].first;
+            int L = reference_positions[snps[snp_index+n_snps-1].first]
+                  - reference_positions[snps[snp_index].first] + 1;
 
             if (L > L_max) continue;
 
@@ -1490,15 +1484,16 @@ vector<pair<allele_t,int>> find_alleles(const vector<int>& consensus, const alig
     return alleles;
 }
 
-void show_alleles(const vector<pair<allele_t,int>>& alleles, const alphabet& a, const vector<int>& consensus)
+void show_alleles(const vector<pair<allele_t,int>>& alleles, const alphabet& a, const vector<int>& consensus,
+                  const vector<int>& reference_positions)
 {
     // 3. 
     std::cout<<"count"<<"\t"<<"start"<<"\t"<<"length"<<"\t"<<"consensus"<<"\t"<<"allele"<<"\n";
     for(auto& [allele, count]: alleles)
     {
         // Add 1 to the position, because it is stored as 0-based.
-        int start = allele[0].first+1;
-        int length = allele.back().first - allele[0].first+1;
+        int start = reference_positions[allele[0].first]+1;
+        int length = reference_positions[allele.back().first] - reference_positions[allele[0].first]+1;
         string allele_chars;
         string consensus_chars;
         for(auto& [pos,c]: allele)
@@ -1700,15 +1695,25 @@ int main(int argc,char* argv[])
                 throw myexception()<<"argument to --find-alleles only has "<<find_args.size()<<" colon-separate elements.";
             int n_snps = convertTo<int>(find_args[0]);
             int L = convertTo<int>(find_args[1]);
-            int min_count = 0;
+            int min_count = 1;
             if (not find_args[2].empty())
                 min_count = convertTo<int>(find_args[2]);
             int max_count = A.n_sequences();
             if (not find_args[3].empty())
                 max_count = convertTo<int>(find_args[3]);
 
-            auto alleles = find_alleles(consensus1, A, n_snps, L, min_count, max_count, consensus_seqs1);
-            show_alleles(alleles, A.get_alphabet(), consensus1);
+            // Preserve reference numbering while retaining columns for allele identity and lookup.
+            // A reference gap consumes no position and shares the next reference base's coordinate.
+            vector<int> reference_positions(A.length());
+            int ref_pos = 0;
+            for(int c=0;c<A.length();c++)
+            {
+                reference_positions[c] = ref_pos;
+                if (not A.gap(c,0)) ref_pos++;
+            }
+            auto alleles = find_alleles(consensus1, A, n_snps, L, min_count, max_count,
+                                        consensus_seqs1, reference_positions);
+            show_alleles(alleles, A.get_alphabet(), consensus1, reference_positions);
             exit(0);
         }
 
