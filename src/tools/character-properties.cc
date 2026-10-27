@@ -460,10 +460,7 @@ static void write_selected_report(const report_arguments& arguments, std::uint64
                  <<"\tconditioned-probability\tconditioned-dNdS-mean\tconditioned-dNdS-sd"
                  <<"\tconditioned-dNdS-median\n";
     else if (arguments.format == "tsv")
-        // Ordinary selected-property reports retain their existing empty trailing columns;
-        // this change only simplifies the positive-selection format.
-        std::cout<<"column\tsequence\tsequence-character\tsymbol\ttranslation\tmean\tsd\tmedian"
-                 <<"\tcompanion-property\tcompanion-mean\tcompanion-sd\tcompanion-median\n";
+        std::cout<<"column\tsequence\tsequence-character\tsymbol\ttranslation\tmean\tsd\tmedian\n";
     else
     {
         write_text_header(arguments, retained_samples, total_retained_samples);
@@ -497,7 +494,7 @@ static void write_selected_report(const report_arguments& arguments, std::uint64
             }
             else
                 std::cout<<"\t"<<format_number(row.property_summary.sd)<<"\t"
-                         <<format_number(row.property_summary.median)<<"\t\t\t\t";
+                         <<format_number(row.property_summary.median);
         }
         else
         {
