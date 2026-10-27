@@ -178,9 +178,6 @@ public:
     double total_length() const;
     void scale(double s);
 
-    //  vector<partition> mini_branches;
-    //  vector<double> mini_branch_lengths;
-    //  vector<int> parent_branch_of_mini_branch;
     MC_tree_with_lengths(const PTree& tree)
 	:MC_tree(tree),
 	 branch_lengths(2*n_branches(),0.0),
@@ -227,10 +224,6 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
     vector<partition> nodes;
     vector<double> node_lengths;
 
-    vector<partition> mini_branches;
-    vector<double> mini_branch_lengths;
-    vector<int> parent_branch_of_mini_branch;
-
     //-------------------- Read lengths from file --------------------//
     checked_ifstream file(filename,"multi-connected tree file");
 
@@ -250,19 +243,21 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
 	    with_lengths=false;
 	    SequenceTree T = standardized(line);
 	    names = T.get_leaf_labels();
-	    if (T.n_nodes() > 2)
-		for(int b=0;b<T.n_branches();b++) {
-		    partition P = partition_from_branch(T,b);
-		    double L = 1.0;
-		    if (T.branch(b).has_length())
-			L = T.branch(b).length();
-		    if (L < 0)
-			L = 1;
-		    else
-			with_lengths = true;
-		    branches.push_back(P);
-		    branch_lengths.push_back(L);
-		}
+            for(int b=0;b<T.n_branches();b++)
+            {
+                partition P = partition_from_branch(T,b);
+                double L = 1.0;
+                if (T.branch(b).has_length())
+                {
+                    L = T.branch(b).length();
+                    if (L < 0)
+                        L = 1;
+                    else
+                        with_lengths = true;
+                }
+                branches.push_back(P);
+                branch_lengths.push_back(L);
+            }
 	    first_line=false;
 	    continue;
 	}
@@ -303,24 +298,8 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
 	    nodes.push_back(P);
 	    node_lengths.push_back(length);
 	}
-	else if (words.size() == 2 and words[0] == "mini-branch")
-	{
-	    // get the next line
-	    if (not file or not portable_getline(file,line))
-		throw myexception()<<"Missing partition after 'mini-branch'!";
-
-	    if (not line.size())
-		throw myexception()<<"Empty line after 'mini-branch'!";
-
-	    double length = convertTo<double>(words[1]);
-	    Partition P(line);
-	    if (names.empty()) names = P.names;
-
-	    mini_branches.push_back(P);
-	    mini_branch_lengths.push_back(length);
-	}
 	else {
-	    if (with_lengths)
+	    if (with_lengths or line.find('|') == string::npos)
 		throw myexception()<<"Don't understand line='"<<line<<"'";
 	    Partition P(line);
 	    if (names.empty()) names = P.names;
@@ -332,22 +311,26 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
     if (log_verbose) cerr<<"draw-tree: Read "<<branches.size()<<" partitions"<<endl;
 
     //--------------- Construct MC tree with lengths  ---------------//
-    branches = check_MC_partitions(names, branches).partitions;
-    MC_tree_with_lengths MC({names, branches});
+    const auto retained = check_MC_partitions(names, branches).partitions;
+    MC_tree_with_lengths MC({names, retained});
 
-    for(int i=0;i<branches.size();i++)
+    // Filtering can remove entries from anywhere in the list. Match surviving partitions to
+    // their original lengths; duplicate partitions retain the first entry, as the filter does.
+    for(const auto& P: retained)
     {
-	double L = branch_lengths[i];
+        auto original = find_index(branches, P);
+        assert(original);
+        double L = branch_lengths[*original];
 
-	auto b1 = find_index(MC.partitions,branches[i]);
+	auto b1 = find_index(MC.partitions,P);
 	if (not b1)
-	    throw myexception()<<"Can't find partition I just added to tree!\n"<<"     "<<Partition(names, branches[i]);
+	    throw myexception()<<"Can't find partition I just added to tree!\n"<<"     "<<Partition(names, P);
 
 	int b2 = MC.reverse(*b1);
 
 	MC.branch_length(*b1) = MC.branch_length(b2) = L;
 
-	if (branches[i].full())
+	if (P.full())
 	    MC.T.directed_branch(*b1).set_length(L);
     }
 
@@ -363,17 +346,19 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
 	int n = MC.mapping[b];
 	int d = MC.degree(n);
 
-	if (d < 4 and log_verbose) {
-	    cerr<<"draw-tree: Processing node '"<<Partition(MC.names(),nodes[i])<<"'"<<endl;
-	    cerr<<"draw-tree: Found as branch '"<<Partition(MC.names(),MC.partitions[b])<<"'"<<endl;
-	    cerr<<"draw-tree: degree = "<<MC.degree(n)<<endl;
-
-	    for(int i=0;i<2*MC.n_branches();i++)
-		if (MC.mapping[i] == n)
-		    cerr<<"draw-tree: "<<Partition(MC.names(), MC.partitions[i])<<endl;
-
-	    throw myexception()<<"Error: node length given for node of degree "<<d<<"!";
-	}
+        if (d <= 3)
+        {
+            if (log_verbose)
+            {
+                cerr<<"draw-tree: Processing node '"<<Partition(MC.names(),nodes[i])<<"'"<<endl;
+                cerr<<"draw-tree: Found as branch '"<<Partition(MC.names(),MC.partitions[b])<<"'"<<endl;
+                cerr<<"draw-tree: degree = "<<d<<endl;
+                for(int j=0;j<2*MC.n_branches();j++)
+                    if (MC.mapping[j] == n)
+                        cerr<<"draw-tree: "<<Partition(MC.names(), MC.partitions[j])<<endl;
+            }
+            throw myexception()<<"Node length given for node of degree "<<d<<"; expected degree at least 4.";
+        }
 
 	MC.node_length(n) = L;
     }
