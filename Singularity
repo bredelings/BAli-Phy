@@ -1,5 +1,5 @@
 BootStrap: docker
-From: ubuntu:24.04
+From: ubuntu:26.04
 
 %post
 

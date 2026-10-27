@@ -18,11 +18,11 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-               ubuntu-gcc-13-DEBUG_MACHINE,
-               ubuntu-gcc-14-sanitize,
-               ubuntu-gcc-15-release,
-               ubuntu-gcc-15-assertions,
-               ubuntu-clang-18-arm-release,
+               ubuntu-gcc-14-DEBUG_MACHINE,
+               ubuntu-gcc-15-sanitize,
+               ubuntu-gcc-16-release,
+               ubuntu-gcc-16-assertions,
+               ubuntu-clang-20-arm-release,
                macos-intel-NDEBUG_DP,
                macos-xcode16-arm-sanitize,
                macos-xcode26-arm-assertions,
@@ -32,41 +32,39 @@ jobs:
                ]
 
         include:
-          - name: ubuntu-gcc-13-DEBUG_MACHINE
+          - name: ubuntu-gcc-14-DEBUG_MACHINE
             os: ubuntu-24.04
             compiler: gcc
-            version: "13"
+            version: "14"
             assertions: true
             cxxflags: "-DDEBUG_MACHINE=1"
             arch: "linux64"
 
-          - name: ubuntu-gcc-14-sanitize
-            os: ubuntu-24.04
+          - name: ubuntu-gcc-15-sanitize
+            os: ubuntu-26.04
             compiler: gcc
-            version: "14"
+            version: "15"
             sanitize: "address,undefined"
             arch: "linux64"
 
-          - name: ubuntu-gcc-15-release
-            os: ubuntu-latest
+          - name: ubuntu-gcc-16-release
+            os: ubuntu-26.04
             compiler: gcc
-            version: "15"
+            version: "16"
             cxxflags: "-march=x86-64-v3"
-            image: ubuntu:25.04
             arch: "linux64"
 
-          - name: ubuntu-gcc-15-assertions  # gcc-15 has new assertion checks
-            os: ubuntu-latest
+          - name: ubuntu-gcc-16-assertions
+            os: ubuntu-26.04
             compiler: gcc
-            version: "15"
+            version: "16"
             assertions: true
-            image: ubuntu:25.04
             arch: "linux64"
 
-          - name: ubuntu-clang-18-arm-release
-            os: ubuntu-24.04-arm
+          - name: ubuntu-clang-20-arm-release
+            os: ubuntu-26.04-arm
             compiler: clang
-            version: "18"
+            version: "20"
             arch: "linux64"
 
           - name: macos-intel-NDEBUG_DP
@@ -291,7 +289,7 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1.2.23
       with:
          install: ${{ runner.os == 'Linux' && 'binary' || 'detect' }}
-         max-size: ${{ matrix.name == 'ubuntu-gcc-14-sanitize' && '1G' || '500M' }}
+         max-size: ${{ matrix.name == 'ubuntu-gcc-15-sanitize' && '1G' || '500M' }}
          # GitHub caches are immutable.  Timestamped SHA keys make each save unique, while
          # these prefixes restore the newest same-commit or preceding accessible cache.
          # Keep UCRT caches separate without changing the MinGW job names.

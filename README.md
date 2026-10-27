@@ -12,15 +12,18 @@ You will need a C++ compiler that understands C++23.
 
 The oldest compiler versions tested in CI are:
 
- * GCC 13
- * Clang 18
+ * GCC 14
+ * Clang 20
  * Xcode 16
+
+Linux Clang builds also need libstdc++ 14 or newer.
 
 Install Prerequisites
 ---------------------
 On Ubuntu 24.04 (or higher), or on Debian testing, you can use apt-get:
 ```bash
-sudo apt-get install g++ libcairo2-dev meson libboost-all-dev libcli11-dev pandoc
+sudo apt-get install g++-14 libcairo2-dev meson libboost-all-dev libcli11-dev pandoc
+export CC=gcc-14 CXX=g++-14
 ```
 
 On Mac (or Linux, actually) you can use homebrew:

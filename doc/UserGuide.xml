@@ -4323,10 +4323,10 @@ The stabilization criterion is the same one described above for numerical values
     </itemizedlist>
     Use the GNU C++ Compiler
     (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gcc.gnu.org/">GCC</link>)
-    version 13 or higher, or the
+    version 14 or higher, or the
     <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://clang.llvm.org/">Clang</link>
-    compiler version 18 or higher. GCC 13 and Clang 18 are the oldest versions of these compilers
-    tested in CI. The
+    compiler version 20 or higher. GCC 14 and Clang 20 are the oldest versions of these compilers
+    tested in CI. Linux Clang builds also need libstdc++ 14 or newer. The
     <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cairographics.org/">Cairo</link>
     graphics library is optional, but if it is missing, the <command>draw-tree</command> tool that
     is used to draw consensus trees won&apos;t be built. See also <xref linkend="software_req"/>.
@@ -4334,7 +4334,8 @@ The stabilization criterion is the same one described above for numerical values
 
     <section><info><title>Linux</title></info>
     <para>On Debian and Ubuntu, you can type:
-<screen><prompt>%</prompt> <userinput>sudo apt-get install g++ git libcairo2-dev pandoc libboost-all-dev libcli11-dev</userinput></screen>
+<screen><prompt>%</prompt> <userinput>sudo apt-get install g++-14 git libcairo2-dev pandoc libboost-all-dev libcli11-dev</userinput>
+<prompt>%</prompt> <userinput>export CC=gcc-14 CXX=g++-14</userinput></screen>
 
     </para>
 If your version of Debian or Ubuntu is recent enough to contain meson version 1.6 or higher, you can install meson with apt-get:
