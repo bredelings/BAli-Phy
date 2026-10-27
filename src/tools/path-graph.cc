@@ -47,9 +47,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     all.add_options()
 	("help,h", "produce help message")
 	("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
-	("taxa",value<string>(),"Colon-separate pair of taxon names")
-	("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
-	("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
+	("taxa",value<string>(),"Colon-separated taxon names; report every pair")
+	("skip",value<unsigned>()->default_value(0),"number of alignment samples to skip")
+	("max-alignments",value<int>()->default_value(1000),"maximum retained alignments (thin the sample; -1 retains all)")
 	;
 
     // positional options
@@ -58,7 +58,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);    
 
     if (args.count("help")) {
-	cout<<"Compute a consensus alignment for the alignments given.\n\n";
+	cout<<"Count pairwise alignment-path edges across sampled alignments.\n\n";
 	cout<<"Usage: path-graph [OPTIONS] < alignments-file\n\n";
 	cout<<all<<"\n";
 	exit(0);
@@ -70,7 +70,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     return args;
 }
 
-void do_setup(const variables_map& args,vector<alignment>& alignments) 
+void do_setup(const variables_map& args,list<alignment>& alignments) 
 {
     //------------ Try to load alignments -----------//
     int maxalignments = args["max-alignments"].as<int>();
@@ -78,11 +78,16 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
 
     // --------------------- try ---------------------- //
     cerr<<"Loading alignments...";
-    list<alignment> As = load_alignments(std::cin,get_alphabet_name(args),skip,maxalignments);
-    alignments.insert(alignments.begin(),As.begin(),As.end());
+    alignments = load_alignments(std::cin,get_alphabet_name(args),skip,maxalignments);
     cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
     if (not alignments.size())
 	throw myexception()<<"Alignment sample is empty.";
+
+    // The loader already matches sequence names and order to the first retained alignment.
+    for (const auto& A: alignments)
+        for (int i=0; i<A.n_sequences(); i++)
+            if (static_cast<const string&>(A.seq(i)) != static_cast<const string&>(alignments.front().seq(i)))
+                throw myexception()<<"Sequence '"<<A.seq(i).name<<"' differs between sampled alignments.";
 }
 
 bool after(int c1, int c2, const alignment& A,const vector<int>& nodes) {
@@ -123,7 +128,7 @@ vector<int> getorder(const alignment& A,int n1,int n2) {
 	columns.push_back(column);
 
     //-------- Re-order unordered columns by AP order ---------//
-    for(int i=0;i<columns.size()-1;) {
+    for(int i=0;i+1<columns.size();) {
 	if (not intersect(columns[i],columns[i+1],A) and after(columns[i],columns[i+1],A,nodes)) {
 	    std::swap(columns[i],columns[i+1]);
 	    if (i>0) i--;
@@ -147,7 +152,7 @@ vector<int> getorder(const alignment& A,int n1,int n2) {
     return bits;
 }
 
-void getpath(const alignment& /*A*/,const vector<int>& bits,vector<int>& cx, vector<int>& cy) {
+void getpath(const vector<int>& bits,vector<int>& cx, vector<int>& cy) {
     cx.push_back(0);
     cy.push_back(0);
     int x=0;
@@ -184,14 +189,13 @@ struct edge_lessthan {
     }
 };
 
-void write_truck_graph(std::ostream& ofile,const vector<alignment>& alignments,int t1,int t2,
+void write_truck_graph(std::ostream& ofile,const list<alignment>& alignments,int t1,int t2,
 		       const vector<string>& taxa) 
 {
     map<edge,int,edge_lessthan> edges;
 	
     //---------- Count the edges ----------//
-    for(int i=0;i<alignments.size();i++) {
-	const alignment& A = alignments[i];
+    for(const alignment& A: alignments) {
 
 	int n1 = A.index(taxa[t1]);
 	if (n1 == -1)
@@ -205,7 +209,7 @@ void write_truck_graph(std::ostream& ofile,const vector<alignment>& alignments,i
       
 	vector<int> cx;
 	vector<int> cy;
-	getpath(A,bits,cx,cy);
+	getpath(bits,cx,cy);
 
 	for(int j=0;j<cx.size()-1;j++) {
 	    int x1 = cx[j];
@@ -242,7 +246,7 @@ int main(int argc,char* argv[])
 	vector<string> taxa = split(args["taxa"].as<string>(),':');
 
 	/*---------------- Load alignment and tree -----------------*/
-	vector<alignment> alignments;
+	list<alignment> alignments;
 	do_setup(args,alignments);
 
 	cerr<<"Read "<<alignments.size()<<" alignments\n";

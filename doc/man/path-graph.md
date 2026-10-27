@@ -4,7 +4,7 @@
 
 # NAME
 
-**path-graph** - Compute a consensus alignment for the alignments given.
+**path-graph** - Count pairwise alignment-path edges across sampled alignments.
 
 # SYNOPSIS
 
@@ -12,7 +12,9 @@
 
 # DESCRIPTION
 
-Compute a consensus alignment for the alignments given.
+Count pairwise alignment-path edges across sampled alignments of the same sequences.
+Gap placement may vary, but the underlying sequences must match. For each requested
+pair, report how often each path edge occurs among the retained alignments.
 
 # ALLOWED OPTIONS:
 **-h**, **--help**
@@ -22,13 +24,14 @@ Compute a consensus alignment for the alignments given.
 : Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.
 
 **--taxa** _arg_
-: Colon-separate pair of taxon names
+: Colon-separated taxon names; report every pair.
 
 **--skip** _arg_ (=0)
-: number of tree samples to skip
+: Number of alignment samples to skip.
 
 **--max-alignments** _arg_ (=1000)
-: maximum number of alignments to analyze
+: Maximum number of retained alignments. The sample is thinned across the input rather
+  than truncated to its first entries. Use -1 to retain all alignments.
 
 
 # REPORTING BUGS:
