@@ -1064,7 +1064,7 @@ optional<int> get_frequency(const alignment& A, int allele, int column, const ve
     int total = 0;
     for(int i: indices)
     {
-        if (A(column,i) == alphabet::not_gap) continue;
+        if (not A.get_alphabet().is_letter(A(column,i))) continue;
 
         total++;
         if (A(column,i) == allele)

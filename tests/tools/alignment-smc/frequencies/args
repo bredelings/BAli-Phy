@@ -1,0 +1,3 @@
+# Frequency denominators must exclude missing and ambiguous calls; exact-only data cannot check this.
+# Retain while BED output reports frequencies from observed exact alleles.
+alignment.fa --alphabet DNA --minor-allele 1 --write-bed chr --show-freq
