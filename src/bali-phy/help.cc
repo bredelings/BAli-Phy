@@ -16,6 +16,7 @@
 #include "version.hh"
 #include "models/rules.hh"
 #include "models/parse.hh"
+#include "computation/haskell/ids.hh"
 #include "util/text.hh"
 #include "util/ptree.hh"
 
@@ -239,8 +240,16 @@ string get_help_for_rule(const Rule& rule)
 	args_names_types.push_back(blue(arg_name) + bold(": ") + red(arg_type));
     }
     help<<header("Usage");
-    help<<"   "<<bold(name);
-    if (args_names_types.size()) help<<bold("(")<<join(args_names_types,bold(", "))<<bold(")");
+    help<<"   ";
+    // Show symbolic operators infix; named functions such as pow retain function-call syntax.
+    if (rule.fixity and is_haskell_sym(name) and args_names_types.size() == 2)
+        help<<bold("(")<<args_names_types[0]<<bold(")")<<" "<<bold(name)<<" "
+            <<bold("(")<<args_names_types[1]<<bold(")");
+    else
+    {
+        help<<bold(name);
+        if (args_names_types.size()) help<<bold("(")<<join(args_names_types,bold(", "))<<bold(")");
+    }
     help<<" "<<bold("->")<<" "<<red(result_type);
     help<<"\n\n";
 
