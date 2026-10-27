@@ -91,7 +91,10 @@ Generate input for SMC programs.
 : Output counts of snp-snp lengths up to arg snps
 
 **--sfs2d** _arg_
-: pop1:pop2:anc:window
+: Use `pop1:pop2:anc`, where each field is a sequence-name prefix. Report one
+  two-population derived-allele count spectrum across the entire alignment. Sites with
+  uncalled members in either population are excluded; the ancestor must have exactly
+  one observed allele. Only sites with two observed alleles across the populations count.
 
 **--find-alleles** _arg_
 : Find alleles with S snps in L bases and count >= N

@@ -144,7 +144,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
         ("pi-matrix","Calculate pi for each pair of sequences")
         ("histogram",value<int>(),"Output SNP counts for blocks of arg bases")
         ("snp-snp-lengths",value<int>(),"Output counts of snp-snp\nlengths up to arg snps")
-        ("sfs2d",value<string>(),"pop1:pop2:anc:window")
+        ("sfs2d",value<string>(),"pop1:pop2:anc")
         ("find-alleles",value<string>(), "Find alleles with S snps in L bases and count >= N")
         ("mask-alleles,m",value<vector<string>>()->composing(), "Find alleles with S snps in L bases and count >= N")
         ;
@@ -1200,8 +1200,7 @@ int get_derived_count(const alignment& A, int col, const vector<int>& pop, int a
 matrix<int> compute_2d_sfs(const alignment& A,
                            const vector<int>& pop1,
                            const vector<int>& pop2,
-                           const vector<int>& anc,
-                           int /* window_size */)
+                           const vector<int>& anc)
 {
     matrix<int> counts(pop1.size()+1, pop2.size()+1,0);
 
@@ -1771,18 +1770,17 @@ int main(int argc,char* argv[])
         if (args.count("sfs2d"))
         {
             auto args2d = split(args["sfs2d"].as<string>(),":");
-            if (args2d.size() != 4)
-                throw myexception()<<"sfs2d: argument '"<<args["sfs2d"].as<string>()<<"' should have 4 colon-separated parts";
+            if (args2d.size() != 3)
+                throw myexception()<<"sfs2d: argument '"<<args["sfs2d"].as<string>()<<"' should have 3 colon-separated parts";
 
             auto pop1prefix = args2d[0];
             auto pop2prefix = args2d[1];
             auto ancprefix = args2d[2];
-            auto window_size = convertTo<int>(args2d[3]);
             auto pop1 = find_sequence_subset_with_prefix(A, pop1prefix);
             auto pop2 = find_sequence_subset_with_prefix(A, pop2prefix);
             auto anc = find_sequence_subset_with_prefix(A, ancprefix);
 
-            auto sfs_counts = compute_2d_sfs(A,pop1,pop2,anc,window_size);
+            auto sfs_counts = compute_2d_sfs(A,pop1,pop2,anc);
             for(int i=0;i<sfs_counts.size1();i++)
                 for(int j=0;j<sfs_counts.size2();j++)
                     std::cout<<i<<"\t"<<j<<"\t"<<sfs_counts(i,j)<<"\n";
