@@ -44,7 +44,6 @@ using std::vector;
 using std::valarray;
 using std::pair;
 
-using boost::program_options::variables_map;
 using boost::dynamic_bitset;
 
 string clean(const string& in) {

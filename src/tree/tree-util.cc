@@ -25,7 +25,6 @@
 #include "util/io.hh"
 #include "tools/read-trees.hh" // split out trees_format::reader_t
 
-using boost::program_options::variables_map;
 using std::map;
 using std::string;
 using std::string_view;
@@ -40,7 +39,7 @@ using boost::dynamic_bitset;
 
 namespace fs = std::filesystem;
 
-/// Load a tree from command line args "--tree filename"
+/// Load the first Newick or NEXUS tree from a file.
 RootedSequenceTree load_tree_from_file(const fs::path& filename)
 {
     using namespace trees_format;
@@ -51,15 +50,6 @@ RootedSequenceTree load_tree_from_file(const fs::path& filename)
 	throw myexception()<<"No tree in file "<<filename;
 
     return RT;
-}
-
-/// Load a tree from command line args "--tree filename"
-RootedSequenceTree load_T(const variables_map& args) {
-    if (not args.count("tree"))
-	throw myexception()<<"Tree file not specified! (--tree <filename>)";
-    
-    auto filename = args["tree"].as<string>();
-    return load_tree_from_file(filename);
 }
 
 std::optional<SequenceTree> parse_sequence_tree(const string& text)

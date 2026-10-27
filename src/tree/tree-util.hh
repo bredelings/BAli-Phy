@@ -19,14 +19,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #ifndef TREE_UTIL_H
 #define TREE_UTIL_H
-#include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <filesystem>
 
 #include "tree/sequencetree.hh"
 
-/// Load a tree from command line args --tree filename
-RootedSequenceTree load_T(const boost::program_options::variables_map& args);
 RootedSequenceTree load_tree_from_file(const std::filesystem::path& filename);
 
 std::optional<SequenceTree> parse_sequence_tree(const std::string& text);

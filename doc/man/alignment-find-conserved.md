@@ -10,8 +10,6 @@
 
 **alignment-find-conserved** [_alignment-file_] **`--tree`** _tree-file_ \[OPTIONS\]
 
-**alignment-find-conserved** **`--align`** _alignment-file_ **`--tree`** _tree-file_ \[OPTIONS\]
-
 # DESCRIPTION
 
 Produce highlighting values for each alignment column and sequence, based on conservation
@@ -22,8 +20,9 @@ The highlighting matrix is written to standard output. Group listings and per-co
 parsimony diagnostics are written to standard error; redirect the two streams separately.
 This command does not estimate a tree, branch lengths, substitution rates, or support values.
 
-Supply an alignment and a matching Newick tree. Sequence names are matched to tree-tip names;
-sequences may be reordered to match the tree. The output header gives the resulting order.
+Supply an alignment and a matching Newick tree. The optional alignment filename defaults
+to standard input; an explicit `-` also reads standard input. Sequence names are matched to
+tree-tip names; sequences may be reordered to match the tree. The output header gives the resulting order.
 A tree is required for the calculations.
 Groups are optional: without them the highlighting matrix is zero, but per-column parsimony
 scores are still reported.
@@ -94,12 +93,7 @@ options, all members of eligible groups receive 1, whether conserved or not.
 # OPTIONS
 
 **-h**, **`--help`**
-: Print help and exit. The current help text uses the old spelling `alignment-find conserved`;
-  invoke the executable as **alignment-find-conserved**.
-
-**`--align`** _file_
-: Read the alignment from _file_, instead of supplying it positionally. The default is `-`,
-  meaning standard input.
+: Print help and exit.
 
 **`--tree`** _file_
 : Read the tree used to match groups to edges and calculate parsimony. Required.

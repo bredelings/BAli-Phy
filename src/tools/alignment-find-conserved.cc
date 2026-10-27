@@ -35,60 +35,17 @@
 #include "parsimony.hh"
 #include "tree-dist.hh"
 
-#include <boost/program_options.hpp>
-
-namespace po = boost::program_options;
+#include <CLI/CLI.hpp>
+#include <optional>
 
 using boost::dynamic_bitset;
 
-using po::variables_map;
 using std::string;
 using std::cout;
 using std::cerr;
 using std::endl;
 using std::vector;
 using std::valarray;
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description all("Allowed options");
-    all.add_options()
-	("help,h", "produce help message")
-	("align", value<string>()->default_value("-"),"file with alignment to convert (default STDIN)")
-	("tree",value<string>(),"file with initial tree")
-	("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
-	("groups", value<string>(),"file with taxon groups")
-	("split",value<vector<string> >()->composing(),"a split to consider")
-	("ignore-rate-change","ignore rate changes")
-	("require-conservation","Highlight conserved regions")
-	("require-change","Highlight regions if conservation changes")
-	("require-all-different","Taxa differences are interesting of there is no letter overlap")
-	;
-
-    // positional options
-    positional_options_description p;
-    p.add("align", 1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-	  options(all).positional(p).run(), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	std::cout<<"Find conserved parts of an alignment.\n\n";
-	std::cout<<"Usage: alignment-find-conserved <alignment-file> [OPTIONS]\n\n";
-	std::cout<<all<<"\n";
-	exit(0);
-    }
-
-    if (not args.count("tree"))
-        throw myexception()<<"A tree is required; specify --tree.";
-
-    return args;
-}
 
 struct sequence_group
 {
@@ -222,17 +179,40 @@ int main(int argc,char* argv[])
 { 
     try {
 	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Highlight conserved groups and report site-wise parsimony.", "alignment-find-conserved"};
+        app.usage("Usage: alignment-find-conserved [ALIGNMENT] --tree TREE [OPTIONS]");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string alignment_file = "-", tree_file, alphabet_name;
+        std::optional<string> groups_file;
+        vector<string> split_specs;
+        bool ignore_rate_change = false, require_conservation = false;
+        bool require_change = false, require_all_different = false;
+        app.add_option("ALIGNMENT", alignment_file, "Alignment file (default: STDIN; '-' also reads STDIN)")
+            ->type_name("");
+        app.add_option("--tree", tree_file, "Tree used to match groups and calculate parsimony")
+            ->required()->type_name("TREE");
+        app.add_option("--alphabet", alphabet_name, "Specify the alphabet (default: inferred from alignment)");
+        app.add_option("--groups", groups_file, "File of named taxon groups");
+        app.add_option("--split", split_specs, "Split of group names to compare; quote each specification");
+        app.add_flag("--ignore-rate-change", ignore_rate_change, "Ignore changes in conservation alone");
+        app.add_flag("--require-conservation", require_conservation, "Require groups to be conserved");
+        app.add_flag("--require-change", require_change, "Require differences between group conservation values");
+        app.add_flag("--require-all-different", require_all_different, "Require disjoint observed symbols between groups");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
 
 	//----------- Load alignment and tree ---------//
-	alignment A = load_A(args, false);
-	SequenceTree T;
-	if (args.count("tree"))
-	{
-	    T = load_T(args);
-	    link(A,T,false);
-	    check_alignment(A,T,false);
-	}
+        alignment A = chop_internal(load_alignment(alignment_file, alphabet_name));
+        SequenceTree T = load_tree_from_file(tree_file);
+        link(A,T,false);
+        check_alignment(A,T,false);
 
 	const alphabet& a = A.get_alphabet();
     
@@ -240,8 +220,8 @@ int main(int argc,char* argv[])
 
 	//------- Load groups and find branches -------//
 	vector<sequence_group> groups;
-	if (args.count("groups")) 
-	    groups = load_groups(A,args["groups"].as<string>());
+	if (groups_file) 
+	    groups = load_groups(A,*groups_file);
 
 	for(int i=0;i<groups.size();i++) {
 	    cerr<<groups[i].name<<": ";
@@ -250,37 +230,30 @@ int main(int argc,char* argv[])
 	    cerr<<endl;
 	}
 
-	vector<int> group_branches;
-	if (args.count("tree"))
-	{
-	    for(int i=0;i<groups.size();i++)
-	    {
-		dynamic_bitset<> p(T.n_leaves());
-		for(int j=0;j<groups[i].taxa.size();j++)
-		    p[groups[i].taxa[j]] = true;
+        vector<int> group_branches;
+        for(int i=0;i<groups.size();i++)
+        {
+            dynamic_bitset<> p(T.n_leaves());
+            for(int j=0;j<groups[i].taxa.size();j++)
+                p[groups[i].taxa[j]] = true;
 
-		int found = -1;
-		for(int b=0;b<2*T.n_branches() and found == -1;b++)
-		    if (p == branch_partition(T,b))
-			found = b;
-		if (found == -1)
-		    throw myexception()<<"I can't find group "<<i+1<<" on the tree!";
-	
-		group_branches.push_back(found);
-	    }
-	}
+            int found = -1;
+            for(int b=0;b<2*T.n_branches() and found == -1;b++)
+                if (p == branch_partition(T,b))
+                    found = b;
+            if (found == -1)
+                throw myexception()<<"I can't find group "<<i+1<<" on the tree!";
+
+            group_branches.push_back(found);
+        }
 
 	vector<string> group_names;
 	for(int i=0;i<groups.size();i++)
 	    group_names.push_back(groups[i].name);
 
 	vector<Partition> splits;
-	if (args.count("split")) 
-	{
-	    vector<string> split = args["split"].as<vector<string> >();
-	    for(int i=0;i<split.size();i++) 
-		splits.push_back(Partition(group_names,split[i]));
-	}
+        for (const auto& spec: split_specs)
+            splits.emplace_back(group_names, spec);
 
 	//-------------------------------------------//
 
@@ -326,9 +299,9 @@ int main(int argc,char* argv[])
 	    }
 
 	    //-------- Determine whether column is interesting --------//
-	    if (args.count("require-all-different"))
+	    if (require_all_different)
 	    {
-		if (args.count("split"))
+		if (not splits.empty())
 		{
 		    vector<bool> in_changed_split(groups.size(),false);
 		    for(int i=0;i<splits.size();i++) 
@@ -371,9 +344,9 @@ int main(int argc,char* argv[])
 		}
 	    }
     
-	    if (args.count("require-change"))
+	    if (require_change)
 	    {
-		if (args.count("split"))
+		if (not splits.empty())
 		{
 		    vector<bool> in_changed_split(groups.size(),false);
 		    for(int i=0;i<splits.size();i++) 
@@ -383,7 +356,7 @@ int main(int argc,char* argv[])
 			    for(int g2=0;g2<groups.size();g2++)
 				if (splits[i].group1[g1] and splits[i].group2[g2]) {
 				    if (value[g1] != value[g2])
-					if (not args.count("ignore-rate-change") or 
+					if (not ignore_rate_change or 
 					    (value[g1] != alphabet::gap and value[g2] != alphabet::gap))
 					    some_different = true;
 				}
@@ -413,7 +386,7 @@ int main(int argc,char* argv[])
 		}
 
 		else {
-		    if (args.count("ignore-rate-change")) 
+		    if (ignore_rate_change) 
 		    {
 			for(int g=0;g<groups.size();g++) 
 			    interesting[g] = interesting[g] and not all_same_or(value,alphabet::gap);
@@ -427,12 +400,12 @@ int main(int argc,char* argv[])
 	    }
     
 	    // A group is only interesting if its conserved
-	    if (args.count("require-conservation"))
+	    if (require_conservation)
 		for(int g=0;g<groups.size();g++)
 		    interesting[g] = interesting[g] and (value[g] != alphabet::gap);
 
 	    // A group is only interesting if it is in one of the splits
-	    if (args.count("split"))
+	    if (not splits.empty())
 		for(int g=0;g<groups.size();g++) {
 		    bool found = false;
 		    for(int i=0;i<splits.size() and not found;i++) 
