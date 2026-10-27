@@ -1,0 +1,3 @@
+# Inclusive bounds permit a single iteration; ordinary report inputs do not exercise equality.
+# Retain while summary files store inclusive selection bounds.
+report summary.json alignment.fasta rate --format tsv

@@ -290,8 +290,8 @@ summary from_json(const json::value& document, const std::string& context)
     if (result.selection.subsample == 0)
         throw myexception()<<context<<": selection subsample must be positive.";
     if (result.selection.skip and result.selection.until
-        and *result.selection.until <= *result.selection.skip)
-        throw myexception()<<context<<": selection until must be greater than skip.";
+        and *result.selection.until < *result.selection.skip)
+        throw myexception()<<context<<": selection until must be at least skip.";
 
     result.retained_samples =
         nonnegative_integer(required_field(root, "retained_samples", context), context+" retained_samples");
