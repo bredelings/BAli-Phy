@@ -807,7 +807,7 @@ vector<int> allele_counts_with_gap(const alignment& A, int col)
 {
     auto& a = A.get_alphabet();
     vector<int> counts(a.size()+2, 0);
-    const int not_gap = a.size()-1;
+    const int not_gap = a.size()+1;
     const int gap = a.size();
     for(int i=0;i<A.n_sequences();i++)
     {
@@ -838,8 +838,8 @@ vector<int> allele_counts(const alignment& A, int col, const vector<int>& seqs)
 vector<int> allele_counts_with_gap(const alignment& A, int col, const vector<int>& seqs)
 {
     auto& a = A.get_alphabet();
-    vector<int> counts(a.size()+1, 0);
-    const int not_gap = a.size()-1;
+    vector<int> counts(a.size()+2, 0);
+    const int not_gap = a.size()+1;
     const int gap = a.size();
     for(int i:seqs)
     {
@@ -908,7 +908,7 @@ int largest_minor_allele_count(const alignment& A, int col)
 vector<int> get_consensus(const alignment& A, const vector<int>& seqs)
 {
     auto& a = A.get_alphabet();
-    const int not_gap = a.size()-1;
+    const int not_gap = a.size()+1;
     const int gap = a.size();
 
     // The consensus is not going to have ambiguity
@@ -941,7 +941,7 @@ vector<int> get_consensus(const alignment& A, const vector<int>& seqs)
 vector<int> get_consensus_strict(const alignment& A, const vector<int>& seqs)
 {
     auto& a = A.get_alphabet();
-    const int not_gap = a.size()-1;
+    const int not_gap = a.size()+1;
     const int gap = a.size();
 
     // The consensus is not going to have ambiguity
@@ -960,7 +960,11 @@ vector<int> get_consensus_strict(const alignment& A, const vector<int>& seqs)
             // drop - and +
             counts.resize(a.size());
 
-            consensus[col] = argmax(counts);
+            // Missing bases establish presence, but cannot select an exact consensus letter.
+            if (std::any_of(counts.begin(), counts.end(), [](int count) {return count > 0;}))
+                consensus[col] = argmax(counts);
+            else
+                consensus[col] = alphabet::not_gap;
         }
     }
 

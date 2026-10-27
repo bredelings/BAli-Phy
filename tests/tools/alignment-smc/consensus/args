@@ -1,0 +1,3 @@
+# T-majority consensus must behave like other bases; all-A tests miss count-slot collisions.
+# Retain while consensus uses separate missing and exact-letter counts.
+alignment.fa --alphabet DNA --find-alleles 2:10:1:3
