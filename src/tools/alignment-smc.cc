@@ -501,6 +501,8 @@ int n_snps(const alignment& A)
 
 vector<int> snps_in_blocks(const alignment& A, int blocksize)
 {
+    if (blocksize <= 0)
+        throw myexception()<<"--histogram requires a positive block size.";
     vector<int> counts;
     for(int i=0;i<A.length();)
     {
@@ -864,6 +866,8 @@ vector<int> allele_counts_with_gap(const alignment& A, int col, const vector<int
 
 vector<vector<int>> make_bins(const vector<int>& columns, int width)
 {
+    if (width <= 0)
+        throw myexception()<<"--one-every requires a positive width.";
     vector<vector<int>> bins;
     if (columns.empty()) return bins;
 
@@ -1739,7 +1743,7 @@ int main(int argc,char* argv[])
                 // Construct arguments n_snps, L
                 auto find_args = split(allele_spec,':');
                 if (find_args.size() != 2)
-                    throw myexception()<<"argument to --mask-alleles should have the form n:L, but got '"<<args["mask-alleles"].as<string>();
+                    throw myexception()<<"argument to --mask-alleles should have the form n:L, but got '"<<allele_spec<<"'";
                 int n_snps = convertTo<int>(find_args[0]);
                 int L = convertTo<int>(find_args[1]);
                 snp_lengths.push_back({n_snps, L});
