@@ -75,15 +75,17 @@ variables_map parse_cmd_line(int argc,char* argv[])
     variables_map args;     
     store(command_line_parser(argc, argv).
 	  options(all).positional(p).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
     notify(args);    
 
     if (args.count("help")) {
 	std::cout<<"Find conserved parts of an alignment.\n\n";
-	std::cout<<"Usage: alignment-find conserved <alignment-file> [OPTIONS]\n\n";
+	std::cout<<"Usage: alignment-find-conserved <alignment-file> [OPTIONS]\n\n";
 	std::cout<<all<<"\n";
 	exit(0);
     }
+
+    if (not args.count("tree"))
+        throw myexception()<<"A tree is required; specify --tree.";
 
     return args;
 }
@@ -104,23 +106,26 @@ vector<sequence_group> load_groups(const alignment& A,const string& filename)
     string line;
     for(int g=1;portable_getline(file,line);g++)
     {
-	if (not groups.size() or groups.back().taxa.size())
-	    groups.push_back(sequence_group());
-
-	vector<string> names = split(line,' ');
+        groups.push_back(sequence_group());
+        vector<string> names = split(line,' ');
+        std::erase(names, string{});
+        if (names.empty())
+            throw myexception()<<"Group "<<g<<": Empty group line.";
 
 	sequence_group& current_group = groups.back();
 
 	string n = names[0];
-	if (n[n.size()-1] != ':')
+	if (n.size() < 2 or n.back() != ':')
 	    throw myexception()<<"Group "<<g<<": Group doesn't start with a name (ending in a ':')";
 	n = n.substr(0,n.size()-1);
 	names.erase(names.begin());
 
 	current_group.name = n;
 
+        if (names.empty())
+            throw myexception()<<"Group "<<g<<": No taxa supplied.";
+
 	for(auto& name: names)
-	    if (names.size())
 	    {
 		if (auto j = find_index(seq_names, name))
 		    current_group.taxa.push_back(*j);
@@ -231,6 +236,8 @@ int main(int argc,char* argv[])
 
 	const alphabet& a = A.get_alphabet();
     
+	const auto cost = unit_cost_matrix(a);
+
 	//------- Load groups and find branches -------//
 	vector<sequence_group> groups;
 	if (args.count("groups")) 
@@ -293,7 +300,7 @@ int main(int argc,char* argv[])
 	    for(int j=0;j<leaf_letters.size();j++)
 		leaf_letters[j] = A(c,j);
 	    vector<vector<int> > node_letters = get_all_parsimony_letters(
-	        a, A.get_ambiguities(), leaf_letters, T, unit_cost_matrix(a));
+	        a, A.get_ambiguities(), leaf_letters, T, cost);
 
 	    vector<vector<int> > initial_value(groups.size());
 	    for(int g=0;g<groups.size();g++) 
@@ -454,7 +461,7 @@ int main(int argc,char* argv[])
 		    cerr<<a.lookup(initial_value[i][j]);
 		cerr<<" "; 
 	    }     
-	    cerr<<"    "<<n_mutations(a,A.get_ambiguities(),leaf_letters,T,unit_cost_matrix(a))<<endl;
+	    cerr<<"    "<<n_mutations(a,A.get_ambiguities(),leaf_letters,T,cost)<<endl;
 	    cerr<<endl;
 
 

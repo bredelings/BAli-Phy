@@ -24,7 +24,7 @@ This command does not estimate a tree, branch lengths, substitution rates, or su
 
 Supply an alignment and a matching Newick tree. Sequence names are matched to tree-tip names;
 sequences may be reordered to match the tree. The output header gives the resulting order.
-A tree is required for the calculations, although the option parser does not enforce this.
+A tree is required for the calculations.
 Groups are optional: without them the highlighting matrix is zero, but per-column parsimony
 scores are still reported.
 
@@ -102,7 +102,7 @@ options, all members of eligible groups receive 1, whether conserved or not.
   meaning standard input.
 
 **`--tree`** _file_
-: Read the tree used to match groups to edges and calculate parsimony. Required in practice.
+: Read the tree used to match groups to edges and calculate parsimony. Required.
 
 **`--alphabet`** _name_
 : Specify the alphabet instead of inferring it. Examples include `DNA`, `RNA`, `Amino-Acids`,
@@ -150,8 +150,8 @@ The first line lists sequence names separated by spaces. Each following line cor
 to one processed alignment column and contains space-separated highlighting values in that
 sequence order. There is no position column.
 
-The current implementation writes **one extra trailing zero** on every numerical row, with
-no corresponding name in the header. This is an existing output quirk, not another sequence.
+Each numerical row ends with a reserved whole-column highlighting value, currently zero.
+This field has no sequence name in the header and is expected by **alignment-draw**.
 
 ## Standard error
 
