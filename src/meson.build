@@ -261,6 +261,7 @@ declarative_tool_tests += ['alignment-cat', 'alignment-translate', 'alignment-fi
 declarative_tool_tests += ['stats-cat', 'stats-select', 'stats-merge']
 declarative_tool_tests += ['alignment-consensus', 'alignment-gild', 'alignment-find-conserved']
 declarative_tool_tests += ['joint-parsimony', 'model_P', 'mctree-mean-lengths']
+declarative_tool_tests += ['alignment-smc']
 declarative_tool_tests += ['draw-tree', 'trees-pair-distances', 'tree-tool', 'tree-reroot']
 tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
 

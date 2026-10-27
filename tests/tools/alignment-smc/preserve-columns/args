@@ -1,0 +1,3 @@
+# Preserve genomic coordinates in pairwise input; help cannot detect removed columns.
+# Retain while loading can remove internal sequences or empty columns.
+alignment.fa --alphabet DNA --minor-allele 1 --write-bed chr

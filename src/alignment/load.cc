@@ -110,7 +110,7 @@ alignment load_A(const variables_map& args,bool keep_internal, bool remove_empty
     alignment A = load_alignment(filepath, get_alphabet_name(args), remove_empty);
 
     if (not keep_internal)
-	A = chop_internal(A);
+	A = chop_internal(A, not remove_empty);
 
     return A;
 }
