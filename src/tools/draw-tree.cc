@@ -117,9 +117,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("output",value<string>()->default_value("pdf"),"Type of output to write: tree, topology, mtree, lengths, dot, ps, pdf, svg")
 	("out",value<string>(),"Output filename (without extension)")
 	("full","Consider only full splits by collapsing any partial splits.")
-	("iterations",value<int>()->default_value(2),"Number of iterations for layout algorithm")
+	("iterations",value<int>()->default_value(2),"Graph optimization rounds after initialization; draw once after both stages")
 	("font-size",value<double>()->default_value(10),"Font size in points before explicit output resizing")
-	("angle_iterations",value<int>()->default_value(0),"Number of iterations for layout algorithm with small-angle penalties")
+	("angle_iterations",value<int>()->default_value(0),"Additional graph optimization rounds with small-angle penalties")
 	("labels",value<string>()->default_value("horizontal"),"Are the names horizontal or angled?")
 	("collapse","Give node lengths evenly to neighboring branches and zero the node lengths.")
 	("layout",value<string>()->default_value("graph"),"Layout method: graph, equal-angle, equal-daylight")
@@ -3682,43 +3682,33 @@ int main(int argc,char* argv[])
 
 
 
-	// lay out using circular tree layout
-	if (args["layout"].as<string>() == "equal-angle") 
-	{
-	    tree_layout L = equal_angle_layout(MC);
-	    L.rotate_for_aspect_ratio(xw,yw);
-	    tree_plotter tp(L, xw, yw, font_size);
-	    if (args["labels"].as<string>() != "horizontal")
-		tp.horizontal_names = false;
+        const string layout_name = args["layout"].as<string>();
+        if (layout_name != "graph" and layout_name != "equal-angle" and layout_name != "equal-daylight")
+            throw myexception()<<"Unrecognized layout '"<<layout_name
+                               <<"'; use graph, equal-angle, or equal-daylight.";
 
-	    string filename = name+"-tree";
-	    if (args.count("out"))
-		filename = args["out"].as<string>();
+        bool all_zero = true;
+        for(int b: MC.branch_order)
+            all_zero = all_zero and MC.branch_length(b) == 0;
+        for(int n=0;n<MC.n_nodes();n++)
+            all_zero = all_zero and MC.node_length(n) == 0;
+        if (all_zero)
+            throw myexception()<<"Cannot draw a tree whose branch and node lengths are all zero.";
 
-	    draw(filename,output,tp,width,height);
-	    exit(0);
-	}
-	else if (args["layout"].as<string>() == "equal-daylight")
-	{
-	    bool greedy = (args.count("greedy") > 0);
-	    bool no_shade = (args.count("no-shade") > 0);
-	    tree_layout L = equal_daylight_layout(MC,greedy,no_shade);
-	    L.rotate_for_aspect_ratio(xw,yw);
-	    tree_plotter tp(L, xw, yw, font_size);
-	    if (args["labels"].as<string>() != "horizontal")
-		tp.horizontal_names = false;
+        if (layout_name != "graph")
+        {
+            bool greedy = args.count("greedy") > 0;
+            bool no_shade = args.count("no-shade") > 0;
+            tree_layout L = layout_name == "equal-angle" ? equal_angle_layout(MC)
+                                                       : equal_daylight_layout(MC,greedy,no_shade);
+            L.rotate_for_aspect_ratio(xw,yw);
+            tree_plotter tp(L, xw, yw, font_size);
+            tp.horizontal_names = args["labels"].as<string>() == "horizontal";
+            string filename = args.count("out") ? args["out"].as<string>() : name+"-tree";
+            draw(filename,output,tp,width,height);
+            return 0;
+        }
 
-	    string filename = name+"-tree";
-	    if (args.count("out"))
-		filename = args["out"].as<string>();
-
-	    draw(filename,output,tp,width,height);	
-	    exit(0);
-	}
-        else if (args["layout"].as<string>() == "fr")
-            throw myexception()<<"Layout 'fr' is not implemented; use graph, equal-angle, or equal-daylight.";
-    
-    
 	// lay out as a graph
 	MC.scale(1.0/MC.total_length());
 	graph_layout layout = layout_on_circle(MC,2);
@@ -3759,46 +3749,29 @@ int main(int argc,char* argv[])
 	    energy_layout(layout,layout_energy(1,1000000,stretchy_weight,0),800);
 	}
 
-	for(int i=0;i<n_iterations;i++) 
-	{
-	    energy_layout(layout,layout_energy(1,length_weight,stretchy_weight,0));
-	    layout.rotate_for_aspect_ratio(xw,yw);
+        for(int i=0;i<n_iterations;i++)
+        {
+            energy_layout(layout,layout_energy(1,length_weight,stretchy_weight,0));
+            layout.rotate_for_aspect_ratio(xw,yw);
+        }
 
-	    graph_plotter gp(layout, xw, yw, font_size);
+        // Improve angular resolution without changing the preceding optimization sequence.
+        int a_iterations = args["angle_iterations"].as<int>();
+        for(int i=0;i<a_iterations;i++)
+        {
+            energy_layout(layout,layout_energy(1,10000000,0.01,50));
+            layout.rotate_for_aspect_ratio(xw,yw);
+        }
 
-	    if (args.count("draw-clouds")) {
-		gp.draw_clouds = true;
-		if (args["draw-clouds"].as<string>() == "only")
-		    gp.draw_type_2_edges = false;
-	    }
-      
-	    string filename = name+"-mctree";
-	    if (args.count("out"))
-		filename = args["out"].as<string>();
-      
-	    draw(filename,output,gp,width,height);
-	}
-
-	// improve angular resolution
-	int a_iterations = args["angle_iterations"].as<int>();
-	for(int i=0;i<a_iterations;i++) {
-	    energy_layout(layout,layout_energy(1,10000000,0.01,50));
-	    layout.rotate_for_aspect_ratio(xw,yw);
-	    graph_plotter gp(layout, xw, yw, font_size);
-
-	    if (args.count("draw-clouds")) {
-		gp.draw_clouds = true;
-
-		if (args["draw-clouds"].as<string>() == "only")
-		    gp.draw_type_2_edges = false;
-	    }
-
-	    string filename = name+"-mctree";
-	    if (args.count("out"))
-		filename = args["out"].as<string>();
-
-	    draw(filename,output,gp,width,height);
-	}
+        // Render the final layout once, including when neither loop has any iterations.
+        graph_plotter gp(layout, xw, yw, font_size);
+        if (args.count("draw-clouds"))
+        {
+            gp.draw_clouds = true;
+            gp.draw_type_2_edges = args["draw-clouds"].as<string>() != "only";
+        }
+        string output_name = args.count("out") ? args["out"].as<string>() : name+"-mctree";
+        draw(output_name,output,gp,width,height);
     }
     catch (std::exception& e) {
 	cerr<<"draw-tree: Error! "<<e.what()<<endl;
