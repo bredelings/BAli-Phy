@@ -26,7 +26,9 @@
 #include "alignment/alignment-util.hh"
 #include "util/string/split.hh"
 #include "util/string/join.hh"
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
+#include <limits>
+#include <optional>
 #include <boost/dynamic_bitset.hpp>
 #include "util/assert.hh"
 #include "util/io.hh"
@@ -52,9 +54,6 @@ using std::endl;
 using std::ostream;
 using std::optional;
 
-namespace po = boost::program_options;
-using po::variables_map;
-
 using boost::dynamic_bitset;
 
 using std::cout;
@@ -68,72 +67,40 @@ struct sequence_mask
     vector<pair<int,int>> intervals;
 };
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
+namespace {
+// Settings shared by the mutually exclusive analysis commands and their preprocessing pipeline.
+struct preprocessing_options
+{
+    string alphabet_name;
+    bool erase_empty = false;
+    optional<string> reference;
+    bool autoclean = false;
+    vector<string> mask_files;
+    optional<int> mask_gap_distance;
+    double gap_fraction = 0.01;
+    bool strip_gaps = false;
+    vector<string> mask_allele_specs;
+    string consensus_seqs = "-";
+};
+}
 
-    // named options
-    options_description all("Allowed options");
-    all.add_options()
-        ("help,h", "produce help message")
-        ("align", value<string>(),"file with sequences and initial alignment")
-        ("alphabet",value<string>(),"specify the alphabet: DNA, RNA, Amino-Acids, Triplets, or Codons")
-        ("erase-empty-columns,e","Remove columns with no characters (all gaps).")
-
-        ("minor-allele",value<int>(),"Keep columns with minor-allele count >= <arg>")
-        ("missing-freq",value<double>()->default_value(1.0),"With --minor-allele, keep columns with missing frequency <= <arg>")
-        ("one-every",value<int>(),"With --minor-allele, keep 1 column per interval of size <arg> (positive)")
-
-        ("mask-gaps,G",value<int>(),"Mask columns within <arg> columns of a gap")
-        ("strip-gaps,S","With --mask-gaps, remove gap columns and mask nearby columns")
-        ("gap-fraction",value<double>()->default_value(0.01),"Fraction of sequences that need to have a gap")
-        ("mask-file,M",value<vector<string>>()->composing(),"Apply mask-file")
-        ("autoclean,A","Mask blocks with too many SNPs")
-
-        ("dical2","Output file for DiCal2")
-        ("msmc","Output file for MSMC")
-        ("psmc","Output file for PSMC")
-        ("write-bed",value<string>(),"Output BED file with chromosome name <arg>") // BED only works for --minor-allele!
-
-        // parameters
-        ("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?") // statistic
-        ("consensus-seqs",value<string>(), "sequences to use in consensus") // For find-alleles
-
-        ("translate-mask",value<string>(),"Translate mask-file coordinates from the first sequence to the second")
-        ("translate-vcf",value<string>(),"Translate positions in a VCF file using aligned sequence pairs")
-        ("show-freq", "Show allele frequencies")
-        ("clean-to-ref",value<string>(),"Remove columns not in reference sequence <arg>")
-        ("pi-matrix","Calculate pi for each pair of sequences")
-        ("histogram",value<int>(),"Output SNP counts for blocks of <arg> bases (positive)")
-        ("snp-snp-lengths",value<int>(),"Output counts of snp-snp\nlengths up to arg snps")
-        ("sfs2d",value<string>(),"pop1:pop2:anc")
-        ("find-alleles",value<string>(), "Find alleles with S snps in L bases and count >= N")
-        ("mask-alleles,m",value<vector<string>>()->composing(), "Find alleles with S snps in L bases and count >= N")
-        ;
-
-    // positional options
-    positional_options_description p;
-    p.add("align", 1);
-  
-    variables_map args;     
-    store(command_line_parser(argc, argv).
-          options(all).positional(p).run(), args);
-    notify(args);    
-
-    if (args.count("help")) {
-        cout<<"Generate input for SMC programs.\n\n";
-        cout<<"Usage: alignment-smc <alignment-file> [OPTIONS]\n\n";
-        cout<<all<<"\n";
-        cout<<"Examples:\n\n";
-        cout<<"  To calculate some statistics:\n";
-        cout<<"    % alignment-smc sequence.fasta > /dev/null\n";
-        cout<<"\n";
-        cout<<"  To write out SNPS with minor-allele count >=2 in BED format:\n";
-        cout<<"    % alignment-smc sequences.fasta --minor-allele=2 --write-bed=chrom > snps.bed\n";
-        exit(0);
-    }
-
-    return args;
+// Register shared settings on each analysis command, keeping its help self-contained.
+static void add_preprocessing_options(CLI::App& command, preprocessing_options& options)
+{
+    command.add_option("--alphabet", options.alphabet_name, "Alphabet (default: inferred from alignment)");
+    command.add_flag("--erase-empty-columns,-e", options.erase_empty, "Remove empty alignment columns");
+    command.add_option("--clean-to-ref", options.reference, "Remove columns absent from this reference sequence");
+    command.add_flag("--autoclean,-A", options.autoclean, "Mask blocks with too many SNPs");
+    command.add_option("--mask-file,-M", options.mask_files, "Apply reference-coordinate mask files; may be repeated");
+    command.add_option("--mask-gaps,-G", options.mask_gap_distance, "Mask columns within this distance of a gap");
+    command.add_option("--gap-fraction", options.gap_fraction, "Gap fraction used by --mask-gaps")
+        ->capture_default_str();
+    command.add_flag("--strip-gaps,-S", options.strip_gaps,
+                     "With --mask-gaps, remove gap columns and mask nearby columns");
+    command.add_option("--mask-alleles,-m", options.mask_allele_specs,
+                       "Mask alleles with N differences in L columns; may be repeated")->type_name("N:L");
+    command.add_option("--consensus-seqs", options.consensus_seqs,
+                       "Sequence range for consensus (default: all sequences)")->type_name("RANGE");
 }
 
 
@@ -1216,13 +1183,9 @@ void show_alleles(const vector<pair<allele_t,int>>& alleles, const alphabet& a, 
     }
 }
 
-void translate_vcf(const string& vcf_filename, const variables_map& args)
+void translate_vcf(const string& vcf_filename, const string& alignments_filename)
 {
-    auto alignments_filename = get_arg<string>(args,"align");
-    if (not alignments_filename)
-        throw myexception()<<"No filename specified for alignments to translate coordinates";
-
-    auto tables = get_translation_tables(*alignments_filename);
+    auto tables = get_translation_tables(alignments_filename);
 
     istream_or_ifstream vcf_file(std::cin, "-", vcf_filename);
     string line;
@@ -1287,10 +1250,8 @@ void translate_vcf(const string& vcf_filename, const variables_map& args)
     }
 }
 
-void translate_mask(const string& mask_filename, const variables_map& args)
+void translate_mask(const string& mask_filename, const alignment& A)
 {
-    //----------- Load alignment ---------//
-    alignment A = load_A(args,false,false);
 
     if (A.n_sequences() != 2)
         throw myexception()<<"translate-mask: expected exactly 2 sequences, but got "<<A.n_sequences()<<"!";
@@ -1457,180 +1418,189 @@ static void write_summary(const alignment& A, int original_length, int variant_d
 
 }
 
+// Apply the established preprocessing order before any analysis, including allele reporting.
+static void apply_preprocessing(alignment& A, const preprocessing_options& options)
+{
+    if (options.reference)
+        A = clean_to_ref(A, *options.reference);
+    if (options.autoclean)
+        autoclean(A);
+    for(const auto& filename: options.mask_files)
+        apply_masks(read_masks(filename), A);
+
+    if (options.mask_gap_distance)
+    {
+        // Gap columns may be removed; neighboring columns retain their positions but are masked.
+        int gap_label = options.strip_gaps ? 2 : 1;
+        auto gaps = gap_columns(A, gap_label, options.gap_fraction);
+        gaps = diffuse(gaps, *options.mask_gap_distance);
+        remove_and_mask_columns(A, [&gaps](int c){return gaps[c];});
+    }
+
+    if (not options.mask_allele_specs.empty())
+    {
+        // This range selects sequences for consensus, not alignment columns.
+        auto consensus_seqs = parse_multi_range(options.consensus_seqs, A.n_sequences());
+        auto consensus = get_consensus_strict(A, consensus_seqs);
+        vector<pair<int,int>> snp_lengths;
+        for(const auto& spec: options.mask_allele_specs)
+        {
+            auto fields = split(spec, ':');
+            if (fields.size() != 2)
+                throw myexception()<<"argument to --mask-alleles should have the form n:L, but got '"<<spec<<"'";
+            snp_lengths.emplace_back(convertTo<int>(fields[0]), convertTo<int>(fields[1]));
+        }
+        mask_alleles(consensus, A, snp_lengths);
+    }
+}
+
 int main(int argc,char* argv[])
-{ 
+{
     try {
         cerr.precision(10);
         cout.precision(10);
-    
-        //---------- Parse command line  -------//
-        variables_map args = parse_cmd_line(argc,argv);
 
-        if (auto vcf_filename = get_arg<string>(args, "translate-vcf"))
+        CLI::App app{"Prepare alignments, report variation, or translate coordinates.", "alignment-smc"};
+        app.require_subcommand(1, 1);
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+
+        auto* show = app.add_subcommand("show", "Write the processed alignment to standard output");
+        auto* alleles = app.add_subcommand("find-alleles", "Report alleles differing from a consensus");
+        auto* distances = app.add_subcommand("snp-distances", "Report distances between SNPs");
+        auto* histogram = app.add_subcommand("histogram", "Report SNP counts in blocks");
+        auto* sfs = app.add_subcommand("sfs2d", "Report a whole-alignment two-population frequency spectrum");
+        auto* select_sites = app.add_subcommand("select-sites", "Write selected columns as an alignment or BED table");
+        auto* pi = app.add_subcommand("pi-matrix", "Report pairwise diversity");
+        auto* msmc = app.add_subcommand("msmc", "Write MSMC input");
+        auto* psmc = app.add_subcommand("psmc", "Write PSMC input");
+        auto* dical2 = app.add_subcommand("dical2", "Write DiCal2 input");
+        auto* mask = app.add_subcommand("translate-mask", "Translate mask coordinates through a pairwise alignment");
+        auto* vcf = app.add_subcommand("translate-vcf", "Translate VCF positions using aligned sequence pairs");
+
+        // Exactly one command is selected, so the shared input/settings have one active binding.
+        string alignment_file;
+        preprocessing_options preprocessing;
+        for(auto* command: {show, alleles, distances, histogram, sfs, select_sites, pi, msmc, psmc, dical2})
         {
-            translate_vcf(*vcf_filename, args);
-            exit(0);
+            command->add_option("ALIGNMENT", alignment_file, "Input alignment; '-' reads standard input")
+                ->required()->type_name("");
+            add_preprocessing_options(*command, preprocessing);
         }
 
-        if (auto filename = get_arg<string>(args, "translate-mask"))
+        int n_snps = 0, allele_length = 0, min_count = 1;
+        optional<int> max_count;
+        alleles->add_option("--snps", n_snps, "Number of consecutive SNPs")
+            ->required()->check(CLI::Range(2, std::numeric_limits<int>::max()));
+        alleles->add_option("--length", allele_length, "Maximum inclusive span in reference positions")
+            ->required()->check(CLI::Range(2, std::numeric_limits<int>::max()));
+        alleles->add_option("--min-count", min_count, "Minimum allele occurrence count")
+            ->check(CLI::PositiveNumber)->capture_default_str();
+        alleles->add_option("--max-count", max_count, "Maximum allele occurrence count (default: sequence count)");
+
+        int max_snps = 0, block_size = 0;
+        distances->add_option("MAX_SNPS", max_snps, "Maximum number of SNP intervals between endpoints")
+            ->required()->type_name("");
+        histogram->add_option("BLOCK_SIZE", block_size, "Number of positions per block")
+            ->required()->check(CLI::PositiveNumber)->type_name("");
+
+        string pop1_prefix, pop2_prefix, ancestor_prefix;
+        sfs->add_option("POP1", pop1_prefix, "First population's sequence-name prefix")->required()->type_name("");
+        sfs->add_option("POP2", pop2_prefix, "Second population's sequence-name prefix")->required()->type_name("");
+        sfs->add_option("ANCESTOR", ancestor_prefix, "Ancestral sequences' name prefix")->required()->type_name("");
+
+        int minor_count = 0;
+        double missing_frequency = 1.0;
+        optional<int> width;
+        optional<string> chromosome;
+        bool show_frequencies = false;
+        select_sites->add_option("--minor-allele", minor_count, "Minimum minor-allele count")->required();
+        select_sites->add_option("--missing-freq", missing_frequency, "Maximum missing frequency")
+            ->capture_default_str();
+        select_sites->add_option("--one-every", width, "Keep one column per interval of this size")
+            ->check(CLI::PositiveNumber);
+        select_sites->add_option("--write-bed", chromosome, "Write a BED table with this chromosome name");
+        select_sites->add_flag("--show-freq", show_frequencies, "With --write-bed, include allele frequencies");
+
+        int variant_distance = 1;
+        for(auto* command: {show, msmc, psmc, dical2})
+            command->add_option("--variant", variant_distance, "SNP separation used in summary diagnostics")
+                ->capture_default_str();
+
+        string mask_file, vcf_file, mask_alphabet;
+        mask->add_option("ALIGNMENT", alignment_file, "Source/target alignment; '-' reads standard input")
+            ->required()->type_name("");
+        mask->add_option("MASK", mask_file, "Source mask file with 0-based inclusive intervals")
+            ->required()->type_name("");
+        mask->add_option("--alphabet", mask_alphabet, "Alphabet (default: inferred from alignment)");
+        vcf->add_option("ALIGNMENTS", alignment_file, "Consecutive source/target pairs; '-' reads standard input")
+            ->required()->type_name("");
+        vcf->add_option("VCF", vcf_file, "VCF file; '-' reads standard input")->required()->type_name("");
+
+        try
         {
-            translate_mask(*filename, args);
-            exit(0);
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
         }
 
-        //----------- Load alignment ---------//
-        bool erase_empty = false;
-        if (args.count("erase-empty-columns"))
-            erase_empty = true;
-        alignment A0 = load_A(args, false, erase_empty);
-
-        auto A = A0;
-
-        if (auto ref_name = get_arg<string>(args, "clean-to-ref"))
-            A = clean_to_ref(A, *ref_name);
-
-        if (args.count("autoclean"))
-            autoclean(A);
-
-        if (args.count("mask-file"))
+        if (*vcf)
         {
-            for(auto& filename: args["mask-file"].as<vector<string>>())
-            {
-                auto masks = read_masks(filename);
-                apply_masks(masks, A);
-            }
+            translate_vcf(vcf_file, alignment_file);
+            return 0;
+        }
+        if (*mask)
+        {
+            auto A = chop_internal(load_alignment(alignment_file, mask_alphabet, false), true);
+            translate_mask(mask_file, A);
+            return 0;
         }
 
-        if (args.count("mask-gaps"))
+        auto A = chop_internal(load_alignment(alignment_file, preprocessing.alphabet_name, preprocessing.erase_empty),
+                               not preprocessing.erase_empty);
+        int original_length = A.length();
+        apply_preprocessing(A, preprocessing);
+
+        if (*alleles)
+            report_alleles(A, preprocessing.consensus_seqs, n_snps, allele_length, min_count,
+                           max_count.value_or(A.n_sequences()));
+        else if (*distances)
+            write_snp_distances(A, max_snps);
+        else if (*histogram)
+            write_histogram(std::cout, block_size, A);
+        else if (*sfs)
         {
-            // 1. label gap columns with 2 to remove them.
-            int gap_label = 1;
-            if (args.count("strip-gaps"))
-                gap_label = 2;
-            double gap_fraction = args["gap-fraction"].as<double>();
-
-            auto gaps = gap_columns(A, gap_label, gap_fraction);
-
-            // 2. label nearby columns with '1' to mask them
-            int mask_gap_dist = args["mask-gaps"].as<int>();
-            gaps = diffuse(gaps, mask_gap_dist);
-
-            // 3. Alter the alignment
-            remove_and_mask_columns(A, [&gaps](int c){return gaps[c];});
+            auto pop1 = find_sequence_subset_with_prefix(A, pop1_prefix);
+            auto pop2 = find_sequence_subset_with_prefix(A, pop2_prefix);
+            auto anc = find_sequence_subset_with_prefix(A, ancestor_prefix);
+            auto counts = compute_2d_sfs(A, pop1, pop2, anc);
+            for(int i=0;i<counts.size1();i++)
+                for(int j=0;j<counts.size2();j++)
+                    std::cout<<i<<"\t"<<j<<"\t"<<counts(i,j)<<"\n";
         }
-
-        if (args.count("find-alleles"))
-        {
-            // This takes a range of SEQUENCES, not a range of columns.
-            string range = args.count("consensus-seqs") ? args["consensus-seqs"].as<string>() : "-";
-            auto find_args = split(args["find-alleles"].as<string>(),':');
-            if (find_args.size() < 4)
-                throw myexception()<<"argument to --find-alleles only has "<<find_args.size()<<" colon-separate elements.";
-            int n_snps = convertTo<int>(find_args[0]);
-            int L = convertTo<int>(find_args[1]);
-            int min_count = 1;
-            if (not find_args[2].empty())
-                min_count = convertTo<int>(find_args[2]);
-            int max_count = A.n_sequences();
-            if (not find_args[3].empty())
-                max_count = convertTo<int>(find_args[3]);
-
-            report_alleles(A, range, n_snps, L, min_count, max_count);
-            exit(0);
-        }
-
-        if (args.count("mask-alleles"))
-        {
-            // This takes a range of SEQUENCES, not a range of columns.
-            string range = args.count("consensus-seqs") ? args["consensus-seqs"].as<string>() : "-";
-            auto consensus_seqs1 = parse_multi_range(range, A.n_sequences());
-            auto consensus1 = get_consensus_strict(A, consensus_seqs1);
-
-            vector<pair<int,int>> snp_lengths;
-            for(const string& allele_spec: args["mask-alleles"].as<vector<string>>())
-            {
-                // Construct arguments n_snps, L
-                auto find_args = split(allele_spec,':');
-                if (find_args.size() != 2)
-                    throw myexception()<<"argument to --mask-alleles should have the form n:L, but got '"<<allele_spec<<"'";
-                int n_snps = convertTo<int>(find_args[0]);
-                int L = convertTo<int>(find_args[1]);
-                snp_lengths.push_back({n_snps, L});
-            }
-
-            mask_alleles(consensus1, A, snp_lengths);
-        }
-
-
-        if (args.count("snp-snp-lengths"))
-        {
-            int max_d = args["snp-snp-lengths"].as<int>();
-            write_snp_distances(A, max_d);
-            exit(0);
-        }
-
-        if (args.count("histogram"))
-        {
-            write_histogram(std::cout, args["histogram"].as<int>(), A);
-            exit(0);
-        }
-
-        if (args.count("sfs2d"))
-        {
-            auto args2d = split(args["sfs2d"].as<string>(),":");
-            if (args2d.size() != 3)
-                throw myexception()<<"sfs2d: argument '"<<args["sfs2d"].as<string>()<<"' should have 3 colon-separated parts";
-
-            auto pop1prefix = args2d[0];
-            auto pop2prefix = args2d[1];
-            auto ancprefix = args2d[2];
-            auto pop1 = find_sequence_subset_with_prefix(A, pop1prefix);
-            auto pop2 = find_sequence_subset_with_prefix(A, pop2prefix);
-            auto anc = find_sequence_subset_with_prefix(A, ancprefix);
-
-            auto sfs_counts = compute_2d_sfs(A,pop1,pop2,anc);
-            for(int i=0;i<sfs_counts.size1();i++)
-                for(int j=0;j<sfs_counts.size2();j++)
-                    std::cout<<i<<"\t"<<j<<"\t"<<sfs_counts(i,j)<<"\n";
-
-            exit(0);
-        }
-
-        if (args.count("minor-allele"))
-        {
-            int count = args["minor-allele"].as<int>();
-
-            double max_missing_freq = args["missing-freq"].as<double>();
-
-            write_selected_sites(A, count, max_missing_freq, get_arg<int>(args, "one-every"),
-                                 get_arg<string>(args, "write-bed"), args.count("show-freq"));
-            exit(0);
-        }
-
-        if (args.count("msmc"))
-            write_msmc(std::cout, A);
-        else if (args.count("psmc"))
-            write_psmc(std::cout,A,0,1);
-        else if (args.count("dical2"))
-            write_dical2(std::cout,A);
-        else if (args.count("pi-matrix"))
-        {
-            print_matrix(std::cout, pi_matrix(A),'\t');
-            exit(0);
-        }
+        else if (*select_sites)
+            write_selected_sites(A, minor_count, missing_frequency, width, chromosome, show_frequencies);
+        else if (*pi)
+            print_matrix(std::cout, pi_matrix(A), '\t');
         else
-            std::cout<<A;
-        std::cout.flush();
-
-        write_summary(A, A0.length(), args["variant"].as<int>());
-
-        // Look at LD, look at whether adjacent SNPs are correlated, and over what distance.
-        // Look at blocks with more than
-        // MASK columns instead of REMOVING them if they are w/in some distance of gap;
+        {
+            if (*msmc)
+                write_msmc(std::cout, A);
+            else if (*psmc)
+                write_psmc(std::cout, A, 0, 1);
+            else if (*dical2)
+                write_dical2(std::cout, A);
+            else
+                std::cout<<A;
+            std::cout.flush();
+            write_summary(A, original_length, variant_distance);
+        }
     }
     catch (std::exception& e) {
         cerr<<"alignment-smc: Error! "<<e.what()<<endl;
-        exit(1);
+        return 1;
     }
     return 0;
 }

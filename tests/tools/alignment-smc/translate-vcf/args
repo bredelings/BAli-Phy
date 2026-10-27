@@ -1,3 +1,3 @@
 # Preserve records and exact endpoint mappings; interior-only translations miss both errors.
 # Retain while VCF coordinates are translated through alignments.
-alignment.fa --translate-vcf variants.vcf
+translate-vcf alignment.fa variants.vcf

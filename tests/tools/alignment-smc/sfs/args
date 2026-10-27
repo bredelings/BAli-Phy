@@ -1,3 +1,3 @@
 # Fixed-size SFS bins require called population members; complete data misses missing-as-ancestral.
 # Retain while SFS skips uncalled sites rather than projecting sample sizes.
-alignment.fa --alphabet DNA --sfs2d p1:p2:anc
+sfs2d alignment.fa p1 p2 anc --alphabet DNA

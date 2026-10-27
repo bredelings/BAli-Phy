@@ -1,0 +1,3 @@
+# Allele reporting must see the masked alignment; other cases do not combine these operations.
+# Retain while all analysis commands share preprocessing before reporting.
+find-alleles alignment.fa --alphabet DNA --snps 2 --length 10 --mask-alleles 2:3
