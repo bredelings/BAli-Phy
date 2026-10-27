@@ -359,6 +359,8 @@ public:
                 const auto& sequence_moments = moments_.at(property_name).at(sequence_name);
                 auto& means = property.mean[sequence_name];
                 auto& standard_deviations = property.sd[sequence_name];
+                // Empty sequences never enter the median passes, but still need matching keys.
+                property.median[sequence_name];
                 means.reserve(sequence_moments.size());
                 standard_deviations.reserve(sequence_moments.size());
                 for (const auto& value: sequence_moments)
