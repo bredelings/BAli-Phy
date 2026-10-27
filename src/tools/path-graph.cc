@@ -25,10 +25,8 @@
 #include "alignment/alignment.hh"
 #include "alignment/load.hh"
 #include "util/string/split.hh"
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 using std::vector;
 using std::string;
@@ -38,47 +36,12 @@ using std::endl;
 using std::map;
 using std::list;
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-    using namespace po;
-
-    // named options
-    options_description all("Allowed options");
-    all.add_options()
-	("help,h", "produce help message")
-	("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
-	("taxa",value<string>(),"Colon-separated taxon names; report every pair")
-	("skip",value<unsigned>()->default_value(0),"number of alignment samples to skip")
-	("max-alignments",value<int>()->default_value(1000),"maximum retained alignments (thin the sample; -1 retains all)")
-	;
-
-    // positional options
-    variables_map args;     
-    store(parse_command_line(argc, argv, all), args);
-    notify(args);    
-
-    if (args.count("help")) {
-	cout<<"Count pairwise alignment-path edges across sampled alignments.\n\n";
-	cout<<"Usage: path-graph [OPTIONS] < alignments-file\n\n";
-	cout<<all<<"\n";
-	exit(0);
-    }
-
-    if (not args.count("taxa") or not args["taxa"].as<string>().size())
-	throw myexception(string("No taxa specified [taxa=name1:name2:...]"));
-
-    return args;
-}
-
-void do_setup(const variables_map& args,list<alignment>& alignments) 
+// Load retained alignments and check that their underlying sequences agree.
+void do_setup(const string& alphabet_name, int skip, int maxalignments, list<alignment>& alignments) 
 {
     //------------ Try to load alignments -----------//
-    int maxalignments = args["max-alignments"].as<int>();
-    unsigned skip = args["skip"].as<unsigned>();
-
-    // --------------------- try ---------------------- //
     cerr<<"Loading alignments...";
-    alignments = load_alignments(std::cin,get_alphabet_name(args),skip,maxalignments);
+    alignments = load_alignments(std::cin,alphabet_name,skip,maxalignments);
     cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
     if (not alignments.size())
 	throw myexception()<<"Alignment sample is empty.";
@@ -241,13 +204,35 @@ int main(int argc,char* argv[])
 { 
     try {
 	//---------- Parse command line  -------//
-	variables_map args = parse_cmd_line(argc,argv);
+        CLI::App app{"Count pairwise alignment-path edges across sampled alignments.", "path-graph"};
+        app.usage("Usage: path-graph --taxa NAMES [OPTIONS] < alignments-file");
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        string taxa_names, alphabet_name;
+        int skip = 0, maxalignments = 1000;
+        app.add_option("--taxa", taxa_names, "Colon-separated taxon names; report every pair")->required();
+        app.add_option("--alphabet", alphabet_name, "Specify the alphabet (default: inferred from alignment)");
+        app.add_option("--skip", skip, "Number of alignment samples to skip")
+            ->check(CLI::NonNegativeNumber)->capture_default_str();
+        app.add_option("--max-alignments", maxalignments,
+                       "Maximum retained alignments (thin the sample; -1 retains all)")
+            ->check(CLI::PositiveNumber | CLI::IsMember({-1}))->capture_default_str();
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+        if (taxa_names.empty())
+            throw myexception("No taxa specified [taxa=name1:name2:...]");
 
-	vector<string> taxa = split(args["taxa"].as<string>(),':');
+	vector<string> taxa = split(taxa_names,':');
 
 	/*---------------- Load alignment and tree -----------------*/
 	list<alignment> alignments;
-	do_setup(args,alignments);
+	do_setup(alphabet_name,skip,maxalignments,alignments);
 
 	cerr<<"Read "<<alignments.size()<<" alignments\n";
 

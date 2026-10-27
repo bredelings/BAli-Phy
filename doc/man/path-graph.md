@@ -8,7 +8,7 @@
 
 # SYNOPSIS
 
-**path-graph** [OPTIONS] < alignments-file
+**path-graph** **`--taxa`** _names_ \[OPTIONS\] < alignments-file
 
 # DESCRIPTION
 
@@ -24,14 +24,14 @@ pair, report how often each path edge occurs among the retained alignments.
 : Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.
 
 **--taxa** _arg_
-: Colon-separated taxon names; report every pair.
+: Colon-separated taxon names; report every pair. Required.
 
 **--skip** _arg_ (=0)
-: Number of alignment samples to skip.
+: Number of alignment samples to skip (nonnegative).
 
 **--max-alignments** _arg_ (=1000)
-: Maximum number of retained alignments. The sample is thinned across the input rather
-  than truncated to its first entries. Use -1 to retain all alignments.
+: Maximum number of retained alignments (positive, or -1 for no limit). The sample is
+  thinned across the input rather than truncated to its first entries.
 
 
 # REPORTING BUGS:
