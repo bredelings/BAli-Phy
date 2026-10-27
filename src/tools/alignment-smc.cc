@@ -18,19 +18,14 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include <iostream>
-#include <fstream>
 #include <map>
 #include <string>
 #include <regex>
-#include "tree/tree.hh"
 #include "alignment/alignment.hh"
 #include "alignment/load.hh"
 #include "alignment/alignment-util.hh"
 #include "util/string/split.hh"
 #include "util/string/join.hh"
-#include "findroot.hh"
-#include "parsimony.hh"
-#include "statistics.hh"
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include "util/assert.hh"
@@ -64,9 +59,6 @@ using boost::dynamic_bitset;
 
 using std::cout;
 using std::cerr;
-using std::endl;
-
-using std::string;
 
 struct sequence_mask
 {
@@ -75,36 +67,6 @@ struct sequence_mask
     // 0-based regions to mask out.
     vector<pair<int,int>> intervals;
 };
-
-template<typename T>
-void add(vector<T>& v1,const vector<T>& v2) 
-{
-    for(int i=0;i<v1.size();i++)
-        v1[i] += v2[i];
-}
-
-
-vector<int> find_triplet(const sequence& s,const string& triplet) 
-{
-    sequence s2 = s;
-    s2.strip_gaps();
-
-    vector<int> found(3,0);
-
-    int pos=-1;
-    while(pos=s.find(triplet,pos+1),pos != -1)
-        found[pos%3]++;
-
-    return found;
-}
-
-vector<int> find_triplet(const vector<sequence>& sequences,const string& triplet) 
-{
-    vector<int> found(3,0);
-    for(auto& sequence: sequences)
-        add(found, find_triplet(sequence,triplet) );
-    return found;
-}
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
@@ -156,7 +118,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     variables_map args;     
     store(command_line_parser(argc, argv).
           options(all).positional(p).run(), args);
-    // store(parse_command_line(argc, argv, desc), args);
     notify(args);    
 
     if (args.count("help")) {
@@ -188,156 +149,11 @@ int n_letters(const valarray<int>& count,int level) {
 bool is_informative(const valarray<int>& count,int level) 
 {
     int n = n_letters(count,level);
-//??    if (level == 0) assert(n > 0);
     return n>1;
 }
 
 
-double min_identity(const alignment& A,bool gaps_count)
-{
-    double identity = 1.0;
-    for(int i=0;i<A.n_sequences();i++)
-        for(int j=0;j<i;j++)
-            identity = std::min(identity,fraction_identical(A,i,j,gaps_count));
-
-    return identity;
-}
-
-unsigned letter_classes(const alignment& A) 
-{
-    // Count the occurrence of the different letters
-    unsigned count=0;
-    for(int i=0;i<A.length();i++) {
-        for(int j=0;j<A.n_sequences();j++) {
-            if (alphabet::is_ambiguity(A(i,j)))
-                count++;
-        }
-    }
-
-    return count;
-}
-struct gap {
-    int start;
-    int length;
-    mutable int type;
-    gap(int s,int l,int t):start(s),length(l),type(t) {}
-};
-
-bool operator==(const gap& i1,const gap& i2)
-{
-    return (i1.start== i2.start) and (i1.length == i2.length);
-}
-
-bool operator<(const gap& i1,const gap& i2)
-{
-    if (i1.start < i2.start)
-        return true;
-    if (i1.start > i2.start)
-        return false;
-    return (i1.length < i2.length);
-}
-
-vector<gap> find_gaps(const alignment& A,int t)
-{
-    vector<gap> gaps;
-    bool prev_gap=false;
-    for(int i=0;i<A.length();i++)
-    {
-        if (A.gap(i,t)) {
-            if (prev_gap)
-                gaps.back().length++;
-            else
-                gaps.push_back(gap(i,1,1));
-            prev_gap = true;
-        }
-        else
-            prev_gap=false;
-    }
-    return gaps;
-}
-
-unsigned n_insertions(const alignment& A,int start,int length)
-{
-    unsigned count=0;
-    for(int j=0;j<A.n_sequences();j++) {
-        bool found = false;
-        for(int k=0;k<length and not found;k++)
-            if (A.gap(start+k,j))
-                found=true;
-        if (not found)
-            count++;
-    }
-    return count;
-}
-
-map<gap,unsigned> guess_indels(const alignment& A)
-{
-    map<gap,unsigned> gaps;
-    for(int i=0;i<A.n_sequences();i++)
-    {
-        for(auto& g: find_gaps(A,i))
-            gaps[g]++;
-    }
-
-    // flip deletions in many taxa to insertions in few taxa
-    for(map<gap,unsigned>::iterator i=gaps.begin();i!=gaps.end();) 
-    {
-        const gap& g = i->first;
-        unsigned ins_count = n_insertions(A,g.start,g.length);
-        if (ins_count < i->second) {
-            g.type = 2;
-            i->second = ins_count;
-        }
-
-        // increment counter and remove current element if count==0.
-        {
-            map<gap,unsigned>::iterator j = i;
-            i++;
-            if (not j->second)
-                gaps.erase(j);
-        }
-    }
-    return gaps;
-}
-
-vector<pair<int,int>> columns_to_regions(const vector<int>& columns)
-{
-    vector<pair<int,int>> regions;
-
-    if (columns.empty()) return regions;
-
-    regions.push_back({columns[0],columns[0]+1});
-    for(int i=1; i<columns.size();i++)
-    {
-        if (regions.back().second == columns[i])
-            regions.back().second++;
-        else
-            regions.push_back({columns[i],columns[i]+1});
-    }
-
-    return regions;
-}
-
-dynamic_bitset<> diffuse(const dynamic_bitset<>& v, int d)
-{
-    auto w = v;
-
-    for(int i=0;i<w.size();i++)
-    {
-        if (w[i]) continue;
-
-        for(int j=1;j<=d and not w[i];j++)
-        {
-            if (i+j >=0 and i+j < v.size() and v[i+j])
-                w[i] = true;
-            else if (i-j >=0 and i-j < v.size() and v[i-j])
-                w[i] = true;
-        }
-    }
-    return w;
-}
-
-vector<int> diffuse(const vector<int>& v, int d, int /*label*/)
+vector<int> diffuse(const vector<int>& v, int d)
 {
     auto w = v;
 
@@ -598,15 +414,6 @@ int autoclean(alignment& A)
 
 
 
-vector<int> expand_intervals(const vector<pair<int,int>>& intervals)
-{
-    vector<int> seq;
-    for(auto& I: intervals)
-        for(int i=I.first;i<=I.second;i++)
-            seq.push_back(i);
-    return seq;
-}
-
 void mask_one_sequence(alignment& A, int i, const vector<int>& columns)
 {
     for(int col: columns)
@@ -614,12 +421,6 @@ void mask_one_sequence(alignment& A, int i, const vector<int>& columns)
         if (A.character(col,i))
             A.set_value(col, i, alphabet::not_gap);
     }
-}
-
-void mask_columns(alignment& A, const vector<int>& columns)
-{
-    for(int c: columns)
-        mask_column(A,c);
 }
 
 void mask_interval(alignment& A, int c1, int c2)
@@ -719,42 +520,6 @@ double pi(const alignment& A)
     return double(pi_count)/pi_total;
 }
 
-ostream& write_bed(ostream& o, const vector<sequence_mask>& regions)
-{
-    for(auto& [chrom,intervals]: regions)
-        for(auto& interval: intervals)
-            o<<chrom<<'\t'<<interval.first<<'\t'<<interval.second+1<<'\n';
-    return o;
-}
-
-// BED files are 0-indexed.
-vector<sequence_mask> read_bed(const string& filename)
-{
-    // 1. Read fine lines
-    checked_ifstream file(filename,"BED file");
-
-    vector<sequence_mask> masks;
-
-    auto lines = read_lines(file);
-    lines = select(lines, [](auto& line){return not strip(line," \t").empty();});
-
-    for(auto& line: lines)
-    {
-        auto fields = resplit(line, R"([ \t]+))");
-        if (fields.size() < 3)
-            throw myexception()<<"Line does not appear to have 3 fields:\n |"<<line<<"\n";
-        if (masks.empty() or masks.back().region_name != fields[0])
-            masks.push_back({fields[0],{}});
-        int start = convertTo<int>(fields[1]);
-        int end = convertTo<int>(fields[2]);
-        masks.back().intervals.push_back({start,end-1});
-    }
-
-    write_bed(std::cerr, masks);
-
-    return masks;
-}
-
 // This is for dust-masker-style masks.
 vector<sequence_mask> read_masks(const string& filename)
 {
@@ -809,25 +574,6 @@ vector<int> allele_counts(const alignment& A, int col)
         auto c = A(col,i);
         if (a.is_letter(c))
             counts[c]++;
-    }
-    return counts;
-}
-
-vector<int> allele_counts_with_gap(const alignment& A, int col)
-{
-    auto& a = A.get_alphabet();
-    vector<int> counts(a.size()+2, 0);
-    const int not_gap = a.size()+1;
-    const int gap = a.size();
-    for(int i=0;i<A.n_sequences();i++)
-    {
-        auto c = A(col,i);
-        if (a.is_letter(c))
-            counts[c]++;
-        else if (c == alphabet::gap)
-            counts[gap]++;
-        else if (c == alphabet::not_gap)
-            counts[not_gap]++;
     }
     return counts;
 }
@@ -1027,13 +773,6 @@ pair<string,string> get_ref_alt(const alignment& A, int col)
     return {a.lookup(ref), a.lookup(alt)};
 }
 
-ostream& write_bed(ostream& o, const string& chromosome, const vector<pair<int,int>>& columns)
-{
-    for(auto& [start,end]: columns)
-        o<<chromosome<<'\t'<<start<<'\t'<<end<<'\n';
-    return o;
-}
-
 ostream& write_snp_bed(ostream& o, const string& chromosome, const vector<int>& columns, const alignment& A)
 {
     o<<"#CHROM\tPOS\tID\tREF\tALT\n";
@@ -1121,12 +860,6 @@ ostream& write_snp_bed_with_frequencies(ostream& o, const string& chromosome, co
     }
     return o;
 }
-
-ostream& write_bed(ostream& o, const string& chromosome, const vector<int>& columns)
-{
-    return write_bed(o, chromosome, columns_to_regions(columns));
-}
-
 
 struct translation_table
 {
@@ -1316,43 +1049,6 @@ vector<int> get_diff_columns(const alignment& A, const vector<int>& consensus, i
 
     return columns;
 }
-
-/*
-//using boost::hash_combine
-template <class T>
-inline void hash_combine(std::size_t& seed, T const& v)
-{
-    seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-}
-
-namespace std
-{
-    template<typename T>
-    struct hash<vector<T>>
-    {
-        typedef vector<T> argument_type;
-        typedef std::size_t result_type;
-        result_type operator()(argument_type const& in) const
-        {
-            size_t size = in.size();
-            size_t seed = 0;
-            for (size_t i = 0; i < size; i++)
-                //Combine the hash of the current vector with the hashes of the previous ones
-                hash_combine(seed, in[i]);
-            return seed;
-        }
-    };
-
-    template <class T1, class T2>
-    struct hash<pair<T1,T2>>
-    {
-        std::size_t operator()(const pair<T1,T2>& p) const noexcept
-        {
-            return std::hash<T1>()(p.first) ^ std::hash<T2>()(p.second);
-        }
-    };
-}
-*/
 
 /*
  * How about cases where we have >=n snps in L bases, but n UNIQUE snps in L bases?  Does thus make sense if looking for a count of (say) 2 for each base?
@@ -1690,7 +1386,7 @@ int main(int argc,char* argv[])
 
             // 2. label nearby columns with '1' to mask them
             int mask_gap_dist = args["mask-gaps"].as<int>();
-            gaps = diffuse(gaps, mask_gap_dist, 1);
+            gaps = diffuse(gaps, mask_gap_dist);
 
             // 3. Alter the alignment
             remove_and_mask_columns(A, [&gaps](int c){return gaps[c];});
@@ -1838,49 +1534,29 @@ int main(int argc,char* argv[])
 
         //----- Count informative/non-constant sites ----//
         dynamic_bitset<> informative(A.length());
-        dynamic_bitset<> informative2(A.length());
         dynamic_bitset<> different(A.length());
-        dynamic_bitset<> different2(A.length());
-        dynamic_bitset<> could_be_different(A.length());
-        dynamic_bitset<> contains_a_gap(A.length());
 
         dynamic_bitset<> alleles2(A.length());
         dynamic_bitset<> alleles3(A.length());
         dynamic_bitset<> is_masked(A.length());
         
         valarray<int> count(a.size());
-        valarray<int> count2(2);
 
-//        int pi_count = 0;
-//        int pi_total = 0;
 
         for(int c=0;c<A.length();c++) {
             count = 0;
-            count2 = 0;
             for(int i=0;i<A.n_sequences();i++) {
                 int l = A(c,i);
                 if (a.is_letter(l))
                     count[l]++;
 
-                if (alphabet::is_character(l))
-                    count2[0]++;
-                else if (l == alphabet::gap)
-                    count2[1]++;
             }
 
-//            int total_letters = count.sum();
-//            pi_total += total_letters*(total_letters-1)/2;
 
-//            for(int l1=0;l1<a.size();l1++)
-//                for(int l2=0;l2<l1;l2++)
-//                    pi_count += count[l1]*count[l2];
 
             different[c]  =   is_informative(count ,0);
             informative[c]  = is_informative(count ,1);
 
-            contains_a_gap[c] = (count2[1]>0);
-            different2[c] =   different[c] or contains_a_gap[c];
-            informative2[c] = informative[c] or is_informative(count2,1);
 
             alleles2[c] = n_letters(count,0) == 2;
             alleles3[c] = n_letters(count,0) == 3;
@@ -1888,13 +1564,8 @@ int main(int argc,char* argv[])
         }
 
         int n_different  = different.count();
-//      int n_same = A.length() - n_different;
         int n_informative  = informative.count();
 
-//      int n_different2 = different2.count();
-//      int n_same2 = A.length() - n_different2;
-//      int n_informative2 = informative2.count();
-//      int n_with_gaps = contains_a_gap.count();
 
         int non_masked_columns = A.length() - is_masked.count();
 
@@ -1904,9 +1575,6 @@ int main(int argc,char* argv[])
             write_psmc(std::cout,A,0,1);
         else if (args.count("dical2"))
             write_dical2(std::cout,A);
-        else if (args.count("ldhat"))
-        {
-        }
         else if (args.count("pi-matrix"))
         {
             print_matrix(std::cout, pi_matrix(A),'\t');
