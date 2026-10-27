@@ -3169,11 +3169,12 @@ By default each partition has a separate scale, but you can force groups of part
     <command>character-properties</command>:</para>
 <screen><prompt>%</prompt> character-properties summarize <replaceable>run-1</replaceable>/C1.P1.site-property-samples.jsonl \
   <replaceable>run-2</replaceable>/C1.P1.site-property-samples.jsonl --skip=<replaceable>burnin</replaceable> > properties.json
-<prompt>%</prompt> character-properties report properties.json <replaceable>alignment</replaceable>.fasta rate --format=tsv > rates.tsv</screen>
+<prompt>%</prompt> character-properties columns properties.json <replaceable>alignment</replaceable>.fasta rate --format=tsv > rates.tsv</screen>
     <para>This table summarizes the per-letter rate estimates within each alignment column.
     Sequence names and ungapped sequences must match the analyzed data. Sequence positions
     identify letters; column numbers refer only to the alignment used for display. See
-    <command>character-properties report --help</command> for filtering and reporting options.</para>
+    <command>character-properties columns --help</command> for column-report options, or
+    <command>character-properties letters --help</command> to select and report representative letters.</para>
   </section>
 
   <section xml:id="positive-selection"><info><title>Positive selection</title></info>

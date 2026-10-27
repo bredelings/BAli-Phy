@@ -1,1 +1,1 @@
-report ../report-summary.json ../report-alignment.fasta rate --format text
+columns ../report-summary.json ../report-alignment.fasta rate --format text

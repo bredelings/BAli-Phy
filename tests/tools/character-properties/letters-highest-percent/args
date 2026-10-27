@@ -1,0 +1,1 @@
+letters ../percent-summary.json ../percent-alignment.fasta rate --highest=1% --format tsv

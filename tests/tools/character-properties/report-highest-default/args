@@ -1,1 +1,0 @@
-report ../percent-summary.json ../percent-alignment.fasta rate --highest --format tsv

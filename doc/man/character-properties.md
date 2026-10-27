@@ -10,7 +10,9 @@
 
 **character-properties summarize** [OPTIONS] _C1.PN.site-property-samples.jsonl_ [...]
 
-**character-properties report** [OPTIONS] _SUMMARY_ _ALIGNMENT_ _PROPERTY_
+**character-properties columns** [OPTIONS] _SUMMARY_ _ALIGNMENT_ _PROPERTY_
+
+**character-properties letters** [OPTIONS] _SUMMARY_ _ALIGNMENT_ _PROPERTY_
 
 **character-properties positive-selection** [OPTIONS] _SUMMARY_ _ALIGNMENT_ [_PROPERTY_]
 
@@ -39,21 +41,24 @@ that pass are ignored, so summarization can run while MCMC sampling continues.
 The command stops with an error if an observed prefix is subsequently modified,
 replaced with different contents, or truncated.
 
-The two report commands project summarized letter properties onto a template
+The three report commands project summarized letter properties onto a template
 alignment. Each stored value continues to identify a non-gap observed letter
 by sequence name and ungapped character index; an alignment column is only a
 presentation group.
 
-The ordinary **report** command either describes every nonempty column or
-selects letters globally before grouping the selected letters by column. An
-above or highest selection uses the highest-scoring selected letter as the
-column representative. A below or lowest selection uses the lowest-scoring
-selected letter. Row ordering is applied only after representative selection.
-
-With no selection option, **report** prints the minimum, lower middle, and
-maximum of both the per-letter posterior means and per-letter posterior medians
-in every column. These column-level middle values are distinct from the
+The **columns** command reports one row per nonempty alignment column. Each row contains
+the minimum, lower middle, and maximum of both the per-letter posterior means and
+per-letter posterior medians. These column-level middle values are distinct from the
 posterior median stored for each individual letter.
+
+The **letters** command selects letters globally and reports one representative per selected
+alignment column. Specify exactly one of **--above**, **--below**, **--highest**, or **--lowest**.
+An above or highest selection uses the highest-scoring selected letter as the column
+representative; a below or lowest selection uses the lowest-scoring selected letter.
+Each row identifies that letter's sequence, ungapped character position, symbol, and
+translation where available, and reports its posterior mean, SD, and median.
+Row ordering is applied only after representative selection. Even **--highest=100%** reports
+representative letters rather than the ranges produced by **columns**.
 
 The **positive-selection** command reports both model-averaged site support and,
 when available, support conditioned on `positiveSelectionInModel` being true.
@@ -86,7 +91,7 @@ corresponding `-dNdS` property when it exists.
 
 **--alphabet=ALPHABET**
 : Constrain the alphabet used to interpret logical alignment characters. When
-  omitted, **report** guesses the alphabet from the alignment, while
+  omitted, **columns** and **letters** guess the alphabet from the alignment, while
   **positive-selection** defaults to **Codons**. Partial names are completed
   from the data: **Codons** guesses DNA versus RNA and uses the standard genetic
   code, while **Codons(,mt-vert)** also guesses DNA versus RNA but preserves the
@@ -100,15 +105,23 @@ corresponding `-dNdS` property when it exists.
 
 **--sort=column|increasing|decreasing**
 : Order completed rows (default: column). Increasing and decreasing use the
-  selected representative score. For an all-column ordinary report, they use
+  selected representative score. For **columns**, they use
   the column's middle value for the statistic selected by **--by**. Equal
   values have no defined secondary order. Positive-selection reports sort by
   model-averaged probability.
 
 **--condition=NAME**
-: Use only samples in which the named Boolean model condition is true.
+: For **columns** and **letters**, use the posterior conditioned on the named Boolean
+  being true. For **positive-selection**, pair that conditioned posterior with the
+  model-averaged posterior; the conditioned probabilities guide representative selection.
 
-# ORDINARY REPORT OPTIONS
+**--by=mean|median**
+: Available on **columns** and **letters** (default: mean). For **columns**, choose the
+  statistic used for sorting; both mean and median ranges remain in the output.
+  For **letters**, choose the statistic used for selection, representative choice, and
+  sorting. Representative rows display all three posterior summaries regardless of this choice.
+
+# LETTER SELECTION OPTIONS
 
 **--above=VALUE**
 : Select letters whose score is strictly greater than _VALUE_.
@@ -116,20 +129,16 @@ corresponding `-dNdS` property when it exists.
 **--below=VALUE**
 : Select letters whose score is strictly less than _VALUE_.
 
-**--highest[=PERCENT]**
+**--highest=PERCENT**
 : Select the highest-scoring percentage of projected non-gap letters. The
-  implicit percentage is 1%.
+  percentage is required and must end in `%`, for example **--highest=5%**.
 
-**--lowest[=PERCENT]**
+**--lowest=PERCENT**
 : Select the lowest-scoring percentage of projected non-gap letters. The
-  implicit percentage is 1%.
+  percentage is required and must end in `%`, for example **--lowest=5%**.
 
-**--by=mean|median**
-: Use the per-letter posterior mean or posterior median for selection,
-  representative choice, and value ordering (default: mean). Representative
-  rows display all available posterior summaries regardless of this choice.
-
-The four selection options are mutually exclusive. Percentage selection first
+Exactly one of these four selection options is required by **letters**; none is accepted
+by **columns**. Percentages must be greater than 0% and at most 100%. Percentage selection first
 sorts the _N_ projected non-gap letters and takes exactly
 `max(1, floor(N*PERCENT/100))`. Equal scores do not enlarge the selection and
 have no defined secondary order. Multiple selected letters can subsequently
@@ -143,9 +152,10 @@ collapse into one alignment-column row.
   conditional probability is chosen before either threshold is applied; if the
   conditional summary is unavailable, the highest overall probability is used.
 
-**--highest[=PERCENT]**
-: Instead select the highest-probability percentage of letters, with an
-  implicit percentage of 1%.
+**--highest=PERCENT**
+: Instead select the highest-probability percentage of letters. An explicit percentage
+  ending in `%` is required, for example **--highest=5%**. This option and **--above**
+  are mutually exclusive.
 
 **--unconditional**
 : Report and select only from the model-averaged posterior. By default,
@@ -180,7 +190,7 @@ character-properties summarize \
 Describe every alignment column for a rate property:
 
 ```
-character-properties report \
+character-properties columns \
   P1.site-property-summary.json P1.initial.fasta rate
 ```
 
@@ -188,14 +198,14 @@ Select letters whose posterior median rate exceeds 2 and order the resulting
 column representatives from high to low:
 
 ```
-character-properties report summary.json alignment.fasta rate \
+character-properties letters summary.json alignment.fasta rate \
   --above=2 --by=median --sort=decreasing
 ```
 
 Report the highest 1% of letters, always retaining at least one:
 
 ```
-character-properties report summary.json alignment.fasta rate --highest
+character-properties letters summary.json alignment.fasta rate --highest=1%
 ```
 
 Report model-averaged positive selection together with estimates conditional

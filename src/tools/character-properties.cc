@@ -8,7 +8,7 @@
 #include <string_view>
 #include <vector>
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 #include <fmt/format.h>
 
 #include "alignment/character-property-alignment.hh"
@@ -19,82 +19,9 @@
 #include "util/json.hh"
 #include "util/myexception.hh"
 
-namespace po = boost::program_options;
-
 using character_properties::summarize_options;
 using std::string;
 using std::vector;
-
-/// Print the public command overview, including one typical invocation of every command.
-static void show_help()
-{
-    std::cout<<"Summarize and report sampled character properties.\n\n"
-             <<"Usage: character-properties COMMAND [OPTIONS]\n\n"
-             <<"Commands:\n"
-             <<"  summarize           Compute posterior summaries from sampled character properties.\n"
-             <<"  report              Report an ordinary property by alignment column.\n"
-             <<"  positive-selection  Report columns containing positively selected letters.\n\n"
-             <<"Examples:\n"
-             <<"  character-properties summarize run-1/C1.P1.site-property-samples.jsonl run-2/C1.P1.site-property-samples.jsonl\n"
-             <<"  character-properties report P1.site-property-summary.json P1.initial.fasta rate\n"
-             <<"  character-properties positive-selection P1.site-property-summary.json P1.initial.fasta\n";
-}
-
-/// Parse and validate options for the summarize subcommand.
-static summarize_options parse_summarize_options(int argc, char* argv[])
-{
-    po::options_description positional("Positional options");
-    positional.add_options()
-        ("filenames", po::value<vector<string>>()->composing(), "property sample files");
-
-    po::options_description visible("Allowed options");
-    visible.add_options()
-        ("help,h", "Produce help message.")
-        ("skip", po::value<std::int64_t>(), "Discard samples before this iteration.")
-        ("until", po::value<std::int64_t>(), "Discard samples after this iteration.")
-        ("subsample", po::value<std::int64_t>()->default_value(1),
-         "Retain every Nth eligible sample per chain.")
-        ("median-memory", po::value<std::int64_t>()->default_value(256),
-         "Target MiB of working memory for exact medians.");
-
-    po::options_description all;
-    all.add(positional).add(visible);
-    po::positional_options_description positions;
-    positions.add("filenames", -1);
-
-    po::variables_map arguments;
-    po::store(po::command_line_parser(argc, argv).options(all).positional(positions).run(), arguments);
-    po::notify(arguments);
-
-    if (arguments.count("help"))
-    {
-        std::cout<<"Compute posterior property summaries for each observed sequence character.\n\n"
-                 <<"Usage: character-properties summarize [OPTIONS] SAMPLE-FILE [SAMPLE-FILE ...]\n\n"
-                 <<visible<<"\n"
-                 <<"Examples:\n"
-                 <<"  character-properties summarize run-1/C1.P1.site-property-samples.jsonl run-2/C1.P1.site-property-samples.jsonl\n"
-                 <<"  character-properties summarize C1.P1.site-property-samples.jsonl --skip 1000 --subsample 2\n";
-        std::exit(0);
-    }
-
-    summarize_options options;
-    if (arguments.count("filenames"))
-        for (const auto& filename: arguments["filenames"].as<vector<string>>())
-            options.filenames.emplace_back(filename);
-    if (arguments.count("skip"))
-        options.selection.skip = arguments["skip"].as<std::int64_t>();
-    if (arguments.count("until"))
-        options.selection.until = arguments["until"].as<std::int64_t>();
-    auto subsample = arguments["subsample"].as<std::int64_t>();
-    auto median_memory_mib = arguments["median-memory"].as<std::int64_t>();
-    if (subsample <= 0)
-        throw myexception()<<"--subsample must be positive.";
-    if (median_memory_mib <= 0)
-        throw myexception()<<"--median-memory must be positive.";
-    options.selection.subsample = static_cast<std::uint64_t>(subsample);
-    options.median_memory_mib = static_cast<std::size_t>(median_memory_mib);
-    return options;
-}
 
 struct report_arguments
 {
@@ -109,7 +36,7 @@ struct report_arguments
     std::optional<std::string> condition;
     bool default_positive_condition = false;
     bool positive_selection = false;
-    std::string format;
+    std::string format = "text";
 };
 
 /// Parse a required percent sign and return the fraction represented by the argument.
@@ -133,137 +60,34 @@ static double parse_percentage(const std::string& text, const std::string& optio
     return percentage / 100;
 }
 
-/// Parse and validate the generic or positive-selection report command.
-static report_arguments parse_report_options(int argc, char* argv[], bool positive_selection)
+/// Register the reporting inputs and options shared by the three report commands.
+/// Defaults live in each command's arguments, and only that command binds to them.
+static void add_report_options(CLI::App& command, report_arguments& arguments)
 {
-    po::options_description positional("Positional options");
-    positional.add_options()
-        ("summary", po::value<string>(), "character-property summary")
-        ("alignment", po::value<string>(), "template alignment")
-        ("property", po::value<string>(), "property to report");
-
-    po::options_description visible("Allowed options");
-    visible.add_options()
-        ("help,h", "Produce help message.")
-        ("alphabet", po::value<string>(), positive_selection
-                                           ? "Alignment alphabet or partial constraint "
-                                             "(default: Codons; DNA/RNA guessed from alignment)."
-                                           : "Alignment alphabet or partial constraint "
-                                             "(default: guessed from alignment).")
-        ("format", po::value<string>()->default_value("text"), "Output format: text or tsv.")
-        ("sort", po::value<string>()->default_value("column"), "Row order: column, increasing, or decreasing.")
-        ("condition", po::value<string>(), "Use only samples where this Boolean condition is true.")
-        ("above", po::value<double>(), positive_selection ? "Select probabilities above this value."
-                                                          : "Select letters whose score is above this value.")
-        ("highest", po::value<string>()->implicit_value("1%"), "Select the highest-scoring percentage of letters.");
-    if (positive_selection)
-        visible.add_options()
-            ("unconditional", "Report only the model-averaged posterior instead of pairing both views.");
+    command.add_option("SUMMARY", arguments.summary_filename, "Character-property summary file")
+        ->required()->type_name("");
+    command.add_option("ALIGNMENT", arguments.alignment_filename, "Template alignment file")
+        ->required()->type_name("");
+    auto* property = command.add_option("PROPERTY", arguments.property, "Property to report")->type_name("");
+    if (arguments.positive_selection)
+        property->capture_default_str();
     else
-        visible.add_options()
-            ("below", po::value<double>(), "Select letters whose score is below this value.")
-            ("lowest", po::value<string>()->implicit_value("1%"), "Select the lowest-scoring percentage of letters.")
-            ("by", po::value<string>()->default_value("mean"), "Letter score: mean or median.");
-
-    po::options_description all;
-    all.add(positional).add(visible);
-    po::positional_options_description positions;
-    positions.add("summary", 1).add("alignment", 1).add("property", 1);
-
-    po::variables_map arguments;
-    po::store(po::command_line_parser(argc, argv).options(all).positional(positions).run(), arguments);
-    po::notify(arguments);
-
-    if (arguments.count("help"))
-    {
-        if (positive_selection)
-            std::cout<<"Report columns containing letters with posterior evidence of positive selection.\n\n"
-                     <<"Usage: character-properties positive-selection [OPTIONS] SUMMARY ALIGNMENT [PROPERTY]\n\n";
-        else
-            std::cout<<"Report an ordinary posterior character property by template-alignment column.\n\n"
-                     <<"Usage: character-properties report [OPTIONS] SUMMARY ALIGNMENT PROPERTY\n\n";
-        std::cout<<visible<<"\nExamples:\n";
-        if (positive_selection)
-            std::cout<<"  character-properties positive-selection P1.site-property-summary.json P1.initial.fasta\n"
-                     <<"  character-properties positive-selection P1.site-property-summary.json P1.initial.fasta --above 0.95\n"
-                     <<"  character-properties positive-selection P1.site-property-summary.json P1.initial.fasta --highest\n"
-                     <<"  character-properties positive-selection summary.json alignment.fasta --unconditional\n";
-        else
-            std::cout<<"  character-properties report P1.site-property-summary.json P1.initial.fasta rate\n"
-                     <<"  character-properties report summary.json alignment.fasta rate --above 2 --by median\n"
-                     <<"  character-properties report summary.json alignment.fasta rate --highest=5% --sort decreasing\n"
-                     <<"  character-properties report summary.json codons.fasta rate --alphabet Codons\n";
-        std::exit(0);
-    }
-
-    for (const auto* required: {"summary", "alignment"})
-        if (not arguments.count(required))
-            throw myexception()<<"Argument '"<<required<<"' is required by this report command.";
-    if (not positive_selection and not arguments.count("property"))
-        throw myexception()<<"Argument 'property' is required by the report command.";
-
-    int selection_count = arguments.count("above") + arguments.count("highest");
-    if (not positive_selection)
-        selection_count += arguments.count("below") + arguments.count("lowest");
-    if (selection_count > 1)
-        throw myexception()<<"Specify only one of --above, --below, --highest, or --lowest.";
-    if (positive_selection and arguments.count("condition") and arguments.count("unconditional"))
-        throw myexception()<<"--condition and --unconditional cannot be used together.";
-
-    report_arguments result;
-    result.summary_filename = arguments["summary"].as<string>();
-    result.alignment_filename = arguments["alignment"].as<string>();
-    result.alphabet_name = arguments.count("alphabet") ? arguments["alphabet"].as<string>()
-                                                       : (positive_selection ? "Codons" : "");
-    result.property = arguments.count("property") ? arguments["property"].as<string>() : "posSelection";
-    result.positive_selection = positive_selection;
-    result.order = arguments["sort"].as<string>();
-    if (result.order != "column" and result.order != "increasing" and result.order != "decreasing")
-        throw myexception()<<"Unknown report sort '"<<result.order<<"'.";
-    if (arguments.count("above"))
-    {
-        result.selection = "above";
-        result.selection_value = arguments["above"].as<double>();
-    }
-    else if (arguments.count("highest"))
-    {
-        result.selection = "highest";
-        result.selection_value = parse_percentage(arguments["highest"].as<string>(), "--highest");
-    }
-    else if (arguments.count("below"))
-    {
-        result.selection = "below";
-        result.selection_value = arguments["below"].as<double>();
-    }
-    else if (arguments.count("lowest"))
-    {
-        result.selection = "lowest";
-        result.selection_value = parse_percentage(arguments["lowest"].as<string>(), "--lowest");
-    }
-    else if (positive_selection)
-    {
-        result.selection = "above";
-        result.selection_value = 0.5;
-    }
-
-    if (not positive_selection)
-    {
-        result.statistic = arguments["by"].as<string>();
-        if (result.statistic != "mean" and result.statistic != "median")
-            throw myexception()<<"Unknown report statistic '"<<result.statistic<<"'.";
-    }
-    if (arguments.count("condition"))
-        result.condition = arguments["condition"].as<string>();
-    else if (positive_selection and not arguments.count("unconditional"))
-    {
-        result.condition = "positiveSelectionInModel";
-        result.default_positive_condition = true;
-    }
-
-    result.format = arguments["format"].as<string>();
-    if (result.format != "text" and result.format != "tsv")
-        throw myexception()<<"Unknown report format '"<<result.format<<"'.";
-    return result;
+        property->required();
+    command.add_option("--alphabet", arguments.alphabet_name, arguments.positive_selection
+                       ? "Alignment alphabet (default: Codons; DNA/RNA guessed from alignment)"
+                       : "Alignment alphabet (default: guessed from alignment)");
+    command.add_option("--format", arguments.format, "Output format")
+        ->check(CLI::IsMember({"text", "tsv"}))->capture_default_str();
+    command.add_option("--sort", arguments.order, arguments.positive_selection
+                       ? "Row order; increasing/decreasing use model-averaged probability"
+                       : "Row order; increasing/decreasing use the statistic selected by --by")
+        ->check(CLI::IsMember({"column", "increasing", "decreasing"}))->capture_default_str();
+    command.add_option("--condition", arguments.condition, arguments.positive_selection
+                       ? "Pair model-averaged results with this True-conditioned posterior"
+                       : "Use the posterior conditioned on this Boolean being true");
+    if (not arguments.positive_selection)
+        command.add_option("--by", arguments.statistic, "Posterior statistic for selection and sorting")
+            ->check(CLI::IsMember({"mean", "median"}))->capture_default_str();
 }
 
 /// Use enough significant digits for report values to round-trip through a double.
@@ -598,29 +422,128 @@ static void run_report(const report_arguments& arguments)
     write_selected_report(arguments, retained_samples, properties.retained_samples, rows);
 }
 
-/// Dispatch the requested character-property command and report concise errors.
+/// Parse one character-property subcommand before loading inputs or producing output.
 int main(int argc, char* argv[])
 {
     try
     {
-        if (argc == 1 or string(argv[1]) == "--help" or string(argv[1]) == "-h")
+        CLI::App app{"Summarize and report sampled character properties.", "character-properties"};
+        app.require_subcommand(1, 1);
+        app.get_formatter()->long_option_alignment_ratio(0.2f);
+        app.get_formatter()->enable_footer_formatting(false);
+        app.footer("Use character-properties COMMAND --help for options and examples.");
+
+        summarize_options summary_options;
+        report_arguments column_arguments, letter_arguments, positive_arguments;
+        positive_arguments.positive_selection = true;
+        positive_arguments.property = "posSelection";
+        positive_arguments.alphabet_name = "Codons";
+        // Exactly one command runs, so the two selecting commands can share these parse values.
+        std::optional<double> above, below;
+        std::optional<string> highest, lowest;
+        bool unconditional = false;
+
+        auto* summarize = app.add_subcommand("summarize", "Compute posterior summaries for each sequence character");
+        summarize->add_option("SAMPLE-FILE", summary_options.filenames, "Property sample files, one per chain")
+            ->required()->type_name("");
+        summarize->add_option("--skip", summary_options.selection.skip, "Discard records before this iteration")
+            ->check(CLI::NonNegativeNumber);
+        summarize->add_option("--until", summary_options.selection.until, "Discard records after this iteration")
+            ->check(CLI::NonNegativeNumber);
+        summarize->add_option("--subsample", summary_options.selection.subsample,
+                              "Retain every Nth eligible sample per chain")
+            ->check(CLI::PositiveNumber)->capture_default_str();
+        summarize->add_option("--median-memory", summary_options.median_memory_mib,
+                              "Target MiB of working memory for exact medians")
+            ->check(CLI::PositiveNumber)->capture_default_str();
+        summarize->footer("Example: character-properties summarize run-1/C1.P1.site-property-samples.jsonl "
+                          "run-2/C1.P1.site-property-samples.jsonl --skip=1000");
+
+        auto* columns = app.add_subcommand("columns", "Report ranges and middle values within each alignment column");
+        auto* letters = app.add_subcommand("letters", "Report one selected representative letter per alignment column");
+        auto* positive = app.add_subcommand("positive-selection", "Report paired posterior support for positive selection");
+        add_report_options(*columns, column_arguments);
+        add_report_options(*letters, letter_arguments);
+        add_report_options(*positive, positive_arguments);
+        positive->add_flag("--unconditional", unconditional, "Report only the model-averaged posterior")
+            ->excludes(positive->get_option("--condition"));
+
+        for (auto* command: {letters, positive})
         {
-            show_help();
+            auto* selection = command->add_option_group("Selection", command == letters
+                                                        ? "Choose exactly one selection option"
+                                                        : "Choose at most one; default: --above=0.5");
+            selection->require_option(command == letters ? 1 : 0, 1);
+            selection->add_option("--above", above, command == letters
+                                  ? "Select letters with scores strictly above VALUE"
+                                  : "Select representatives with either probability strictly above VALUE")
+                ->type_name("VALUE");
+            selection->add_option("--highest", highest, "Select the highest-scoring percentage of letters (e.g. 5%)")
+                ->type_name("PERCENT");
+            if (command == letters)
+            {
+                selection->add_option("--below", below, "Select letters with scores strictly below VALUE")
+                    ->type_name("VALUE");
+                selection->add_option("--lowest", lowest, "Select the lowest-scoring percentage of letters (e.g. 5%)")
+                    ->type_name("PERCENT");
+            }
+        }
+        columns->footer("Both mean and median ranges are reported; --by chooses the statistic for sorting.\n\n"
+                        "Example: character-properties columns P1.site-property-summary.json P1.initial.fasta rate");
+        letters->footer("Select letters globally, then report one score extreme per selected column.\n\n"
+                        "Example: character-properties letters summary.json alignment.fasta rate --highest=5%");
+        positive->footer("By default, pair model-averaged results with the positiveSelectionInModel=True posterior.\n"
+                         "Use --condition to choose another condition, or --unconditional for model-averaged results only.\n\n"
+                         "Example: character-properties positive-selection summary.json alignment.fasta --above=0.95");
+        try
+        {
+            app.parse(argc, argv);
+        }
+        catch (const CLI::ParseError& error)
+        {
+            app.exit(error);
+            return error.get_exit_code() == 0 ? 0 : 1;
+        }
+
+        if (*summarize)
+        {
+            auto result = character_properties::summarize(summary_options);
+            std::cout<<json::serialize(character_properties::to_json(result))<<"\n";
             return 0;
         }
-        string command = argv[1];
-        if (command == "summarize")
+
+        auto& arguments = *columns ? column_arguments : (*letters ? letter_arguments : positive_arguments);
+        if (above)
         {
-            auto options = parse_summarize_options(argc - 1, argv + 1);
-            auto result = character_properties::summarize(options);
-            std::cout<<json::serialize(character_properties::to_json(result))<<"\n";
+            arguments.selection = "above";
+            arguments.selection_value = *above;
         }
-        else if (command == "report")
-            run_report(parse_report_options(argc - 1, argv + 1, false));
-        else if (command == "positive-selection")
-            run_report(parse_report_options(argc - 1, argv + 1, true));
-        else
-            throw myexception()<<"Unknown command '"<<command<<"'.";
+        else if (below)
+        {
+            arguments.selection = "below";
+            arguments.selection_value = *below;
+        }
+        else if (highest)
+        {
+            arguments.selection = "highest";
+            arguments.selection_value = parse_percentage(*highest, "--highest");
+        }
+        else if (lowest)
+        {
+            arguments.selection = "lowest";
+            arguments.selection_value = parse_percentage(*lowest, "--lowest");
+        }
+        else if (*positive)
+        {
+            arguments.selection = "above";
+            arguments.selection_value = 0.5;
+        }
+        if (*positive and not arguments.condition and not unconditional)
+        {
+            arguments.condition = "positiveSelectionInModel";
+            arguments.default_positive_condition = true;
+        }
+        run_report(arguments);
         return 0;
     }
     catch (const std::exception& error)
