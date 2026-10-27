@@ -459,6 +459,7 @@ void write_psmc(std::ostream& o, const alignment& A, int x1, int x2)
     for(int i=0;i<A.length()/blocksize;i++)
     {
         bool diff = false;
+        bool observed = false;
         for(int j=0;not diff and j<blocksize;j++)
         {
             int c = blocksize * i + j;
@@ -468,12 +469,13 @@ void write_psmc(std::ostream& o, const alignment& A, int x1, int x2)
 
             if (not a.is_letter(l1) or not a.is_letter(l2)) continue;
 
+            observed = true;
             diff = (l1 != l2);
         }
         if (diff)
             o<<"K";
         else
-            o<<"T";
+            o<<(observed ? "T" : "N");
         if (i%60 == 59)
             o<<"\n";
     }

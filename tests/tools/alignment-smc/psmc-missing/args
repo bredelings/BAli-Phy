@@ -1,0 +1,3 @@
+# An unobserved block must not become homozygous; help cannot exercise block encoding.
+# Retain while PSMC output distinguishes observed and missing blocks (1000 bases required).
+alignment.fa --alphabet DNA --psmc
