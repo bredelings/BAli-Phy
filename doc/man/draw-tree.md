@@ -1,6 +1,6 @@
 % draw-tree(1)
 % Benjamin Redelings
-% Feb 2018
+% October 2026
 
 # NAME
 
@@ -28,6 +28,12 @@ with fewer branch crossings, even when this moves the text farther away. Crossin
 these leader lines do not represent evolutionary distances. Angled labels follow terminal branches
 and may overlap. Page fitting includes labels and leader lines.
 
+Input may be a Newick tree, a topology-only MC tree with additional partial splits, or
+an extended tree with `branch LENGTH` and `node LENGTH` records followed by identifying
+partitions. Node lengths describe unresolved length and are accepted only at nodes of
+degree at least 4. `mini-branch` records are unsupported. Trees whose branch and node
+lengths are all zero can be exported as text but cannot be drawn.
+
 # INPUT OPTIONS:
 **-h**, **--help**
 : Produce help message
@@ -39,10 +45,11 @@ and may overlap. Page fitting includes labels and leader lines.
 : Output height in inches; otherwise fit the drawing
 
 **--file** _arg_
-: predicates to examine
+: Input tree file
 
 **--output** _arg_ (=pdf)
-: Type of output to write: tree, topology, mtree, lengths, dot, ps, pdf, svg
+: Type of output to write: tree, topology, mtree, lengths, dot, ps, pdf, svg.
+  Text formats are written to standard output; successful exports return status 0.
 
 **--out** _arg_
 : Output filename (without extension)
@@ -51,13 +58,16 @@ and may overlap. Page fitting includes labels and leader lines.
 : Consider only full splits by collapsing any partial splits.
 
 **--iterations** _arg_ (=2)
-: Number of iterations for the graph layout algorithm
+: Number of optimization rounds after graph initialization. The final drawing is written
+  once, after both this stage and **--angle_iterations**. If both counts are zero, the
+  initialized layout is drawn; initialization itself includes optimization unless
+  **--tree-layout-initial** is supplied.
 
 **--font-size** _arg_ (=10)
 : Font size in points before explicit output resizing
 
 **--angle_iterations** _arg_ (=0)
-: Number of iterations for layout algorithm with small-angle penalties
+: Additional graph optimization rounds with small-angle penalties
 
 **--labels** _arg_ (=horizontal)
 : Use `horizontal` for horizontal labels with overlap avoidance, or `angled` for labels aligned
@@ -72,7 +82,7 @@ and may overlap. Page fitting includes labels and leader lines.
   Equal-daylight starts from this arrangement and balances angular gaps between
   subtrees, including the space occupied by node bubbles. It stops when every accepted rotation
   in a sweep is smaller than 0.001 radians, or after 50 sweeps. Labels are placed afterward.
-  The former `fr` placeholder is not implemented.
+  Other layout names, including the former `fr` placeholder, are rejected.
 
 **--greedy**
 : For equal-daylight layout: redistribute angular gaps equally at each node, preserving

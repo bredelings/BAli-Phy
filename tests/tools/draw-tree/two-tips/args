@@ -1,0 +1,3 @@
+# Two-tip input must preserve the connecting distance after suppressing its root.
+# Larger-tree tests miss the special size case; retain while two-tip trees are supported.
+input.tree --output lengths --seed 1

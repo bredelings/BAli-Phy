@@ -1,0 +1,14 @@
+branch 10
+A B | C D [ E ]
+branch 20
+A B | C D E
+branch 1
+A | B C D E
+branch 2
+B | A C D E
+branch 3
+C | A B D E
+branch 4
+D | A B C E
+branch 5
+E | A B C D

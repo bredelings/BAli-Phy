@@ -1,0 +1,3 @@
+# Filtering must preserve lengths of retained splits, including later leaf entries.
+# Existing layout tests do not check lengths; retain while MC input can discard splits.
+input.tree --output tree --seed 1

@@ -1,0 +1,3 @@
+# Topology-only MC input must retain partial splits and be readable after mtree export.
+# Ordinary-tree tests cannot cover this; retain while the extended format is supported.
+input.tree --output mtree --seed 1
