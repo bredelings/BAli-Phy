@@ -1225,9 +1225,11 @@ matrix<int> compute_2d_sfs(const alignment& A,
         auto anc_counts = get_non_zero_allele_counts2(A, i, anc);
         if (anc_counts.size() != 1) continue;
 
+        // The matrix axes use fixed population sizes, so every sampled member must be called.
+        // Otherwise an unobserved allele would be treated implicitly as ancestral.
         bool missing_data = false;
         for(int j: pop12)
-            if (A.gap(i,j))
+            if (not A.get_alphabet().is_letter(A(i,j)))
                 missing_data = true;
 
         if (missing_data) continue;
