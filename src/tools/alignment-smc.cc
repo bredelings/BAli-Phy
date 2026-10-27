@@ -1143,12 +1143,7 @@ struct translation_table
                 lookup.push_back({loc2,loc2+1});
         }
 
-        // Map beginning to beginng
-        lookup[0] = {0,0};
-        // Map end to end
-        lookup.back() = {loc2,loc2};
 
-        lookup.push_back({loc2,loc2}); // Handle end that is 1 too large?
     }
 };
 
@@ -1523,17 +1518,20 @@ void translate_vcf(const string& vcf_filename, const variables_map& args)
 
     istream_or_ifstream vcf_file(std::cin, "-", vcf_filename);
     string line;
-    while(portable_getline(vcf_file,line) and line.size() and line[0] == '#')
-        std::cout<<line<<"\n";
-
     set<string> unknown;
     string chrom;
-    const translation_table* table;
+    const translation_table* table = nullptr;
 
     while(portable_getline(vcf_file,line))
     {
+        if (line.empty() or line[0] == '#')
+        {
+            std::cout<<line<<"\n";
+            continue;
+        }
         auto fields = split(line,'\t');
-        assert(fields.size());
+        if (fields.size() < 2)
+            throw myexception()<<"VCF record has no position: "<<line;
         if (fields[0] != chrom or chrom.empty())
         {
             chrom = fields[0];
@@ -1558,7 +1556,7 @@ void translate_vcf(const string& vcf_filename, const variables_map& args)
             int pos = convertTo<int>(fields[1])-1;
             if (pos < 0)
                 throw myexception()<<chrom<<'\t'<<pos<<": should not be negative!";
-            if (pos > table->lookup.size())
+            if (pos >= table->lookup.size())
                 throw myexception()<<chrom<<'\t'<<pos<<": after end of chromosome of length "<<table->lookup.size();
 
             auto& [p1,p2]  = table->lookup[pos];

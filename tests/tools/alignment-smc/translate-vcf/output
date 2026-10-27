@@ -1,0 +1,5 @@
+##fileformat=VCFv4.2
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+target	2	.	A	N	.	.	.
+target	3	.	G	N	.	.	.
+target	4	.	T	N	.	.	.
