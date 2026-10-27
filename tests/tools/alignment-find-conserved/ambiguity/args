@@ -1,0 +1,3 @@
+# Conserved ambiguity codes must be printable; exact-letter and help cases miss this path.
+# Retain while conservation diagnostics report encoded alignment symbols.
+alignment.fasta --tree tree --groups groups --alphabet DNA --require-conservation

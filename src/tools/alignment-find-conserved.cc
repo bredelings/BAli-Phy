@@ -437,7 +437,7 @@ int main(int argc,char* argv[])
 	    //------------ print 'group conserved at' values ----------//
 	    cerr<<c+1<<"   ";
 	    for(int i=0;i<value.size();i++) 
-		cerr<<a.lookup(value[i])<<" ";
+		cerr<<A.lookup(value[i])<<" ";
 	    cerr<<"     ";
 
 	    for(int g=0;g<groups.size();g++) 
