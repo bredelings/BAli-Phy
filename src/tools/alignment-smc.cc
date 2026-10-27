@@ -383,6 +383,13 @@ void write_dical2(std::ostream& o, const alignment& A)
 
         if (not is_variant_column(A,column)) continue;
         
+        // DiCal2's binary encoding cannot distinguish multiple alternate exact alleles.
+        vector<bool> observed(A.get_alphabet().size(), false);
+        for(int h=0;h<A.n_sequences();h++)
+            if (A.get_alphabet().is_letter(A(column,h)))
+                observed[A(column,h)] = true;
+        if (std::count(observed.begin(), observed.end(), true) > 2) continue;
+
         segregating_sites.push_back(column+1);
 
         for(int h=0;h<A.n_sequences();h++)

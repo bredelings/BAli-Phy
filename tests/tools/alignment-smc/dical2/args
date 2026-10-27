@@ -1,0 +1,3 @@
+# Binary output must omit multiallelic sites without compressing coordinates.
+# Retain while DiCal2 output encodes alleles as 0/1; biallelic-only input misses merging.
+alignment.fa --alphabet DNA --dical2
