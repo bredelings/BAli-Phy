@@ -432,38 +432,6 @@ bool segments_cross(const point_position& m1,
     return cross;
 }
 
-// Unused geometric primitive: test intersection with extended segment-parameter intervals.
-bool segments_cross_with_margin(const point_position& m1,
-				const point_position& m2,
-				const point_position& n1,
-				const point_position& n2,
-				double a,
-				double b,
-				double c,
-				double d)
-{
-    double t,s;
-    if (not lines_cross(m1,m2,n1,n2,t,s)) return false;
-
-    bool cross = ((-a <= s) and (s <= 1+b) and (-c <= t) and (t <= 1+d));
-
-    return cross;
-}
-
-// Unused geometric primitive: test the forward ray m1→m2 against segment n1→n2.
-bool ray_points_to_segment(const point_position& m1,
-			   const point_position& m2,
-			   const point_position& n1,
-			   const point_position& n2)
-{
-    double t,s;
-    if (not lines_cross(m1,m2,n1,n2,t,s)) return false;
-
-    bool cross = ((0 <= s) and (s <= 1) and (0 <= t));
-
-    return cross;
-}
-
 double distance_to_line_segment(const point_position& p1,
 				const point_position& p2,
 				const point_position& p3)
@@ -812,43 +780,6 @@ double node_diameter(double lengths,int degree)
 
 tree_layout equal_angle_layout(SequenceTree MF,vector<double> node_radius)
 {
-    // Subdivision experiment: insert intermediate nodes on branches while conserving length,
-    // then remap the original radii. Retained as code to document the required index remapping.
-    /*
-
-      vector<nodeview> nodes;
-      for(int i=0;i<MF.n_nodes();i++)
-      nodes.push_back(MF.node(i));
-
-      vector<branchview> branches;
-
-      for(int j=0;j<3;j++) {
-      for(int i=0;i<MF.n_branches();i++)
-      branches.push_back(MF.branch(i));
-
-      for(int i=0;i<branches.size();i++) {
-      
-      nodeview n = MF.create_node_on_branch(branches[i]);
-      
-      out_edges_iterator temp = n.branches_out();
-      branchview b1 = *temp;
-      temp++;
-      branchview b2 = *temp;
-      
-      double L = b1.length() + b2.length();
-      b1.set_length(L/2.0);
-      b2.set_length(L/2.0);
-      }
-      }
-
-      // remap node radii
-      vector<double> old_node_radius = node_radius;
-      node_radius = vector<double>(MF.n_nodes(), 0.0);
-      for(int i=0;i<old_node_radius.size();i++)
-      node_radius[nodes[i]] = old_node_radius[i];
-    */
-
-
     for(int b=0;b<MF.n_branches();b++) 
     {
 	double L = MF.branch(b).length();
@@ -1432,50 +1363,6 @@ tree_layout equal_daylight_layout(const MC_tree_with_lengths& MC, bool greedy=fa
              << (movement < tolerance ? "movement below 0.001 radians" : "50-sweep limit reached") << ".\n";
     return L;
 }
-
-// Retained geometric traversal experiment: follow the next outgoing direction around the drawing.
-vector<int> walk_tree(const tree_layout& TL, const vector<int>& edges)
-{
-    vector<int> edges_order;
-
-    int e = edges[0];
-  
-    do {
-
-	edges_order.push_back(e);
-
-	double A0 = get_angle(TL,e);
-
-	vector<const_branchview> children;
-	append(TL.T.directed_branch(e).branches_after(),children);
-
-	if (children.size()) {
-	    vector<double> angles(children.size());
-	    for(int i=0;i<children.size();i++)
-		angles[i] = circular_minus(get_angle(TL,children[i]), A0);
-
-	    int nexti = argmin(angles);
-	    e = children[nexti];
-	}
-	else 
-	    e = TL.T.directed_branch(e).reverse();
-
-    
-    } while (e != edges[0]);
-
-    return edges_order;
-}
-
-vector<int> walk_tree(const tree_layout& TL)
-{
-    vector<int> edges;
-    for(int i=0;i<TL.T.n_branches();i++)
-	edges.push_back(i);
-
-    return walk_tree(TL,edges);
-}
-
-
 
 // Draw node bubbles after branches, using tree-unit radii and point-scaled dashed outlines.
 void draw_node_circles(cairo_t* cr, const common_layout& layout, double line_width)
@@ -2674,129 +2561,6 @@ vector<point_position> energy_derivative_2D(const graph_layout& GL1, const graph
     return D;
 }
 
-// Unfinished alternative layouts, retained as integration sketches for future comparisons.
-// Kamada-Kawai still needs an edge-weight property map and an enabled layout invocation.
-// The Fruchterman-Reingold experiment below includes its initialization and custom force;
-// neither experiment currently supplies a working layout option.
-// #include <boost/graph/graph_traits.hpp>
-// #include <boost/graph/adjacency_list.hpp>
-// #include <boost/graph/topological_sort.hpp>
-// #include <boost/graph/kamada_kawai_spring_layout.hpp>
-// #include <boost/graph/fruchterman_reingold.hpp>
-// 
-// typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS> Graph; 
-// typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
-// typedef boost::graph_traits<Graph>::edge_descriptor Edge_t;
-// 
-// 
-// graph_layout kamada_kawai_layout(graph_layout GL)
-// {
-//     const MC_tree& MC = GL.MC;
-//     Graph g(MC.n_nodes());
-// 
-//     //------------ Construct the Graph --------------//
-//     for(int i=0;i<MC.edges.size();i++) {
-// 	const mc_tree_edge& e = MC.edges[i];
-// 	add_edge(e.from, e.to, g);
-//     }
-// 
-//     //--------- Package position as property ---------//
-//     typedef vector<point_position> PositionVec;
-//     typedef boost::iterator_property_map<PositionVec::iterator,
-//                                          boost::property_map<Graph, boost::vertex_index_t>::type>
-// 	PositionMap;
-// 
-//     PositionMap position(GL.node_positions.begin(), get(boost::vertex_index, g));
-// 
-//     //--------- Package weights as property ---------//
-//     vector<double> weights(num_edges(g));
-// 
-//     //  typedef vector<double> WeightVec;
-//     //  typedef iterator_property_map<WeightVec::iterator, 
-//     //    property_map<Graph, edge_index_t>::type>
-//     //    WeightMap;
-// 
-//     //  WeightMap weight(weights.begin(), get(edge_index,g));
-// 
-//     // kamada_kawai_spring_layout(g, position, weight, boost::side_length(1.0) );
-// 
-//     return GL;
-// }
-// 
-// struct my_square_distance_attractive_force {
-//     template<typename Graph, typename T>
-//     T
-//     operator()(typename boost::graph_traits<Graph>::edge_descriptor,
-// 	       T k,
-// 	       T d,
-// 	       const Graph&) const
-// 	{
-// 	    k /= 10;
-// 	    d -= k;
-// 	    double temp = 100.0*d * d / k;
-// 	    if (d < k) temp *= -1;
-// 	    return temp;
-// 	}
-// };
-// 
-// 
-// #include <boost/graph/random_layout.hpp>
-// #include <boost/random/linear_congruential.hpp>
-// 
-// graph_layout fruchterman_reingold_layout(graph_layout GL, double /* width */, double /* height */)
-// {
-//     /*
-//       const MC_tree& MC = GL.MC;
-//       Graph g(MC.n_nodes());
-// 
-//       //------------ Construct the Graph --------------//
-//       for(int i=0;i<MC.edges.size();i++) {
-//       const mc_tree_edge& e = MC.edges[i];
-//       add_edge(e.from, e.to, g);
-//       }
-// 
-//       //--------- Package position as property ---------//
-//       typedef vector<point_position> PositionVec;
-//       typedef iterator_property_map<PositionVec::iterator,
-//       property_map<Graph, vertex_index_t>::type>
-//       PositionMap;
-// 
-//       PositionMap position(GL.node_positions.begin(), get(vertex_index, g));
-// 
-//       cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
-// 
-//       //------------ Initial random layout ------------//
-//       minstd_rand gen;
-//       gen.seed(rng::get_random_seed());
-//       rectangle_topology<> R(-width/2, width/2, -height/2, height/2);
-//       random_graph_layout(g, position, R);
-//       cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
-// 
-//       //------------ Final force-directed layout ------------//
-//       //  width *= MC.n_branches()*100;
-//       //  height *= MC.n_branches()*100;
-//       width *= 100;
-//       height *= 100;
-// 
-//       PositionVec Displacements(num_vertices(g));
-//       PositionMap displacements(Displacements.begin(), get(vertex_index, g));
-// 
-//       fruchterman_reingold_force_directed_layout(g, 
-//       position, 
-//       R,
-//       my_square_distance_attractive_force(),
-//       square_distance_repulsive_force(),
-//       make_grid_force_pairs(R,position,g),
-//       linear_cooling<double>(1000),
-//       displacements
-//       );
-// 
-//       cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
-//     */
-//     return GL;
-// }
-// 
-
 void energy_layout(graph_layout& GL, const graph_energy_function& E,int n=1000)
 {
     double T = 0;
@@ -3621,8 +3385,6 @@ int main(int argc,char* argv[])
 	string filename = args["file"].as<string>();
 	string name = get_graph_name(filename);
 
-	// FIXME! - load a MF/MC tree w/ no length information
-	// FIX name collision!
 	MC_tree_with_lengths MC = get_MC_tree_with_lengths(filename);
 	if (log_verbose) {
 	    cerr<<"score = "<<MC.score()<<"    "<<double(MC.score())/MC.n_leaves()<<" / "<<MC.n_leaves()-3<<" branches\n";
@@ -3727,12 +3489,7 @@ int main(int argc,char* argv[])
 	double length_weight = 10000000;
 
 	int n_iterations = args["iterations"].as<int>();
-	/*
-	  for(int i=0;i<10;i++) {
-	  double w = length_weight/100*double(i)/10;
-	  layout = energy_layout(layout,layout_energy(1,w,1,0),1000);
-	  }
-	*/
+
 
 	double stretchy_weight = 1.0;
 	if (args.count("draw-clouds") and args["draw-clouds"].as<string>() == "only") {
