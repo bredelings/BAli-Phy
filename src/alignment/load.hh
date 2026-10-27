@@ -6,16 +6,10 @@
 #include <list>
 #include <string>
 #include <filesystem>
-#include <boost/program_options.hpp>
 #include "sequence/sequence.hh"
 #include "sequence/alphabet.hh"
 #include "alignment.hh"
 #include "util/file-readers.hh"
-
-std::string get_alphabet_name(const boost::program_options::variables_map& args);
-
-/// Load an alignment from command line args --align=filename
-alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true, bool remove_empty_columns=true);
 
 /// Load an alignment from file
 std::vector<sequence> load_sequences_with_range(const std::filesystem::path& filename, const std::string&_range);

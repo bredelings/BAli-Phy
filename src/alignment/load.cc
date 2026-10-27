@@ -15,17 +15,8 @@ using std::cerr;
 using std::endl;
 
 using std::optional;
-using boost::program_options::variables_map;
 
 namespace fs = std::filesystem;
-
-std::string get_alphabet_name(const boost::program_options::variables_map& args)
-{
-    string alph_name;
-    if (args.count("alphabet"))
-	alph_name = args["alphabet"].as<string>();
-    return alph_name;
-}
 
 vector<sequence> load_sequences_with_range(const fs::path& filename, const string& range)
 {
@@ -99,24 +90,6 @@ alignment load_alignment(const fs::path& filename, const string& alph_name, bool
     }
 }
 
-/// Load an alignment from command line args "--align filename"
-alignment load_A(const variables_map& args,bool keep_internal, bool remove_empty) 
-{
-    // ----- Try to load alignment ------ //
-    if (not args.count("align")) 
-	throw myexception("Alignment file not specified! (--align <filename>)");
-  
-    fs::path filepath = args["align"].as<string>();
-    alignment A = load_alignment(filepath, get_alphabet_name(args), remove_empty);
-
-    if (not keep_internal)
-	A = chop_internal(A, not remove_empty);
-
-    return A;
-}
-
-
-using std::vector;
 using std::string;
 using std::list;
 
