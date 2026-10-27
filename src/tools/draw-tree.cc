@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iomanip>
 #include <string>
 #include <iostream>
 #include <vector>
@@ -3317,11 +3318,13 @@ void draw_graph(const MC_tree_with_lengths& T,const string& name)
     double total_branch_length = 0;
     for(int b=0;b<T.n_branches();b++)
 	total_branch_length += T.branch_length(b);
-    scale = 0.5*T.n_branches()/total_branch_length;
+    // Zero-length trees still have valid text exports; keep their DOT lengths zero.
+    if (total_branch_length != 0)
+        scale = 0.5*T.n_branches()/total_branch_length;
 
     const int N = T.n_nodes();
 
-    cout<<"digraph "<<name<<" { \n\
+    cout<<"digraph "<<std::quoted(name)<<" { \n\
 \n\
       nodesep=1.0\n\
       ratio=auto\n\
@@ -3369,7 +3372,7 @@ void draw_graph(const MC_tree_with_lengths& T,const string& name)
     // leaf names
     vector<string> names = T.names();
     for(int i=0;i<names.size();i++)
-	cout<<"      N"<<T.leaf(i)<<" [label=\""<<names[i]<<"\"]\n";
+	cout<<"      N"<<T.leaf(i)<<" [label="<<std::quoted(names[i])<<"]\n";
     cout<<endl;
 
     for(int n=0;n<N;n++) 
@@ -3638,17 +3641,17 @@ int main(int argc,char* argv[])
 	if (output == "dot")
 	{
 	    draw_graph(MC,get_graph_name(filename));
-	    exit(1);
+	    return 0;
 	}
 	else if (output == "topology")
 	{
 	    cout<<MC.T.write(false)<<endl;
-	    exit(1);
+	    return 0;
 	}
 	else if (output == "tree")
 	{
 	    cout<<MC.T.write(true)<<endl;
-	    exit(1);
+	    return 0;
 	}
 	else if (output == "mtree")
 	{
@@ -3658,7 +3661,7 @@ int main(int argc,char* argv[])
 		if (not P.full())
 		    cout<<Partition(MC.names(),P)<<endl;
 	    }
-	    exit(1);
+	    return 0;
 	}
 	else if (output == "lengths")
 	{
@@ -3674,7 +3677,7 @@ int main(int argc,char* argv[])
 		    cout<<Partition(MC.names(),MC.partitions[MC.branch_to_node(n)])<<endl;
 		}
 	    }
-	    exit(1);
+	    return 0;
 	}
 
 
