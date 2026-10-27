@@ -163,12 +163,3 @@ std::vector<std::string> get_string_list(const std::string& values)
 	str = str.substr(1);
     return parse_string_list(str);
 }
-
-// Retrieve a Boost option and apply the same list interpretation as other callers.
-std::vector<std::string> get_string_list(const boost::program_options::variables_map& args, const std::string& key)
-{
-    if (auto str = get_arg<string>(args,key))
-	return get_string_list(*str);
-    else
-	return {};
-}

@@ -26,7 +26,6 @@
 #include "alignment-util.hh"
 #include "index-matrix.hh"
 
-#include <boost/program_options.hpp>
 #include "util/set.hh"
 #include "util/io.hh"
 #include "util/range.hh"
@@ -44,7 +43,6 @@ using std::istream;
 using boost::dynamic_bitset;
 using std::optional;
 
-using boost::program_options::variables_map;
 
 alignment chop_internal(alignment A, int n_leaves)
 {

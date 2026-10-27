@@ -27,7 +27,6 @@
 #include "alignment-util2.hh"
 #include "util/io.hh"
 #include "util/assert.hh"
-#include <boost/program_options.hpp>
 
 using std::string;
 using std::vector;
@@ -40,7 +39,6 @@ using std::istream;
 using boost::dynamic_bitset;
 using std::optional;
 
-using boost::program_options::variables_map;
 
 vector<dynamic_bitset<>> get_states_for_leaf_characters(const alignment& A, const TreeInterface& t)
 {
