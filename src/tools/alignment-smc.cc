@@ -1584,30 +1584,22 @@ void translate_vcf(const string& vcf_filename, const variables_map& args)
 void translate_mask(const string& mask_filename, const variables_map& args)
 {
     //----------- Load alignment ---------//
-    alignment A = load_A(args,false);
+    alignment A = load_A(args,false,false);
 
     if (A.n_sequences() != 2)
         throw myexception()<<"translate-mask: expected exactly 2 sequences, but got "<<A.n_sequences()<<"!";
 
-    vector<pair<int,int>> map;
-    int loc2 = -1;
+    // Source positions identify columns; target prefix counts identify sequence boundaries.
+    // Their difference counts exactly the target bases inside a source interval's column span,
+    // including internal insertions but excluding adjacent bases outside that span.
+    vector<int> source_columns;
+    vector<int> target_prefix(A.length()+1, 0);
     for(int c=0;c<A.length();c++)
     {
-        if (A.character(c,1)) loc2++;
-
-        if (A.character(c,0))
-        {
-            if (A.character(c,1))
-                map.push_back({loc2,loc2});
-            else
-                map.push_back({loc2,loc2+1});
-        }
+        if (not A.gap(c,0))
+            source_columns.push_back(c);
+        target_prefix[c+1] = target_prefix[c] + (not A.gap(c,1));
     }
-    // Map beginning to beginng
-    map[0] = {0,0};
-    // Map end to end
-    map.back() = {loc2,loc2};
-    map.push_back({loc2,loc2}); // Handle end that is 1 too large?
 
     auto masks = read_masks(mask_filename);
     if (masks.size() == 0)
@@ -1617,18 +1609,16 @@ void translate_mask(const string& mask_filename, const variables_map& args)
                 
     auto& mask = masks[0];
     std::cout<<">"<<A.seq(1).name<<"\n";
-    for(auto& [beg,end]: mask.intervals)
+    for(const auto& [beg,end]: mask.intervals)
     {
-        if (beg < 0)
-            throw myexception()<<"0-indexed interval should not have negative start offset!";
-        if (end > map.size())
-            throw myexception()<<"0-indexed interval should end before the length of the source chromosome! ("<<map.size()<<")";
-        if (beg > end)
-            throw myexception()<<"interval should not begin before it ends!";
+        if (beg < 0 or end < beg or end >= source_columns.size())
+            throw myexception()<<"Invalid 0-based inclusive source interval "<<beg<<" - "<<end
+                               <<" for sequence of length "<<source_columns.size()<<".";
 
-        beg = map[beg].first;
-        end = map[end].second;
-        std::cout<<beg<<" - "<<end<<"\n";
+        int target_begin = target_prefix[source_columns[beg]];
+        int target_end = target_prefix[source_columns[end]+1];
+        if (target_begin < target_end)
+            std::cout<<target_begin<<" - "<<target_end-1<<"\n";
     }
 }
 

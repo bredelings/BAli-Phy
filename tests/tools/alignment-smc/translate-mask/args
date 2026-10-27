@@ -1,0 +1,3 @@
+# Check span boundaries across insertions/deletions; simple ungapped examples miss expansion.
+# Retain while masks translate between ungapped coordinate systems.
+alignment.fa --alphabet DNA --translate-mask mask
