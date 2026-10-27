@@ -1329,6 +1329,134 @@ void translate_mask(const string& mask_filename, const variables_map& args)
 }
 
 
+// Compute a reporting consensus and print qualifying alleles in reference coordinates.
+static void report_alleles(const alignment& A, const string& consensus_range,
+                           int n_snps, int length, int min_count, int max_count)
+{
+    auto consensus_seqs1 = parse_multi_range(consensus_range, A.n_sequences());
+    auto consensus1 = get_consensus(A, consensus_seqs1);
+    // Preserve reference numbering while retaining columns for allele identity and lookup.
+    // A reference gap consumes no position and shares the next reference base's coordinate.
+    vector<int> reference_positions(A.length());
+    int ref_pos = 0;
+    for(int c=0;c<A.length();c++)
+    {
+        reference_positions[c] = ref_pos;
+        if (not A.gap(c,0)) ref_pos++;
+    }
+    auto alleles = find_alleles(consensus1, A, n_snps, length, min_count, max_count,
+                                consensus_seqs1, reference_positions);
+    show_alleles(alleles, A.get_alphabet(), consensus1, reference_positions);
+}
+
+// Report SNP distances for the existing sequence pairing and reference-coordinate convention.
+static void write_snp_distances(const alignment& A, int max_d)
+{
+    // Go through non-overlapping pairs, using the first sequence in the pair as a reference.
+    // (If we were scanning to remove things we would use every sequence as a reference, but this is just to get a distribution).
+    std::cout<<"seq1\tseq2\tSNPs\tref_pos\tdistance\n";
+    for(int i=0;i<A.n_sequences();i+=2)
+    {
+        int i2 = (i+1)%A.n_sequences();
+        // positions are measured in terms of distance along i
+        auto snp_positions = get_snp_positions(A,i,i2);
+        for(int j=1;j<=max_d;j++)
+            for(int k=0;k+j < snp_positions.size();k+=j)
+                std::cout<<i<<"\t"<<i2<<"\t"<<j<<"\t"<<snp_positions[k].first<<"\t"<<snp_positions[k+j].second - snp_positions[k].second<<"\n";
+    }
+
+}
+
+// Write selected sites either as an alignment or as the existing BED-style SNP table.
+static void write_selected_sites(alignment& A, int count, double max_missing_freq,
+                                 optional<int> width, const optional<string>& chromosome,
+                                 bool show_frequencies)
+{
+    auto columns = find_columns(A, [&](int col) {
+        return largest_minor_allele_count(A,col) >= count and missing_freq(A,col) <= max_missing_freq;
+    });
+
+    // Space out the kept columns - keep only 1 every width bases
+    if (width)
+    {
+        auto bins = make_bins(columns, *width);
+        columns.clear();
+        for(auto& bin: bins)
+            if (bin.size())
+                columns.push_back(bin[0]);
+    }
+
+    if (chromosome)
+    {
+        if (show_frequencies)
+            write_snp_bed_with_frequencies(std::cout, *chromosome, columns, A);
+        else
+            write_snp_bed(std::cout, *chromosome, columns, A);
+    }
+    else
+    {
+        select_columns_inplace(A, columns);
+        std::cout<<A<<std::endl;
+    }
+}
+
+// Print the existing scalar diagnostics after alignment or SMC output.
+static void write_summary(const alignment& A, int original_length, int variant_dist)
+{
+    const auto& a = A.get_alphabet();
+    //----- Count informative/non-constant sites ----//
+    dynamic_bitset<> informative(A.length());
+    dynamic_bitset<> different(A.length());
+
+    dynamic_bitset<> alleles2(A.length());
+    dynamic_bitset<> alleles3(A.length());
+    dynamic_bitset<> is_masked(A.length());
+
+    valarray<int> count(a.size());
+
+
+    for(int c=0;c<A.length();c++) {
+        count = 0;
+        for(int i=0;i<A.n_sequences();i++) {
+            int l = A(c,i);
+            if (a.is_letter(l))
+                count[l]++;
+
+        }
+
+
+
+        different[c]  =   is_informative(count ,0);
+        informative[c]  = is_informative(count ,1);
+
+
+        alleles2[c] = n_letters(count,0) == 2;
+        alleles3[c] = n_letters(count,0) == 3;
+        is_masked[c] = is_masked_column(A,c);
+    }
+
+    int n_different  = different.count();
+    int n_informative  = informative.count();
+
+
+    int non_masked_columns = A.length() - is_masked.count();
+
+    if (A.length() != original_length)
+        std::cerr<<"Length changed from "<<original_length<<" to "<<A.length()<<"\n";
+    std::cerr<<"Masked "<<is_masked.count()<<" sites.  "<<A.length()-is_masked.count()<<" sites remain.\n";
+    std::cerr<<"Sites with 2 alleles: "<<alleles2.count()<<" ("<<double(alleles2.count())/non_masked_columns<<")  ";
+    std::cerr<<"Sites with 3 alleles: "<<alleles3.count()<<" ("<<double(alleles3.count())/non_masked_columns<<")  \n";
+    {
+        double pi_stat = pi(A);
+        double theta = pi_stat/(1.0-pi_stat);
+        std::cerr<<"pi = "<<pi_stat<<"    theta = "<<theta<<"\n";
+    }
+    std::cerr<<"Variant sites: "<<n_different<<" ("<<double(n_different)/non_masked_columns<<")  ";
+    std::cerr<<"Variant sites at distance "<<variant_dist<<" before variant: "<<variant_column_at_distance(A,variant_dist).count()<<"\n";
+    std::cerr<<"Informative sites: "<<n_informative<<" ("<<double(n_informative)/non_masked_columns<<")  \n";
+
+}
+
 int main(int argc,char* argv[])
 { 
     try {
@@ -1357,7 +1485,6 @@ int main(int argc,char* argv[])
         alignment A0 = load_A(args, false, erase_empty);
 
         auto A = A0;
-        const alphabet& a = A.get_alphabet();
 
         if (auto ref_name = get_arg<string>(args, "clean-to-ref"))
             A = clean_to_ref(A, *ref_name);
@@ -1396,9 +1523,6 @@ int main(int argc,char* argv[])
         {
             // This takes a range of SEQUENCES, not a range of columns.
             string range = args.count("consensus-seqs") ? args["consensus-seqs"].as<string>() : "-";
-            auto consensus_seqs1 = parse_multi_range(range, A.n_sequences());
-            auto consensus1 = get_consensus(A, consensus_seqs1);
-
             auto find_args = split(args["find-alleles"].as<string>(),':');
             if (find_args.size() < 4)
                 throw myexception()<<"argument to --find-alleles only has "<<find_args.size()<<" colon-separate elements.";
@@ -1411,18 +1535,7 @@ int main(int argc,char* argv[])
             if (not find_args[3].empty())
                 max_count = convertTo<int>(find_args[3]);
 
-            // Preserve reference numbering while retaining columns for allele identity and lookup.
-            // A reference gap consumes no position and shares the next reference base's coordinate.
-            vector<int> reference_positions(A.length());
-            int ref_pos = 0;
-            for(int c=0;c<A.length();c++)
-            {
-                reference_positions[c] = ref_pos;
-                if (not A.gap(c,0)) ref_pos++;
-            }
-            auto alleles = find_alleles(consensus1, A, n_snps, L, min_count, max_count,
-                                        consensus_seqs1, reference_positions);
-            show_alleles(alleles, A.get_alphabet(), consensus1, reference_positions);
+            report_alleles(A, range, n_snps, L, min_count, max_count);
             exit(0);
         }
 
@@ -1452,19 +1565,7 @@ int main(int argc,char* argv[])
         if (args.count("snp-snp-lengths"))
         {
             int max_d = args["snp-snp-lengths"].as<int>();
-            // Go through non-overlapping pairs, using the first sequence in the pair as a reference.
-            // (If we were scanning to remove things we would use every sequence as a reference, but this is just to get a distribution).
-            std::cout<<"seq1\tseq2\tSNPs\tref_pos\tdistance\n";
-            for(int i=0;i<A.n_sequences();i+=2)
-            {
-                int i2 = (i+1)%A.n_sequences();
-                // positions are measured in terms of distance along i
-                auto snp_positions = get_snp_positions(A,i,i2);
-                for(int j=1;j<=max_d;j++)
-                    for(int k=0;k+j < snp_positions.size();k+=j)
-                        std::cout<<i<<"\t"<<i2<<"\t"<<j<<"\t"<<snp_positions[k].first<<"\t"<<snp_positions[k+j].second - snp_positions[k].second<<"\n";
-            }
-
+            write_snp_distances(A, max_d);
             exit(0);
         }
 
@@ -1501,73 +1602,10 @@ int main(int argc,char* argv[])
 
             double max_missing_freq = args["missing-freq"].as<double>();
 
-            auto columns = find_columns(A, [&](int col) {
-                return largest_minor_allele_count(A,col) >= count and missing_freq(A,col) <= max_missing_freq;
-            });
-
-            // Space out the kept columns - keep only 1 every width bases
-            if (args.count("one-every"))
-            {
-                int width = args["one-every"].as<int>();
-                auto bins = make_bins(columns, width);
-                columns.clear();
-                for(auto& bin: bins)
-                    if (bin.size())
-                        columns.push_back(bin[0]);
-            }
-
-            if (args.count("write-bed"))
-            {
-                auto chromosome = args["write-bed"].as<string>();
-                if (args.count("show-freq"))
-                    write_snp_bed_with_frequencies(std::cout, chromosome, columns, A);
-                else
-                    write_snp_bed(std::cout, chromosome, columns, A);
-            }
-            else
-            {
-                select_columns_inplace(A, columns);
-                std::cout<<A<<std::endl;
-            }
+            write_selected_sites(A, count, max_missing_freq, get_arg<int>(args, "one-every"),
+                                 get_arg<string>(args, "write-bed"), args.count("show-freq"));
             exit(0);
         }
-
-        //----- Count informative/non-constant sites ----//
-        dynamic_bitset<> informative(A.length());
-        dynamic_bitset<> different(A.length());
-
-        dynamic_bitset<> alleles2(A.length());
-        dynamic_bitset<> alleles3(A.length());
-        dynamic_bitset<> is_masked(A.length());
-        
-        valarray<int> count(a.size());
-
-
-        for(int c=0;c<A.length();c++) {
-            count = 0;
-            for(int i=0;i<A.n_sequences();i++) {
-                int l = A(c,i);
-                if (a.is_letter(l))
-                    count[l]++;
-
-            }
-
-
-
-            different[c]  =   is_informative(count ,0);
-            informative[c]  = is_informative(count ,1);
-
-
-            alleles2[c] = n_letters(count,0) == 2;
-            alleles3[c] = n_letters(count,0) == 3;
-            is_masked[c] = is_masked_column(A,c);
-        }
-
-        int n_different  = different.count();
-        int n_informative  = informative.count();
-
-
-        int non_masked_columns = A.length() - is_masked.count();
 
         if (args.count("msmc"))
             write_msmc(std::cout, A);
@@ -1584,20 +1622,7 @@ int main(int argc,char* argv[])
             std::cout<<A;
         std::cout.flush();
 
-        if (A.length() != A0.length())
-            std::cerr<<"Length changed from "<<A0.length()<<" to "<<A.length()<<"\n";
-        int variant_dist = args["variant"].as<int>();
-        std::cerr<<"Masked "<<is_masked.count()<<" sites.  "<<A.length()-is_masked.count()<<" sites remain.\n";
-        std::cerr<<"Sites with 2 alleles: "<<alleles2.count()<<" ("<<double(alleles2.count())/non_masked_columns<<")  ";
-        std::cerr<<"Sites with 3 alleles: "<<alleles3.count()<<" ("<<double(alleles3.count())/non_masked_columns<<")  \n";
-        {
-            double pi_stat = pi(A);
-            double theta = pi_stat/(1.0-pi_stat);
-            std::cerr<<"pi = "<<pi_stat<<"    theta = "<<theta<<"\n";
-        }
-        std::cerr<<"Variant sites: "<<n_different<<" ("<<double(n_different)/non_masked_columns<<")  ";
-        std::cerr<<"Variant sites at distance "<<variant_dist<<" before variant: "<<variant_column_at_distance(A,variant_dist).count()<<"\n";
-        std::cerr<<"Informative sites: "<<n_informative<<" ("<<double(n_informative)/non_masked_columns<<")  \n";
+        write_summary(A, A0.length(), args["variant"].as<int>());
 
         // Look at LD, look at whether adjacent SNPs are correlated, and over what distance.
         // Look at blocks with more than
