@@ -8,18 +8,16 @@
 
 # SYNOPSIS
 
-**draw-graph** _file1_
+**draw-graph** _file_
 
 # DESCRIPTION
 
-Write a multiconnected tree in Graphviz DOT format.
+Write a multiconnected tree in Graphviz DOT format. The required _file_ contains a
+Newick tree and/or taxon partitions.
 
 # INPUT OPTIONS:
 **-h**, **--help**
 : produce help message
-
-**--file** _arg_
-: File containing a Newick tree and/or taxon partitions.
 
 
 # REPORTING BUGS:

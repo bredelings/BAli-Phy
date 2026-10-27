@@ -23,49 +23,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util/myexception.hh"
 #include "mctree.hh"
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 
-namespace po = boost::program_options;
-using po::variables_map;
 
 using namespace std;
 
-
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
-  using namespace po;
-
-  // named options
-  options_description input("Input options");
-  input.add_options()
-    ("help,h", "produce help message")
-    ("file",value<string>(),"file containing a tree and/or taxon partitions")
-    ;
-  
-  options_description all("All options");
-  all.add(input);
-
-  // positional options
-  positional_options_description p;
-  p.add("file", -1);
-  
-  variables_map args;     
-  store(command_line_parser(argc, argv).
-	    options(all).positional(p).run(), args);
-  notify(args);    
-
-  if (args.count("help")) {
-    cout<<"Write a multiconnected tree as Graphviz DOT on standard output.\n\n";
-    cout<<"Usage: draw-graph <file>\n";
-    cout<<all<<"\n";
-    exit(0);
-  }
-
-  if (not args.count("file"))
-    throw myexception()<<"No file supplied.";
-
-  return args;
-}
 
 int main(int argc,char* argv[]) 
 { 
@@ -75,10 +37,21 @@ int main(int argc,char* argv[])
     cout.setf(ios::fixed);
 
     //----------- Parse command line  -----------//
-    variables_map args = parse_cmd_line(argc,argv);
+    CLI::App app{"Write a multiconnected tree as Graphviz DOT on standard output.", "draw-graph"};
+    app.get_formatter()->long_option_alignment_ratio(0.2f);
+    string filename;
+    app.add_option("FILE", filename, "File containing a tree and/or taxon partitions")->required()->type_name("");
+    try
+    {
+      app.parse(argc, argv);
+    }
+    catch (const CLI::ParseError& error)
+    {
+      app.exit(error);
+      return error.get_exit_code() == 0 ? 0 : 1;
+    }
 
     //------------ Load Partitions --------------//
-    string filename = args["file"].as<string>();
     MC_tree T = load_MC_tree(filename);
     
     //------------ Draw the graph ---------------//
