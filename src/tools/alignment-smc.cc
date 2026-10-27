@@ -423,19 +423,18 @@ void write_dical2(std::ostream& o, const alignment& A)
 
 void write_msmc(std::ostream& o, const alignment& A)
 {
-    int last_snp = -1;
+    int called_sites = 0;
     int widened = 0;
     for(int i=0;i<A.length();i++)
     {
-        if (is_masked_column(A,i))
-        {
-            last_snp = i;
-            continue;
-        }
+        // Count unmasked sites since the preceding output SNP, including this site.
+        // A mask contributes zero but does not discard earlier callable positions.
+        if (is_masked_column(A,i)) continue;
+        called_sites++;
 
         if (not is_variant_column(A,i)) continue;
         
-        o<<"1\t"<<i<<"\t"<<(i-last_snp)<<"\t";
+        o<<"1\t"<<i+1<<"\t"<<called_sites<<"\t";
         for(int j=0;j<A.n_sequences();j++)
         {
             auto [spelling, exact] = A.decode(A(i,j));
@@ -444,7 +443,7 @@ void write_msmc(std::ostream& o, const alignment& A)
         }
         o<<"\n";
 
-        last_snp = i;
+        called_sites = 0;
     }
 
     if (widened)
