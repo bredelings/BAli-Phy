@@ -164,7 +164,7 @@ jobs:
 
         sudo apt-get update
         sudo apt-get install -y pandoc
-        sudo apt-get install -y librange-v3-dev libeigen3-dev libcairo2-dev libcli11-dev libzstd-dev
+        sudo apt-get install -y libeigen3-dev libcairo2-dev libcli11-dev libzstd-dev
         sudo apt-get install -y r-base
 
         if [ "${{ matrix.compiler }}" = "gcc" ] ; then
@@ -207,7 +207,6 @@ jobs:
           mingw-w64-ucrt-x86_64-meson
           mingw-w64-ucrt-x86_64-ninja
           mingw-w64-ucrt-x86_64-pkgconf
-          mingw-w64-ucrt-x86_64-range-v3
           mingw-w64-ucrt-x86_64-zstd
 
     - name: Materialize test-data links (Windows native MinGW)
@@ -267,7 +266,7 @@ jobs:
 
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 # Don't try and install python3.12
           brew install pandoc ccache coreutils
-          brew install eigen range-v3 cairo cli11 fmt zstd
+          brew install eigen cairo cli11 fmt zstd
           brew install r
           if [ "${{ matrix.compiler }}" = "llvm" ] ; then
             brew install llvm

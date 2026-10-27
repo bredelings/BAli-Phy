@@ -13,9 +13,7 @@
 
 #include "simplifier.hh"
 
-#include "range/v3/all.hpp"
 
-namespace views = ranges::views;
 
 using std::string;
 using std::vector;

@@ -42,7 +42,8 @@
 #include "util/matrix.hh"
 #include "util/io/matrix.hh"
 
-#include "range/v3/all.hpp"
+#include <algorithm>
+#include <ranges>
 
 using std::vector;
 using std::valarray;
@@ -1155,7 +1156,7 @@ vector<pair<allele_t,int>> find_alleles(const vector<int>& consensus, const alig
         if (ac.second >= min_count and ac.second <= max_count)
             alleles.push_back(ac);
 
-    ranges::sort(alleles, {}, [](auto& x){return x.first[0].first;});
+    std::ranges::sort(alleles, {}, [](auto& x){return x.first[0].first;});
 
     return alleles;
 }

@@ -15,9 +15,9 @@
 
 #include "util/assert.hh"
 
-#include "range/v3/all.hpp"
+#include <ranges>
 
-namespace views = ranges::views;
+namespace views = std::views;
 
 using namespace simplifier;
 
@@ -512,7 +512,7 @@ std::optional<Occ::Exp> pattern_to_expression(const Occ::Pattern& pattern)
 	return {};
     else
     {
-        auto args = pattern.args | ranges::to<vector<Occ::Exp>>;
+        auto args = pattern.args | std::ranges::to<vector<Occ::Exp>>();
         return Occ::ConApp{*pattern.head, args};
     }
 }
@@ -939,7 +939,7 @@ SimplifierState::simplify_alt(const std::optional<Occ::Exp>& object, bool scruti
             Unfolding unfolding;
             if (pattern.is_irrefutable())
             {
-                auto other_cons = seen_constructors | ranges::to<vector>;
+                auto other_cons = seen_constructors | std::ranges::to<vector>();
                 unfolding = OtherConUnfolding(other_cons);
             }
             else

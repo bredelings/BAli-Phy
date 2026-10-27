@@ -73,8 +73,7 @@ if ! "${PACMAN[@]}" -S --needed \
         mingw-w64-ucrt-x86_64-boost \
         mingw-w64-ucrt-x86_64-cairo \
         mingw-w64-ucrt-x86_64-cli11 \
-        mingw-w64-ucrt-x86_64-eigen3 \
-        mingw-w64-ucrt-x86_64-range-v3 ; then
+        mingw-w64-ucrt-x86_64-eigen3 ; then
     echo "Failed to install MSYS2 packages into ${SYSROOT}."
     exit 1
 fi

@@ -24,7 +24,7 @@
 #include "util/log-level.hh"
 #include "util/string/strip.hh"
 #include "util/string/split.hh"
-#include "range/v3/all.hpp"
+#include <ranges>
 
 using std::string;
 using std::vector;
@@ -154,7 +154,7 @@ vector<pair<string,dynamic_bitset<>>> get_branch_queries_from_tree(SequenceTree 
 // Read named leaf groups or labelled Newick trees as directed branch queries.
 vector<pair<string,dynamic_bitset<>>> load_groups_from_file(const string& filename, const vector<string>& leaf_names)
 {
-    namespace views = ranges::views;
+    namespace views = std::views;
     vector<pair<string,dynamic_bitset<>>> groups;
 
     istream_or_ifstream groups_file(std::cin,"-",filename,"groups file");
@@ -185,7 +185,7 @@ vector<pair<string,dynamic_bitset<>>> load_groups_from_file(const string& filena
                 throw myexception()<<"In groups file '"<<filename<<"':\n  Badly formed line:\n    |"<<line_;
 
             auto name = words[0];
-            auto taxon_names = words | views::drop(2) | ranges::to<std::vector>;
+            auto taxon_names = words | views::drop(2) | std::ranges::to<std::vector>();
             dynamic_bitset<> group = group_from_names(leaf_names, taxon_names);
             groups.push_back({name,group});
         }

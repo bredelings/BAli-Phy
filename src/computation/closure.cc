@@ -3,11 +3,11 @@
 #include "computation/operation.hh"
 #include "computation/preprocess.hh"
 #include "util/string/join.hh" // for join( )
-#include <range/v3/all.hpp>
+#include <ranges>
 #include <cstdlib>
 #include <utility>
 
-namespace views = ranges::views;
+namespace views = std::views;
 
 using std::vector;
 using std::string;

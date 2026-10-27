@@ -1,8 +1,8 @@
 #include "trim.hh"
 
-#include <range/v3/all.hpp>
+#include <ranges>
 
-namespace views = ranges::views;
+namespace views = std::views;
 
 using std::vector;
 

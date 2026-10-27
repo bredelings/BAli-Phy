@@ -3,7 +3,7 @@ tree_tests = executable(
   'tree-tests.cc',
   build_rpath: build_rpath,
   include_directories: [root_inc, libutil_inc],
-  dependencies: [boost, libxxhash, eigen, math_dep, librange],
+  dependencies: [boost, libxxhash, eigen, math_dep],
   link_with: [libcommon, libmcon, libutil],
 )
 

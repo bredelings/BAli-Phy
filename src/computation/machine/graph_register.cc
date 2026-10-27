@@ -1,5 +1,5 @@
 #include <iostream>
-#include <range/v3/all.hpp>
+#include <ranges>
 #include <algorithm>
 #include "util/truncate.hh"
 #include "util/log-level.hh"
@@ -573,7 +573,7 @@ std::set<int> reg_heap::find_affected_sampling_events(int c, const std::function
 void reg_heap::do_pending_effect_registrations()
 {
     // Don't modify `steps_pending_effect_registration` while we are walking it!
-    auto v = steps_pending_effect_registration | ranges::to<vector>;
+    auto v = steps_pending_effect_registration | std::ranges::to<vector>();
     for(int s: v)
     {
         assert(steps[s].has_pending_effect_registration());
@@ -587,7 +587,7 @@ void reg_heap::do_pending_effect_registrations()
 void reg_heap::do_pending_effect_unregistrations()
 {
     // Don't modify `steps_pending_effect_unregistration` while we are walking it!
-    auto v = steps_pending_effect_unregistration | ranges::to<vector>;
+    auto v = steps_pending_effect_unregistration | std::ranges::to<vector>();
     for(int s: v)
     {
         assert(steps[s].has_pending_effect_unregistration());

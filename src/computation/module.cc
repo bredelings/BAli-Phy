@@ -13,7 +13,7 @@
 #include "util/variant.hh"
 #include "util/io.hh"
 #include "util/log-level.hh"
-#include "range/v3/all.hpp"
+#include <ranges>
 #include "util/range.hh"
 #include "util/set.hh"   // for add( , )
 #include "util/string/split.hh"
@@ -51,7 +51,6 @@
 #include <link.h>
 #endif
 
-namespace views = ranges::views;
 
 using std::pair;
 using std::map;
@@ -1919,7 +1918,7 @@ Core::Exp<> load_builtin(const module_loader& loader, const string& plugin_name,
     auto fn = loader.load_builtin_ptr(plugin_name, symbol_name, call_conv);
 
     auto args = make_vars<>(n);
-    auto args_exp = args | ranges::to<vector<Core::Exp<>>>;
+    auto args_exp = args | std::ranges::to<vector<Core::Exp<>>>();
 
     Core::Exp<> body = Core::BuiltinOp<>(plugin_name, symbol_name, call_conv, args_exp, fn);
     return lambda_quantify(args, body);
@@ -1997,7 +1996,7 @@ Core::Exp<> make_constructor(const std::string& con_name, const DataConInfo& inf
     int arity = info.dict_arity() + info.arity();
 
     auto args = make_vars<>(arity);
-    auto args_exp = args | ranges::to<vector<Core::Exp<>>>;
+    auto args_exp = args | std::ranges::to<vector<Core::Exp<>>>();
 
     if (info.is_newtype_constructor)
     {
@@ -2209,7 +2208,7 @@ const_symbol_ptr make_builtin_symbol(const std::string& name)
         symbol_info cons(":", symbol_type_t::constructor, "[]", 2, {{Infix::Associativity::right, 5}});
         S = std::make_shared<symbol_info>(cons);
         auto args = make_vars<>(2,'l');
-        auto args_exp = args | ranges::to<vector<Core::Exp<>>>;
+        auto args_exp = args | std::ranges::to<vector<Core::Exp<>>>();
         U = lambda_quantify(args, Core::Exp<>(Core::ConApp(":", args_exp)));
     }
     else if (is_tuple_name(name))
@@ -2217,7 +2216,7 @@ const_symbol_ptr make_builtin_symbol(const std::string& name)
         int arity = name.size() - 1;
         S = std::make_shared<symbol_info>(name, symbol_type_t::constructor, name, arity);
         auto args = make_vars<>(arity,'t');
-        auto args_exp = args | ranges::to<vector<Core::Exp<>>>;
+        auto args_exp = args | std::ranges::to<vector<Core::Exp<>>>();
         U = lambda_quantify(args, Core::Exp<>(Tuple(args_exp)));
     }
     else

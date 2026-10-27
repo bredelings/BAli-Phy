@@ -3,7 +3,7 @@ alignment_sample_file_tests = executable(
   'character-property-sample-file-tests.cc',
   build_rpath: build_rpath,
   include_directories: [root_inc, libutil_inc],
-  dependencies: [boost, libxxhash, eigen, math_dep, librange],
+  dependencies: [boost, libxxhash, eigen, math_dep],
   link_with: [libcommon, libmcon, libutil],
 )
 
@@ -14,7 +14,7 @@ ambiguity_tests = executable(
   'ambiguity-tests.cc',
   build_rpath: build_rpath,
   include_directories: [root_inc, libutil_inc],
-  dependencies: [boost, libxxhash, eigen, math_dep, librange],
+  dependencies: [boost, libxxhash, eigen, math_dep],
   link_with: [libcommon, libmcon, libutil],
 )
 

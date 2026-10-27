@@ -358,12 +358,3 @@ alignment_reader::alignment_reader(std::istream& f)
     next();
 }
 
-
-void fasta_blocks::next()
-{
-    find_alignment(*file);
-    if (*file)
-        current = read_next_alignment(*file);
-    else
-        file = nullptr;
-}

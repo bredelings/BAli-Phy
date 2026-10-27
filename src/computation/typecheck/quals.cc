@@ -2,9 +2,8 @@
 #include "kindcheck.hh"
 #include "computation/haskell/ids.hh"
 
-#include "range/v3/all.hpp"
+#include <ranges>
 
-namespace views = ranges::views;
 
 using std::string;
 using std::vector;
@@ -21,7 +20,7 @@ namespace
         set<string> names;
         for(const auto& var: Hs::vars_bound_in_stmts(R.stmts))
             names.insert(unloc(var).name);
-        return names | ranges::to<vector<string>>();
+        return names | std::ranges::to<vector<string>>();
     }
 
     vector<Hs::LExp> rec_stmt_binder_exps(const vector<string>& names)

@@ -9,7 +9,8 @@
 
 #include "computation/core/func.hh"
 
-#include <range/v3/all.hpp>
+#include <ranges>
+#include "util/concat_view.hh"
 
 using std::string;
 using std::vector;
@@ -20,7 +21,7 @@ using std::optional;
 using std::tuple;
 using std::shared_ptr;
 
-namespace views = ranges::views;
+namespace views = std::views;
 
 string NonCanonical::print() const
 {
@@ -596,7 +597,8 @@ Core::Decls<> Solver::simplify(const LIE& givens, LIE& wanteds)
 
         // interact
         bool done = false;
-        for(auto& inert: views::concat(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs, inerts.dicts, inerts.irreducible, inerts.failed))
+        for(auto& inert: concat_view(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs,
+                                      inerts.dicts, inerts.irreducible, inerts.failed))
         {
             auto I = interact(inert, p);
             if (auto C = to<Changed>(I))
@@ -705,7 +707,8 @@ Core::Decls<> Solver::simplify(const LIE& givens, LIE& wanteds)
 
     // Split inert into substitution and remaining constraints
     wanteds.clear();
-    for(auto& P: views::concat(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs, inerts.dicts, inerts.irreducible, inerts.failed))
+    for(auto& P: concat_view(inerts.tv_eqs, inerts.mtv_eqs, inerts.tyfam_eqs,
+                             inerts.dicts, inerts.irreducible, inerts.failed))
     {
         assert(is_canonical(P));
 
@@ -799,7 +802,7 @@ Solver::Solver(const TypeChecker& tc)
 string InertSet::print() const
 {
     vector<string> ps;
-    for(auto& pred: views::concat(tv_eqs, mtv_eqs, tyfam_eqs, dicts, irreducible, failed))
+    for(auto& pred: concat_view(tv_eqs, mtv_eqs, tyfam_eqs, dicts, irreducible, failed))
     {
         ps.push_back(pred.print());
     }

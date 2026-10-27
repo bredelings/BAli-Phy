@@ -49,4 +49,4 @@ Command-line-visible models and functions are registered through JSON files unde
 - `examples/`: biological sequence, alignment, and tree example datasets.
 - `scripts/`: helper scripts, R plotting/reporting scripts, benchmarking, and packaging helpers.
 - `python/`: small Python helper package, mainly for printers.
-- `external/` and `subprojects/`: vendored or fallback dependencies such as range-v3, immer, dlfcn-win32, fmt, and xxhash wraps.
+- `external/` and `subprojects/`: vendored or fallback dependencies such as immer, dlfcn-win32, fmt, and xxhash wraps.

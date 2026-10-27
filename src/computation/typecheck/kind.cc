@@ -1,13 +1,13 @@
 #include "kind.hh"
 
-#include <range/v3/all.hpp>
+#include <ranges>
 
 using std::string;
 using std::optional;
 using std::pair;
 using std::vector;
 
-namespace views = ranges::views;
+namespace views = std::views;
 
 // Note: Attempting to add kinds on TypeCon can cause loops!
 // * make_arrow_type( ) <-> kind_arrow( )

@@ -1,4 +1,5 @@
 #include "util/text.hh"
+#include "util/concat_view.hh"
 #include "util/file-readers.hh"
 #include <cstdlib>
 #include <iostream>
@@ -40,4 +41,29 @@ int main()
             return 1;
         }
     }
+
+    // Check reference preservation, empty boundaries, and ownership directly: application tests do
+    // not isolate these iterator properties. Retire when std::views::concat replaces this view.
+    std::vector<int> empty, first{1, 2}, last{3};
+    auto joined = concat_view(empty, first, empty, last, empty);
+    static_assert(std::ranges::forward_range<decltype(joined)>);
+    for (auto& value: joined)
+        value *= 2;
+    const std::vector<int> expected{2, 4, 6};
+    const auto owned = concat_view(std::vector<int>{2, 4}, std::vector<int>{6});
+    const auto mixed = concat_view(first, std::as_const(last));
+    static_assert(std::same_as<std::ranges::range_reference_t<decltype(mixed)>, const int&>);
+    auto current = joined.begin();
+    auto previous = current++;
+    if (first != std::vector<int>{2, 4} or last != std::vector<int>{6} or
+        std::ranges::to<std::vector>(joined) != expected or
+        std::ranges::to<std::vector>(owned) != expected or
+        std::ranges::to<std::vector>(mixed) != expected or
+        concat_view(empty, empty).begin() != std::default_sentinel or
+        *previous != 2 or *current != 4)
+    {
+        std::cerr<<"Unexpected concat_view traversal or reference behavior\n";
+        return 1;
+    }
+
 }

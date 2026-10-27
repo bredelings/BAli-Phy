@@ -17,7 +17,6 @@
 #include "util/io.hh"
 #include "util/log-level.hh"
 #include <boost/compute/detail/sha1.hpp>
-#include <range/v3/all.hpp>
 
 namespace fs = std::filesystem;
 

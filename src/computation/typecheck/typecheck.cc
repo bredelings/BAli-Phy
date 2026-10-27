@@ -4,7 +4,6 @@
 
 #include <set>
 
-#include <range/v3/all.hpp>
 
 #include "haskell/haskell.hh"
 
@@ -20,7 +19,6 @@
 #include "alphabetize.hh" // for alphabetize_type( ).
 #include "solver.hh"
 
-namespace views = ranges::views;
 
 using std::vector;
 using std::string;
@@ -1478,8 +1476,8 @@ pair<Hs::Binds,Core::Decls<>> typechecker_result::all_binds() const
     Hs::Binds all = value_decls;
     all.signatures = {};
 
-    ranges::insert(all, all.end(), default_method_decls);
-    ranges::insert(all, all.end(), instance_method_decls);
+    all.insert(all.end(), default_method_decls.begin(), default_method_decls.end());
+    all.insert(all.end(), instance_method_decls.begin(), instance_method_decls.end());
 
 //    std::cerr<<"Haskell decls:\n";
 //    std::cerr<<all.print();

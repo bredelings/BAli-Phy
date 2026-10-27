@@ -19,9 +19,9 @@
   # include <tuple>
   # include "models/model-expr.hh"
   # include "models/model-type.hh"
-  # include "range/v3/all.hpp"
 
-  namespace views = ranges::views;
+  # include <ranges>
+
 
   class zz_driver;
 
@@ -319,7 +319,7 @@ CM::UntypedExpr make_sample(const CM::UntypedExpr& dist)
 CM::UntypedExpr make_function(const vector<CM::UntypedPattern>& patterns, const CM::UntypedExpr& body)
 {
     auto f = body;
-    for(auto& pattern: patterns | views::reverse)
+    for(auto& pattern: patterns | std::views::reverse)
     {
         f = {
             CM::NoAnn{},

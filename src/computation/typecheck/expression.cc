@@ -1,3 +1,4 @@
+#include <ranges>
 #include "typecheck.hh"
 #include "kindcheck.hh"
 #include "match.hh" // for tcMatchesFun
@@ -56,7 +57,9 @@ namespace
         Hs::Matches matches;
         for(const auto& alt: alternatives)
         {
-            auto rhs = Hs::apply({alt.constructor.loc, unloc(alt.constructor)}, alt.rhs_apps | ranges::views::transform([](const auto& app) { return app.arg; }) | ranges::to<std::vector>);
+            auto rhs = Hs::apply({alt.constructor.loc, unloc(alt.constructor)},
+                                 alt.rhs_apps | std::views::transform([](const auto& app) { return app.arg; })
+                                              | std::ranges::to<std::vector>());
             matches.push_back(Hs::MRule({alt.checked_pattern}, Hs::SimpleRHS(rhs)));
         }
         return matches;

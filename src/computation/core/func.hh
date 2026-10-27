@@ -1,6 +1,8 @@
 #ifndef CORE_FUNC_H
 #define CORE_FUNC_H
 
+#include <ranges>
+
 #include "util/myexception.hh"
 #include "computation/core/ast.hh"
 #include "computation/haskell/ids.hh"
@@ -40,7 +42,7 @@ Core::Exp<NoteV, NoteE> make_apply(const Core::Exp<NoteV, NoteE>& E, const std::
 template <typename NoteV = std::monostate, typename NoteE = std::monostate>
 Core::Exp<NoteV, NoteE> lambda_quantify(const std::vector<Core::Var<NoteV>>& xs, Core::Exp<NoteV, NoteE> E)
 {
-    for(auto& x: xs | ranges::views::reverse)
+    for(auto& x: xs | std::views::reverse)
 	E = Core::Lambda<NoteV,NoteE>{x, E};
 
     return E;
@@ -65,7 +67,7 @@ Core::Exp<NoteV, NoteE> make_rec_let(Core::Decls<NoteV,NoteE> decls, Core::Exp<N
 template <typename NoteV = std::monostate, typename NoteE = std::monostate>
 Core::Exp<NoteV, NoteE> make_lets(Core::Binds<NoteV,NoteE> binds, Core::Exp<NoteV, NoteE> body)
 {
-    for(auto& bind: binds | ranges::views::reverse)
+    for(auto& bind: binds | std::views::reverse)
         body = Core::Let<NoteV,NoteE>{std::move(bind), std::move(body)};
     return body;
 }

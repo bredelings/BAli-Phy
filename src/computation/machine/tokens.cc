@@ -1,11 +1,12 @@
+#include <algorithm>
 #include <iostream>
 #include "graph_register.hh"
 #include "util/range.hh" // for remove_element( )
-#include "range/v3/all.hpp"
+#include <ranges>
 #include "util/assert.hh"
 #include "util/set.hh"
 
-namespace views = ranges::views;
+namespace views = std::views;
 
 using std::vector;
 using std::pair;
@@ -1033,7 +1034,7 @@ void reg_heap::check_tokens() const
 
 	// At most 1 neighboring node can be older.
 	auto older = [&](int t2){ return token_older_than(t2,t); };
-	assert(ranges::count_if(tokens[t].neighbors(), older) <= 1);
+	assert(std::ranges::count_if(tokens[t].neighbors(), older) <= 1);
 
 	for(int c: tokens[t].context_refs)
 	    assert(token_for_context(c) == t);

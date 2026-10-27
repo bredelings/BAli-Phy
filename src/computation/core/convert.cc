@@ -2,7 +2,7 @@
 #include "computation/haskell/Integer.hh"
 #include "util/variant.hh"
 
-#include <range/v3/all.hpp>
+#include <ranges>
 
 using std::set;
 using std::vector;
@@ -72,7 +72,7 @@ Core::Pattern<> to_core_pattern(const Occ::Pattern& P)
         return {};
     else
     {
-	auto args = P.args | ranges::views::transform( to_core_pattern_arg ) | ranges::to<vector>();
+	auto args = P.args | std::views::transform( to_core_pattern_arg ) | std::ranges::to<vector>();
 	return {P.head, args};
     }
 }

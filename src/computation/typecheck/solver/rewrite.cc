@@ -4,9 +4,7 @@
 
 #include "util/variant.hh"
 
-#include <range/v3/all.hpp>
 
-namespace views = ranges::views;
 
 using std::vector;
 using std::string;

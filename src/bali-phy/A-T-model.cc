@@ -39,11 +39,11 @@
 #include "util/string/join.hh"                       // for join
 #include "util/string/split.hh"                      // for split, split_on_last
 #include "util/text.hh"                              // for bold, bold_blue
-#include <range/v3/all.hpp>                         // for ranges::transform
+#include <ranges>
 
 class module_loader;
 
-namespace views = ranges::views;
+namespace views = std::views;
 
 extern int log_verbose;
 

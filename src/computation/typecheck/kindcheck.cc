@@ -1,5 +1,5 @@
 #include "kindcheck.hh"
-#include "range/v3/all.hpp"
+#include <ranges>
 #include "haskell/ids.hh"
 #include "util/set.hh"   // for add( , )
 #include "util/graph.hh"
@@ -14,7 +14,7 @@ using std::optional;
 using std::string;
 using std::vector;
 
-namespace views = ranges::views;
+namespace views = std::views;
 
 
 /* FIXME: We currently kind_check data types, and then duplicate the work to construct the DataConInfo.

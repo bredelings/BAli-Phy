@@ -43,9 +43,9 @@
 #include "computation/operations.hh"
 #include "computation/haskell/generated.hh"
 #include "computation/haskell/ids.hh"
-#include "range/v3/all.hpp"
+#include <ranges>
 
-namespace views = ranges::views;
+namespace views = std::views;
 namespace HsG = Haskell::Generated;
 
 extern int log_verbose;

@@ -7,7 +7,7 @@
 #include "rename/rename.hh" // for get_indices_for_names( )
 
 #include "util/set.hh"
-#include <range/v3/all.hpp>
+#include <ranges>
 #include "util/assert.hh"
 
 using std::string;
@@ -27,7 +27,7 @@ Type quantify(const T& tvs, const Type& monotype)
         return monotype;
     else
     {
-        return ForallType(tvs | ranges::to<vector>, monotype);
+        return ForallType(tvs | std::ranges::to<vector>(), monotype);
     }
 }
 
@@ -844,7 +844,7 @@ TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Dec
 
     auto ev_decls = std::make_shared<Core::Decls<>>(solve_decls);
 
-    auto imp = std::make_shared<Implication>(level()+1, qtvs | ranges::to<vector>, givens, wanteds, ev_decls, context());
+    auto imp = std::make_shared<Implication>(level()+1, qtvs | std::ranges::to<vector>(), givens, wanteds, ev_decls, context());
 
     if (not wanteds.empty())
         current_wanteds().implications.push_back(imp);
@@ -873,7 +873,7 @@ TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Dec
 
     // 8. Construct the quantified declaration to return
     vector< Core::Var<> > dict_vars = dict_vars_from_lie(givens);
-    auto gen_bind = mkGenBind( qtvs | ranges::to<vector>, dict_vars, ev_decls, decls, bind_infos );
+    auto gen_bind = mkGenBind( qtvs | std::ranges::to<vector>(), dict_vars, ev_decls, decls, bind_infos );
     Hs::Decls decls2({{noloc, gen_bind }});
 
     return decls2;

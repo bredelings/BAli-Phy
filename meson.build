@@ -154,14 +154,6 @@ else
   libdl = cpp.find_library('dl')
 endif
 
-if cpp.has_header('range/v3/view/take.hpp')
-  used_librange = 'system'
-  librange = []
-else
-  used_librange = 'internal'
-  subdir('external/range-v3/')
-endif
-
 cereal = dependency('cereal').as_system()
 
 subdir('external/immer/')
@@ -311,7 +303,6 @@ summary({'optimization': get_option('optimization'),
         },section: 'Configuration')
 
 summary({
-         'range v3': used_librange,
          'cairo': used_cairo,
          'RE/flex': 'bundled 6.3.0 (portable runtime)'
         },section: 'Libraries')

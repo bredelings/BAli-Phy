@@ -1,4 +1,4 @@
-#include "range/v3/all.hpp"
+#include <ranges>
 #include <iostream>
 #include "graph_register.hh"
 #include <algorithm>
@@ -14,7 +14,7 @@ using std::pair;
 using std::cerr;
 using std::endl;
 
-namespace views = ranges::views;
+namespace views = std::views;
 
 long total_steps_pivoted = 0;
 long total_results_pivoted = 0;

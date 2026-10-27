@@ -1,3 +1,4 @@
+#include <ranges>
 #include "typecheck.hh"
 #include "kindcheck.hh"
 #include "haskell/ids.hh"
@@ -593,7 +594,7 @@ void TypeChecker::default_type_instance(const TypeCon& tf_con,
     rhs = apply_subst(default_subst, rhs);
 
     // 4. add the instance
-    auto quantified_tvs = free_type_variables(type_apply(tf_con, args)) | ranges::to<vector>();
+    auto quantified_tvs = free_type_variables(type_apply(tf_con, args)) | std::ranges::to<vector>();
     TypeFamEqnInfo equation{quantified_tvs, tf_con, args, rhs};
     if (check_open_type_family_equation(equation))
         add_type_instance(equation);

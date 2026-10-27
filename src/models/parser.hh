@@ -55,9 +55,9 @@
   # include <tuple>
   # include "models/model-expr.hh"
   # include "models/model-type.hh"
-  # include "range/v3/all.hpp"
 
-  namespace views = ranges::views;
+  # include <ranges>
+
 
   class zz_driver;
 

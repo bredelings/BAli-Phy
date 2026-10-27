@@ -2031,7 +2031,7 @@ CM::UntypedExpr make_sample(const CM::UntypedExpr& dist)
 CM::UntypedExpr make_function(const vector<CM::UntypedPattern>& patterns, const CM::UntypedExpr& body)
 {
     auto f = body;
-    for(auto& pattern: patterns | views::reverse)
+    for(auto& pattern: patterns | std::views::reverse)
     {
         f = {
             CM::NoAnn{},

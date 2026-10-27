@@ -7,10 +7,10 @@
 #include "computation/runtime/ast.hh"
 #include "computation/runtime/trim.hh"
 
-#include <range/v3/all.hpp>
+#include <ranges>
 #include <stdexcept>
 
-namespace views = ranges::views;
+namespace views = std::views;
 
 using std::vector;
 using std::string;

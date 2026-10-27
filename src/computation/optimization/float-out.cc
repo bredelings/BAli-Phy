@@ -9,8 +9,6 @@
 #include "free-vars.hh"
 #include "immer/map.hpp" // for immer::map
 
-#include "range/v3/all.hpp"
-namespace views = ranges::views;
 
 using std::vector;
 using std::set;

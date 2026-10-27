@@ -4,7 +4,7 @@
 #include "util/string/join.hh"
 #include "haskell/ids.hh"       // for tuple_name
 #include "util/set.hh"          // for includes( , )
-#include <range/v3/all.hpp>
+#include <ranges>
 
 using std::string;
 using std::pair;
@@ -12,7 +12,7 @@ using std::tuple;
 using std::vector;
 using std::optional;
 
-namespace views = ranges::views;
+namespace views = std::views;
 
 namespace Haskell
 {

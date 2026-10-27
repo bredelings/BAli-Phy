@@ -8,9 +8,9 @@
 #include "computation/haskell/generated.hh" // for Haskell::Generated builders
 #include "computation/haskell/ids.hh"       // for haskell_qid
 #include "util/string/join.hh"              // for join( )
-#include "range/v3/all.hpp"
+#include <ranges>
 
-namespace views = ranges::views;
+namespace views = std::views;
 namespace HsG = Haskell::Generated;
 
 using std::string;

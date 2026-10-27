@@ -11,8 +11,8 @@ using std::pair;
 using std::vector;
 using std::optional;
 
-#include <range/v3/all.hpp>
-namespace views = ranges::views;
+#include <ranges>
+namespace views = std::views;
 
 namespace Haskell
 {

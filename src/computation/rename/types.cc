@@ -1,3 +1,4 @@
+#include <ranges>
 #include <string>
 #include <vector>
 #include <set>
@@ -89,7 +90,7 @@ void free_type_variables_(const Hs::LType& ltype, vector<Hs::LTypeVar>& tvs)
     }
     else if (auto fa = type.to<Hs::ForallType>())
     {
-        auto binders = fa->type_var_binders | ranges::to<set>();
+        auto binders = fa->type_var_binders | std::ranges::to<set>();
 
         vector<Hs::LTypeVar> body_tvs;
         free_type_variables_(fa->type, body_tvs);
@@ -165,7 +166,7 @@ vector<Hs::LTypeVar> free_type_variables(const Hs::LType& type)
 
 vector<Hs::LTypeVar> type_vars_except(const vector<Hs::LTypeVar>& tvs, const vector<Hs::LTypeVar>& remove_)
 {
-    auto remove = remove_ | ranges::to<set>();
+    auto remove = remove_ | std::ranges::to<set>();
 
     vector<Hs::LTypeVar> tvs2;
     for(auto& tv: tvs)

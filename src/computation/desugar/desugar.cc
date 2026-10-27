@@ -1,4 +1,4 @@
-#include <range/v3/all.hpp>
+#include <ranges>
 #include <cstdint>
 #include <limits>
 #include "computation/module.hh"
@@ -15,8 +15,7 @@
 #include "computation/haskell/ids.hh"
 #include "computation/core/func.hh"
 
-#include "range/v3/all.hpp"
-namespace views = ranges::views;
+namespace views = std::views;
 
 using std::string;
 using std::vector;
@@ -28,8 +27,8 @@ using std::tuple;
 
 void desugared_decls::append(const desugared_decls& binds)
 {
-    ranges::insert(decls, decls.end(), binds.decls);
-    ranges::insert(strict_vars, strict_vars.end(), binds.strict_vars);
+    decls.insert(decls.end(), binds.decls.begin(), binds.decls.end());
+    strict_vars.insert(strict_vars.end(), binds.strict_vars.begin(), binds.strict_vars.end());
 }
 
 Core::Exp<> desugared_decls::wrap_body(const Core::Exp<>& body) const
@@ -100,7 +99,7 @@ Core::Exp<> unit_value()
 
 vector<Core::Exp<>> pattern_binding_payload(const vector<Core::Var<>>& binders)
 {
-    vector<Core::Exp<>> payload = binders | ranges::to<vector<Core::Exp<>>>;
+    vector<Core::Exp<>> payload = binders | std::ranges::to<vector<Core::Exp<>>>();
 
     if (payload.size() == 1)
         payload.push_back(unit_value());
@@ -242,9 +241,9 @@ desugared_decls desugar_state::desugar_decls(const Hs::Decls& v)
             auto gb_body_decls = desugar_decls(gb->body);
 
             vector<Core::Var<>> all_locals = binders;
-            ranges::insert(all_locals, all_locals.end(), gb_body_decls.strict_vars);
+            all_locals.insert(all_locals.end(), gb_body_decls.strict_vars.begin(), gb_body_decls.strict_vars.end());
 
-            auto all_locals_exp = all_locals | ranges::to<vector<Core::Exp<>>>;
+            auto all_locals_exp = all_locals | std::ranges::to<vector<Core::Exp<>>>();
             Core::Exp<> tup_body = make_rec_let( gb_body_decls.decls, gb_body_decls.wrap_body(Tuple(all_locals_exp)) );
 
             for(auto& dd: gb->dict_decls | views::reverse)

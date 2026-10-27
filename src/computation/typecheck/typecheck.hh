@@ -9,7 +9,6 @@
 #include "kindcheck.hh"
 #include "env.hh"
 #include "substitution.hh"
-#include <range/v3/all.hpp>
 #include "util/cow-ptr.hh"
 
 #include "computation/haskell/haskell.hh"

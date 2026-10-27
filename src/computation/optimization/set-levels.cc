@@ -9,9 +9,8 @@
 #include "free-vars.hh"
 #include "immer/map.hpp" // for immer::map
 
-#include "range/v3/all.hpp"
-namespace views = ranges::views;
-namespace actions = ranges::actions;
+#include <ranges>
+namespace views = std::views;
 
 using std::vector;
 using std::set;
@@ -69,7 +68,7 @@ Core::Var<> strip_level(const Levels::Var& x)
 
 vector<Core::Var<>> strip_levels(const vector<Levels::Var>& xs)
 {
-    return xs | ranges::views::transform( [&](auto& x) {return strip_level(x);} ) | ranges::to<vector>();
+    return xs | std::views::transform( [&](auto& x) {return strip_level(x);} ) | std::ranges::to<vector>();
 }
 
 Core::Pattern<> strip_levels_from_pattern(const Levels::Pattern& pattern)
@@ -88,12 +87,12 @@ Levels::Var add_level(const FV::Var& x, const level_env_t& env)
 
 vector<Levels::Var> add_levels_no_missing(const Vector<FV::Var>& xs, const level_env_t& env)
 {
-    return xs | ranges::views::transform( [&](auto& x) {return env.at(x);} ) | ranges::to<vector>();
+    return xs | std::views::transform( [&](auto& x) {return env.at(x);} ) | std::ranges::to<vector>();
 }
 
 vector<Levels::Var> add_levels(const Vector<FV::Var>& xs, const level_env_t& env)
 {
-    return xs | ranges::views::transform( [&](auto& x) {return add_level(x, env);} ) | ranges::to<vector>();
+    return xs | std::views::transform( [&](auto& x) {return add_level(x, env);} ) | std::ranges::to<vector>();
 }
 
 Levels::Pattern subst_pattern(const FV::Pattern& pattern, const level_env_t& env)
@@ -261,7 +260,7 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
     {
         vector<Levels::Exp> lv_args = C->args
             | views::transform([&](const auto& arg) {return set_level_maybe_MFE(arg, level, env);})
-            | ranges::to<vector>;
+            | std::ranges::to<vector>();
 
         return Levels::ConApp{C->head, lv_args};
     }
@@ -277,7 +276,7 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
                 else
                     return set_level_maybe_MFE(arg, level, env);
             })
-            | ranges::to<vector>;
+            | std::ranges::to<vector>();
 
         return Levels::BuiltinOp(B->lib_name, B->func_name, B->call_conv, lv_args, B->op);
     }

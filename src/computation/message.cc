@@ -6,12 +6,12 @@
 #include <string_view>
 #include "util/text.hh"
 #include "util/string/join.hh"
-#include <range/v3/all.hpp>
+#include <ranges>
 
 using std::string;
 using std::vector;
 
-namespace views = ranges::views;
+namespace views = std::views;
 
 // Advance one source column position using the same tab convention as RE/flex:
 // UTF-8 scalar values count as one column, and tabs advance to an 8-column stop.

@@ -3,7 +3,7 @@ util_tests = executable(
   'text-tests.cc',
   build_rpath: build_rpath,
   include_directories: libutil_inc,
-  dependencies: [boost, eigen, librange, fmt, cereal, utf8proc_dep],
+  dependencies: [boost, eigen, fmt, cereal, utf8proc_dep],
   link_with: libutil,
 )
 

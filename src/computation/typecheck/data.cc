@@ -1,3 +1,4 @@
+#include <ranges>
 #include "typecheck.hh"
 #include "haskell/ids.hh"
 #include "rename/rename.hh"
@@ -474,7 +475,7 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
             }
 
             // 6. Get existential vars
-            set<TypeVar> exi_tvs_set = written_tvs | ranges::to<set>;
+            set<TypeVar> exi_tvs_set = written_tvs | std::ranges::to<set>();
             for(auto& u_tv: u_tvs)
                 exi_tvs_set.erase(u_tv);
 
@@ -500,7 +501,7 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
             info.data_type = data_type_con;
             info.written_constraints = constraints;
             info.top_constraints = data_context;
-            info.exi_tvs = exi_tvs_set | ranges::to<vector>();
+            info.exi_tvs = exi_tvs_set | std::ranges::to<vector>();
             info.uni_tvs = u_tvs;
             info.is_newtype_constructor = data_decl.data_or_newtype == Hs::DataOrNewtype::newtype;
             

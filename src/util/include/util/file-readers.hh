@@ -15,7 +15,7 @@
 #include "util/log-level.hh"
 
 
-#include "range/v3/all.hpp"
+#include <ranges>
 
 struct CompleteLine {    // Line Proxy for the input Iterator
     friend std::istream& operator>>(std::istream& is, CompleteLine& cl);
@@ -23,14 +23,12 @@ struct CompleteLine {    // Line Proxy for the input Iterator
     std::string completeLine;
 };
 
-inline auto lines(std::istream& input) {return ranges::istream<CompleteLine>(input);}
+inline auto lines(std::istream& input) {return std::views::istream<CompleteLine>(input);}
 
 
 // See "tools/read-trees.hh" - it implements almost the same interface on either Tree or RootedTree.
 // See "alignment/load.hh" - it implements alignment loading with better error handling.
 
-// We should be able to use range-v3 instead -- there is already a views::getlines( ) range, for example.
-// * also, separating position from evaluation should allow laziness..
 
 template <typename T>
 struct reader

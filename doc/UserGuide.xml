@@ -4393,7 +4393,6 @@ Otherwise you can install meson through pip3:
   mingw-w64-ucrt-x86_64-fmt \
   mingw-w64-ucrt-x86_64-gcc \
   mingw-w64-ucrt-x86_64-meson \
-  mingw-w64-ucrt-x86_64-range-v3 \
   mingw-w64-ucrt-x86_64-zstd</userinput></screen>
     <para><command>pacman</command> installs the Python, Ninja, and pkg-config dependencies of
       the packaged UCRT64 version of Meson automatically.  Cairo is included so that the
