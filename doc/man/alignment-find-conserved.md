@@ -1,6 +1,6 @@
 % alignment-find-conserved(1)
 % Benjamin Redelings
-% September 2026
+% October 2026
 
 # NAME
 
@@ -20,17 +20,18 @@ The highlighting matrix is written to standard output. Group listings and per-co
 parsimony diagnostics are written to standard error; redirect the two streams separately.
 This command does not estimate a tree, branch lengths, substitution rates, or support values.
 
-Supply an alignment and a matching Newick tree. The optional alignment filename defaults
-to standard input; an explicit `-` also reads standard input. Sequence names are matched to
-tree-tip names; sequences may be reordered to match the tree. The output header gives the resulting order.
-A tree is required for the calculations.
-Groups are optional: without them the highlighting matrix is zero, but per-column parsimony
-scores are still reported.
+Supply an alignment and a matching tree. The optional alignment filename defaults to
+standard input; an explicit `-` also reads standard input. The required **`--tree`** file
+may contain Newick or NEXUS trees; only the first tree is used. Sequence names are matched
+to tree-tip names, and sequences may be reordered accordingly. The output header gives
+that order. Groups are optional: without them the highlighting matrix is zero, but
+per-column parsimony scores are still reported.
 
 Empty columns are removed during alignment loading, including columns consisting entirely
-of gaps (`-`), unknown calls (`?`), or a mixture of these. All-`N` DNA columns are retained. Reported positions are 1-based indices in the processed alignment, not necessarily
-original alignment columns or reference-sequence coordinates. For Triplets or Codons they
-index alphabet units rather than individual nucleotides.
+of gaps (`-`), unknown calls (`?`), or a mixture of these. All-`N` DNA columns are retained.
+Reported positions are 1-based indices in the processed alignment, not necessarily original
+alignment columns or reference-sequence coordinates. For Triplets or Codons they index
+alphabet units rather than individual nucleotides.
 
 # GROUPS AND SPLITS
 
@@ -175,62 +176,37 @@ does not identify sequencing errors, admixture, or an incorrect tree.
 
 # EXAMPLES
 
-Create `example.fasta`:
-
-```
->a
-AAA
->b
-ATA
->c
-AAA
->d
-TTA
->e
-TTA
->f
-TTA
-```
-
-Create `example.tree`:
-
-```
-((a,b),c,((d,e),f));
-```
-
-Create `groups.txt` using the `left` and `right` groups shown above. Highlight conserved groups:
+Highlight conserved groups defined in `groups.txt`:
 
 ```bash
-alignment-find-conserved example.fasta --tree example.tree \
+alignment-find-conserved alignment.fasta --tree tree.nwk \
     --groups groups.txt --require-conservation \
     > highlights.txt 2> diagnostics.txt
 ```
 
-Both groups receive 1 at columns 1 and 3. At column 2, only `right` is conserved and receives
-1; `left` receives 0. Every numerical row also has the extra trailing zero described above.
+Sequences in qualifying groups receive 1; the diagnostics include group conservation
+values and per-column parsimony scores.
 
-Require different conserved values across the split:
+Using the `left` and `right` group names above, require different conserved values:
 
 ```bash
-alignment-find-conserved example.fasta --tree example.tree \
+alignment-find-conserved alignment.fasta --tree tree.nwk \
     --groups groups.txt --split 'left | right' \
     --require-change --ignore-rate-change \
     > changes.txt 2> changes.log
 ```
 
-Column 1 receives 1 in both groups. At column 2, `left` receives 0 and `right` receives 0.5.
-At column 3 both groups receive 0.5: they are conserved at the same state, so neither is
-interesting under this comparison.
+Groups with different non-gap conservation values receive 1. Conserved groups that fail
+the comparison retain a highlight of 0.5.
 
 Obtain per-column parsimony diagnostics without groups:
 
 ```bash
-alignment-find-conserved example.fasta --tree example.tree \
+alignment-find-conserved alignment.fasta --tree tree.nwk \
     > /dev/null 2> site-scores.txt
 ```
 
-The scores for columns 1, 2, and 3 are respectively 1, 2, and 0. They are printed on the lines
-following the corresponding column numbers, not alongside them in a two-column table.
+Each score appears on the line following its column number.
 
 # SEE ALSO
 
