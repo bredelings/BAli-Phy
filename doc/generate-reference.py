@@ -9,6 +9,7 @@ import posixpath
 import re
 import shlex
 import sys
+import unicodedata
 from pathlib import Path
 from urllib.parse import quote
 
@@ -134,13 +135,30 @@ def navigation(slug):
     return '<nav class="reference-breadcrumbs" aria-label="Breadcrumb">' + ' / '.join(crumbs) + '</nav>'
 
 
+# Match the symbolic characters accepted by the model language, including Unicode operators.
+def symbolic_name(name):
+    return bool(name) and all(c in "!#$%&*+./<=>?@\\^|-~:" if ord(c) < 128
+                              else unicodedata.category(c) in ('Pc', 'Pd', 'Po', 'Sm', 'Sc', 'Sk', 'So')
+                              for c in name)
+
+
+# A signature already names every argument; detail entries need prose or a default to add value.
+def argument_has_details(arg):
+    return bool(arg.get('description', '').strip()) or arg.get('default_value') is not None
+
+
 # Group each typed argument with its punctuation so CSS can wrap at real argument boundaries.
 # Ordinary text spaces preserve a readable signature when copied or read without the stylesheet.
 def signature_html(entry):
-    arguments = [html.escape(arg['name']) + ': <span class="signature-type">'
-                 + html.escape(arg['type']) + '</span>' for arg in entry['args']]
+    arguments = []
+    for arg in entry['args']:
+        label = html.escape(arg['name'])
+        # Keep default-expression links valid when the argument has no separate detail entry.
+        if not argument_has_details(arg):
+            label = '<span id="arg-' + quote(arg['name']) + '">' + label + '</span>'
+        arguments.append(label + ': <span class="signature-type">' + html.escape(arg['type']) + '</span>')
     name = html.escape(entry['name'])
-    if 'fixity' in entry and len(arguments) == 2:
+    if symbolic_name(entry['name']) and len(arguments) == 2:
         prefix = ''
         units = ['(' + arguments[0] + ')', name + ' (' + arguments[1] + ')']
     else:
@@ -174,49 +192,47 @@ def binding_page(slug, entry, lookup, warnings):
         metadata.append('**Type constraints:** ' + ', '.join(map(code, entry['constraints'])))
     if 'fixity' in entry:
         fixity = entry['fixity']
-        metadata.append(f'**Operator:** precedence {fixity["precedence"]}; '
+        label = 'Operator' if symbolic_name(entry['name']) else 'Backtick infix use'
+        metadata.append(f'**{label}:** precedence {fixity["precedence"]}; '
                      f'associativity: {html.escape(fixity["associativity"])}.')
     if entry.get('synonyms'):
         metadata.append('**Aliases:** ' + ', '.join(map(code, entry['synonyms'])))
     if metadata:
         parts += ['<div class="reference-metadata">', *metadata, '</div>']
-    parts += ['</div>', '## Arguments', '<div class="reference-section">']
-    if not args:
-        parts.append('This entry has no arguments.')
-    notes = []
-    if any(match[1] in names for arg in args
-           for match in DEFAULT_TOKEN.finditer(arg.get('default_value', ''))):
-        notes.append('Underlined names in default expressions refer to other arguments.')
-    if any(arg.get('default_value', '').startswith('~') for arg in args):
-        notes.append('A default beginning with `~` specifies a prior distribution.')
-    if notes:
-        parts += ['<div class="argument-note">', ' '.join(notes), '</div>']
-    originals = []
-    if args:
-        parts.append('<dl class="arguments">')
-    for arg in args:
-        label = html.escape(arg['name'])
-        if arg.get('description'):
-            label += '<span class="argument-colon">:</span>'
-        parts += ['<div class="argument">', f'<dt id="arg-{quote(arg["name"])}"><code>{label}</code></dt>',
-                  '<dd class="argument-description">']
-        if arg.get('description'):
-            parts.append(prose(arg['description']))
-        parts.append('</dd>')
-        default = arg.get('default_value')
-        if default is not None:
-            rendered = default_text(default, names, warnings)
-            parts += ['<dd class="argument-default">',
-                      '<strong class="default-label">Default:</strong> ' + rendered, '</dd>']
-            if rendered != code(default):
-                originals.append(f'<dt>{code(arg["name"])}</dt><dd><pre>{code(default)}</pre></dd>')
-        parts.append('</div>')
-    if args:
-        parts.append('</dl>')
-    if originals:
-        parts += ['<details class="original-defaults"><summary>Original default expressions</summary>',
-                  '<dl>' + '\n'.join(originals) + '</dl>', '</details>']
     parts.append('</div>')
+    detailed_args = [arg for arg in args if argument_has_details(arg)]
+    if detailed_args:
+        parts += ['## Arguments', '<div class="reference-section">']
+        notes = []
+        if any(match[1] in names for arg in detailed_args
+               for match in DEFAULT_TOKEN.finditer(arg.get('default_value', ''))):
+            notes.append('Underlined names in default expressions refer to other arguments.')
+        if any(arg.get('default_value', '').startswith('~') for arg in detailed_args):
+            notes.append('A default beginning with `~` specifies a prior distribution.')
+        if notes:
+            parts += ['<div class="argument-note">', ' '.join(notes), '</div>']
+        originals = []
+        parts.append('<dl class="arguments">')
+        for arg in detailed_args:
+            label = html.escape(arg['name'])
+            if arg.get('description', '').strip():
+                label += '<span class="argument-colon">:</span>'
+            parts += ['<div class="argument">', f'<dt id="arg-{quote(arg["name"])}"><code>{label}</code></dt>']
+            if arg.get('description', '').strip():
+                parts += ['<dd class="argument-description">', prose(arg['description']), '</dd>']
+            default = arg.get('default_value')
+            if default is not None:
+                rendered = default_text(default, names, warnings)
+                parts += ['<dd class="argument-default">',
+                          '<strong class="default-label">Default:</strong> ' + rendered, '</dd>']
+                if rendered != code(default):
+                    originals.append(f'<dt>{code(arg["name"])}</dt><dd><pre>{code(default)}</pre></dd>')
+            parts.append('</div>')
+        parts.append('</dl>')
+        if originals:
+            parts += ['<details class="original-defaults"><summary>Original default expressions</summary>',
+                      '<dl>' + '\n'.join(originals) + '</dl>', '</details>']
+        parts.append('</div>')
     if entry.get('description'):
         parts += ['## Description', '<div class="reference-section reference-description">',
                   prose(entry['description']), '</div>']

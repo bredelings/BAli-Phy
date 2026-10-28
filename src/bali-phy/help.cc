@@ -242,7 +242,7 @@ string get_help_for_rule(const Rule& rule)
     help<<header("Usage");
     help<<"   ";
     // Show symbolic operators infix; named functions such as pow retain function-call syntax.
-    if (rule.fixity and is_haskell_sym(name) and args_names_types.size() == 2)
+    if (is_haskell_sym(name) and args_names_types.size() == 2)
         help<<bold("(")<<args_names_types[0]<<bold(")")<<" "<<bold(name)<<" "
             <<bold("(")<<args_names_types[1]<<bold(")");
     else
@@ -262,19 +262,30 @@ string get_help_for_rule(const Rule& rule)
 	help<<indent_and_wrap(3, terminal_width(),join(syn,", "))<<"\n\n";
     }
 
-    if (not rule.args.empty())
-	help<<header("Arguments");
+    bool arguments_heading = false;
     for(auto& arg: rule.args)
     {
-	// 1. arg: description
-	auto description = arg.description.value_or("");
-	help<<"   "<<blue(arg.name)<<": "<<description<<".\n";
+        auto description = boost::trim_copy(arg.description.value_or(""));
+        if (description.empty() and not arg.default_value)
+            continue;
 
-	// 2. default =/~ default
-	if (arg.default_value)
-	    help<<"       default "<<show_model(*arg.default_value)<<"\n";
-
-	help<<std::endl;
+        // Defaults remain useful even when an argument needs no explanatory prose.
+        if (not arguments_heading)
+        {
+            help<<header("Arguments");
+            arguments_heading = true;
+        }
+        help<<"   "<<blue(arg.name);
+        if (not description.empty())
+        {
+            help<<": "<<description;
+            if (description.find_last_of(".!?:;") != description.size() - 1)
+                help<<".";
+        }
+        help<<"\n";
+        if (arg.default_value)
+            help<<"       default "<<show_model(*arg.default_value)<<"\n";
+        help<<std::endl;
     }
 
     if (auto description = rule.docs.description)

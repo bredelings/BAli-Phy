@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
+import json
+import os
+from pathlib import Path
+import re
+import tempfile
 import subprocess
 
 
@@ -144,6 +149,32 @@ def main():
         diagnostics = result.stdout + result.stderr
         if result.returncode == 0 or "Inference inputs cannot be used with the help command" not in diagnostics:
             raise AssertionError("help accepted inference inputs instead of reporting their conflict")
+
+    # Synthetic bindings isolate empty/default-only entries and operators without fixity, which
+    # catalogue entries need not exercise. Retire if binding help stops using these JSON fields.
+    with tempfile.TemporaryDirectory(dir=".") as temporary:
+        bindings = Path(temporary) / "bindings"
+        bindings.mkdir()
+        entry = {"name": "%+%", "result_type": "a", "call": "@x",
+                 "args": [{"name": "x", "type": "a"}, {"name": "y", "type": "a"}]}
+        (bindings / "operator.json").write_text(json.dumps(entry))
+        local_args = argparse.Namespace(**vars(args))
+        # Wine uses Windows path-list separators; relative paths work in its mapped working directory.
+        separator = ";" if args.wrapper or os.name == "nt" else ":"
+        local_args.package_path = args.package_path + separator + temporary
+        text = re.sub(r"\x1b\[[0-9;]*m", "", run_help(local_args, "%+%"))
+        if "(x: a) %+% (y: a) -> a" not in text or "Arguments" in text:
+            raise AssertionError("operator help required fixity or displayed empty argument details")
+        entry["name"] = "helpDetailsTest"
+        entry["args"][0]["description"] = "   "
+        entry["args"][1]["default_value"] = "@x"
+        entry["args"].append({"name": "z", "type": "a", "description": "An explanation."})
+        (bindings / "details.json").write_text(json.dumps(entry))
+        text = re.sub(r"\x1b\[[0-9;]*m", "", run_help(local_args, "helpDetailsTest"))
+        details = text.split("Arguments", 1)[1]
+        if ("default" not in details or "   x" in details or "y:" in details or
+                "z: An explanation." not in details or "explanation.." in details):
+            raise AssertionError("argument help lost defaults or retained empty/duplicate punctuation")
 
     models = run_help(args, "models")
     if "Covarion/" not in models:
