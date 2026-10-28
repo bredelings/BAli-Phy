@@ -7,11 +7,12 @@
     "args": [
         {
             "name": "as",
-            "type": "List<Double>"
+            "type": "List<Double>",
+            "description": "Nonempty list of positive concentration parameters, one per proportion"
         }
     ],
-    "title":"The Dirichlet distribution",
+    "title": "The Dirichlet distribution",
     "examples": ["~Dirichlet([1,2,3])"],
-    "description": "The Dirichlet distribution samples from vectors that sum to 1.",
+    "description": "The Dirichlet distribution produces a list of proportions that sum to 1, with one entry for each concentration parameter in as. The expected proportion for each entry is its concentration divided by sum(as). Multiplying all concentrations by the same factor greater than 1 preserves these expected proportions while reducing variation around them.",
     "see": ["SymmetricDirichlet"]
 }

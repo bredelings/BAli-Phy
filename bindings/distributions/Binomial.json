@@ -9,17 +9,19 @@
         {
             "name": "N",
             "type": "Int",
-	    "description": "Number of trials"
+            "description": "Number of independent trials, a nonnegative integer"
         },
         {
             "name": "p",
             "type": "Double",
-	    "description": "Probability of success in each trial"
+            "description": "Probability of success in each trial, between 0 and 1 inclusive"
         }
     ],
-    "description": "The Binomial distribution gives the number of successes in N trials, where each trial has probability p.  Thus the sum of N Bernoulli random variables with success probability p follows the Binomial(N,p) distribution.",
-    "examples": ["~Binomial(N=10, p=0.25)",
-		 "~IID(10, Binomial(10, 0.25))",
-		 "density(Binomial(10, 0.25), 2)"
-		]
+    "description": "The Binomial distribution counts successes in N independent trials, each with the same success probability p. Results are integers from 0 through N. Equivalently, it is the distribution of the sum of N independent Bernoulli random variables with success probability p.",
+    "examples": [
+        "~Binomial(N=10, p=0.25)",
+        "~IID(10, Binomial(10, 0.25))",
+        "density(Binomial(10, 0.25), 2)"
+    ],
+    "see": ["Bernoulli"]
 }

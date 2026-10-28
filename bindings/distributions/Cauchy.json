@@ -8,15 +8,19 @@
         {
             "name": "m",
             "type": "Double",
-	    "description": "The center parameter"
+            "description": "Center and median of the distribution"
         },
         {
             "name": "s",
             "type": "Double",
-	    "description": "The scale parameter"
+            "description": "Positive scale parameter; larger values give a wider distribution"
         }
     ],
     "title": "The Cauchy-Lorentz distribution",
-    "description":"The Cauchy distribution is so widely dispersed that its mean and variance are both undefined.",
-    "examples": ["~Cauchy(0,1)","~IID(10, Cauchy(0, 1))"]
+    "description": "The Cauchy distribution is symmetric around m and has heavy tails, allowing values far from its center. Its mean and variance are undefined; s is a scale parameter, not a standard deviation.",
+    "examples": [
+        "~Cauchy(0,1)",
+        "~IID(10, Cauchy(0,1))",
+        "cdf(Cauchy(0,1),0)  # Returns 0.5"
+    ]
 }

@@ -8,14 +8,15 @@
         {
             "name": "n",
             "type": "Int",
-	    "description": "The number of samples"
+            "description": "Number of draws, a nonnegative integer"
         },
         {
             "name": "dist",
             "type": "Distribution<a>",
-	    "description": "The distribution to sample from"
+            "description": "Distribution used for every draw"
         }
     ],
     "title": "The Independent and Identically Distributed (i.i.d.) distribution",
-    "examples": ["~IID(10, Normal(0,1))    // A list of 10 Normal(0,1) random variables"]
+    "examples": ["~IID(10, Normal(0,1))  # A list of 10 independent Normal(0,1) draws"],
+    "description": "IID produces a list of n independent draws from the same distribution dist. If dist has shared random parameters, the draws are independent conditional on those parameters."
 }

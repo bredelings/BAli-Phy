@@ -9,9 +9,10 @@
         {
             "name": "p",
             "type": "Double",
-	    "description": "Probability of success (i.e. drawing a 1)"
+            "description": "Probability of drawing 1, between 0 and 1 inclusive"
         }
     ],
-    "description":"The Bernoulli distribution yields 1 with probability p, and 0 with probability (1-p).",
-    "examples": ["~Bernoulli(0.5)"]
+    "description": "The Bernoulli distribution yields 1 with probability p and 0 with probability 1-p.",
+    "examples": ["~Bernoulli(0.5)"],
+    "see": ["Binomial"]
 }

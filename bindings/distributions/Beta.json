@@ -8,18 +8,19 @@
         {
             "name": "a",
             "type": "Double",
-	    "description": "The a parameter"
+            "description": "Positive shape parameter a"
         },
         {
             "name": "b",
             "type": "Double",
-	    "description": "The b parameter"
+            "description": "Positive shape parameter b"
         }
     ],
     "title": "The Beta distribution",
-    "description": "The Beta distribution has mean a*b and variance\n a*b/((a+b)^2 * (a+b+1)).",
-    "examples": ["~Beta(1,1)               // Sample from a Uniform(0,1)",
-		 "~IID(10, Beta(1,1))       // Generate 10 uniform samples",
-		 "density(Beta(3,4),0.5)   // Compute the Beta[3,4] density at 0.5"
-		 ]
+    "description": "The Beta distribution describes values between 0 and 1, such as probabilities and proportions. Its mean is a/(a+b) and its variance is a*b/((a+b)^2 * (a+b+1)).\n\nBeta(1,1) is uniform on this interval. Increasing both shape parameters by the same factor concentrates values around the same mean.",
+    "examples": [
+        "~Beta(1,1)              # Sample from a Uniform(0,1)",
+        "~IID(10, Beta(1,1))     # Generate 10 uniform samples",
+        "density(Beta(3,4),0.5)  # Compute the density at 0.5"
+    ]
 }

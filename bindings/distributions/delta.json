@@ -7,12 +7,13 @@
         {
             "name": "x",
             "type": "Double",
-	    "description": "Location of the point mass"
+            "description": "Location of the point mass; every draw equals this value"
         }
     ],
     "title": "The Dirac delta distribution",
-    "description": "The Delta distribution returns `x` when sampling.  It does not have a continuous density.",
-    "examples": ["~delta(0)                // Always return 0",
-		 "~IID(10, delta(1))       // Return ten 1s"
-		 ]
+    "description": "The delta distribution places all probability at x, so every draw equals x. It has no continuous density. The function density(delta(x),y) returns probability mass: 1 when y equals x and 0 otherwise.",
+    "examples": [
+        "~delta(0)           # Always return 0",
+        "~IID(10, delta(1))  # Return ten 1s"
+    ]
 }
