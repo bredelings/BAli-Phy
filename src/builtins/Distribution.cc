@@ -748,6 +748,28 @@ extern "C" closure builtin_function_cauchy_density(OperationArgs& Args)
     return { cauchy_pdf(x, a1, a2) };
 }
 
+// Evaluate the Cauchy CDF with the same argument order and error handling as the Normal CDF.
+extern "C" closure builtin_function_cauchy_cdf(OperationArgs& Args)
+{
+    double m = Args.evaluate_slot_to_value(0).as_double();
+    double s = Args.evaluate_slot_to_value(1).as_double();
+    double x = Args.evaluate_slot_to_value(2).as_double();
+    assert(s >= 0);
+
+    using boost::math::cauchy_distribution;
+
+    try
+    {
+        return { cdf(cauchy_distribution<>(m,s),x) };
+    }
+    catch(const std::exception& e)
+    {
+        if (log_verbose >= 2)
+            std::cerr<<"Warning: cauchy_cdf (x="<<x<<", m="<<m<<", s="<<s<<"), "<<e.what()<<std::endl;
+        return { 0.0 };
+    }
+}
+
 extern "C" closure builtin_function_sample_cauchy(OperationArgs& Args)
 {
     double a1 = Args.evaluate_slot_to_value_(0).as_double();

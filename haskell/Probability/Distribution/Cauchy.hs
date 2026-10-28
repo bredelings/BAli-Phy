@@ -6,6 +6,7 @@ import MCMC
 ---- cauchy
 
 foreign import bpcall "Distribution:" cauchy_density :: Double -> Double -> Double -> Log Double
+foreign import bpcall "Distribution:" cauchy_cdf :: Double -> Double -> Double -> Double
 foreign import bpcall "Distribution:" cauchy_quantile :: Double -> Double -> Double -> Double
 foreign import bpcall "Distribution:" sample_cauchy :: Double -> Double -> IO Double
 
@@ -25,7 +26,7 @@ instance HasPdf Cauchy where
     pdf (Cauchy m s) x = cauchy_density m s x
 
 instance Dist1D Cauchy where
-    cdf (Cauchy m s) x = undefined
+    cdf (Cauchy m s) x = cauchy_cdf m s x
 
 instance ContDist1D Cauchy where
     quantile (Cauchy m s) p = cauchy_quantile m s p
