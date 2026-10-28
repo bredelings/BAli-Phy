@@ -16,5 +16,14 @@
             "name": "y",
             "type": "Double"
         }
+    ],
+    "title": "Division",
+    "description": "Divides x by y. Division produces a floating-point result: for example, 5 / 2 is 2.5.",
+    "examples": [
+        "5 / 2"
+    ],
+    "see": [
+        "*",
+        "pow"
     ]
 }

@@ -6,7 +6,9 @@
     },
     "result_type": "a",
     "no_log": true,
-    "constraints": ["Num<a>"],
+    "constraints": [
+        "Num<a>"
+    ],
     "call": "@x + @y",
     "args": [
         {
@@ -18,5 +20,13 @@
             "type": "a"
         }
     ],
-    "title":"The addition operator"
+    "title": "Addition",
+    "description": "Returns the sum of x and y.",
+    "examples": [
+        "2 + 3"
+    ],
+    "see": [
+        "-",
+        "*"
+    ]
 }

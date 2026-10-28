@@ -6,7 +6,9 @@
     },
     "result_type": "a",
     "no_log": true,
-    "constraints": ["Num<a>"],
+    "constraints": [
+        "Num<a>"
+    ],
     "call": "@x - @y",
     "args": [
         {
@@ -17,5 +19,14 @@
             "name": "y",
             "type": "a"
         }
+    ],
+    "title": "Subtraction",
+    "description": "Subtracts y from x.",
+    "examples": [
+        "5 - 2"
+    ],
+    "see": [
+        "+",
+        "*"
     ]
 }

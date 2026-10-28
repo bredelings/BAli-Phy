@@ -6,16 +6,30 @@
     },
     "result_type": "a",
     "no_log": true,
-    "constraints": ["Floating<a>"],
+    "constraints": [
+        "Floating<a>"
+    ],
     "call": "(Prelude.**)(@x,@y)",
     "args": [
         {
             "name": "x",
-            "type": "a"
+            "type": "a",
+            "description": "The base"
         },
         {
             "name": "y",
-            "type": "a"
+            "type": "a",
+            "description": "The exponent"
         }
+    ],
+    "title": "Exponentiation",
+    "description": "Raises x to the power y. The exponent need not be an integer: for example, pow(9.0,0.5) is 3.0.",
+    "examples": [
+        "pow(2.0,3.0)",
+        "pow(9.0,0.5)"
+    ],
+    "see": [
+        "*",
+        "/"
     ]
 }

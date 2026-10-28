@@ -6,7 +6,9 @@
     },
     "result_type": "a",
     "no_log": true,
-    "constraints": ["Num<a>"],
+    "constraints": [
+        "Num<a>"
+    ],
     "call": "@x * @y",
     "args": [
         {
@@ -17,5 +19,15 @@
             "name": "y",
             "type": "a"
         }
+    ],
+    "title": "Multiplication",
+    "description": "Returns the product of x and y.",
+    "examples": [
+        "2 * 3"
+    ],
+    "see": [
+        "+",
+        "/",
+        "pow"
     ]
 }
