@@ -152,7 +152,7 @@ cycle xs         =  let xs' = xs ++ xs' in xs'
 --
 
 take :: Int -> [a] -> [a]
-take 0 x     = []
+take n _ | n <= 0 = []
 take n []    = []
 take n (h:t) = h:(take (n-1) t)
 
