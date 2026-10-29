@@ -3,6 +3,7 @@
     "result_type": "a",
     "no_log": true,
     "call": "(IntMap.!)(@m,@i)",
+    "import": ["qualified Data.IntMap as IntMap"],
     "args": [
         {
             "name": "m",

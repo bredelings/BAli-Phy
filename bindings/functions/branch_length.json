@@ -3,6 +3,7 @@
     "result_type": "Double",
     "no_log": true,
     "call": "branchLength(@tree,@b)",
+    "import": ["Tree"],
     "args": [
         {
             "name": "tree",
