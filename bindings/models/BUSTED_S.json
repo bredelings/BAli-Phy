@@ -15,18 +15,18 @@
             "name": "omegaDist",
             "type": "DiscreteDist<Double>",
             "default_value": "~DirichletMixture(Uniform(0,1), 2, @n)",
-	    "description": "The conserved omega (i.e. dN/dS) values"
+	    "description": "The distribution of conserved omega (dN/dS) values and their mixture weights"
         },
         {
             "name": "posP",
             "type": "Double",
             "default_value": "~Beta(1,10)",
-            "description": "The fraction of positively selected sites"
+            "description": "The branch-site mixture weight of the positive-selection category"
         },
         {
             "name": "posW",
             "type": "Double",
-            "description": "The dN\/dS value for positively selected sites",
+            "description": "The omega value for the positive-selection category under the alternative",
             "default_value": "~LogGamma(4,0.25)"
         },
         {
@@ -51,7 +51,7 @@
             "name": "n",
             "type": "Int",
             "default_value": "2",
-	    "description": "The number of conserved omega categories, if not specified"
+	    "description": "The number of categories in the default conserved omega distribution"
         }
     ],
     "computed": [
@@ -60,7 +60,7 @@
             "context": "object"
         }
     ],
-    "description":"A Bayesian test of positive selection using the BUSTED-S model.  The BUSTED-S model handles synonymous rate variation by adding Gamma-distributed across-site rate variation (ASRV) to the BUSTED model using n=3 bins.\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of the posterior probability of positive selection than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)",
+    "description":"A Bayesian BUSTED-S variant for testing positive selection, with Gamma-distributed rate variation across sites. Omega (dN/dS) categories vary among branches and sites, while each site has a Gamma rate category shared across the tree. All branches participate in the test.\n\nThe omega mixture combines conserved categories with a positive-selection category of weight posP. This category has omega=posW under the alternative (posSelection=1) and omega=1 under the null (posSelection=0).\n\nThe posterior probability of positive selection concerns the overall model comparison, not individual sites. Average PrPosSelection to estimate the posterior probability of positive selection; it can give a more accurate estimate than averaging posSelection. Use statreport to summarize LogOddsPosSelection; do not average that field directly.",
     "extract": "all",
     "citation": {"type": "article",
 		 "title": "Synonymous Site-to-Site Substitution Rate Variation Dramatically Inflates False Positive Rates of Selection Analyses: Ignore at Your Own Peril",

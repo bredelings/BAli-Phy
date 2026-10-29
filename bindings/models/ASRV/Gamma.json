@@ -9,7 +9,7 @@
         {
             "name": "submodel",
             "type": "DiscreteDist<CTMC<a>>",
-            "description": "The model being scaled"
+            "description": "The substitution model or mixture whose rates vary among sites"
         },
         {
             "name": "n",
@@ -26,7 +26,7 @@
     ],
     "examples": ["GTR +> ASRV.Gamma(4) +> Inv"],
     "title": "The Gamma rate heterogeneity model",
-    "description": "This model divides a unit-mean Gamma distribution into equal-probability categories and represents each category by its conditional mean.",
+    "description": "Models differences in evolutionary rate among sites using a Gamma distribution with mean 1. Smaller values of alpha give greater rate variation; larger values give more nearly equal rates.\n\nThe distribution is divided into n equal-probability categories, each represented by its conditional mean. When applied to an existing mixture, each component is combined with each rate category.",
     "citation":{"type": "article",
 		"title": "Maximum likelihood phylogenetic estimation from DNA sequences with variable rates over sites: approximate methods",
 		"year": "1994",

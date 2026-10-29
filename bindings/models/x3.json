@@ -2,7 +2,7 @@
     "name": "x3",
     "result_type": "CTMC<t>",
     "constraints": [ "Triplets<t,n>" ],
-    "title": "Rate matrix on triplets/codons constructed from nucleotide rates",
+    "title": "Triplet rate matrix constructed from nucleotide rates",
     "call": "SModel.x3(@a,@submodel)",
     "import": ["SModel"],
     "args": [
@@ -10,16 +10,16 @@
             "name": "submodel",
             "type": "CTMC<n>",
             "alphabet": "getNucleotides(@a)",
-	    "description": "Nucleotide rates"
+	    "description": "The nucleotide substitution model applied at each of the three positions"
         },
         {
             "name": "a",
             "type": "t",
             "default_value": "get_state(alphabet)",
-	    "description": "The Triplets alphabet"
+	    "description": "The triplet alphabet, including a codon alphabet"
         }
     ],
-    "description":"Construct a triplet or codon rate matrix from a nucleotide rate matrix.\n\nStationary inputs produce stationary models. For stationary non-reversible inputs, equilibrium frequencies are recalculated from the constructed rates.\n\nFor non-equilibrium inputs, root frequencies are calculated by multiplying the nucleotide frequencies at the three positions, then normalizing over the allowed triplets or codons.",
-    "examples": ["F81 +> x3 +> dNdS      // equivalent to MG94","GTR +> x3"],
+    "description":"Construct a rate matrix on a triplet alphabet, including a codon alphabet, from a nucleotide rate matrix. The same nucleotide model applies at all three positions. Each instantaneous substitution changes one nucleotide; the target alphabet determines which triplets are allowed.\n\nStationary inputs produce stationary models. For stationary non-reversible inputs, equilibrium frequencies are recalculated from the constructed rates.\n\nFor non-equilibrium inputs, root frequencies are calculated by multiplying the nucleotide frequencies at the three positions, then normalizing over the allowed triplets or codons.",
+    "examples": ["F81 +> x3 +> dNdS      # equivalent to MG94","GTR +> x3"],
     "see": ["MG94","MG94_ext"]
 }

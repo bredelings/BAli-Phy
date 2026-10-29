@@ -22,25 +22,25 @@
             "name": "p0",
             "type": "Double",
             "default_value": "~Uniform(0,1)",
-	    "description": "The fraction of conserved sites among non-positively selected sites."
+	    "description": "The fraction of conserved sites within the conserved/neutral mixture"
         },
         {
             "name": "posP",
             "type": "Double",
             "default_value": "~Beta(1,10)",
-            "description": "The fraction of positively selected sites"
+            "description": "The fraction of sites in the positive-selection category"
         },
         {
             "name": "posW",
             "type": "Double",
             "default_value": "~LogGamma(4,0.25)",
-            "description": "The omega value for positively selected sites"
+            "description": "The omega value for the positive-selection category under the alternative"
         },
         {
             "name": "posSelection",
             "type": "Int",
             "default_value": "~Bernoulli(0.5)",
-            "description": "The model selector: 1 if positive selection, 0 if not."
+            "description": "The model selector: 1 if positive selection, 0 if not"
         }
     ],
     "computed": [
@@ -49,7 +49,7 @@
             "context": "object"
         }
     ],
-    "description": "This model performs a Bayesian version of the test of M2a against M1a. The posterior probability that posSelection=1 is the posterior probability of positive selection.\n\nThe default background uses GTR, MNM, and MutSelAA. Here omega scales nonsynonymous rates after accounting for amino-acid fitnesses. Thus omega=1 retains these fitness effects; neutrality and positive selection are assessed relative to this background.\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of this probability than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)",
+    "description": "This model performs a Bayesian version of the test of M2a against M1a. The posterior probability that posSelection=1 is the posterior probability of positive selection in the overall model comparison, not a probability for an individual site.\n\nThe conserved, neutral, and positive-selection categories have weights (1-posP)*p0, (1-posP)*(1-p0), and posP. The first two have omega values omega0 and 1. The positive-selection category has omega=posW under the alternative (posSelection=1) and omega=1 under the null (posSelection=0).\n\nThe default background uses GTR, MNM, and MutSelAA. Here omega scales nonsynonymous rates after accounting for amino-acid fitnesses. Thus omega=1 retains these fitness effects; neutrality and positive selection are assessed relative to this background.\n\nAverage PrPosSelection to estimate the posterior probability of positive selection; it can give a more accurate estimate than averaging posSelection. Use statreport to summarize LogOddsPosSelection; do not average that field directly.",
     "citation":{"type": "article",
 		"title": "Accuracy and Power of Statistical Methods for Detecting Adaptive Evolution in Protein Coding Sequences and for Identifying Positively Selected Sites",
 		"year": "2004",
@@ -62,7 +62,7 @@
 			    "number": "2",
 			    "pages": "1041--1051"},
 		"identifier": [{"type":"doi",
-				"id":"10.1534/genetics.104.031153 "}]
+				"id":"10.1534/genetics.104.031153"}]
 	       },
     "examples": ["|w:GY94(omega=w,pi=F1x4)| +> M2a_test","|w:MG94(omega=w)| +> M2a_test","|w:FMutSel0(omega=w)| +> M2a_test"],
     "see": ["M1a", "M2a", "GTR", "MNM", "MutSelAA", "dNdS"],

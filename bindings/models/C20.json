@@ -9,17 +9,17 @@
             "name": "weights",
             "type": "List<Double>",
 	    "default_value":"~SymmetricDirichlet(20, @alpha)",
-	    "description": "The relative frequencies of the components"
+	    "description": "The 20 component probabilities, summing to one"
         },
         {
             "name": "alpha",
             "type": "Double",
 	    "default_value":"2",
-	    "description": "Concentration parameter"
+	    "description": "Concentration parameter of the default symmetric Dirichlet prior on weights"
         }
     ],
-    "title": "Mixture model",
-    "description": "Empirically derived mixture model where different components have different equilibrium frequencies to account for site-specific biochemical constraints. It partitions protein alignment sites into 20 distinct profile classes, each with a unique amino acid distribution, to better approximate the varying selective pressures across a sequence.\nThis site-heterogeneous approach effectively mitigates long-branch attraction and systematic biases that often compromise simpler, single-matrix models like LG or WAG.\nThis version estimates the relative frequencies of the 20 components from the data set under study.",
+    "title": "The C20 amino-acid profile mixture model",
+    "description": "Empirically derived mixture model with 20 fixed amino-acid frequency profiles, representing different site-specific biochemical constraints. At each site, the likelihood is averaged over these profiles using their mixture weights.\n\nThis site-heterogeneous approach effectively mitigates long-branch attraction and systematic biases that often compromise simpler, single-matrix models like LG or WAG.\n\nThis version estimates the relative frequencies of the 20 components from the data set under study.",
     "examples":
     [
         "C20 +> ASRV.Gamma"

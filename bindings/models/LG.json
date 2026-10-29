@@ -1,5 +1,6 @@
 {
     "name": "LG",
+    "title": "The LG amino-acid exchangeability model",
     "deprecated-synonyms": ["lg08"],
     "result_type": "ExchangeModel<AA>",
     "call": "SModel.lg(@a)",
@@ -12,7 +13,7 @@
             "description": "The alphabet"
         }
     ],
-    "description": "Empirically derived exchangability matrix for general proteins.\n\nThis command only refers to the symmetric part of the LG08 model, not the frequencies.  Frequencies are added by using the ` +> F` command.  Frequencies are estimated by default but can be fixed to the values estimated in the paper using ` +> F(LG_freq)`.",
+    "description": "Empirically derived amino-acid exchangeability matrix for general proteins.\n\nLG supplies the symmetric exchangeabilities, not the equilibrium frequencies. When used as a complete substitution model, frequencies are estimated automatically; LG +> F makes this explicit. Use LG +> F(LG_freq) to fix frequencies to the values estimated in the paper.",
     "citation":{"type": "article",
 		"title": "An Improved General Amino Acid Replacement Matrix",
 		"year": "2008",

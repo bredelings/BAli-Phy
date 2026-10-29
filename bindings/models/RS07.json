@@ -23,14 +23,16 @@
             "name": "meanLength",
             "type": "Double",
             "default_value": "~ShiftedExponential(10,1)",
-	    "description": "The mean indel length"
+	    "description": "The mean indel length in alignment symbols; must be at least 1"
         },
         {
             "name": "topology",
             "type": "Topology",
-            "default_value": "get_state(topology)"
+            "default_value": "get_state(topology)",
+            "description": "The tree topology, normally supplied automatically"
         }
     ],
-    "description": "This model allows insertion and deletions (indels) of multiple residues.  Indel lengths are geometrically distributed. Insertions and deletions are symmetric in this model.\nNote that the insertion-deletion rate is normalized to the substitution rate, so that if rate=1.0, then the insertion-deletion rate is the same as the substitution rate.\nNote that the mean indel length must be at least 1.",
+    "description": "This model allows insertions and deletions (indels) of multiple residues.  Indel lengths are geometrically distributed. Insertions and deletions are symmetric in this model.\nNote that the insertion-deletion rate is normalized to the substitution rate, so that if rate=1.0, then the insertion-deletion rate is the same as the substitution rate.\nIndel lengths are measured in alignment symbols (for example, nucleotides for a DNA alignment or codons for a codon alignment).",
+    "examples": ["-I RS07"],
     "extract": "all"
 }
