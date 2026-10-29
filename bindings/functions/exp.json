@@ -9,5 +9,7 @@
             "type": "Double"
         }
     ],
-    "title": "The exponential function"
+    "title": "The exponential function",
+    "description": "Returns e raised to the power x.",
+    "examples": ["exp(0)  # Returns 1"]
 }

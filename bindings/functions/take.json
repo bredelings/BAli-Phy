@@ -6,11 +6,16 @@
     "args": [
         {
             "name": "n",
-            "type": "Int"
+            "type": "Int",
+            "description": "Maximum number of elements to return"
         },
         {
             "name": "xs",
-            "type": "List<a>"
+            "type": "List<a>",
+            "description": "Input list"
         }
-    ]
+    ],
+    "title": "Take the beginning of a list",
+    "description": "Return the first n elements of xs in their original order. If the list has fewer than n elements, return the whole list. If n is zero or negative, return an empty list.",
+    "examples": ["take(2,[1,2,3])  # Returns [1,2]"]
 }

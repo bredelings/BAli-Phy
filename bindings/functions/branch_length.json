@@ -7,11 +7,16 @@
     "args": [
         {
             "name": "tree",
-            "type": "Tree<t>"
+            "type": "Tree<t>",
+            "description": "Tree carrying branch lengths"
         },
         {
             "name": "b",
-            "type": "Int"
+            "type": "Int",
+            "description": "Branch identifier, as returned by branches_list(tree)"
         }
-    ]
+    ],
+    "title": "The length of a branch",
+    "description": "Return the length of branch b in tree. Units depend on how the tree was constructed; they are not necessarily substitutions per site.",
+    "see": ["branches_list"]
 }

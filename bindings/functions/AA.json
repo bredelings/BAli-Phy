@@ -5,5 +5,7 @@
     "call": "aa",
     "import": ["Bio.Alphabet"],
     "args": [],
-    "title": "The amino-acid alphabet"
+    "title": "The amino-acid alphabet",
+    "description": "The standard alphabet of 20 amino acids, excluding the stop symbol. X represents any amino acid; B represents D or N, Z represents E or Q, and J represents I or L.",
+    "examples": ["AA"]
 }

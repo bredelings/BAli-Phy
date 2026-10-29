@@ -7,19 +7,20 @@
         {
             "name": "f",
             "type": "a -> b -> c",
-	    "description": "The function f(x,y)"
+            "description": "Function receiving an element from xs and the corresponding element from ys"
         },
         {
             "name": "xs",
             "type": "List<a>",
-	    "description": "The first list"
+            "description": "First list"
         },
         {
             "name": "ys",
             "type": "List<b>",
-	    "description": "The second list"
+            "description": "Second list"
         }
     ],
-    "description": "Combine corresponding pairs of two lists using a function f",
-    "examples": ["zipWith(|x y: x+y|, [1,2,3], [4,5,6])"]
+    "description": "Apply f to corresponding pairs of elements from xs and ys, preserving their order. The result stops at the end of the shorter list; unmatched elements are ignored.",
+    "examples": ["zipWith(|x y: x+y|, [1,2,3], [4,5])  # Returns [5,7]"],
+    "title": "Combine corresponding list elements"
 }

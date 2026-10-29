@@ -7,11 +7,15 @@
     "args": [
         {
             "name": "m",
-            "type": "IntMap<a>"
+            "type": "IntMap<a>",
+            "description": "Integer-keyed map"
         },
         {
             "name": "i",
-            "type": "Int"
+            "type": "Int",
+            "description": "Key whose value is returned"
         }
-    ]
+    ],
+    "title": "Look up an integer key",
+    "description": "Return the value associated with key i in the integer-keyed map m. A missing key raises an error."
 }

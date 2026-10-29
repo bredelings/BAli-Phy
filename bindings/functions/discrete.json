@@ -7,7 +7,11 @@
     "args": [
         {
             "name": "pairs",
-            "type": "List<(a,Double)>"
+            "type": "List<(a,Double)>",
+            "description": "List of values paired with their probabilities"
         }
-    ]
+    ],
+    "title": "A discrete distribution",
+    "description": "Construct a distribution from a nonempty list of (value, probability) pairs. Probabilities must be nonnegative and sum to 1; they are not normalized automatically. If a value occurs more than once, its probability mass is the sum of the corresponding probabilities.",
+    "examples": ["~discrete([(1,0.25),(2,0.75)])  # Draw 1 with probability 0.25, otherwise 2"]
 }
