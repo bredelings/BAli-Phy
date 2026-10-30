@@ -8,15 +8,16 @@
         {
             "name": "lmu",
             "type": "Double",
-	    "description": "The mean parameter (log scale)"
+	    "description": "The location (median) of the distribution of log(X)"
         },
         {
             "name": "lscale",
             "type": "Double",
-	    "description": "The standard deviation parameter (log scale)"
+	    "description": "The scale of the distribution of log(X)"
         }
     ],
-    "title": "The log-cauchy distribution",
+    "title": "The log-Cauchy distribution",
     "examples": ["~LogCauchy(0,1)","~IID(10, LogCauchy(0,1))"],
-    "description": "A variable X is log-cauchy if log(X) is cauchy."
+    "description": "For X drawn from LogCauchy(lmu,lscale), log(X) has a Cauchy distribution with location lmu and scale lscale. Thus X > 0 and its median is exp(lmu).",
+    "see": ["Cauchy", "LogNormal", "LogLaplace"]
 }

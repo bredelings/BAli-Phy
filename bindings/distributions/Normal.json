@@ -17,5 +17,7 @@
         }
     ],
     "title": "The normal distribution",
-    "examples": ["~Normal(0,1)","~IID(10, Normal(0,1))"]
+    "examples": ["~Normal(0,1)","~IID(10, Normal(0,1))"],
+    "description": "The normal (Gaussian) distribution with the given mean and standard deviation.",
+    "see": ["LogNormal", "Laplace"]
 }

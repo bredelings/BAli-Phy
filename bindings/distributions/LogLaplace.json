@@ -7,11 +7,17 @@
     "args": [
         {
             "name": "lm",
-            "type": "Double"
+            "type": "Double",
+            "description": "The location of the distribution of log(X)"
         },
         {
             "name": "ls",
-            "type": "Double"
+            "type": "Double",
+            "description": "The scale of the distribution of log(X)"
         }
-    ]
+    ],
+    "title": "The log-Laplace distribution",
+    "description": "For X drawn from LogLaplace(lm,ls), log(X) has a Laplace distribution with location lm and scale ls. Thus X > 0 and its median is exp(lm).",
+    "examples": ["~LogLaplace(0, 1)", "quantile(LogLaplace(0, 1), 0.95)"],
+    "see": ["Laplace", "LogNormal", "LogCauchy"]
 }

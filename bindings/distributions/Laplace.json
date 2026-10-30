@@ -7,12 +7,17 @@
     "args": [
         {
             "name": "m",
-            "type": "Double"
+            "type": "Double",
+            "description": "The location (mean and median)"
         },
         {
             "name": "s",
-            "type": "Double"
+            "type": "Double",
+            "description": "The scale parameter"
         }
     ],
-    "title": "The Laplace distribution"
+    "title": "The Laplace distribution",
+    "description": "The Laplace (double-exponential) distribution centered at m, with scale s. Its variance is 2*s^2.",
+    "examples": ["~Laplace(0, 1)", "cdf(Laplace(0, 1), 0)", "quantile(Laplace(0, 1), 0.95)"],
+    "see": ["Normal", "LogLaplace"]
 }
