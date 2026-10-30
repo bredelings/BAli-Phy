@@ -1,18 +1,35 @@
 {
     "name": "SymmetricDirichletOn",
-    "deprecated-synonyms": ["symmetric_dirichlet_on"],
+    "deprecated-synonyms": [
+        "symmetric_dirichlet_on"
+    ],
     "result_type": "Distribution<Map<a,Double>>",
-    "constraints": ["Ord<a>"],
+    "constraints": [
+        "Ord<a>"
+    ],
     "call": "symmetricDirichletOn(@items,@n)",
-    "import": ["Probability"],
+    "import": [
+        "Probability"
+    ],
     "args": [
         {
             "name": "items",
-            "type": "Set<a>"
+            "type": "Set<a>",
+            "description": "The set of category keys"
         },
         {
             "name": "n",
-            "type": "Double"
+            "type": "Double",
+            "description": "The concentration per category"
         }
+    ],
+    "title": "A symmetric Dirichlet distribution on named categories",
+    "description": "Draws a map of probabilities for the keys in items. Probabilities sum to one, and each category has concentration n.",
+    "examples": [
+        "~SymmetricDirichletOn({\"a\",\"b\"},2)"
+    ],
+    "see": [
+        "DirichletOn",
+        "SymmetricDirichlet"
     ]
 }

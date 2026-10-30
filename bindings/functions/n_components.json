@@ -3,11 +3,23 @@
     "result_type": "Int",
     "no_log": true,
     "call": "nComponents(@x)",
-    "import": ["Probability.Distribution.Discrete"],
+    "import": [
+        "Probability.Distribution.Discrete"
+    ],
     "args": [
         {
             "name": "x",
-            "type": "DiscreteDist<a>"
+            "type": "DiscreteDist<a>",
+            "description": "The discrete distribution"
         }
+    ],
+    "title": "Number of mixture components",
+    "description": "Returns the number of stored components in a discrete distribution. Repeated values and zero-probability entries each count as components.",
+    "examples": [
+        "n_components(discreteFromMap({1:0.25,2:0.75}))"
+    ],
+    "see": [
+        "discrete",
+        "unit_mixture"
     ]
 }

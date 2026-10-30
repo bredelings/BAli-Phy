@@ -1,28 +1,41 @@
 {
     "name": "DirichletMixture",
-    "deprecated-synonyms": ["dirichlet_mixture"],
+    "deprecated-synonyms": [
+        "dirichlet_mixture"
+    ],
     "result_type": "Distribution<DiscreteDist<a>>",
     "call": "dirichletMixture(@n,@alpha,@dist)",
-    "import": ["Probability"],
+    "import": [
+        "Probability"
+    ],
     "args": [
         {
             "name": "dist",
             "type": "Distribution<a>",
-	    "description": "The distribution on component values"
+            "description": "The distribution on component values"
         },
         {
             "name": "alpha",
             "type": "Double",
-	    "default_value": "1",
-	    "description": "The dirichlet concentration parameter"
+            "default_value": "1",
+            "description": "The Dirichlet concentration per component"
         },
         {
             "name": "n",
             "type": "Int",
             "default_value": "1 + ~Geometric(0.5)",
-	    "description": "The number of components"
+            "description": "The number of components"
         }
     ],
-    "title": "Dirichlet mixture model",
-    "description": "A mixture model with n components where the distribution on component weights is `SymmetricDirichlet(n,alpha)`.  If `n` is unknown, this prior resembles the Dirichlet process distribution, but may have a different marginal distribution on the number of components.  The value for each component has distribution `dist`."
+    "title": "A Dirichlet-weighted discrete distribution",
+    "description": "Draws n independent component values from dist and weights from SymmetricDirichlet(n,alpha). The result is a discrete distribution over those values. If n is omitted, the number of components is random. Density evaluation uses the stored component list, retaining its order and duplicate values; it requires dist to support density evaluation.",
+    "examples": [
+        "~DirichletMixture(Normal(0,1),alpha=2,n=3)",
+        "pdf(DirichletMixture(Uniform(0,2),n=2),discrete([(0.5,0.25),(1.5,0.75)]))"
+    ],
+    "see": [
+        "SymmetricDirichlet",
+        "discrete",
+        "DirichletOnDirichlet"
+    ]
 }

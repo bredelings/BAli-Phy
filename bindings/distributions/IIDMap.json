@@ -1,21 +1,33 @@
 {
     "name": "IIDMap",
-    "deprecated-synonyms": ["iidMap"],
+    "deprecated-synonyms": [
+        "iidMap"
+    ],
     "result_type": "Distribution<IntMap<a>>",
     "call": "iidMap(@set,@dist)",
-    "import": ["Probability"],
+    "import": [
+        "Probability"
+    ],
     "args": [
         {
             "name": "set",
             "type": "IntSet",
-	    "description": "The number of samples"
+            "description": "The set of integer keys identifying the draws"
         },
         {
             "name": "dist",
             "type": "Distribution<a>",
-	    "description": "The distribution to sample from"
+            "description": "The distribution for each draw"
         }
     ],
-    "title": "The Independent and Identically Distributed (i.i.d.) distribution",
-    "examples": ["~IIDMap(branches(tree), Normal(0,1))    // A list of 10 Normal(0,1) random variables"]
+    "title": "Independent draws indexed by integer keys",
+    "examples": [
+        "~IIDMap(branches(tree),LogNormal(0,1))  # One positive rate per branch; tree comes from the surrounding model"
+    ],
+    "description": "Draws one value from dist for each integer key in set, returning an IntMap with those keys. Draws are independent conditional on any shared random parameters of dist. Density evaluation requires exactly the same keys.",
+    "see": [
+        "IIDOn",
+        "IID",
+        "branches"
+    ]
 }

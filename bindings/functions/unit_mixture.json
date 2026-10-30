@@ -1,14 +1,27 @@
 {
     "name": "unit_mixture",
-    "synonyms": ["UnitMixture"],
+    "synonyms": [
+        "UnitMixture"
+    ],
     "result_type": "DiscreteDist<CTMC<a>>",
     "no_log": true,
     "call": "unitMixture(@submodel)",
-    "import": ["SModel"],
+    "import": [
+        "SModel"
+    ],
     "args": [
         {
             "name": "submodel",
-            "type": "CTMC<a>"
+            "type": "CTMC<a>",
+            "description": "The substitution model"
         }
+    ],
+    "title": "A single-component model mixture",
+    "description": "Wraps a substitution model in a discrete mixture containing that model with probability one.",
+    "examples": [
+        "n_components(unit_mixture(HKY85))"
+    ],
+    "see": [
+        "n_components"
     ]
 }

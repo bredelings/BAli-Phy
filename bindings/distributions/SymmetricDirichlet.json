@@ -1,20 +1,33 @@
 {
     "name": "SymmetricDirichlet",
-    "deprecated-synonyms": ["symmetric_dirichlet"],
+    "deprecated-synonyms": [
+        "symmetric_dirichlet"
+    ],
     "result_type": "Distribution<List<Double>>",
     "call": "symmetricDirichlet(@n,@x)",
-    "import": ["Probability"],
+    "import": [
+        "Probability"
+    ],
     "args": [
         {
             "name": "n",
-            "type": "Int"
+            "type": "Int",
+            "description": "The number of categories"
         },
         {
             "name": "x",
-            "type": "Double"
+            "type": "Double",
+            "description": "The concentration per category"
         }
     ],
-    "title":"The Dirichlet distribution",
-    "examples": ["~SymmetricDirichlet(2, 4)"],
-    "description": "This is a Dirichlet with identical weight in all categories"
+    "title": "The symmetric Dirichlet distribution",
+    "examples": [
+        "~SymmetricDirichlet(2,4)",
+        "pdf(SymmetricDirichlet(2,4),[0.5,0.5])"
+    ],
+    "description": "Draws a list of n probabilities that sum to one, with the same concentration x for every category.",
+    "see": [
+        "Dirichlet",
+        "SymmetricDirichletOn"
+    ]
 }

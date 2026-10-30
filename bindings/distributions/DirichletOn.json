@@ -1,13 +1,27 @@
 {
     "name": "DirichletOn",
-    "deprecated-synonyms": ["dirichlet_on"],
+    "deprecated-synonyms": [
+        "dirichlet_on"
+    ],
     "result_type": "Distribution<Map<a,Double>>",
     "call": "dirichletOn(@concentrations)",
-    "import": ["Probability"],
+    "import": [
+        "Probability"
+    ],
     "args": [
         {
             "name": "concentrations",
-            "type": "Map<a,Double>"
+            "type": "Map<a,Double>",
+            "description": "Map from category keys to Dirichlet concentrations"
         }
+    ],
+    "title": "A Dirichlet distribution on named categories",
+    "description": "Draws a map of category probabilities that sum to one. The concentration map supplies the category keys and the concentration for each category. Density evaluation requires exactly the same keys.",
+    "examples": [
+        "pdf(DirichletOn({\"a\":1.0,\"b\":2.0}),{\"a\":0.25,\"b\":0.75})"
+    ],
+    "see": [
+        "Dirichlet",
+        "SymmetricDirichletOn"
     ]
 }

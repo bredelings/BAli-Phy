@@ -3,12 +3,23 @@
     "result_type": "DiscreteDist<a>",
     "no_log": true,
     "call": "Discrete.fromMap(@weights)",
-    "import": ["qualified Probability.Distribution.Discrete as Discrete"],
+    "import": [
+        "qualified Probability.Distribution.Discrete as Discrete"
+    ],
     "args": [
         {
             "name": "weights",
-            "type": "Map<a,Double>"
+            "type": "Map<a,Double>",
+            "description": "Map from values to their probabilities"
         }
     ],
-    "description": "Construct a discrete distribution from a map of values to weights."
+    "description": "Constructs a discrete distribution whose values are the map keys and whose probabilities are the map values. Probabilities must be nonnegative and sum to one; they are not normalized automatically.",
+    "title": "A discrete distribution from a map",
+    "examples": [
+        "discreteFromMap({1:0.25,2:0.75})"
+    ],
+    "see": [
+        "discrete",
+        "convertDiscrete"
+    ]
 }

@@ -1,22 +1,35 @@
 {
     "name": "IIDOn",
-    "deprecated-synonyms": ["iid_on"],
+    "deprecated-synonyms": [
+        "iid_on"
+    ],
     "result_type": "Distribution<Map<a,b>>",
-    "constraints": ["Ord<a>"],
+    "constraints": [
+        "Ord<a>"
+    ],
     "call": "iidOn(@xs,@dist)",
-    "import": ["Probability"],
+    "import": [
+        "Probability"
+    ],
     "args": [
         {
             "name": "xs",
             "type": "Set<a>",
-	    "description": "The keys identifying the samples"
+            "description": "The set of keys identifying the draws"
         },
         {
             "name": "dist",
             "type": "Distribution<b>",
-	    "description": "The distribution to sample from"
+            "description": "The distribution for each draw"
         }
     ],
-    "title": "The Independent and Identically Distributed (i.i.d.) distribution",
-    "examples": ["~IIDOn({1,2,3},Normal(0,1))    // A map of 3 Normal(0,1) random variables"]
+    "title": "Independent draws indexed by keys",
+    "examples": [
+        "~IIDOn({1,2,3},Normal(0,1))  # A map of three independent draws"
+    ],
+    "description": "Draws one value from dist for each key in xs, returning a map with those keys. Draws are independent conditional on any shared random parameters of dist. Density evaluation requires exactly the same keys.",
+    "see": [
+        "IIDMap",
+        "IID"
+    ]
 }

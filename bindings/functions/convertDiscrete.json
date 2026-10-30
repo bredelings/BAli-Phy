@@ -6,8 +6,17 @@
     "args": [
         {
             "name": "x",
-            "type": "DiscreteDist<a>"
+            "type": "DiscreteDist<a>",
+            "description": "The discrete distribution"
         }
     ],
-    "title": "Convert a discrete distribution to a distribution"
+    "title": "Convert a discrete distribution to a distribution",
+    "description": "Treats a discrete distribution as a general distribution. Its values and probabilities are unchanged; no normalization is performed.",
+    "examples": [
+        "~convertDiscrete(discreteFromMap({1:0.25,2:0.75}))"
+    ],
+    "see": [
+        "discrete",
+        "discreteFromMap"
+    ]
 }

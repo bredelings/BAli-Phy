@@ -7,16 +7,27 @@
     "result_type": "Distribution<a>",
     "no_log": true,
     "call": "Mixture2(@component,@rest)",
-    "import": ["Probability"],
+    "import": [
+        "Probability"
+    ],
     "args": [
         {
             "name": "component",
-            "type": "Distribution<a>"
+            "type": "Distribution<a>",
+            "description": "A distribution weighted with .*."
         },
         {
             "name": "rest",
-            "type": "Distribution<a>"
+            "type": "Distribution<a>",
+            "description": "Another weighted distribution or a mixture of weighted distributions"
         }
     ],
-    "description": "Add a weighted component to a heterogeneous mixture."
+    "description": "Combines weighted distributions into a mixture. Sampling chooses a component in proportion to its weight, then draws from that component. Components can use different distribution families but must produce the same type of value.",
+    "title": "Combine weighted distributions",
+    "examples": [
+        "pdf(1 .*. Normal(0,1) |+| 3 .*. Normal(2,1),0)"
+    ],
+    "see": [
+        ".*."
+    ]
 }

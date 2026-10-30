@@ -7,16 +7,27 @@
     "result_type": "Distribution<a>",
     "no_log": true,
     "call": "Weighted(@weight,@distribution)",
-    "import": ["Probability"],
+    "import": [
+        "Probability"
+    ],
     "args": [
         {
             "name": "weight",
-            "type": "Double"
+            "type": "Double",
+            "description": "The relative mixture weight"
         },
         {
             "name": "distribution",
-            "type": "Distribution<a>"
+            "type": "Distribution<a>",
+            "description": "The component distribution"
         }
     ],
-    "description": "Attach a relative weight to a distribution."
+    "description": "Attaches a relative weight to a distribution for use with |+|. Mixture weights must be nonnegative with a positive total. A single weighted distribution behaves like its underlying distribution.",
+    "title": "A weighted distribution",
+    "examples": [
+        "pdf(2 .*. Normal(0,1),0)"
+    ],
+    "see": [
+        "|+|"
+    ]
 }

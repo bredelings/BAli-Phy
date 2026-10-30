@@ -1,28 +1,40 @@
 {
     "name": "DirichletOnDirichlet",
-    "synonyms": ["DP"],
-    "deprecated-synonyms": ["dirichlet_on_dirichlet"],
+    "synonyms": [
+        "DP"
+    ],
+    "deprecated-synonyms": [
+        "dirichlet_on_dirichlet"
+    ],
     "result_type": "Distribution<DiscreteDist<Double>>",
     "call": "dirichletOnDirichlet(@n,@a1,@a2)",
-    "import": ["Probability"],
+    "import": [
+        "Probability"
+    ],
     "args": [
         {
             "name": "n",
             "type": "Int",
-	    "description": "Number of categories"
+            "description": "The number of components"
         },
         {
             "name": "a1",
             "type": "Double",
-	    "description": "Alpha parameter for weights"
+            "description": "The concentration per component for weights"
         },
         {
             "name": "a2",
             "type": "Double",
-	    "description": "Alpha parameter for items"
+            "description": "The concentration per component for values"
         }
     ],
-    "title": "Free rates model",
-    "description":"Rate heterogeneity model where the rate and frequency of each category can be estimated from the data.",
-    "examples": ["HKY85 +> ASRV.Free(n=3)"]
+    "title": "Dirichlet-distributed component values and weights",
+    "description": "Draws a discrete distribution with n components. Its weights are drawn from SymmetricDirichlet(n,a1) and, independently, its component values from SymmetricDirichlet(n,a2). Each vector sums to one. Used by ASRV.Free to construct relative rates. Sampling is supported; density evaluation is not implemented.",
+    "examples": [
+        "~DirichletOnDirichlet(3,1,2)"
+    ],
+    "see": [
+        "DirichletMixture",
+        "ASRV.Free"
+    ]
 }
