@@ -156,6 +156,42 @@ instance (MaybeVariance d, MaybeVarianceComponents rest, Result d ~ Result rest)
 instance (Variance d, Variance rest, MaybeVarianceComponents rest, Result d ~ Result rest) =>
     Variance (Mixture2 d rest)
 
+-- Summarize unnormalized densities and weights so zero-weight suffixes need no division.
+-- Different component types require recursive instances, just as for CDFs and moments above.
+class WeightedComponents mixture => PdfComponents mixture where
+    weightedPdfSummary :: mixture -> Result mixture -> (Log Double, Log Double)
+
+instance HasPdf d => PdfComponents (Weighted d) where
+    -- An inactive component contributes neither mass nor weight, without evaluating its density.
+    weightedPdfSummary (Weighted weight distribution) x
+      | weight == 0 = (0, 0)
+      | otherwise = (w * density distribution x, w)
+      where w = toFloating weight
+
+instance (HasPdf d, PdfComponents rest, Result d ~ Result rest) =>
+    PdfComponents (Mixture2 d rest) where
+    -- Add summaries in log space; normalize once at the outermost mixture.
+    weightedPdfSummary (Mixture2 component rest) x =
+        (numerator + restNumerator, weight + restWeight)
+      where
+        (numerator, weight) = weightedPdfSummary component x
+        (restNumerator, restWeight) = weightedPdfSummary rest x
+
+instance HasPdf d => HasPdf (Weighted d) where
+    -- A lone component is selected with probability one; preserve its density factors.
+    densityWithProperties (Weighted _ distribution) x = (densities distribution x, ())
+
+instance HasPdf d => HasAnnotatedPdf (Weighted d)
+
+instance (HasPdf d, PdfComponents rest, Result d ~ Result rest) =>
+    HasPdf (Mixture2 d rest) where
+    -- Addition deliberately collapses component factors to Log Double, as for Mixture below.
+    pdf mixture x = numerator / weight
+      where (numerator, weight) = weightedPdfSummary mixture x
+
+instance (HasPdf d, PdfComponents rest, Result d ~ Result rest) =>
+    HasAnnotatedPdf (Mixture2 d rest)
+
 -- Walk to one indexed component and apply `sample` only to that distribution.
 class WeightedComponents mixture => SampleableComponents mixture where
     sampleComponent :: Int -> mixture -> Random (Result mixture)
