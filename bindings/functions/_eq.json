@@ -18,5 +18,12 @@
             "type": "a"
         }
     ],
-    "title":"The equality operator"
+    "title":"The equality operator",
+    "description": "Returns true if x equals y.",
+    "examples": [
+        "2 == 2"
+    ],
+    "see": [
+        "!="
+    ]
 }

@@ -18,5 +18,13 @@
             "type": "a"
         }
     ],
-    "title":"The less-than-or-equals operator"
+    "title":"The less-than-or-equals operator",
+    "description": "Returns true if x is less than or equal to y.",
+    "examples": [
+        "2 <= 2"
+    ],
+    "see": [
+        "<",
+        ">="
+    ]
 }

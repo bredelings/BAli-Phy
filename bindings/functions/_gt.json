@@ -18,5 +18,13 @@
             "type": "a"
         }
     ],
-    "title":"The greater-than operator"
+    "title":"The greater-than operator",
+    "description": "Returns true if x is greater than y.",
+    "examples": [
+        "3 > 2"
+    ],
+    "see": [
+        ">=",
+        "<"
+    ]
 }

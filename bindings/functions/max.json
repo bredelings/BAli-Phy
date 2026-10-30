@@ -14,5 +14,12 @@
             "type": "a"
         }
     ],
-    "title":"The maximum of two numbers"
+    "title": "The maximum of two values",
+    "description": "Returns the larger of x and y.",
+    "examples": [
+        "max(2,3)"
+    ],
+    "see": [
+        "min"
+    ]
 }

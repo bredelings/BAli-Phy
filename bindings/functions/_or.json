@@ -17,5 +17,12 @@
             "type": "Bool"
         }
     ],
-    "title":"The or operator"
+    "title": "Logical OR",
+    "description": "Returns true if either x or y is true. The second argument is evaluated only when the first is false.",
+    "examples": [
+        "(2 > 3) || (3 < 4)"
+    ],
+    "see": [
+        "&&"
+    ]
 }

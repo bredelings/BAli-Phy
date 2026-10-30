@@ -18,5 +18,13 @@
             "type": "a"
         }
     ],
-    "title":"The modulo operator"
+    "title": "Integer modulo",
+    "description": "Returns x modulo y. A nonzero result has the same sign as y.",
+    "examples": [
+        "7 % 3",
+        "negate(7) % 3"
+    ],
+    "see": [
+        "/"
+    ]
 }

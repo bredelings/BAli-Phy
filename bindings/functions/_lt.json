@@ -18,5 +18,13 @@
             "type": "a"
         }
     ],
-    "title":"The less-than operator"
+    "title":"The less-than operator",
+    "description": "Returns true if x is less than y.",
+    "examples": [
+        "2 < 3"
+    ],
+    "see": [
+        "<=",
+        ">"
+    ]
 }

@@ -9,5 +9,12 @@
             "type": "Double"
         }
     ],
-    "title": "The square-root function"
+    "title": "The square-root function",
+    "description": "Returns the nonnegative square root of x.",
+    "examples": [
+        "sqrt(9.0)"
+    ],
+    "see": [
+        "pow"
+    ]
 }

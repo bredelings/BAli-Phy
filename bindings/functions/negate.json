@@ -9,5 +9,13 @@
             "name": "x",
             "type": "a"
         }
+    ],
+    "title": "Negation",
+    "description": "Returns the negation of x.",
+    "examples": [
+        "negate(3)"
+    ],
+    "see": [
+        "-"
     ]
 }

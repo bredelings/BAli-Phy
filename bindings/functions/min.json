@@ -14,5 +14,12 @@
             "type": "a"
         }
     ],
-    "title":"The minimum of two numbers"
+    "title": "The minimum of two values",
+    "description": "Returns the smaller of x and y.",
+    "examples": [
+        "min(2,3)"
+    ],
+    "see": [
+        "max"
+    ]
 }

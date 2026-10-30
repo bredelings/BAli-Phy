@@ -17,5 +17,12 @@
             "type": "Bool"
         }
     ],
-    "title":"The and operator"
+    "title": "Logical AND",
+    "description": "Returns true if both x and y are true. The second argument is evaluated only when the first is true.",
+    "examples": [
+        "(2 < 3) && (3 < 4)"
+    ],
+    "see": [
+        "||"
+    ]
 }

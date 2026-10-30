@@ -9,5 +9,13 @@
             "type": "Double"
         }
     ],
-    "title": "The cosine function"
+    "title": "The cosine function",
+    "description": "Returns the cosine of x, where x is an angle in radians.",
+    "examples": [
+        "cos(0.0)"
+    ],
+    "see": [
+        "sin",
+        "tan"
+    ]
 }

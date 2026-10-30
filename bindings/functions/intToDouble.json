@@ -1,5 +1,5 @@
 {
-    "title": "Function to convert an integer to a double-precision number:",
+    "title": "Integer to floating-point conversion",
     "name": "intToDouble",
     "result_type": "Double",
     "no_log": true,
@@ -10,5 +10,9 @@
             "type": "Int",
 	    "description": "The integer to convert"
         }
+    ],
+    "description": "Converts x to a double-precision floating-point value. Large integers may be rounded.",
+    "examples": [
+        "intToDouble(3)"
     ]
 }

@@ -18,5 +18,12 @@
             "type": "a"
         }
     ],
-    "title":"The inequality operator"
+    "title":"The inequality operator",
+    "description": "Returns true if x differs from y.",
+    "examples": [
+        "2 != 3"
+    ],
+    "see": [
+        "=="
+    ]
 }

@@ -9,5 +9,13 @@
             "type": "Double"
         }
     ],
-    "title": "The sine function"
+    "title": "The sine function",
+    "description": "Returns the sine of x, where x is an angle in radians.",
+    "examples": [
+        "sin(0.0)"
+    ],
+    "see": [
+        "cos",
+        "tan"
+    ]
 }
