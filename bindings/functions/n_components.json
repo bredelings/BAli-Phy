@@ -3,6 +3,7 @@
     "result_type": "Int",
     "no_log": true,
     "call": "nComponents(@x)",
+    "import": ["Probability.Distribution.Discrete"],
     "args": [
         {
             "name": "x",

@@ -60,12 +60,15 @@ instance IOSampleable (DirichletOn a) where
       ps <- sampleIO $ dirichlet $ Map.elems concentrations
       return $ Map.fromDistinctAscList $ zip (Map.keys concentrations) ps
 
-instance HasPdf (DirichletOn a) where
-    pdf (DirichletOn concentrations) probabilities =
-      pdf (Dirichlet $ Map.elems concentrations) (Map.elems probabilities)
+instance Eq a => HasPdf (DirichletOn a) where
+    -- Ascending keys give a linear domain check before pairing concentration and probability values.
+    pdf (DirichletOn concentrations) probabilities
+      | Map.size concentrations /= Map.size probabilities = 0
+      | Map.keys concentrations /= Map.keys probabilities = 0
+      | otherwise = pdf (Dirichlet $ Map.elems concentrations) (Map.elems probabilities)
 
 
-instance HasAnnotatedPdf (DirichletOn a)
+instance Eq a => HasAnnotatedPdf (DirichletOn a)
 
 instance Sampleable (DirichletOn a) where
     sample (DirichletOn concentrations) = do

@@ -29,7 +29,11 @@ main = do
       density = toFloating (pdf (dirichletOn concentrations) probabilities) :: Double
   symmetric <- sampleIO $ symmetricDirichletOn (Set.fromList ["B", "A"]) 1
   independent <- runRandomLazy $ sample $ iidOn (Set.fromList ["B", "A"]) (delta 4)
-  print (near density 1.5
+  -- Wrong domains must have zero density even when their values form a valid simplex.
+  -- The existing asymmetric case checks correspondence only when the keys already match.
+  print (pdf (dirichletOn concentrations) (Map.fromList [("X",0.25),("Y",0.75)]) == 0
+      && pdf (dirichletOn concentrations) (Map.singleton "A" 1) == 0
+      && near density 1.5
       && Map.keys symmetric == ["A", "B"]
       && near (sum $ Map.elems symmetric) 1
       && Map.toAscList independent == [("A", 4), ("B", 4)])

@@ -3,7 +3,7 @@
     "synonyms": ["DP"],
     "deprecated-synonyms": ["dirichlet_on_dirichlet"],
     "result_type": "Distribution<DiscreteDist<Double>>",
-    "call": "dirichletOnDirichlet(@n,@a2,@a1)",
+    "call": "dirichletOnDirichlet(@n,@a1,@a2)",
     "import": ["Probability"],
     "args": [
         {
