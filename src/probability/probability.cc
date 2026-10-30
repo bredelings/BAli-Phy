@@ -280,6 +280,12 @@ double normal_quantile(double p, double mu, double sigma)
   assert(p <= 1);
   assert(sigma >= 0);
   if (sigma == 0.0) return mu;
+  // The unbounded support gives infinite endpoint quantiles; avoid Boost's overflow exception.
+  if (std::isfinite(mu) and std::isfinite(sigma) and sigma > 0)
+  {
+      if (p == 0) return -std::numeric_limits<double>::infinity();
+      if (p == 1) return std::numeric_limits<double>::infinity();
+  }
   try
   {
       return quantile(normal_distribution<>(mu,sigma),p);
@@ -299,6 +305,12 @@ double cauchy_quantile(double p, double m, double s)
   assert(p <= 1);
   assert(s >= 0);
   if (s == 0.0) return m;
+  // The unbounded support gives infinite endpoint quantiles; avoid Boost's overflow exception.
+  if (std::isfinite(m) and std::isfinite(s) and s > 0)
+  {
+      if (p == 0) return -std::numeric_limits<double>::infinity();
+      if (p == 1) return std::numeric_limits<double>::infinity();
+  }
   try
   {
       return quantile(cauchy_distribution<>(m,s),p);
