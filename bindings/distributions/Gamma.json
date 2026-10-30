@@ -23,5 +23,5 @@
 		 "quantile(Gamma(0.5, 2), 0.95)",
 		 "density(Gamma(0.5,2), 0.95)"
 		],
-    "see": ["ShiftedGamma","LogGamma"]
+    "see": ["Exponential","LogGamma"]
 }
