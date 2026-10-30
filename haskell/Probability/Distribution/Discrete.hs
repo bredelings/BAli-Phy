@@ -75,7 +75,7 @@ instance Eq a => HasPdf (Discrete a) where
     pdf (Discrete pairs) x = sum [ toFloating p | (item,p) <- pairs, item == x]
 
 instance Dist1D (Discrete Double) where
-    cdf (Discrete pairs) x = sum [ p | (item, p) <- pairs, item < x ]
+    cdf (Discrete pairs) x = sum [ p | (item, p) <- pairs, item <= x ]
     lower_bound (Discrete []) = Nothing
     lower_bound (Discrete pairs) = Just $ minimum [item | (item, _) <- pairs]
     upper_bound (Discrete []) = Nothing
@@ -92,7 +92,7 @@ instance MaybeVariance (Discrete Double) where
 instance Variance (Discrete Double)
 
 instance Dist1D (Discrete Int) where
-    cdf (Discrete pairs) x = sum [ p | (item, p) <- pairs, fromIntegral item < x]
+    cdf (Discrete pairs) x = sum [ p | (item, p) <- pairs, fromIntegral item <= x]
     lower_bound (Discrete []) = Nothing
     lower_bound (Discrete pairs) = Just $ minimum [item | (item, _) <- pairs]
     upper_bound (Discrete []) = Nothing
