@@ -7,6 +7,7 @@
 ## Features
 
  - Depict length of branches inside consensus polytomies by default.
+ - Allow running Python tools from Git Bash and MSYS2 Bash on Windows.
 
 ## Fixes
 
@@ -14,19 +15,30 @@
  - Fix character attributes for fixed alignments.
  - Don't crash summarizing MCMC runs if the tree has foreground attributes.
  - Clear error messages when different data partitions have different sequence names.
- - Labels for tree nodes don't run off the edge of the page in figures.
+ - Improve tree layouts and keep labels clear of branches, nodes, and other labels.
  - Make estimation of branch lengths and "node lengths" faster and more robust.
+ - Fix tree consensus, support, and convergence summaries, including sample and taxon matching.
+ - Fix alignment comparisons, ancestral sequence summaries, and indel reports.
+ - Fix coordinates and missing-data handling in population-genetic reports from `alignment-smc`.
+ - Fix marginal-likelihood estimation and uncertainty reporting in `model_P`.
+ - Fix and extend distribution densities, CDFs, and quantiles, including numerical edge cases.
 
-# Documentation
+## Documentation
  
  - Update and fill out man pages.
  - Add function help to the website.
+ - Expand help for models, distributions, and model-language functions.
  
-# Internal
+## Internal
 
  - Remove unused program `alignment-indices`.
  - Switch from Boost.Program_options -> CLI11 for command line parsing.
+ - Replace range-v3 with standard ranges; Linux builds now need libstdc++ 14 or newer.
  
+## Haskell
+
+ - Support importing and exporting named defaults.
+
 
 # 4.3 (Sep 12, 2026)
 
