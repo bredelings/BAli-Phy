@@ -264,10 +264,10 @@ log_double_t normal_pdf(double x, double mu, double sigma)
   assert(sigma >= 0);
 
   log_double_t Pr = 1;
-  double sigma2 = sigma * sigma;
-  x -= mu;
-
-  Pr.log() = -0.5*log(2.0*M_PI*sigma2) -(x*x)/(2.0*sigma2);
+  // Standardize before squaring and take log(sigma) directly to avoid losing the
+  // scale to overflow/underflow. Halve z first so its square need not be representable.
+  const double z = (x-mu)/sigma;
+  Pr.log() = -log(sigma) - 0.5*log(2.0*M_PI) - (0.5*z)*z;
 
   return Pr;
 }
