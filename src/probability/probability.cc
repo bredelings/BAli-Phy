@@ -147,7 +147,32 @@ log_double_t uniform_pdf(double x, double a, double b)
 
   if (x < a or x > b) return 0;
 
-  return 1.0/log_double_t(b-a);
+  // Finite endpoints can have an overflowing width. Its half remains representable;
+  // divide in log space to retain densities smaller than the range of a Double.
+  const double width = b-a;
+  if (std::isfinite(width)) return 1.0/log_double_t(width);
+  return 0.5/log_double_t(b/2-a/2);
+}
+
+// Interpolate the cumulative probability inside the interval. Scaling both differences
+// by one half avoids overflow when finite endpoints have an unrepresentable width.
+double uniform_cdf(double x, double a, double b)
+{
+    if (not std::isfinite(a) or not std::isfinite(b) or not (a < b) or std::isnan(x))
+        return std::numeric_limits<double>::quiet_NaN();
+    if (x <= a) return 0;
+    if (x >= b) return 1;
+    const double width = b-a;
+    if (std::isfinite(width)) return (x-a)/width;
+    return (x/2-a/2)/(b/2-a/2);
+}
+
+// Use the same overflow-safe interpolation as sampling, preserving the interval endpoints.
+double uniform_quantile(double p, double a, double b)
+{
+    if (not std::isfinite(a) or not std::isfinite(b) or not (a < b) or std::isnan(p))
+        return std::numeric_limits<double>::quiet_NaN();
+    return std::lerp(a, b, p);
 }
 
 log_double_t uniform_int_pdf(int x, int a, int b)

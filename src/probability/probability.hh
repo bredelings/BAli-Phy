@@ -41,6 +41,10 @@ log_double_t exp_exponential_pdf(double y,double mu,double delta=0.0);
 
 log_double_t uniform_pdf(double x, double a, double b);
 
+double uniform_cdf(double x, double a, double b);
+
+double uniform_quantile(double p, double a, double b);
+
 log_double_t uniform_int_pdf(int x, int a, int b);
 
 double uniform_int_cdf(double x, int a, int b);

@@ -849,6 +849,24 @@ extern "C" closure builtin_function_uniform_density(OperationArgs& Args)
     return { ::uniform_pdf(x,a1,a2) };
 }
 
+// Evaluate the continuous uniform CDF using the shared numerical implementation.
+extern "C" closure builtin_function_uniform_cdf(OperationArgs& Args)
+{
+    double a = Args.evaluate_slot_to_value(0).as_double();
+    double b = Args.evaluate_slot_to_value(1).as_double();
+    double x = Args.evaluate_slot_to_value(2).as_double();
+    return { ::uniform_cdf(x, a, b) };
+}
+
+// Evaluate the continuous uniform quantile using overflow-safe interpolation.
+extern "C" closure builtin_function_uniform_quantile(OperationArgs& Args)
+{
+    double a = Args.evaluate_slot_to_value(0).as_double();
+    double b = Args.evaluate_slot_to_value(1).as_double();
+    double p = Args.evaluate_slot_to_value(2).as_double();
+    return { ::uniform_quantile(p, a, b) };
+}
+
 extern "C" closure builtin_function_sample_uniform(OperationArgs& Args)
 {
     double a1 = Args.evaluate_slot_to_value_(0).as_double();

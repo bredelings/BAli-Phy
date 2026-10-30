@@ -4,6 +4,8 @@ import Probability.Random
 import MCMC
 import Compiler.RealFloat (isInfinite, isNaN)
 
+foreign import bpcall "Distribution:" uniform_cdf :: Double -> Double -> Double -> Double
+foreign import bpcall "Distribution:" uniform_quantile :: Double -> Double -> Double -> Double
 foreign import bpcall "Distribution:" uniform_density :: Double -> Double -> Double -> Log Double
 foreign import bpcall "Distribution:" sample_uniform :: Double -> Double -> IO Double
 
@@ -22,16 +24,13 @@ instance HasPdf Uniform where
 valid_uniform_bounds l u = not (isNaN l || isInfinite l || isNaN u || isInfinite u) && l < u
 
 instance Dist1D Uniform where
-    cdf (Uniform l u) x | not (valid_uniform_bounds l u) || isNaN x = 0/0
-                        | x < l     = 0
-                        | x < u     = (x-l)/(u-l)
-                        | otherwise = 1
+    cdf (Uniform l u) x = uniform_cdf l u x
     lower_bound (Uniform l u) = if valid_uniform_bounds l u then Just l else Nothing
     upper_bound (Uniform l u) = if valid_uniform_bounds l u then Just u else Nothing
 
 
 instance ContDist1D Uniform where
-    quantile (Uniform l u) p = if valid_uniform_bounds l u then l + p*(u-l) else 0/0
+    quantile (Uniform l u) p = uniform_quantile l u p
 
 instance MaybeMean Uniform where
     maybeMean (Uniform l u) = Just $ if valid_uniform_bounds l u then (l + u)/2 else 0/0
