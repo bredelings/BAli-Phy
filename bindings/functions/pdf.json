@@ -1,5 +1,6 @@
 {
     "name": "pdf",
+    "synonyms": ["density"],
     "result_type": "Log<Double>",
     "no_log": true,
     "call": "pdf(@dist,@x)",
@@ -17,7 +18,7 @@
         }
     ],
     "title": "The probability density function",
-    "examples": ["pdf(Gamma(1, 2), 1)", "log(pdf(Normal(0, 1), 40))"],
+    "examples": ["pdf(Gamma(1, 2), 1)", "density(Poisson(2), 3)", "log(pdf(Normal(0, 1), 40))"],
     "description": "Evaluate the probability density at x, or the probability mass for a discrete distribution. The result is stored logarithmically; use log(pdf(dist,x)) to obtain the log-density without underflow.",
-    "see": ["density", "log"]
+    "see": ["log"]
 }
