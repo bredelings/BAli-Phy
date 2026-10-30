@@ -52,6 +52,18 @@ instance HasPdf d => HasPdf (Independent [] d) where
 
 instance HasAnnotatedPdf d => HasAnnotatedPdf (Independent [] d)
 
+instance HasPdf d => HasPdf (Independent IntMap.IntMap d) where
+    -- IntMap uses integer hash-trie lookups, so checking every key is linear in the map size.
+    -- Pair by key rather than relying on two maps having the same iteration order.
+    densityWithProperties (Independent dists) values
+      | IntMap.size dists /= IntMap.size values = ([fromLogDensity 0], ())
+      | not (all (\key -> IntMap.member key values) (IntMap.keys dists)) = ([fromLogDensity 0], ())
+      | otherwise = (concat [densities (dists IntMap.! key) (values IntMap.! key)
+                            | key <- IntMap.keys dists], ())
+
+instance HasPdf d => HasAnnotatedPdf (Independent IntMap.IntMap d)
+
+
 --instance Sampleable d => Sampleable (Independent [] d) where
 --    sample (Independent dists) = lazy $ sequence $ map sample dists
 

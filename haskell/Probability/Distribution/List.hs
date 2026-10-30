@@ -115,6 +115,15 @@ instance Sampleable d => Sampleable (IIDOn a d) where
                                   xs <- sequence $ repeat $ dist
                                   return $ Map.fromDistinctAscList $ zip (Set.toAscList domain) xs
 
+instance (Eq a, HasPdf d) => HasPdf (IIDOn a d) where
+    -- Compare ascending domains in linear time; only matching keys contribute density factors.
+    densityWithProperties (IIDOn domain dist) values
+      | Set.size domain /= Map.size values = ([fromLogDensity 0], ())
+      | Set.toAscList domain /= Map.keys values = ([fromLogDensity 0], ())
+      | otherwise = (concatMap (densities dist) (Map.elems values), ())
+
+instance (Eq a, HasPdf d) => HasAnnotatedPdf (IIDOn a d)
+
 iidOn = IIDOn
 
 {-
