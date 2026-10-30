@@ -229,7 +229,9 @@ log_double_t gamma_pdf(double x,double a, double b)
 
   log_double_t Pr = 1;
 
-  Pr.log() = (a-1)*log(x) - x/b - log_gamma(a) - a*log(b);
+  // At shape 1 the power term is zero, including at x=0 where 0*log(0) would be NaN.
+  double log_power = (a == 1) ? 0 : (a-1)*log(x);
+  Pr.log() = log_power - x/b - log_gamma(a) - a*log(b);
 
   return Pr;
 }
