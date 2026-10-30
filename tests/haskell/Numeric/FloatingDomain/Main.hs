@@ -8,6 +8,8 @@ import Compiler.Classes
 import Compiler.Num
 import Compiler.RealFloat
 import Data.Eq
+import Data.Foldable (all)
+import Data.Function ((.))
 import Data.Floating.Types (FloatConvert(toFloating))
 import Data.Ord
 import Numeric.Log (Log)
@@ -18,6 +20,18 @@ infinity = (1.0 / 0.0 :: Double)
 nan = (0.0 / 0.0 :: Double)
 
 near x y = abs (x-y) < 1.0e-12
+
+-- Density arithmetic tests do not check unordered comparisons. Keep both numeric types aligned
+-- with GHC while their Ord instances expose NaNs through floating-point comparisons.
+checkOrdering isNan n low middle high =
+  ( all (\op -> all (\x -> not (op n x) && not (op x n)) [low, middle, high, n])
+        [(<), (<=), (>), (>=)]
+  , min n middle == middle && isNan (min middle n)
+      && isNan (max n middle) && max middle n == middle
+  , low < middle && low <= middle && middle > low && middle >= low
+      && middle < high && high > middle && middle <= middle && middle >= middle
+      && min low high == low && max low high == high
+  )
 
 -- Isolate floating-domain boundaries and Log Double primitives that full-program tests cannot diagnose.
 -- Remove the log-number checks if Log Double no longer supplies the probability-number instances.
@@ -55,3 +69,7 @@ main = do
         , near (ln (expTo 0 - expTo (-1) :: Log Double)) (log1mexp (-1))
         , near (ln (pow quarter 3)) (3 * log 0.25)
         )
+  print (checkOrdering isNaN nan (-infinity) 1 infinity)
+  print (checkOrdering (isNaN . ln) (expTo nan :: Log Double) 0 1 (expTo infinity))
+  -- Equal signed zeros expose which argument max returns; GHC chooses the second.
+  print (1 / max 0 (-0.0) == -infinity && 1 / max (-0.0) 0 == infinity)

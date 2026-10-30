@@ -46,6 +46,11 @@ instance Ord Integer where
 
 instance Ord Double where
     (<) = lessthan_double
+    -- Negating <= would incorrectly make NaN greater than every value.
+    x > y = y < x
+    x >= y = y <= x
+    -- Match GHC's argument selection for NaNs and equal values.
+    max x y = if x <= y then y else x
 
 deriving instance Ord Bool
 

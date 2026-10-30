@@ -38,6 +38,11 @@ instance Eq (Log Double) where
 
 instance Ord (Log Double) where
     (<) = lessthan_log_double
+    -- Negating <= would incorrectly make NaN greater than every value.
+    x > y = y < x
+    x >= y = y <= x
+    -- Match GHC's argument selection for NaNs and equal values.
+    max x y = if x <= y then y else x
 
 instance Num (Log Double) where
     (+) = add_logdouble
