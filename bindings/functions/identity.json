@@ -6,9 +6,12 @@
     "args": [
         {
             "name": "x",
-            "type": "a",
-	    "description": "The argument"
+            "type": "a"
         }
     ],
-    "description" : "The identity function"
+    "description": "Returns x unchanged.",
+    "title": "The identity function",
+    "examples": [
+        "identity(3)"
+    ]
 }

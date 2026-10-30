@@ -2,11 +2,22 @@
     "name": "ordered_letter_pairs",
     "result_type": "Set<String>",
     "call": "Set.fromList(orderedLetterPairNames(@a))",
-    "import": ["SModel.Markov"],
+    "import": [
+        "SModel.Markov"
+    ],
     "args": [
         {
             "name": "a",
-            "type": "a"
+            "type": "a",
+            "description": "The alphabet"
         }
+    ],
+    "title": "Ordered pairs of alphabet symbols",
+    "description": "Returns a set of names for pairs of distinct alphabet symbols, including both orientations. Each name concatenates the two symbols; for DNA, both AC and CA are included.",
+    "examples": [
+        "ordered_letter_pairs(DNA)"
+    ],
+    "see": [
+        "letter_pairs"
     ]
 }

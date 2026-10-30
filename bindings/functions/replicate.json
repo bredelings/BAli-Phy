@@ -7,13 +7,20 @@
         {
             "name": "n",
             "type": "Int",
-	    "description": "Number of times to replicate the object"
+            "description": "Number of times to replicate the object"
         },
         {
             "name": "x",
             "type": "a",
-	    "description": "The object to replicate"
+            "description": "The object to replicate"
         }
     ],
-    "description": "Produces a list of length n where every element is x."
+    "description": "Produces a list of length n where every element is x. Returns an empty list when n is zero or negative.",
+    "examples": [
+        "replicate(3,2)",
+        "replicate(0,2)"
+    ],
+    "see": [
+        "Cons"
+    ]
 }

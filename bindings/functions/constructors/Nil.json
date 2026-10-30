@@ -2,6 +2,13 @@
     "name": "Nil",
     "result_type": "List<a>",
     "call": "([])",
-    "args": [ ],
-    "title": "The empty list"
+    "args": [],
+    "title": "The empty list",
+    "description": "The empty list, equivalent to [].",
+    "examples": [
+        "length(Nil)"
+    ],
+    "see": [
+        "Cons"
+    ]
 }

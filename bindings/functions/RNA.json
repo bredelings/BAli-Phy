@@ -1,9 +1,21 @@
 {
     "name": "RNA",
-    "deprecated-synonyms": ["rna"],
+    "deprecated-synonyms": [
+        "rna"
+    ],
     "result_type": "RNA",
     "call": "rna",
-    "import": ["Bio.Alphabet"],
+    "import": [
+        "Bio.Alphabet"
+    ],
     "args": [],
-    "title": "The RNA alphabet"
+    "title": "The RNA alphabet",
+    "description": "The nucleotide alphabet A, C, G, U. Supports IUPAC ambiguity codes, including N for any nucleotide.",
+    "examples": [
+        "RNA"
+    ],
+    "see": [
+        "DNA",
+        "codons"
+    ]
 }

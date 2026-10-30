@@ -5,12 +5,21 @@
     "args": [
         {
             "name": "first",
-            "type": "a"
+            "type": "a",
+            "description": "The element to prepend"
         },
         {
             "name": "second",
-            "type": "List<a>"
+            "type": "List<a>",
+            "description": "The remaining list"
         }
     ],
-    "title":"cons: append to the front of a list"
+    "title": "Prepend an element to a list",
+    "description": "Returns a list with first followed by the elements of second.",
+    "examples": [
+        "Cons(1,[2,3])"
+    ],
+    "see": [
+        "Nil"
+    ]
 }

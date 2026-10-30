@@ -2,11 +2,22 @@
     "name": "number_pairs",
     "result_type": "Set<String>",
     "call": "numberPairSet(@n)",
-    "import": ["Markov"],
+    "import": [
+        "Markov"
+    ],
     "args": [
         {
             "name": "n",
-            "type": "Int"
+            "type": "Int",
+            "description": "The number of indices"
         }
+    ],
+    "title": "Unordered pairs of indices",
+    "description": "Returns a set of pair names i|j for indices 1 through n, with i < j. For n = 3, the names are 1|2, 1|3, and 2|3.",
+    "examples": [
+        "number_pairs(3)"
+    ],
+    "see": [
+        "letter_pairs"
     ]
 }

@@ -7,13 +7,20 @@
         {
             "name": "xs",
             "type": "List<a>",
-	    "description": "The first list"
+            "description": "The first list"
         },
         {
             "name": "ys",
             "type": "List<b>",
-	    "description": "The second list"
+            "description": "The second list"
         }
     ],
-    "description": "Combine a pair of list into a list of pairs"
+    "description": "Combines two lists into a list of pairs, stopping at the end of the shorter list.",
+    "title": "Pair corresponding list elements",
+    "examples": [
+        "zip([1,2,3],[4,5])"
+    ],
+    "see": [
+        "zipWith"
+    ]
 }

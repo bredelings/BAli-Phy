@@ -2,12 +2,19 @@
     "name": "sort",
     "result_type": "List<a>",
     "no_log": true,
-    "constraints": ["Ord<a>"],
+    "constraints": [
+        "Ord<a>"
+    ],
     "call": "sort(@xs)",
     "args": [
         {
             "name": "xs",
             "type": "List<a>"
         }
+    ],
+    "title": "Sort a list",
+    "description": "Returns the elements of xs in ascending order, retaining duplicates.",
+    "examples": [
+        "sort([3,1,2,1])"
     ]
 }

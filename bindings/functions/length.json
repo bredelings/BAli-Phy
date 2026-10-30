@@ -8,5 +8,10 @@
             "name": "x",
             "type": "List<a>"
         }
+    ],
+    "title": "List length",
+    "description": "Returns the number of elements in x. An empty list has length zero.",
+    "examples": [
+        "length([2,4,6])"
     ]
 }

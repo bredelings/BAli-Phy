@@ -2,11 +2,23 @@
     "name": "letter_pairs",
     "result_type": "Set<String>",
     "call": "Set.fromList(letter_pair_names(@a))",
-    "import": ["SModel.ReversibleMarkov"],
+    "import": [
+        "SModel.ReversibleMarkov"
+    ],
     "args": [
         {
             "name": "a",
-            "type": "a"
+            "type": "a",
+            "description": "The alphabet"
         }
+    ],
+    "title": "Unordered pairs of alphabet symbols",
+    "description": "Returns a set of names for pairs of distinct alphabet symbols, with one name per unordered pair. Each name concatenates the two symbols in underlying alphabet order; for DNA, AC is included but CA is not.",
+    "examples": [
+        "letter_pairs(DNA)"
+    ],
+    "see": [
+        "ordered_letter_pairs",
+        "number_pairs"
     ]
 }

@@ -2,7 +2,16 @@
     "name": "standard_code",
     "result_type": "GeneticCode",
     "call": "standard_code",
-    "import": ["Bio.Alphabet"],
+    "import": [
+        "Bio.Alphabet"
+    ],
     "args": [],
-    "title": "The standard genetic code"
+    "title": "The standard genetic code",
+    "description": "The standard genetic code (NCBI translation table 1).",
+    "examples": [
+        "length(ordered_letters(codons(RNA,standard_code)))"
+    ],
+    "see": [
+        "codons"
+    ]
 }

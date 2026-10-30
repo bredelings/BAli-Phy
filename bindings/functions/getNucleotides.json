@@ -1,13 +1,30 @@
 {
     "name": "getNucleotides",
     "result_type": "b",
-    "constraints": ["Triplets<a,b>"],
+    "constraints": [
+        "Triplets<a,b>"
+    ],
     "call": "getNucleotides(@a)",
-    "import": ["Bio.Alphabet"],
+    "import": [
+        "Bio.Alphabet"
+    ],
     "args": [
         {
             "name": "a",
-            "type": "a"
+            "type": "a",
+            "description": "The codon, triplet, doublet, or RNA-edit alphabet"
         }
+    ],
+    "title": "The underlying nucleotide alphabet",
+    "description": "Returns the DNA or RNA alphabet underlying a codon, triplet, doublet, or RNA-edit alphabet.",
+    "examples": [
+        "getNucleotides(codons(DNA))",
+        "getNucleotides(doublets(RNA))"
+    ],
+    "see": [
+        "codons",
+        "triplets",
+        "doublets",
+        "rnaEditsOf"
     ]
 }

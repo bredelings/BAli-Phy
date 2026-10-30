@@ -2,12 +2,23 @@
     "name": "rnaEditsOf",
     "result_type": "RNAEdits<n>",
     "call": "mkRNAEdits(@nucleotides)",
-    "import": ["Bio.Alphabet"],
+    "import": [
+        "Bio.Alphabet"
+    ],
     "args": [
         {
             "name": "nucleotides",
-            "type": "n"
+            "type": "n",
+            "description": "The DNA or RNA alphabet"
         }
     ],
-    "title": "The RNA-edits alphabet"
+    "title": "The RNA-edits alphabet",
+    "description": "Constructs a six-state alphabet for RNA editing. With RNA, the states are AA, CC, CU, GG, UC, and UU: unchanged nucleotide pairs plus C-to-U and U-to-C edits. With DNA, T replaces U.",
+    "examples": [
+        "ordered_letters(rnaEditsOf(RNA))"
+    ],
+    "see": [
+        "RNA",
+        "getNucleotides"
+    ]
 }

@@ -1,14 +1,27 @@
 {
     "name": "triplets",
-    "deprecated-synonyms": ["tripletsOf"],
+    "deprecated-synonyms": [
+        "tripletsOf"
+    ],
     "result_type": "Triplets<a>",
     "call": "mkTriplets(@nucleotides)",
-    "import": ["Bio.Alphabet"],
+    "import": [
+        "Bio.Alphabet"
+    ],
     "args": [
         {
             "name": "nucleotides",
-            "type": "a"
+            "type": "a",
+            "description": "The DNA or RNA alphabet"
         }
     ],
-    "title": "The triplets alphabet"
+    "title": "A triplet alphabet",
+    "description": "Constructs an alphabet of all 64 nucleotide triplets from DNA or RNA, including combinations that represent stop codons.",
+    "examples": [
+        "length(ordered_letters(triplets(RNA)))"
+    ],
+    "see": [
+        "codons",
+        "doublets"
+    ]
 }

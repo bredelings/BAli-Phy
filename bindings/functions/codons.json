@@ -1,19 +1,34 @@
 {
     "name": "codons",
-    "deprecated-synonyms": ["codonsOf"],
+    "deprecated-synonyms": [
+        "codonsOf"
+    ],
     "result_type": "Codons<a>",
     "call": "mkCodons(@nucleotides,@code)",
-    "import": ["Bio.Alphabet"],
+    "import": [
+        "Bio.Alphabet"
+    ],
     "args": [
         {
             "name": "nucleotides",
-            "type": "a"
+            "type": "a",
+            "description": "The DNA or RNA alphabet"
         },
         {
             "name": "code",
             "type": "GeneticCode",
-            "default_value": "standard_code"
+            "default_value": "standard_code",
+            "description": "The genetic code used to identify stop codons and translate codons"
         }
     ],
-    "title": "The codons alphabet"
+    "title": "A codon alphabet",
+    "description": "Constructs a codon alphabet from DNA or RNA, excluding stop codons under the supplied genetic code. The standard code gives 61 codons.",
+    "examples": [
+        "length(ordered_letters(codons(DNA)))"
+    ],
+    "see": [
+        "triplets",
+        "standard_code",
+        "getAminoAcids"
+    ]
 }

@@ -2,11 +2,22 @@
     "name": "letters",
     "result_type": "Set<String>",
     "call": "letterSet(@a)",
-    "import": ["Bio.Alphabet"],
+    "import": [
+        "Bio.Alphabet"
+    ],
     "args": [
         {
             "name": "a",
-            "type": "a"
+            "type": "a",
+            "description": "The alphabet"
         }
+    ],
+    "title": "Alphabet symbols as a set",
+    "description": "Returns the set of ordinary symbols in alphabet a, excluding ambiguity codes and gap symbols.",
+    "examples": [
+        "letters(DNA)"
+    ],
+    "see": [
+        "ordered_letters"
     ]
 }
