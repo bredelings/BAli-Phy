@@ -183,6 +183,11 @@ def main():
         raise AssertionError("model help marked the leaf topic GTR as having subtopics")
 
     functions = run_help(args, "functions")
+    # Canonical-topic checks do not catch aliases that work in expressions but lack help.
+    # Keep alias help identical while ordinary binding synonyms share one definition.
+    for alias, canonical in (("density", "pdf"), ("UnitMixture", "unit_mixture")):
+        if run_help(args, alias) != run_help(args, canonical):
+            raise AssertionError(f"{alias} did not resolve to {canonical} help")
     for name in ("codons", "doublets", "triplets"):
         if name not in functions:
             raise AssertionError(f"function help did not list {name}")

@@ -421,6 +421,13 @@ ptree load_help_files(const std::vector<fs::path>& package_paths)
 	category.push_back(rule.name);
 	string text = get_help_for_rule(rule);
 	help.make_path(category).put_value(text);
+        // Ordinary synonyms share the canonical help; actual binding names take precedence.
+        for (const auto& synonym: rule.synonyms)
+            if (R.get_rule_for_func(synonym)->name == rule.name)
+            {
+                category.back() = synonym;
+                help.make_path(category).put_value(text);
+            }
     }
 
     return help;
