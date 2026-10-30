@@ -1,6 +1,6 @@
 {
     "name": "pdf",
-    "result_type": "Double",
+    "result_type": "Log<Double>",
     "no_log": true,
     "call": "pdf(@dist,@x)",
     "import": ["Probability"],

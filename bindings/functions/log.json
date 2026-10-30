@@ -2,11 +2,12 @@
     "name": "log",
     "result_type": "Double",
     "no_log": true,
-    "call": "log(@x)",
+    "constraints": ["Pow<a>"],
+    "call": "ln(@x)",
     "args": [
         {
             "name": "x",
-            "type": "Double"
+            "type": "a"
         }
     ],
     "title": "The natural logarithm"
