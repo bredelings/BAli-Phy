@@ -95,6 +95,8 @@ instance (Variance d, Result d ~ Double) => Variance (Shifted d)
 
 shifted by dist = Shifted by dist
 
+shifted_exponential mu shift = shifted shift (exponential mu)
+
 ------------------------------------------------------------------------------------------
 
 data Scaled d = Scaled (Result d) d
