@@ -4,13 +4,15 @@
     "result_type": "Distribution<Double>",
     "call": "exponential(@mean)",
     "import": ["Probability"],
-    "title": "The Exponential distribution",
+    "title": "The exponential distribution",
     "args": [
         {
             "name": "mean",
             "type": "Double",
-	    "description": "The mean parameter"
+	    "description": "The mean of the distribution"
         }
     ],
-    "see": ["ShiftedExponential"]
+    "description": "The exponential distribution parameterized by its mean. Equivalent to Gamma(1, mean).",
+    "examples": ["~Exponential(2)", "density(Exponential(2), 1)"],
+    "see": ["Gamma", "ShiftedExponential"]
 }

@@ -18,5 +18,6 @@
             "type": "Double",
             "description": "Scale parameter of the distribution of log(X)"
         }
-    ]
+    ],
+    "examples": ["density(LogGamma(2, 1), 2)"]
 }
