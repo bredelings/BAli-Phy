@@ -7,7 +7,7 @@
     "args": [
         {
             "name": "dist",
-            "type": "Distribution<Double>",
+            "type": "Distribution<a>",
 	    "description": "The distribution to evaluate"
         },
         {
@@ -17,7 +17,7 @@
         }
     ],
     "title": "The cumulative distribution function",
-    "examples": ["cdf(Gamma(1, 2), 1)"],
-    "description": "Return Pr(X <= x) under dist.",
+    "examples": ["cdf(Gamma(1, 2), 1)", "cdf(Poisson(1), 1/2)"],
+    "description": "Return Pr(X <= x) under dist. The threshold may be fractional even when the distribution produces integers.",
     "see": ["quantile", "pdf"]
 }

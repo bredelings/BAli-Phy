@@ -104,6 +104,11 @@ log_double_t bernoulli_pdf(double p, int k);
 
 log_double_t poisson_pdf(double mu, int k);
 
+double geometric_cdf_from_logs(double log_p, double log_q, double x);
+double poisson_cdf(double mu, double x);
+double binomial_cdf_from_logs(int n, double log_p, double log_q, double x);
+double negative_binomial_cdf_from_logs(int r, double log_p, double log_q, double x);
+
 // -------- Topology counting functions ------ //
 log_double_t num_branches(int n);
 log_double_t num_topologies(int n);

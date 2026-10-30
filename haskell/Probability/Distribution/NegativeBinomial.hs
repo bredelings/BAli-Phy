@@ -5,6 +5,7 @@ where
 import Probability.Random
 import MCMC
 
+foreign import bpcall "Distribution:" negative_binomial_cdf_from_logs :: Int -> Double -> Double -> Double -> Double
 foreign import bpcall "Distribution:" negative_binomial_density_from_logs
     :: Int -> Double -> Double -> Int -> Log Double
 foreign import bpcall "Distribution:" sample_negative_binomial_from_logs :: Int -> Double -> Double -> IO Int
@@ -21,7 +22,7 @@ instance HasPdf NegativeBinomial where
     pdf (NegativeBinomial r p) = negative_binomial_density_from_logs r (ln p) (ln (1-p))
 
 instance Dist1D NegativeBinomial where
-    cdf (NegativeBinomial r p) = undefined
+    cdf (NegativeBinomial r p) = negative_binomial_cdf_from_logs r (ln p) (ln (1-p))
     lower_bound _ = Just 0
 
 instance MaybeMean NegativeBinomial where

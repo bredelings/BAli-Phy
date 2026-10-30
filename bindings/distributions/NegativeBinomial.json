@@ -1,0 +1,29 @@
+{
+    "name": "NegativeBinomial",
+    "result_type": "Distribution<Int>",
+    "call": "negativeBinomial(@r,@p)",
+    "import": [
+        "Probability.Distribution.NegativeBinomial"
+    ],
+    "title": "Negative binomial distribution",
+    "args": [
+        {
+            "name": "r",
+            "type": "Int",
+            "description": "Number of successes to wait for"
+        },
+        {
+            "name": "p",
+            "type": "Double",
+            "description": "Success probability on each trial"
+        }
+    ],
+    "description": "Count failures before r successes in independent trials, each with success probability p. When r is zero, the result is zero. With r=1, this is the Geometric distribution.",
+    "examples": [
+        "cdf(NegativeBinomial(2, 0.25), 3)"
+    ],
+    "see": [
+        "Geometric",
+        "Binomial"
+    ]
+}

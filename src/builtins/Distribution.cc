@@ -998,6 +998,43 @@ extern "C" closure builtin_function_sample_bernoulli_from_logs(OperationArgs& Ar
     return { (int)bernoulli_from_logs(log_p, log_q) };
 }
 
+// Evaluate the inclusive geometric CDF at a real-valued threshold.
+extern "C" closure builtin_function_geometric_cdf_from_logs(OperationArgs& Args)
+{
+    double log_p = Args.evaluate_slot_to_value(0).as_double();
+    double log_q = Args.evaluate_slot_to_value(1).as_double();
+    double x = Args.evaluate_slot_to_value(2).as_double();
+    return { ::geometric_cdf_from_logs(log_p, log_q, x) };
+}
+
+// Evaluate the inclusive poisson CDF at a real-valued threshold.
+extern "C" closure builtin_function_poisson_cdf(OperationArgs& Args)
+{
+    double mu = Args.evaluate_slot_to_value(0).as_double();
+    double x = Args.evaluate_slot_to_value(1).as_double();
+    return { ::poisson_cdf(mu, x) };
+}
+
+// Evaluate the inclusive binomial CDF at a real-valued threshold.
+extern "C" closure builtin_function_binomial_cdf_from_logs(OperationArgs& Args)
+{
+    int n = Args.evaluate_slot_to_value(0).as_int();
+    double log_p = Args.evaluate_slot_to_value(1).as_double();
+    double log_q = Args.evaluate_slot_to_value(2).as_double();
+    double x = Args.evaluate_slot_to_value(3).as_double();
+    return { ::binomial_cdf_from_logs(n, log_p, log_q, x) };
+}
+
+// Evaluate the inclusive negative-binomial CDF at a real-valued threshold.
+extern "C" closure builtin_function_negative_binomial_cdf_from_logs(OperationArgs& Args)
+{
+    int r = Args.evaluate_slot_to_value(0).as_int();
+    double log_p = Args.evaluate_slot_to_value(1).as_double();
+    double log_q = Args.evaluate_slot_to_value(2).as_double();
+    double x = Args.evaluate_slot_to_value(3).as_double();
+    return { ::negative_binomial_cdf_from_logs(r, log_p, log_q, x) };
+}
+
 extern "C" closure builtin_function_geometric_density(OperationArgs& Args)
 {
     double p_fail = Args.evaluate_slot_to_value(0).as_double();

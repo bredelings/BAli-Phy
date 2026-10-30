@@ -714,6 +714,63 @@ log_double_t geometric_pdf(log_double_t p_fail, log_double_t p_success, int n)
   return pr;
 }
 
+
+// For failures before the first success, F(x) = 1-q^(floor(x)+1). Using log(q)
+// and expm1 preserves small CDFs without subtracting nearly equal numbers.
+double geometric_cdf_from_logs(double log_p, double log_q, double x)
+{
+    if (std::isnan(x) or not (log_p <= 0) or not (log_q <= 0)
+        or (log_p == -INFINITY and log_q == -INFINITY))
+        return std::numeric_limits<double>::quiet_NaN();
+    if (x < 0) return 0;
+    if (x == INFINITY or log_q == -INFINITY) return 1;
+    if (log_p == -INFINITY) return 0;
+    return -std::expm1((std::floor(x) + 1)*log_q);
+}
+
+// The inclusive Poisson CDF is Q(floor(x)+1, mu), the regularized upper incomplete
+// gamma function. Handle support endpoints and the point mass at zero explicitly.
+double poisson_cdf(double mu, double x)
+{
+    if (not std::isfinite(mu) or mu < 0 or std::isnan(x))
+        return std::numeric_limits<double>::quiet_NaN();
+    if (x < 0) return 0;
+    if (x == INFINITY or mu == 0) return 1;
+    return boost::math::gamma_q(std::floor(x) + 1, mu);
+}
+
+// For k=floor(x), F(x)=I_q(n-k,k+1)=1-I_p(k+1,n-k). Choose the smaller
+// probability argument so rounding its complement to one does not erase a tail.
+double binomial_cdf_from_logs(int n, double log_p, double log_q, double x)
+{
+    if (n < 0 or std::isnan(x) or not (log_p <= 0) or not (log_q <= 0)
+        or (log_p == -INFINITY and log_q == -INFINITY))
+        return std::numeric_limits<double>::quiet_NaN();
+    if (x < 0) return 0;
+    if (x >= n or log_p == -INFINITY) return 1;
+    if (log_q == -INFINITY) return 0;
+    double k = std::floor(x);
+    if (log_p < log_q)
+        return boost::math::ibetac(k + 1, n - k, std::exp(log_p));
+    return boost::math::ibeta(n - k, k + 1, std::exp(log_q));
+}
+
+// Counting failures before r successes gives F(x)=I_p(r,floor(x)+1).
+// The complementary beta identity lets us use the smaller of p and q directly.
+double negative_binomial_cdf_from_logs(int r, double log_p, double log_q, double x)
+{
+    if (r < 0 or std::isnan(x) or not (log_p <= 0) or not (log_q <= 0)
+        or (log_p == -INFINITY and log_q == -INFINITY))
+        return std::numeric_limits<double>::quiet_NaN();
+    if (x < 0) return 0;
+    if (x == INFINITY or r == 0 or log_q == -INFINITY) return 1;
+    if (log_p == -INFINITY) return 0;
+    double k = std::floor(x);
+    if (log_p < log_q)
+        return boost::math::ibeta(double(r), k + 1, std::exp(log_p));
+    return boost::math::ibetac(k + 1, double(r), std::exp(log_q));
+}
+
 log_double_t poisson_pdf(double mu, int k)
 {
     assert(mu >= 0);

@@ -5,6 +5,7 @@ where
 import Probability.Random
 import MCMC
 
+foreign import bpcall "Distribution:" geometric_cdf_from_logs :: Double -> Double -> Double -> Double
 --foreign import bpcall "Distribution:geometric_density" geometric_density :: Double -> Double -> Int -> Log Double
 foreign import bpcall "Distribution:" sample_geometric_from_logs :: Double -> Double -> IO Int
 
@@ -26,7 +27,7 @@ instance HasPdf Geometric where
 
 
 instance Dist1D Geometric where
-    cdf (Geometric p_success) n = undefined
+    cdf (Geometric p) = geometric_cdf_from_logs (ln p) (ln (1-p))
     lower_bound dist = Just 0
 
 instance MaybeMean Geometric where

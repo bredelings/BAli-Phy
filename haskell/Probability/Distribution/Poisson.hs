@@ -5,6 +5,7 @@ import MCMC
 import Probability.Distribution.List
 import Probability.Distribution.Uniform
 
+foreign import bpcall "Distribution:" poisson_cdf :: Double -> Double -> Double
 foreign import bpcall "Distribution:" poisson_density :: Double -> Int -> Log Double
 foreign import bpcall "Distribution:" sample_poisson :: Double -> IO Int
 
@@ -21,7 +22,7 @@ instance HasPdf Poisson where
     pdf (Poisson mu) n = poisson_density mu n
 
 instance Dist1D Poisson where
-    cdf (Poisson mu) = undefined
+    cdf (Poisson mu) = poisson_cdf mu
     lower_bound _ = Just 0
 
 instance MaybeMean Poisson where

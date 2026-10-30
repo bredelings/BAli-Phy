@@ -5,6 +5,7 @@ where
 import Probability.Random
 import MCMC
 
+foreign import bpcall "Distribution:" binomial_cdf_from_logs :: Int -> Double -> Double -> Double -> Double
 foreign import bpcall "Distribution:" binomial_density_from_logs :: Int -> Double -> Double -> Int -> Log Double
 foreign import bpcall "Distribution:" sample_binomial_from_logs :: Int -> Double -> Double -> IO Int
 
@@ -21,7 +22,7 @@ instance HasPdf Binomial where
     pdf (Binomial n p) x = binomial_density_from_logs n (ln p) (ln (1-p)) x
 
 instance Dist1D Binomial where
-    cdf (Binomial n p) x  = undefined
+    cdf (Binomial n p) = binomial_cdf_from_logs n (ln p) (ln (1-p))
     lower_bound (Binomial n p) = Just 0
     upper_bound (Binomial n p) = Just n
 
