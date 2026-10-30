@@ -875,6 +875,15 @@ extern "C" closure builtin_function_uniform_int_density(OperationArgs& Args)
     return { ::uniform_int_pdf(x,a1,a2) };
 }
 
+// Evaluate the inclusive integer CDF without narrowing the observation to Int.
+extern "C" closure builtin_function_uniform_int_cdf(OperationArgs& Args)
+{
+    int a = Args.evaluate_slot_to_value(0).as_int();
+    int b = Args.evaluate_slot_to_value(1).as_int();
+    double x = Args.evaluate_slot_to_value(2).as_double();
+    return { ::uniform_int_cdf(x, a, b) };
+}
+
 extern "C" closure builtin_function_sample_uniform_int(OperationArgs& Args)
 {
     int a1 = Args.evaluate_slot_to_value_(0).as_int();

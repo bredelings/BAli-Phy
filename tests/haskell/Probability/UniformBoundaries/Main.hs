@@ -12,7 +12,7 @@ import Data.Maybe (Maybe(Nothing))
 import Data.OldList (all)
 import Probability.Dist (ContDist1D(quantile), Mean(mean), Variance(variance))
 import Probability.Dist (Dist1D(cdf, lower_bound, upper_bound), HasPdf(pdf), IOSampleable(sampleIO))
-import Probability.Distribution.Uniform (uniform, uniform_int, uniform_int_quantile)
+import Probability.Distribution.Uniform (uniform, uniform_int)
 import System.IO (IO, print)
 
 -- Check invalid conditional distributions through their public interface: ordinary runs rarely
@@ -31,7 +31,6 @@ main = do
       && singletonSample == 4
       && isNaN (ln $ pdf invalid 5)
       && isNaN (cdf invalid 4)
-      && isNaN (uniform_int_quantile 5 3 4)
       && lower_bound invalid == Nothing
       && upper_bound invalid == Nothing
       && ln (pdf singleton 4) == 0

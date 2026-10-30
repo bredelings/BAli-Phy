@@ -43,6 +43,8 @@ log_double_t uniform_pdf(double x, double a, double b);
 
 log_double_t uniform_int_pdf(int x, int a, int b);
 
+double uniform_int_cdf(double x, int a, int b);
+
 log_double_t exponential_pdf(double x, double mu);
 
 log_double_t laplace_pdf(double x, double mu, double sigma);

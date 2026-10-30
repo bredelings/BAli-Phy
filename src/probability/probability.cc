@@ -163,6 +163,18 @@ log_double_t uniform_int_pdf(int x, int a, int b)
   return 1.0/log_double_t(double(width));
 }
 
+// Count integers <= x using wide arithmetic. Bound checks keep flooring and conversion
+// inside the Int support, even when the observation is infinite.
+double uniform_int_cdf(double x, int a, int b)
+{
+    if (b < a or std::isnan(x)) return std::numeric_limits<double>::quiet_NaN();
+    if (x < a) return 0;
+    if (x >= b) return 1;
+    auto count = std::int64_t(std::floor(x)) - std::int64_t(a) + 1;
+    auto width = std::int64_t(b) - std::int64_t(a) + 1;
+    return double(count)/double(width);
+}
+
 /// log density for y if y=ln (x+delta), and x ~ Exp(mu)
 
 /// f(x) = exp(-x/mu)/mu   g(y) = exp(-(exp(y)-delta)/mu)/mu * exp(y)

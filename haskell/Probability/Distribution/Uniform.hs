@@ -63,6 +63,7 @@ uniform_effect l u x = do
   addMove (1/2) $ metropolisHastings $ uniformIndependenceProposal x l u
 
 ------------------------------------
+foreign import bpcall "Distribution:" uniform_int_cdf :: Int -> Int -> Double -> Double
 foreign import bpcall "Distribution:" uniform_int_density :: Int -> Int -> Int -> Log Double
 foreign import bpcall "Distribution:" sample_uniform_int :: Int -> Int -> IO Int
 
@@ -73,10 +74,7 @@ instance Dist UniformInt where
     distName _ = "uniform_int"
 
 instance Dist1D UniformInt where
-    cdf (UniformInt l u) x | l > u         = 0/0
-                           | floor x < l   = 0
-                           | floor x < u   = fromIntegral (floor x-l+1)/ fromIntegral (u-l+1)
-                           | otherwise     = 1
+    cdf (UniformInt l u) x = uniform_int_cdf l u x
 
     lower_bound (UniformInt l u) = if l <= u then Just l else Nothing
     upper_bound (UniformInt l u) = if l <= u then Just u else Nothing
@@ -92,11 +90,6 @@ instance HasAnnotatedPdf UniformInt where
 
 instance Sampleable UniformInt where
     sample dist@(UniformInt l u) = RanDistribution2 dist (uniform_int_effect l u)
-
-uniform_int_quantile l u x | l > u      = 0/0
-                           | x <= l     = 0
-                           | x > u      = 1
-                           | otherwise  = fromIntegral (x-l) / fromIntegral (u-l+1)
 
 uniform_int_bounds l u = integer_between l u
 uniform_int_effect l u x = do
