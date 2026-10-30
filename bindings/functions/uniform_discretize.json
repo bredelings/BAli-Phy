@@ -1,6 +1,6 @@
 {
     "name": "uniform_discretize",
-    "result_type": "List<Double>",
+    "result_type": "DiscreteDist<Double>",
     "title": "Uniformly discretize a continuous distribution",
     "call": "uniformDiscretize(@dist,@n)",
     "import": ["Probability"],
