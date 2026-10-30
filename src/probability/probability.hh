@@ -47,6 +47,10 @@ log_double_t exponential_pdf(double x, double mu);
 
 log_double_t laplace_pdf(double x, double mu, double sigma);
 
+double laplace_cdf(double x, double m, double s);
+
+double laplace_quantile(double p, double m, double s);
+
 log_double_t cauchy_pdf(double x, double l=0.0, double s=1.0);
 
 log_double_t beta_pdf(double p,double a, double b);

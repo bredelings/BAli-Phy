@@ -185,6 +185,29 @@ log_double_t laplace_pdf(double x, double mu, double b)
   return exp_to_log_space(-std::abs(x-mu)/b)/(2.0*b);
 }
 
+// Integrate the two exponential halves of the Laplace density. Each branch uses
+// a nonpositive exponent, including at infinite observations.
+double laplace_cdf(double x, double m, double s)
+{
+    if (not std::isfinite(m) or not std::isfinite(s) or not (s > 0))
+        return std::numeric_limits<double>::quiet_NaN();
+    const double z = (x-m)/s;
+    return z <= 0 ? 0.5*std::exp(z) : 1.0-0.5*std::exp(-z);
+}
+
+// Invert the two exponential CDF branches using logarithms of tail probabilities.
+// Handle the infinite endpoints explicitly and return the median exactly.
+double laplace_quantile(double p, double m, double s)
+{
+    if (not std::isfinite(m) or not std::isfinite(s) or not (s > 0) or not (p >= 0 and p <= 1))
+        return std::numeric_limits<double>::quiet_NaN();
+    if (p == 0) return -std::numeric_limits<double>::infinity();
+    if (p == 1) return std::numeric_limits<double>::infinity();
+    if (p == 0.5) return m;
+    if (p < 0.5) return m + s*(std::log(p) + std::log(2.0));
+    return m - s*(std::log1p(-p) + std::log(2.0));
+}
+
 log_double_t cauchy_pdf(double x, double l, double s)
 {
   double C = (x-l)/s;

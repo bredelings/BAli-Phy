@@ -814,6 +814,24 @@ extern "C" closure builtin_function_laplace_density(OperationArgs& Args)
     return { ::laplace_pdf(x, a1, a2) };
 }
 
+// Evaluate the Laplace CDF with the model-language location/scale argument order.
+extern "C" closure builtin_function_laplace_cdf(OperationArgs& Args)
+{
+    double m = Args.evaluate_slot_to_value(0).as_double();
+    double s = Args.evaluate_slot_to_value(1).as_double();
+    double x = Args.evaluate_slot_to_value(2).as_double();
+    return { ::laplace_cdf(x, m, s) };
+}
+
+// Evaluate the Laplace quantile with the model-language location/scale argument order.
+extern "C" closure builtin_function_laplace_quantile(OperationArgs& Args)
+{
+    double m = Args.evaluate_slot_to_value(0).as_double();
+    double s = Args.evaluate_slot_to_value(1).as_double();
+    double p = Args.evaluate_slot_to_value(2).as_double();
+    return { ::laplace_quantile(p, m, s) };
+}
+
 extern "C" closure builtin_function_sample_laplace(OperationArgs& Args)
 {
     double m = Args.evaluate_slot_to_value_(0).as_double();

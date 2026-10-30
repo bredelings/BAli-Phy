@@ -4,6 +4,8 @@ import Probability.Random
 import MCMC
 
 foreign import bpcall "Distribution:" laplace_density :: Double -> Double -> Double -> Log Double
+foreign import bpcall "Distribution:" laplace_cdf :: Double -> Double -> Double -> Double
+foreign import bpcall "Distribution:" laplace_quantile :: Double -> Double -> Double -> Double
 foreign import bpcall "Distribution:" sample_laplace  :: Double -> Double -> IO Double
 
 data Laplace = Laplace Double Double
@@ -19,10 +21,10 @@ instance HasPdf Laplace where
     pdf (Laplace m s) x = laplace_density m s x
 
 instance Dist1D Laplace where
-    cdf (Laplace m s) x = undefined
+    cdf (Laplace m s) x = laplace_cdf m s x
 
 instance ContDist1D Laplace where
-    quantile (Laplace m s) p = undefined
+    quantile (Laplace m s) p = laplace_quantile m s p
 
 instance MaybeMean Laplace where
     maybeMean (Laplace m s) = Just m
