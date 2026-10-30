@@ -18,9 +18,10 @@ instance COutput AmbiguityDatabase
 data GeneticCode
 
 -- This should only take a Triplets or Codons!
+-- But it actually accepts codons, triplets, doublets, and RNA-edit alphabets.
 foreign import bpcall "Alphabet:" getNucleotides :: Alphabet -> Alphabet
 
--- This should only take a Triplets or Codons!
+-- Requires a codon alphabet.
 foreign import bpcall "Alphabet:" getAminoAcids :: Alphabet -> Alphabet
 
 foreign import ecall "Alphabet:" alphabetSize :: Alphabet -> Int

@@ -66,7 +66,7 @@ extern "C" closure builtin_function_getNucleotides(OperationArgs& Args)
     if (auto e = arg0.poly_cast<alphabet,RNAEdits>())
 	return Alphabet(e->getNucleotides().clone());
     else
-	throw myexception()<<"getNucleotides: object "<<a.print()<<" is not a Doublets or Triplets alphabet.";
+	throw myexception()<<"getNucleotides: object "<<a.print()<<" is not a Codons, Triplets, Doublets, or RNAEdits alphabet.";
 }
 
 extern "C" closure builtin_function_getAminoAcids(OperationArgs& Args)

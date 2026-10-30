@@ -62,7 +62,7 @@ std::optional<int> RNAEdits::get_doublet(int n1, int n2) const
 
 int RNAEdits::sub_nuc(int letter_index, int pos) const
 {
-    assert( 0 <= pos and pos <= 2);
+    assert(0 <= pos and pos < 2);
 
     return sub_nuc_table[letter_index][pos];
 }
