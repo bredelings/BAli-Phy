@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Main where
 
+import Numeric.Pow
 import Compiler.Floating
 import Compiler.Fractional
 import Compiler.Classes

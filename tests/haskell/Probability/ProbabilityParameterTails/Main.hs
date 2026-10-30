@@ -1,7 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Main where
 
-import Compiler.Floating (Pow(ln), log)
+import Compiler.Floating (log)
+import Numeric.Pow (Pow(ln))
 import Compiler.Num (Num(abs, (*), (+), (-)))
 import Data.Bool ((&&))
 import Data.Eq ((==))

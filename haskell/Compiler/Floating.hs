@@ -67,25 +67,3 @@ instance Floating Double where
     log1p = log1p_double
     log1pexp = log1pexp_double
     log1mexp = log1mexp_double
-
-infixr 8 `pow`
-
--- How about log1p, exmp1, log1pexp, and log1mexp?
-
-class Fractional a => Pow a where
-    ln  :: a -> Double
-    expTo :: Double -> a
-    lnBase :: a -> a -> Double
-
-    sq_rt :: a -> a
-    pow :: a -> Double -> a
-
-    sq_rt x = pow x 0.5
-    lnBase x y = ln x / ln y
-
-instance Pow Double where
-    ln    = log_a
-    expTo = exp_double
-
-    sq_rt  = sqrt_a
-    pow   = pow_a

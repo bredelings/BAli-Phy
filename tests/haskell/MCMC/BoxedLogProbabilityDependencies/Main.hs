@@ -2,7 +2,8 @@
 module Main where
 
 import Compiler.Error (error)
-import Compiler.Floating (Pow(ln), log)
+import Compiler.Floating (log)
+import Numeric.Pow (Pow(ln))
 import Compiler.Num
 import Control.Monad (return)
 import Data.Bool

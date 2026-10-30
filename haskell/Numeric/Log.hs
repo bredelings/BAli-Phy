@@ -1,11 +1,13 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-module Numeric.Log where
+{-# LANGUAGE NamedDefaults #-}
+module Numeric.Log (module Numeric.Log, module Numeric.Pow, default Pow) where
 
 import Compiler.Base (error)
 import Compiler.Classes ()
 import Compiler.FFI.Runtime (RuntimeValue)
 import Compiler.Floating
+import Numeric.Pow
 import Compiler.Fractional
 import Compiler.Integral
 import Compiler.Num

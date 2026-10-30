@@ -1,7 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Main where
 
-import Compiler.Floating (Pow(ln))
+import Numeric.Pow (Pow(ln))
 import Compiler.Fractional
 import Compiler.Num
 import Compiler.RealFloat (isNaN)

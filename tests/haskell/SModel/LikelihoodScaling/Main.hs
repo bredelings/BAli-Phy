@@ -2,7 +2,7 @@
 
 import Bio.Alphabet (dna)
 import Bio.Sequence (bitmaskFromSequence, emptyAmbiguityDatabase, stripGaps)
-import Compiler.Floating (Pow(ln))
+import Numeric.Pow (Pow(ln))
 import Compiler.Num
 import Data.Bool (Bool)
 import Data.Ord

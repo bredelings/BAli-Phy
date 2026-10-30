@@ -2,7 +2,8 @@
 module Main where
 
 import Compiler.Fractional (Fractional(recip), (/))
-import Compiler.Floating (Pow(ln, pow, expTo), exp, log, log1p)
+import Compiler.Floating (exp, log, log1p)
+import Numeric.Pow (Pow(ln, pow, expTo))
 import Compiler.Integral ((^))
 import Compiler.Num (Num(..))
 import Compiler.RealFloat (isNaN)

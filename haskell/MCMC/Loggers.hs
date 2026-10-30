@@ -2,7 +2,7 @@ module MCMC.Loggers where
 
 import           Numeric.Log
 import           Numeric.Prob (fromLogOdds, toFloating)
-import           Compiler.Floating (ln)
+import           Numeric.Pow (ln)
 import           MCMC.Types (ContextAction(..), ContextIndex, Modifiable)
 import           Data.JSON
 import qualified Data.Vector.Unboxed as U

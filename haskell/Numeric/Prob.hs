@@ -1,4 +1,6 @@
+{-# LANGUAGE NamedDefaults #-}
 module Numeric.Prob (Prob,
+                     Pow(..), default Pow,
                      isNaNProb,
                      complement,
                      toProb,

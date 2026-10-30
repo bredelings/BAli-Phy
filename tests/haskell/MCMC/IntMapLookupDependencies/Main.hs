@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Main where
+import Numeric.Pow
 import Prelude
 import System.Environment (getArgs)
 import qualified Data.IntMap as IM

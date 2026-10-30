@@ -4,6 +4,7 @@
     "no_log": true,
     "constraints": ["Pow<a>"],
     "call": "ln(@x)",
+    "import": ["Numeric.Pow"],
     "args": [
         {
             "name": "x",

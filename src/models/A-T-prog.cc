@@ -693,6 +693,7 @@ void write_header(std::ostream& program_file,
     imports.insert("Tree.Newick");                           // for writeNewick
     imports.insert("SModel.Parsimony");                      // for parsimony
     imports.insert("Probability");                           // for prop_likelihood, dropInternalLabels(?)
+    imports.insert("Numeric.Pow");                           // for ln
     imports.insert("Probability.Random");                    // for makeMCMCState
     add(imports, decls.imports);
     for(auto& m: SMs)
