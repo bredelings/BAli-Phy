@@ -492,9 +492,10 @@ bool TypeChecker::same_type(bool keep_syns, const RenameTyvarEnv2& env, const Ty
     // 2. Handle plain type cons
     auto tc1 = t1.to<TypeCon>();
     auto tc2 = t2.to<TypeCon>();
-    if (tc1 and tc2)
-        return (*tc1 == *tc2);
+    if (tc1 and tc2 and *tc1 == *tc2)
+        return true;
 
+    // Different constructors can still denote the same type through synonyms.
     // 3. Maybe follow type synonyms
     if (auto ts1 = expand_type_synonym(t1); ts1 and not keep_syns)
         return same_type(keep_syns, env, *ts1, t2);
