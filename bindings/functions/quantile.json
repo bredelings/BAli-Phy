@@ -8,15 +8,16 @@
         {
             "name": "dist",
             "type": "Distribution<Double>",
-	    "description": "The distribution parameter"
+	    "description": "The distribution to evaluate"
         },
         {
             "name": "p",
             "type": "Double",
-	    "description": "The probability parameter"
+	    "description": "The cumulative probability, from 0 to 1"
         }
     ],
     "title": "The quantile function",
-    "examples": ["quantile(Gamma(1, 2), 0.5)   // compute the median of Gamma(1,2)"],
-    "description": "Find the point x where the Pr(X < x) = p under the distribution."
+    "examples": ["quantile(Gamma(1, 2), 0.5)   # The median of Gamma(1,2)"],
+    "description": "Return the quantile at probability p under dist: the point at which the cumulative probability reaches p. For example, p = 0.5 gives the median.",
+    "see": ["cdf", "uniform_discretize"]
 }

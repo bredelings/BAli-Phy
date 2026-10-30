@@ -8,15 +8,16 @@
         {
             "name": "dist",
             "type": "Distribution<a>",
-	    "description": "The distribution parameter"
+	    "description": "The distribution to evaluate"
         },
         {
             "name": "x",
             "type": "a",
-	    "description": "The argument"
+	    "description": "The value at which to evaluate the density or probability mass"
         }
     ],
     "title": "The probability density function",
-    "examples": ["pdf(Gamma(1, 2), 1)"],
-    "description": "Find the probability density of x under the distribution dist."
+    "examples": ["pdf(Gamma(1, 2), 1)", "log(pdf(Normal(0, 1), 40))"],
+    "description": "Evaluate the probability density at x, or the probability mass for a discrete distribution. The result is stored logarithmically; use log(pdf(dist,x)) to obtain the log-density without underflow.",
+    "see": ["density", "log"]
 }

@@ -16,5 +16,7 @@
 	    "description": "The upper bound"
         }
     ],
-    "title": "The Uniform distribution"
+    "title": "The uniform distribution",
+    "description": "A continuous distribution with constant density between low and high.",
+    "examples": ["~Uniform(0, 1)", "pdf(Uniform(0, 2), 1)"]
 }

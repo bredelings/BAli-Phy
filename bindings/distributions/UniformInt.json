@@ -7,12 +7,16 @@
     "args": [
         {
             "name": "low",
-            "type": "Int"
+            "type": "Int",
+            "description": "The lower bound, included"
         },
         {
             "name": "high",
-            "type": "Int"
+            "type": "Int",
+            "description": "The upper bound, included"
         }
     ],
-    "title": "Uniform distribution on integers"
+    "title": "Uniform distribution on integers",
+    "description": "A uniform distribution over the integers from low to high, including both endpoints.",
+    "examples": ["~UniformInt(1, 6)"]
 }

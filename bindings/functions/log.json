@@ -10,5 +10,8 @@
             "type": "a"
         }
     ],
-    "title": "The natural logarithm"
+    "title": "The natural logarithm",
+    "description": "Return the natural logarithm of x. For a density stored logarithmically, this returns its stored logarithm directly.",
+    "examples": ["log(2.0)", "log(pdf(Normal(0, 1), 40))"],
+    "see": ["pdf", "density", "exp"]
 }

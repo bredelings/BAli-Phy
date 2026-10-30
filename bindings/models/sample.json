@@ -8,7 +8,11 @@
     "args": [
         {
             "name": "dist",
-            "type": "Distribution<a>"
+            "type": "Distribution<a>",
+            "description": "The distribution to sample from"
         }
-    ]
+    ],
+    "title": "Draw from a distribution",
+    "description": "Draw a value from dist. sample(dist) is equivalent to ~dist.",
+    "examples": ["sample(UniformInt(1, 6))"]
 }

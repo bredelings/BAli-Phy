@@ -16,5 +16,7 @@
 	    "description": "The number of bins in the discretization"
         }
     ],
-    "description": "Discretize a continuous distribution using evenly spaced quantiles."
+    "description": "Approximate a continuous distribution by a discrete distribution with n equally weighted values. Divide the probability range into n equal bins and use the midpoint quantile of each bin: (i + 0.5)/n for i = 0,...,n-1. The values need not be equally spaced.",
+    "examples": ["uniform_discretize(Uniform(0, 1), 4)", "~uniform_discretize(Gamma(1, 2), 4)"],
+    "see": ["quantile", "discrete"]
 }

@@ -8,15 +8,16 @@
         {
             "name": "dist",
             "type": "Distribution<Double>",
-	    "description": "The distribution parameter"
+	    "description": "The distribution to evaluate"
         },
         {
             "name": "x",
             "type": "Double",
-	    "description": "The argument"
+	    "description": "The upper threshold"
         }
     ],
     "title": "The cumulative distribution function",
     "examples": ["cdf(Gamma(1, 2), 1)"],
-    "description": "Find the Pr(X <= x) under the distribution."
+    "description": "Return Pr(X <= x) under dist.",
+    "see": ["quantile", "pdf"]
 }

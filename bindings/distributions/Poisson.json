@@ -12,7 +12,7 @@
         }
     ],
     "title" : "The Poisson distribution",
-    "description": "mean = mu\nvariance = mu",
+    "description": "The Poisson distribution describes a nonnegative count with mean mu. Its variance is also mu.",
     "examples": ["~Poisson(1.0)                    # A Poisson sample with mean 1",
 		 "~IID(10, Poisson(0.5))            # 10 samples"
 		]

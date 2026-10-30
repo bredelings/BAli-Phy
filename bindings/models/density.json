@@ -8,12 +8,16 @@
         {
             "name": "dist",
             "type": "Distribution<a>",
-	    "description": "The distribution to take the density of"
+	    "description": "The distribution to evaluate"
         },
         {
             "name": "x",
             "type": "a",
-	    "description": "The value at while to evaluate the density"
+	    "description": "The value at which to evaluate the density or probability mass"
         }
-    ]
+    ],
+    "title": "Probability density or mass",
+    "description": "Evaluate the probability density at x, or the probability mass for a discrete distribution. The result is stored logarithmically; use log(density(dist,x)) to obtain the log-density without underflow.",
+    "examples": ["density(Poisson(2), 3)", "log(density(Normal(0, 1), 40))"],
+    "see": ["pdf", "log"]
 }
