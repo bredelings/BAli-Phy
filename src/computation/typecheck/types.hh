@@ -1,11 +1,15 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <map>
 #include <utility>
 #include <vector>
 
 #include "computation/core/type.hh"
 #include "computation/haskell/type.hh"
+
+// Ordered default types, keyed by the resolved class identity.
+using DefaultEnv = std::map<TypeCon, std::vector<Type>>;
 
 std::set<TypeVar> free_type_variables(const std::vector<Type>& types);
 std::set<TypeVar> free_type_variables(const Type& type);

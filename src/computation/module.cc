@@ -1543,6 +1543,30 @@ void Module::perform_exports()
             {
                 export_module(id);
             }
+            else if (ex.is_default())
+            {
+                if (not language_extensions.has_extension(LangExt::NamedDefaults))
+                {
+                    messages.push_back(error(loc, Note()<<"Default exports require NamedDefaults."));
+                    continue;
+                }
+                if (not type_aliases.count(id))
+                {
+                    messages.push_back(error(loc, Note()<<"Class '"<<id<<"' is not in scope."));
+                    continue;
+                }
+                auto type = lookup_type(id);
+                if (not type->is_class())
+                {
+                    messages.push_back(error(loc, Note()<<"'"<<id<<"' is not a class."));
+                    continue;
+                }
+                auto declaration = effective_defaults.find(TypeCon(type->name, type->kind));
+                if (declaration == effective_defaults.end())
+                    messages.push_back(error(loc, Note()<<"No default declaration is in effect for '"<<id<<"'."));
+                else
+                    exported_defaults_.insert(*declaration);
+            }
             else if (ex.is_value())
             {
                 if (not aliases.count(id))
@@ -1713,6 +1737,7 @@ void Module::perform_exports()
 
 void Module::clear_symbol_table()
 {
+    effective_defaults.clear();
     symbols.clear();
     aliases.clear();
     field_aliases.clear();
@@ -1721,6 +1746,7 @@ void Module::clear_symbol_table()
     exported_symbols_.clear();
     exported_fields_.clear();
     exported_types_.clear();
+    exported_defaults_.clear();
 
     transitively_imported_modules.clear();
 }
@@ -3450,6 +3476,7 @@ void CompiledModule::clear_symbol_table()
     exported_fields_.clear();
 
     exported_types_.clear();
+    exported_defaults_.clear();
 
     // language_extensions_ = keep
 
@@ -3489,6 +3516,7 @@ CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
     std::swap(exported_fields_, m->exported_fields_);
 
     std::swap(exported_types_, m->exported_types_);
+    std::swap(exported_defaults_, m->exported_defaults_);
 
     std::swap(aliases, m->aliases);
 

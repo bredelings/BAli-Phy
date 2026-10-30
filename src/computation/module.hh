@@ -17,6 +17,7 @@
 #include "computation/data_con_info.hh"
 #include "message.hh"
 #include "symbols.hh"
+#include "typecheck/types.hh"
 
 class module_loader;
 
@@ -77,10 +78,14 @@ class Module
     std::multimap<std::string, FieldInfo> exported_fields_;
 
     std::map<std::string, const_type_ptr> exported_types_;
+    DefaultEnv exported_defaults_;
 
     std::shared_ptr<FreshVarState> fresh_var_state_;
 
 public:
+
+    // Local and imported declarations, excluding automatic built-in fallbacks.
+    DefaultEnv effective_defaults;
 
     std::vector<Message> messages;
 
@@ -122,6 +127,7 @@ public:
     const std::multimap<std::string, FieldInfo>& exported_fields() const {return exported_fields_;}
 
     const std::map<std::string, const_type_ptr>& exported_types() const {return exported_types_;}
+    const DefaultEnv& exported_defaults() const {return exported_defaults_;}
 
     std::string qualify_local_name(const std::string&) const;
     bool is_local_qualified_name(const std::string& n) const;
@@ -276,6 +282,7 @@ class CompiledModule
     std::multimap<std::string, FieldInfo> exported_fields_;
 
     std::map<std::string, const_type_ptr> exported_types_;
+    DefaultEnv exported_defaults_;
 
     LanguageExtensions language_extensions_;
 
@@ -337,6 +344,7 @@ public:
     const std::multimap<std::string, FieldInfo>& exported_fields() const {return exported_fields_;}
 
     const std::map<std::string, const_type_ptr>& exported_types() const {return exported_types_;}
+    const DefaultEnv& exported_defaults() const {return exported_defaults_;}
 
     // How does this relate to the exported symbols?
     const_symbol_ptr lookup_local_symbol(const std::string& s) const;
@@ -355,7 +363,7 @@ public:
     void serialize(Archive& ar)
     {
 	ar( modid, dependencies_, prepared_value_decls, symbols, types, exported_symbols_, exported_fields_, exported_types_ );
-        ar( aliases, field_aliases, type_aliases );
+        ar( aliases, field_aliases, type_aliases, exported_defaults_ );
 	ar( language_extensions_, local_instances_, local_eq_instances_, fresh_var_state_ );
 	ar( all_inputs_hash_, foreign_infos_ );
 

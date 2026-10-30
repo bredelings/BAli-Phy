@@ -12,6 +12,7 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
+// Combine explicit declarations before installing fallbacks; only declarations may be exported.
 void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
 {
     auto Num = find_prelude_tycon("Num");
@@ -31,6 +32,7 @@ void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
         unnamed_default_classes.push_back(TypeCon("Data.Traversable.Traversable"));
     }
 
+    DefaultEnv local_defaults;
     for(auto& [loc,default_decl]: M.default_decls)
     {
         vector<Type> default_types;
@@ -61,24 +63,71 @@ void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
 
         for(const auto& dclass: default_classes)
         {
-            if (default_env().count(dclass))
+            if (local_defaults.count(dclass))
                 record_error(loc, Note() <<"Duplicate default declaration." );
             else
             {
                 // Check that the data types are all data types and instances of the class?
-                default_env().insert({dclass, default_types});
+                local_defaults.insert({dclass, default_types});
             }
         }
     }
 
-    if (not default_env().count(Num))
+    // Imports carry defaults independently of their name lists. Hidden and transitive
+    // dependencies do not import defaults, and repeated imports of a module count once.
+    map<TypeCon, vector<vector<Type>>> imported_defaults;
+    set<string> imported_modules;
+    for(const auto& [_, imp]: this_mod().imports())
+    {
+        const auto& name = unloc(imp.modid);
+        if (not imported_modules.insert(name).second) continue;
+        const auto& module = this_mod().transitively_imported_modules.at(name);
+        for(const auto& [cls, types]: module->exported_defaults())
+            imported_defaults[cls].push_back(types);
+    }
+
+    auto& effective = this_mod().effective_defaults;
+    effective = std::move(local_defaults);
+    set<TypeCon> conflicts;
+    for(const auto& [cls, declarations]: imported_defaults)
+    {
+        if (effective.contains(cls)) continue;
+
+        // A subsuming list must be at least as long as every other list. Choose a longest
+        // candidate, then check every list: early rejection of incomparable pairs is incorrect
+        // when a later declaration subsumes both. Equal-length subsuming lists are equivalent.
+        const auto* candidate = &declarations.front();
+        for(const auto& types: declarations)
+            if (types.size() > candidate->size()) candidate = &types;
+        bool subsumes_all = true;
+        for(const auto& types: declarations)
+        {
+            size_t i = 0;
+            for(const auto& type: *candidate)
+                if (i < types.size() and same_type(types[i], type)) ++i;
+            if (i != types.size())
+            {
+                subsumes_all = false;
+                break;
+            }
+        }
+        if (subsumes_all)
+            effective.insert({cls, *candidate});
+        else
+            conflicts.insert(cls);
+    }
+
+    default_env() = effective;
+    // An empty declaration suppresses its fallback by occupying the map entry. A conflict
+    // leaves no declaration in effect, but must also prevent the fallback from being restored.
+    if (not default_env().count(Num) and not conflicts.contains(Num))
     {
         auto Integer = find_prelude_tycon("Integer");
         auto Double = find_prelude_tycon("Double");
         default_env().insert({Num, {Integer, Double}});
     }
 
-    if (not default_env().count(IsString) and ovl_string)
+    if (not default_env().count(IsString) and not conflicts.contains(IsString) and ovl_string)
     {
         Type String = list_type( char_type() );
         default_env().insert({IsString, {String}});
@@ -92,11 +141,11 @@ void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
         auto Integer = find_prelude_tycon("Integer");
         auto Double = find_prelude_tycon("Double");
 
-        if (not default_env().count(Show))
+        if (not default_env().count(Show) and not conflicts.contains(Show))
             default_env().insert({Show, {tuple_type({}), Integer, Double}});
-        if (not default_env().count(Eq))
+        if (not default_env().count(Eq) and not conflicts.contains(Eq))
             default_env().insert({Eq, {tuple_type({}), Integer, Double}});
-        if (not default_env().count(Foldable))
+        if (not default_env().count(Foldable) and not conflicts.contains(Foldable))
             default_env().insert({Foldable, {list_tycon()}});
     }
 }

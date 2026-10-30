@@ -42,9 +42,6 @@ global_value_env sig_env(const signature_env& signatures);
 
 typedef std::map<TypeCon,Kind> KindSigEnv;
 
-// Can the instances be something like (Log Double)?  I suppose they could.
-typedef std::map<TypeCon,std::vector<Type>> DefaultEnv;
-
 struct FamilyInstanceHead
 {
     std::vector<TypeVar> type_vars;
