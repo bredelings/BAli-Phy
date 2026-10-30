@@ -15,9 +15,9 @@ import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 import qualified Data.Set as Set
 import Probability.Dist (HasPdf(pdf), IOSampleable(sampleIO))
-import Probability.Distribution.Dirichlet (dirichletOn, symmetricDirichletOn)
-import Probability.Distribution.Discrete (delta)
-import Probability.Distribution.List (iidOn, iidMap)
+import Probability.Distribution.Dirichlet (dirichletOn, symmetricDirichletOn, symmetricDirichlet)
+import Probability.Distribution.Discrete (delta, Discrete(..))
+import Probability.Distribution.List (iidOn, iidMap, dirichletMixture)
 import Probability.Distribution.Uniform (uniform)
 import Probability.Random (runRandomLazy, sample)
 import System.IO (print)
@@ -38,6 +38,13 @@ main = do
   print (pdf (dirichletOn concentrations) (Map.fromList [("X",0.25),("Y",0.75)]) == 0
       && pdf (dirichletOn concentrations) (Map.singleton "A" 1) == 0
       && near density 1.5
+      -- Check the new evaluable representations, including component count and duplicate values.
+      -- Existing sampling checks cannot establish their normalized density or list interpretation.
+      && near (toFloating (pdf (symmetricDirichlet 2 2) [0.25,0.75])) 1.125
+      && pdf (symmetricDirichlet 2 2) [1] == 0
+      && near (toFloating (pdf (dirichletMixture 2 1 (uniform 0 2))
+                              (Discrete [(0.5,0.25),(0.5,0.75)]))) 0.25
+      && pdf (dirichletMixture 2 1 (uniform 0 2)) (Discrete [(0.5,1)]) == 0
       -- Keyed IID densities must preserve their domains and multiply every component density.
       -- Sampling-only tests cannot detect omitted factors or positive density on different keys.
       && near (toFloating (pdf (iidOn (Set.fromList ["B","A"]) (uniform 0 2))

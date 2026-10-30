@@ -10,6 +10,12 @@ import Data.Tuple (snd)
 import Numeric.Pow (ln, expTo)
 import Numeric.ProbDensity (fromLogDensity, collapseDensity, reciprocalDensity)
 import Probability.Dist
+import Probability.Distribution.List (iidOn, iidMap, dirichletMixture)
+import Probability.Distribution.Discrete (Discrete(..))
+import qualified Data.Map as Map
+import qualified Data.Set as Set
+import qualified Data.IntMap as IntMap
+import qualified Data.IntSet as IntSet
 import Probability.Distribution.RecDist (RecDist(..))
 import System.IO (print)
 
@@ -37,3 +43,11 @@ main = do
     print (ln (pdf (Rich (error "unused properties")) 4))
     let recursive = RecDist (\x -> Rich (x+3))
     print (ln (pdf recursive 4), snd (densityWithProperties recursive 4))
+    -- Product distributions must retain component factors rather than collapse them early.
+    -- Scalar PDF checks miss the multiplicities used in later MCMC ratios.
+    print (map (ln . collapseDensity) (densities
+        (iidOn (Set.fromList [1,2]) (Rich 7)) (Map.fromList [(1,2),(2,4)])))
+    print (map (ln . collapseDensity) (densities
+        (iidMap (IntSet.fromList [1]) (Rich 7)) (IntMap.fromList [(1,2)])))
+    print (map (ln . collapseDensity) (densities
+        (dirichletMixture 2 1 (Rich 7)) (Discrete [(2,0.25),(4,0.75)])))

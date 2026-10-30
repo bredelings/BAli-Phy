@@ -1,16 +1,14 @@
-module Probability.Distribution.Dirichlet where
+module Probability.Distribution.Dirichlet
+    (module Probability.Distribution.Dirichlet,
+     module Probability.Distribution.Dirichlet.Density) where
 
 import Probability.Random
 import Probability.Distribution.Gamma
 import Probability.Distribution.List
 import MCMC.Moves.Real
-import Numeric.LinearAlgebra (Vector, fromList)
+import Probability.Distribution.Dirichlet.Density
 import qualified Data.Map as Map
 import qualified Data.Set as Set
-
-foreign import trcall "Distribution:dirichlet_density" dirichletDensityNative :: Vector Double -> Vector Double -> Log Double
-dirichletDensity as ps = dirichletDensityNative
-    (fromList as) (fromList ps)
 
 -- Sample gamma variables at the family rate, but update their redundant common scale at rate 1.
 -- Common scaling preserves normalized values; the group move supplies the Jacobian.
@@ -41,10 +39,29 @@ instance Sampleable Dirichlet where
 dirichlet as = Dirichlet as
 
 
--- Keep IID so changes in n can reuse gamma variables instead of resampling every entry.
-symmetricDirichlet n a = do
-  ws <- (sample $ iid n (gamma a 1)) `withTKEffect` (\ws -> addMove 1 $ scaleGroupSlice ws)
-  return $ map (/sum ws) ws
+data SymmetricDirichlet = SymmetricDirichlet Int Double
+
+instance Dist SymmetricDirichlet where
+    type Result SymmetricDirichlet = [Double]
+    distName _ = "symmetric_dirichlet"
+
+instance HasPdf SymmetricDirichlet where
+    pdf (SymmetricDirichlet n a) ps
+      | length ps /= n = 0
+      | otherwise = dirichletDensity (replicate n a) ps
+
+instance HasAnnotatedPdf SymmetricDirichlet
+
+instance Sampleable SymmetricDirichlet where
+    -- Keep IID so changes in n reuse Gamma variables; the scale move remains on raw weights.
+    sample (SymmetricDirichlet n a) = do
+      ws <- (sample $ iid n (gamma a 1)) `withTKEffect` (\ws -> addMove 1 $ scaleGroupSlice ws)
+      return $ map (/sum ws) ws
+
+instance IOSampleable SymmetricDirichlet where
+    sampleIO dist = sampleIO (sample dist)
+
+symmetricDirichlet = SymmetricDirichlet
 
 
 -----

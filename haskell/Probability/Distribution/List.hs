@@ -2,6 +2,7 @@ module Probability.Distribution.List where
 
 import Probability.Random
 import Probability.Distribution.Independent
+import Probability.Distribution.Dirichlet.Density
 import Probability.Distribution.Gamma
 import Probability.Distribution.Tuple
 import Probability.Distribution.Discrete -- Maybe move to a different module?
@@ -140,12 +141,34 @@ iid2 n dist1 dist2 = iid n $ PairDist dist1 dist2
 -- The return type should be Random (Discrete a)
 iidMixture n itemDist weightDist = normalizeMixture <$> (sample $ iid2 n (itemDist) (weightDist))
 
--- Scale raw Gamma variables: normalized weights are derived and cannot be modified.
--- Common scaling preserves their proportions; scaleGroupSlice supplies the Jacobian.
-dirichletMixture n a dist = do
-  pairs <- sample (iid2 n dist (gamma a 1)) `withTKEffect`
-             (\pairs -> addMove 1 $ scaleGroupSlice $ map snd pairs)
-  return $ normalizeMixture pairs
+data DirichletMixture d = DirichletMixture Int Double d
+
+instance Dist d => Dist (DirichletMixture d) where
+    type Result (DirichletMixture d) = Discrete (Result d)
+    distName _ = "dirichlet_mixture"
+
+instance HasPdf d => HasPdf (DirichletMixture d) where
+    -- The stored component list is ordered: its density is the Dirichlet weight density
+    -- times independent value densities, without merging duplicates or a permutation factor.
+    densityWithProperties (DirichletMixture n a dist) (Discrete pairs)
+      | length pairs /= n = ([fromLogDensity 0], ())
+      | otherwise = (fromLogDensity (dirichletDensity (replicate n a) (map snd pairs))
+                       : concatMap (densities dist . fst) pairs, ())
+
+instance HasPdf d => HasAnnotatedPdf (DirichletMixture d)
+
+instance Sampleable d => Sampleable (DirichletMixture d) where
+    -- Scale raw Gamma variables: normalized weights are derived and cannot be modified.
+    -- Common scaling preserves their proportions; scaleGroupSlice supplies the Jacobian.
+    sample (DirichletMixture n a dist) = do
+      pairs <- sample (iid2 n dist (gamma a 1)) `withTKEffect`
+                 (\pairs -> addMove 1 $ scaleGroupSlice $ map snd pairs)
+      return $ normalizeMixture pairs
+
+instance Sampleable d => IOSampleable (DirichletMixture d) where
+    sampleIO dist = sampleIO (sample dist)
+
+dirichletMixture = DirichletMixture
 
 ddMoves (Discrete pairs) = do
   let (items,_) = unzip pairs
