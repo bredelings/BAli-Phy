@@ -20,7 +20,6 @@ instance (Dist1D d, IOSampleable d, Result d ~ Double) => Sampleable (ExpTransfo
 
 To make that work, we need to:
 - provide an effect on the new scale, since we are dropping the old effect.
-- provide an AnnotatedDensity instance.
 
 -}
 
@@ -38,6 +37,15 @@ instance (IOSampleable d, Result d ~ Double) => IOSampleable (ExpTransform d) wh
 instance (HasPdf d, Result d ~ Double) => HasPdf (ExpTransform d) where
     pdf (ExpTransform dist) x | x <= 0     = 0
                               | otherwise  = pdf dist (log x) / toFloating x
+
+-- The transform instances use the PDF directly, without forwarding annotations or properties.
+-- ExpTransform must return zero for x <= 0 without evaluating the base density at log x,
+-- but annotatedDensities needs a value before its annotation action can run.
+-- A future interface could return
+-- AnnotatedDensity (Result d -> ([ProbDensity], DistProperties d)), separating that action
+-- from evaluation. RecDist complicates this: its underlying distribution depends on the value.
+instance (HasPdf d, Result d ~ Double) => HasAnnotatedPdf (ExpTransform d) where
+    annotatedDensities dist = make_densities $ pdf dist
 
 instance (Dist1D d, Result d ~ Double) => Dist1D (ExpTransform d) where
     cdf (ExpTransform dist) x | x <= 0    = 0
@@ -70,6 +78,9 @@ instance (IOSampleable d, Num (Result d)) => IOSampleable (Shifted d) where
 
 instance (HasPdf d, Num (Result d)) => HasPdf (Shifted d) where
     pdf (Shifted by dist) x = pdf dist (x - by)
+
+instance (HasPdf d, Num (Result d)) => HasAnnotatedPdf (Shifted d) where
+    annotatedDensities dist = make_densities $ pdf dist
 
 instance (Dist1D d, Result d ~ Double) => Dist1D (Shifted d) where
     cdf (Shifted by dist) x = cdf dist (x-by)
