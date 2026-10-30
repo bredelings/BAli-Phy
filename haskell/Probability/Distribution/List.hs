@@ -131,11 +131,12 @@ iid2 n dist1 dist2 = iid n $ PairDist dist1 dist2
 -- The return type should be Random (Discrete a)
 iidMixture n itemDist weightDist = normalizeMixture <$> (sample $ iid2 n (itemDist) (weightDist))
 
-dmMoves (Discrete pairs) = do
-  let (_,weights) = unzip pairs
-  addMove 1 $ scaleGroupSlice weights
-
-dirichletMixture n a dist = iidMixture n dist (gamma a 1) `withTKEffect` dmMoves
+-- Scale raw Gamma variables: normalized weights are derived and cannot be modified.
+-- Common scaling preserves their proportions; scaleGroupSlice supplies the Jacobian.
+dirichletMixture n a dist = do
+  pairs <- sample (iid2 n dist (gamma a 1)) `withTKEffect`
+             (\pairs -> addMove 1 $ scaleGroupSlice $ map snd pairs)
+  return $ normalizeMixture pairs
 
 ddMoves (Discrete pairs) = do
   let (items,_) = unzip pairs
