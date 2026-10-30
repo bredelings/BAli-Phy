@@ -40,7 +40,7 @@ instance HasAnnotatedPdf Laplace where
     annotatedDensities dist@(Laplace m s) x = do
        in_edge "m" m
        in_edge "s" s
-       return ([fromLogDensity $ pdf dist x], ())
+       return (densityWithProperties dist x)
 
 instance Sampleable Laplace where
     sample dist@(Laplace mu sigma) = RanDistribution2 dist laplace_effect

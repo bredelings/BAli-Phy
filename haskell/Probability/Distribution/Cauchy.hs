@@ -35,7 +35,7 @@ instance HasAnnotatedPdf Cauchy where
     annotatedDensities dist@(Cauchy m s) x = do
        in_edge "m" m
        in_edge "s" s
-       return ([fromLogDensity $ pdf dist x],())
+       return (densityWithProperties dist x)
 
 instance Sampleable Cauchy where
     sample dist@(Cauchy mu sigma) = RanDistribution2 dist cauchy_effect
@@ -69,8 +69,7 @@ instance Dist1D d => Dist1D (Half d) where
 instance ContDist1D d => ContDist1D (Half d) where
     quantile (Half dist) p = quantile dist ((p+1)/2)
 
-instance HasPdf d => HasAnnotatedPdf (Half d) where
-    annotatedDensities dist = make_densities $ pdf dist
+instance HasPdf d => HasAnnotatedPdf (Half d)
 
 instance Sampleable d => Sampleable (Half d) where
     sample (Half dist) = abs <$> sample dist

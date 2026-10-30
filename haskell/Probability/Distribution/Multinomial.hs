@@ -24,9 +24,10 @@ instance IOSampleable Multinomial where
 instance HasPdf Multinomial where
     pdf (Multinomial n ps) ks = builtin_multinomial_density n ps (U.fromList ks)
 
-instance HasAnnotatedPdf Multinomial where
-    annotatedDensities (Multinomial n ps) =
-        make_prob_densities $ builtin_multinomial_prob_density n ps . U.fromList
+    densityWithProperties (Multinomial n ps) ks =
+        ([builtin_multinomial_prob_density n ps (U.fromList ks)], ())
+
+instance HasAnnotatedPdf Multinomial
 
 instance Sampleable Multinomial where
     sample (Multinomial n ps) = sample_multinomial n ps

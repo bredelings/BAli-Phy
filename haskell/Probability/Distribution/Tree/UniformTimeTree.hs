@@ -64,9 +64,11 @@ instance Dist UniformTimeTree where
     type Result UniformTimeTree = WithNodeTimes (WithRoots (Tree ()))
     distName _ = "uniformTimeTree"
 
-instance HasAnnotatedPdf UniformTimeTree where
-    annotatedDensities (UniformTimeTree age n) tree =
-        return (map fromLogDensity $ uniformTimeTreePr age n tree, ())
+instance HasPdf UniformTimeTree where
+    densityWithProperties (UniformTimeTree age n) tree =
+        (map fromLogDensity $ uniformTimeTreePr age n tree, ())
+
+instance HasAnnotatedPdf UniformTimeTree
 
 instance Sampleable UniformTimeTree where
     sample dist@(UniformTimeTree age n) = RanDistribution3 dist uniformTimeTreeEffect triggeredModifiableTimeTree (sampleUniformTimeTree age n)

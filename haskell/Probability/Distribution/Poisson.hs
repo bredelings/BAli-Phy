@@ -37,7 +37,7 @@ instance Variance Poisson
 instance HasAnnotatedPdf Poisson where
     annotatedDensities dist@(Poisson mu) n = do
         in_edge "mu" mu
-        return ([fromLogDensity $ pdf dist n], ())
+        return (densityWithProperties dist n)
 
 instance Sampleable Poisson where
     sample dist = RanDistribution2 dist poisson_effect
@@ -72,8 +72,7 @@ instance Sampleable PoissonProcess where
        xs <- sample $ iid n (uniform t1 t2)
        return $ sort xs
 
-instance HasAnnotatedPdf PoissonProcess where
-    annotatedDensities (PoissonProcess rate t1 t2) = make_densities $ poisson_process_density rate t1 t2
+instance HasAnnotatedPdf PoissonProcess
 
 --- Poisson process, constant rate --
 poisson_process_density' rate t1 t2 n = expTo $ (-rate*(t2-t1)) + (fromIntegral n * log rate)
@@ -97,8 +96,10 @@ instance Dist PoissonProcesses where
 instance HasPdf PoissonProcesses where
     pdf dist = density dist
 
-instance HasAnnotatedPdf PoissonProcesses where
-    annotatedDensities (PoissonProcesses intervals) = make_densities' $ poisson_processes_densities intervals
+    densityWithProperties (PoissonProcesses intervals) xs =
+        (map fromLogDensity $ poisson_processes_densities intervals xs, ())
+
+instance HasAnnotatedPdf PoissonProcesses
 
 instance Sampleable PoissonProcesses where
     sample (PoissonProcesses intervals) = sample_poisson_processes intervals

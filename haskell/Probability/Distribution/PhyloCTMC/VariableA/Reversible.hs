@@ -24,7 +24,8 @@ import Reversible
  - alphabet: describes the letters
  -}
 
-annotated_subst_like_on_tree tree alignment smodel propertyModel sequenceData = do
+-- Compute factors and properties together so they share the likelihood caches and substitution root.
+substLikelihoodOnTree tree alignment smodel propertyModel sequenceData =
   let processRoot = root tree
       -- Deriving the initial substitution root from the node set avoids a topology dependency.
       -- A dependency-free way to initialize modifiables remains to be implemented.
@@ -33,7 +34,7 @@ annotated_subst_like_on_tree tree alignment smodel propertyModel sequenceData = 
               then setRoot substRoot tree
               else tree
 
-  let as = pairwiseAlignments alignment
+      as = pairwiseAlignments alignment
       maybeNodeSequences = observationsOnTree rtree (getSequences sequenceData)
       nModels = rows f
       nodeCLVs = simpleNodeCLVs alphabet ambiguities smap nModels maybeNodeSequences
@@ -65,27 +66,32 @@ annotated_subst_like_on_tree tree alignment smodel propertyModel sequenceData = 
       fs | isStationary smodel = getNodesSet rtree & IntMap.fromSet (\_ -> f)
          | otherwise           = frequenciesOnTree rtree f transitionPs
 
-  in_edge "tree" tree
-  in_edge "alignment" alignment
-  in_edge "smodel" smodel
-
-  let nativeFs = fmap nativeMatrix fs
+      nativeFs = fmap nativeMatrix fs
       prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls
           (collapseDensity likelihood) alphabet (SModel.nStates smodelOnTree)
           (SModel.nBaseModels smodelOnTree) nativeFs nodeCLVs ancestralComponentStates
           smodelProperties smodelConditions
 
-  return ([likelihood], prop)
+  in ([likelihood], prop)
 
 instance Dist (PhyloCTMC t (AlignmentOnTree t2) s) where
     type Result (PhyloCTMC t (AlignmentOnTree t2) s) = UnalignedCharacterData
     distName _ = "PhyloCTMC"
 
 -- TODO: make this work on forests!                  -
-instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, HasProperties t s, IsTree t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s) where
+instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, HasProperties t s, IsTree t2) => HasPdf (PhyloCTMC t (AlignmentOnTree t2) s) where
     type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s) = PhyloCTMCPropertiesVariableA
-    annotatedDensities (PhyloCTMC tree alignment smodel scale) =
-        annotated_subst_like_on_tree tree alignment (scaleTo scale smodel) smodel
+    densityWithProperties (PhyloCTMC tree alignment smodel scale) =
+        substLikelihoodOnTree tree alignment (scaleTo scale smodel) smodel
+
+instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, HasProperties t s, IsTree t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s) where
+    -- Register the same scaled model used by the shared likelihood calculation.
+    annotatedDensities (PhyloCTMC tree alignment smodel scale) sequenceData = do
+        let scaledModel = scaleTo scale smodel
+        in_edge "tree" tree
+        in_edge "alignment" alignment
+        in_edge "smodel" scaledModel
+        return $ substLikelihoodOnTree tree alignment scaledModel smodel sequenceData
 
 -- getSequencesFromTree :: IsGraph t, LabelType t ~ Text => t -> IntMap Sequence ->
 

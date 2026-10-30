@@ -28,10 +28,13 @@ instance IOSampleable Haplotype01FromPLAF where
     sampleIO (Haplotype01FromPLAF plafs) =
         builtin_sample_haplotype01_from_plaf (U.fromList plafs)
 
+instance HasPdf Haplotype01FromPLAF where
+    pdf (Haplotype01FromPLAF plafs) haplotype = haplotype01_from_plaf_probability plafs haplotype
+
 instance HasAnnotatedPdf Haplotype01FromPLAF where
     annotatedDensities dist@(Haplotype01FromPLAF plafs) haplotype = do
        in_edge "PLAFs" plafs
-       return [haplotype01_from_plaf_probability plafs haplotype]
+       return (densityWithProperties dist haplotype)
 
 instance Sampleable Haplotype01FromPLAF where
     sample dist@(Haplotype01FromPLAF plafs) = RanDistribution2 dist doNothing
@@ -57,6 +60,10 @@ instance Dist Reads01FromHaps where
 instance IOSampleable Reads01FromHaps where
     sampleIO (Reads01FromHaps counts weights haplotypes error_rate c outlier_frac) = sample_reads01 counts weights haplotypes error_rate c outlier_frac
 
+-- Density evaluation remains unimplemented, as in the annotated instance.
+instance HasPdf Reads01FromHaps where
+    densityWithProperties _ _ = error "Does this work?"
+
 instance HasAnnotatedPdf Reads01FromHaps where
     annotatedDensities dist@(Reads01FromHaps counts weights haplotypes error_rate c outlier_frac) reads = do
                           in_edge "counts" counts
@@ -67,8 +74,7 @@ instance HasAnnotatedPdf Reads01FromHaps where
                           in_edge "outlier_frac" outlier_frac
 --                          let emit_pr_func ks = emission_prs ks reads haplotypes weights error_rate c outlier_frac
 --                          property "properties" (Reads01Properties emit_pr_func)
-                          error "Does this work?"
-                          return [probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads]
+                          return (densityWithProperties dist reads)
 
 instance Sampleable Reads01FromHaps where
     sample dist@(Reads01FromHaps counts weights haplotypes error_rate c outlier_frac) = RanDistribution2 dist doNothing
@@ -160,13 +166,17 @@ foreign import bpcall "SMC:sample_haplotype01_from_panel" builtin_sample_haploty
 instance IOSampleable Haplotype01FromPanel where
     sampleIO (Haplotype01FromPanel p_haps p_sites switch_rate flip_prob) = builtin_sample_haplotype01_from_panel p_haps p_sites switch_rate flip_prob
 
+instance HasPdf Haplotype01FromPanel where
+    pdf (Haplotype01FromPanel haps sites switch_rate miscopy_prob) haplotype =
+        haplotype01_from_panel_probability haps sites switch_rate miscopy_prob haplotype
+
 instance HasAnnotatedPdf Haplotype01FromPanel where
     annotatedDensities dist@(Haplotype01FromPanel haps sites switch_rate miscopy_prob) haplotype = do
         in_edge "haplotypes" haps
         in_edge "sites" sites
         in_edge "switch_rate" switch_rate
         in_edge "miscopy_prob" miscopy_prob
-        return [haplotype01_from_panel_probability haps sites switch_rate miscopy_prob haplotype]
+        return (densityWithProperties dist haplotype)
 
 instance Sampleable Haplotype01FromPanel where
     sample dist@(Haplotype01FromPanel p_haps p_sites switch_rate flip_prob) = RanDistribution2 dist doNothing

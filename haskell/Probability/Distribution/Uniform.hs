@@ -46,7 +46,7 @@ instance HasAnnotatedPdf Uniform where
     annotatedDensities dist@(Uniform l u) x = do
         in_edge "l" l
         in_edge "u" u
-        return ([fromLogDensity $ pdf dist x],())
+        return (densityWithProperties dist x)
 
 instance Sampleable Uniform where
     sample dist@(Uniform l u) = RanDistribution2 dist (uniform_effect l u)
@@ -84,8 +84,7 @@ instance IOSampleable UniformInt where
 instance HasPdf UniformInt where
     pdf (UniformInt l u) = uniform_int_density l u
 
-instance HasAnnotatedPdf UniformInt where
-    annotatedDensities dist = make_densities $ pdf dist
+instance HasAnnotatedPdf UniformInt
 
 instance Sampleable UniformInt where
     sample dist@(UniformInt l u) = RanDistribution2 dist (uniform_int_effect l u)
@@ -115,8 +114,7 @@ instance IOSampleable (UniformD a) where
 instance Eq a => HasPdf (UniformD a) where
     pdf (UniformD values) x = sum [ if x == v then 1 else 0 | v <- values] / fromIntegral (length values)
 
-instance Eq a => HasAnnotatedPdf (UniformD a) where
-    annotatedDensities dist = make_densities $ pdf dist
+instance Eq a => HasAnnotatedPdf (UniformD a)
 
 instance Sampleable (UniformD a) where
     sample (UniformD values) = do

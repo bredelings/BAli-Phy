@@ -15,7 +15,8 @@ import qualified Data.Text as Text
 import qualified Data.IntMap as IntMap
 import Reversible
 
-annotatedSubstLikelihoodFixedA tree length smodel propertyModel sequenceData = do
+-- Compute factors and properties together so they share the likelihood caches and substitution root.
+substLikelihoodFixedA tree length smodel propertyModel sequenceData =
   let processRoot = root tree
       -- Deriving the initial substitution root from the node set avoids a topology dependency.
       -- A dependency-free way to initialize modifiables remains to be implemented.
@@ -24,7 +25,7 @@ annotatedSubstLikelihoodFixedA tree length smodel propertyModel sequenceData = d
               then setRoot substRoot tree
               else tree
 
-  let (isequences, columnCounts, mapping) = compressAlignment $ getSequences sequenceData
+      (isequences, columnCounts, mapping) = compressAlignment $ getSequences sequenceData
 
       maybeNodeISequences = observationsOnTree rtree isequences
       maybeNodeSeqsBits = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences
@@ -49,25 +50,30 @@ annotatedSubstLikelihoodFixedA tree length smodel propertyModel sequenceData = d
       ancestralComponentStates = sampleAncestralSequences (isReversible smodel) tree substRoot
           nodeCLVs alphabet transitionPs f cls smap mapping
 
-  in_edge "tree" tree
-  in_edge "smodel" smodel
-
-  -- How about stuff related to alignment compression?
-  let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls
+      -- How about stuff related to alignment compression?
+      prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls
           (collapseDensity likelihood) alphabet (SModel.nStates smodelOnTree)
           (SModel.nBaseModels smodelOnTree) ancestralComponentStates smodelProperties smodelConditions
 
-  return ([likelihood], prop)
+  in ([likelihood], prop)
 
 instance Dist (PhyloCTMC t Int s) where
     type Result (PhyloCTMC t Int s) = AlignedCharacterData
     distName _ = "PhyloCTMCFixedA"
 
 -- TODO: make this work on forests!
-instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, HasProperties t s) => HasAnnotatedPdf (PhyloCTMC t Int s) where
+instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, HasProperties t s) => HasPdf (PhyloCTMC t Int s) where
     type DistProperties (PhyloCTMC t Int s) = PhyloCTMCPropertiesFixedA
-    annotatedDensities (PhyloCTMC tree length smodel scale) =
-        annotatedSubstLikelihoodFixedA tree length (scaleTo scale smodel) smodel
+    densityWithProperties (PhyloCTMC tree length smodel scale) =
+        substLikelihoodFixedA tree length (scaleTo scale smodel) smodel
+
+instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, HasProperties t s) => HasAnnotatedPdf (PhyloCTMC t Int s) where
+    -- Register the same scaled model used by the shared likelihood calculation.
+    annotatedDensities (PhyloCTMC tree length smodel scale) sequenceData = do
+        let scaledModel = scaleTo scale smodel
+        in_edge "tree" tree
+        in_edge "smodel" scaledModel
+        return $ substLikelihoodFixedA tree length scaledModel smodel sequenceData
 
 instance (HasAlphabet s, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (PhyloCTMC t Int s) where
     sampleIO (PhyloCTMC rtree rootLength rawSmodel scale) = do

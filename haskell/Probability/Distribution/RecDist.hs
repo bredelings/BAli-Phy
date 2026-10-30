@@ -55,10 +55,11 @@ instance (Dist d, IOSampleable d) => IOSampleable (RecDist d) where
     sampleIO (RecDist f) = mfix (\value -> sampleIO (f value))
 
 instance (Dist d, HasPdf d) => HasPdf (RecDist d) where
+    type DistProperties (RecDist d) = DistProperties d
     pdf (RecDist f) x = pdf (f x) x
+    densityWithProperties (RecDist f) x = densityWithProperties (f x) x
 
 instance (Dist d, HasAnnotatedPdf d) => HasAnnotatedPdf (RecDist d) where
-    type DistProperties (RecDist d) = DistProperties d
     annotatedDensities (RecDist f) x = annotatedDensities (f x) x
 
 instance (Dist d, Sampleable d) => Sampleable (RecDist d) where

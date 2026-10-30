@@ -255,9 +255,11 @@ instance Dist UnlabelledCoalescentTree where
     type Result UnlabelledCoalescentTree = WithNodeTimes (WithRoots (Tree ()))
     distName _ = "coalescentTree"
 
-instance HasAnnotatedPdf UnlabelledCoalescentTree where
-    annotatedDensities (UnlabelledCoalescentTree leafTimes popSizes) tree =
-        return (map fromLogDensity $ coalescentTreePrFactors popSizes tree, ())
+instance HasPdf UnlabelledCoalescentTree where
+    densityWithProperties (UnlabelledCoalescentTree leafTimes popSizes) tree =
+        (map fromLogDensity $ coalescentTreePrFactors popSizes tree, ())
+
+instance HasAnnotatedPdf UnlabelledCoalescentTree
 
 instance Sampleable UnlabelledCoalescentTree where
     sample dist@(UnlabelledCoalescentTree leafTimes popSizes) = RanDistribution3 dist coalescentTreeEffect triggeredModifiableTimeTree (sampleCoalescentTree leafTimes popSizes)
@@ -272,9 +274,11 @@ instance Dist (CoalescentTree l) where
     type Result (CoalescentTree l) = WithNodeTimes (WithRoots (Tree l))
     distName _ = "CoalescentTree"
 
-instance HasAnnotatedPdf (CoalescentTree l) where
-    annotatedDensities (CoalescentTree taxonAges popSizes) tree =
-        return (map fromLogDensity $ coalescentTreePrFactors popSizes tree, ())
+instance HasPdf (CoalescentTree l) where
+    densityWithProperties (CoalescentTree taxonAges popSizes) tree =
+        (map fromLogDensity $ coalescentTreePrFactors popSizes tree, ())
+
+instance HasAnnotatedPdf (CoalescentTree l)
 
 instance Sampleable (CoalescentTree l) where
     sample dist@(CoalescentTree taxonAges popSizes) = addLabels leafIndices <$> (sample $ unlabelledCoalescentTree leafTimes popSizes)

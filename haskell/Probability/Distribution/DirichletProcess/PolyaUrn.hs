@@ -59,7 +59,7 @@ instance HasAnnotatedPdf PolyaUrnParent where
     -- Register alpha as an input so changing concentration invalidates parent probabilities, not structure.
     annotatedDensities dist@(PolyaUrnParent alpha _) parent = do
       in_edge "alpha" alpha
-      return ([fromLogDensity $ pdf dist parent], ())
+      return (densityWithProperties dist parent)
 
 instance Sampleable PolyaUrnParent where
     sample dist@(PolyaUrnParent _ index)

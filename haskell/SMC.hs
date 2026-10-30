@@ -25,8 +25,9 @@ instance Dist SMC where
     type Result SMC = AlignmentMatrix
     distName _ = "SMC"
 
-instance HasAnnotatedPdf SMC where
-    annotatedDensities (SMC rhoOverTheta rates boundaries errorRate) =
-        make_densities $ smc_density rhoOverTheta rates boundaries errorRate
+instance HasPdf SMC where
+    pdf (SMC rhoOverTheta rates boundaries errorRate) = smc_density rhoOverTheta rates boundaries errorRate
+
+instance HasAnnotatedPdf SMC
 
 smc = SMC

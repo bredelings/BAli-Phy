@@ -18,9 +18,8 @@ If we could count the number of forced entries that might work,
 {- NOTE: It seems like observing from an Independent f d should turn into a
          collection of observes.
 
-I guess we are doing observes through annotatedDensities.
-It calls densities on the components, and densities calls
-annotatedDensities on the component distributions.
+Observation uses the component density terms without forwarding component properties
+or named dependency annotations.
 -}
 
 {- QUESTION: Is there a way to observe some of the elements while sampling other?
@@ -49,8 +48,9 @@ instance (Functor f, IOSampleable d) => IOSampleable (Independent f d) where
 instance HasPdf d => HasPdf (Independent [] d) where
     pdf (Independent ds) xs = independent_pdf ds xs
 
-instance HasAnnotatedPdf d => HasAnnotatedPdf (Independent [] d) where
-    annotatedDensities (Independent dists) = make_prob_densities' $ independent_densities dists
+    densityWithProperties (Independent dists) xs = (independent_densities dists xs, ())
+
+instance HasAnnotatedPdf d => HasAnnotatedPdf (Independent [] d)
 
 --instance Sampleable d => Sampleable (Independent [] d) where
 --    sample (Independent dists) = lazy $ sequence $ map sample dists

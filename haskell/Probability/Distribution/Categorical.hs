@@ -30,8 +30,7 @@ instance Dist1D Categorical where
                            | otherwise        = toFloating $ sum (V.take (n + 1) ps)
                            where n = floor x
 
-instance HasAnnotatedPdf Categorical where
-    annotatedDensities dist = make_densities $ pdf dist
+instance HasAnnotatedPdf Categorical
 
 instance Sampleable Categorical where
     sample dist@(Categorical ps) = RanDistribution2 dist $ categorical_effect (V.length ps)
@@ -62,8 +61,7 @@ instance Eq a => HasPdf (CategoricalOn a) where
                                     Nothing -> 0
                                     Just n -> ps V.! n
 
-instance Eq a => HasAnnotatedPdf (CategoricalOn a) where
-    annotatedDensities dist = make_densities $ pdf dist
+instance Eq a => HasAnnotatedPdf (CategoricalOn a)
 
 instance Sampleable (CategoricalOn a) where
     sample dist@(CategoricalOn xs ps) = do

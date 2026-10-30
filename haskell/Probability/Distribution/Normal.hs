@@ -40,7 +40,7 @@ instance HasAnnotatedPdf Normal where
     annotatedDensities dist@(Normal mu sigma) x = do
                                                in_edge "mu" mu
                                                in_edge "sigma" sigma
-                                               return ([fromLogDensity $ pdf dist x], ())
+                                               return (densityWithProperties dist x)
 
 
 {-

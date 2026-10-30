@@ -56,8 +56,10 @@ The problem with this is that we can only sample the alignments for branches goi
 -- PROBLEM! Can we somehow only require HasAnnotatedPdf for RanDistribution2 when we are running
 --          it in the MCMC interpreter?
 
-instance Dist d => HasAnnotatedPdf (IndelsOnTree t d) where
-    annotatedDensities dist _ = undefined
+instance Dist d => HasPdf (IndelsOnTree t d) where
+    densityWithProperties dist _ = undefined
+
+instance Dist d => HasAnnotatedPdf (IndelsOnTree t d)
 
 instance (IOSampleable d, Result d ~ PairwiseAlignment, HasRoot t, HasBranchLengths t) => Sampleable (IndelsOnTree t d) where
     sample dist = RanDistribution2 dist doNothing

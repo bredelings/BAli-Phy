@@ -108,8 +108,7 @@ instance MaybeVariance (Discrete Int) where
 
 instance Variance (Discrete Int)
 
-instance Eq a => HasAnnotatedPdf (Discrete a) where
-    annotatedDensities dist = make_densities $ pdf dist
+instance Eq a => HasAnnotatedPdf (Discrete a)
 
 instance Sampleable (Discrete a) where
     sample (Discrete [(item,_)]) = return item

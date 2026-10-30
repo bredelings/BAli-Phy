@@ -54,14 +54,6 @@ instance Monad AnnotatedDensity where
     f >>= g = ADBind f g
 
 
--- Just get the densities out
--- No ProbFactor events yet.
-get_densities :: AnnotatedDensity a -> a
-get_densities (ADReturn x) = x
-get_densities (ADBind f g) = let x = get_densities f in get_densities (g x)
-get_densities (InEdge _ x) = ()
-
-
 makeEdges :: Effect -> AnnotatedDensity a -> IO a
 makeEdges event (ADReturn x) = return x
 makeEdges event (ADBind f g) = do x <- makeEdges event f
@@ -73,13 +65,9 @@ makeEdges event (InEdge name node) = do registerInEdge node event name
 -- PROBLEM: What if observing from a distribution is supposed to update
 --          a summary statistic?  Can we then register a properties object for each
 --          observation?
-class Dist d => HasAnnotatedPdf d where
-    type DistProperties d :: Type
-    type DistProperties d = ()
+class HasPdf d => HasAnnotatedPdf d where
     annotatedDensities :: d -> Result d -> AnnotatedDensity ([ProbDensity], DistProperties d)
-
-densities dist x = fst $ get_densities $ annotatedDensities dist x
-density dist x = balancedProduct $ map collapseDensity $ densities dist x
+    annotatedDensities dist x = return (densityWithProperties dist x)
 
 
 ---------------------------- TKEffects --------------------------
@@ -423,20 +411,6 @@ prefix .> subvalue = pairStr (prefix ++ "/") (pairs $ subvalue)
 
 logToJson :: (ToJSONKey k, ToJSON v) => [(k,v)] -> Value
 logToJson loggers = J.Object $ [(toJSONKey k, toJSON v) | (k,v) <- loggers]
-
--- Define some helper functions
-make_densities density x = return ([fromLogDensity $ density x],())
-make_densities' densities x = return (map fromLogDensity $ densities x,())
-make_prob_densities density x = return ([density x],())
-make_prob_densities' densities x = return (densities x,())
-pair_apply f (x:y:t) = f x y : pair_apply f t
-pair_apply _ t       = t
-
-foldt f z []  = z
-foldt f _ [x] = x
-foldt f z xs  = foldt f z (pair_apply f xs)
-
-balancedProduct xs = foldt (*) 1 xs
 
 -- maybe I should rename this to (modifiableList_n n f value) or something.
 mapn n f xs = go 0 where

@@ -32,8 +32,7 @@ instance IOSampleable Dirichlet where
 instance HasPdf Dirichlet where
     pdf (Dirichlet as) ps = dirichletDensity as ps
 
-instance HasAnnotatedPdf Dirichlet where
-    annotatedDensities dist = make_densities $ pdf dist
+instance HasAnnotatedPdf Dirichlet
 
 instance Sampleable Dirichlet where
     sample (Dirichlet as) = sampleDirichlet as
@@ -66,8 +65,7 @@ instance HasPdf (DirichletOn a) where
       pdf (Dirichlet $ Map.elems concentrations) (Map.elems probabilities)
 
 
-instance HasAnnotatedPdf (DirichletOn a) where
-    annotatedDensities dist = make_densities $ pdf dist
+instance HasAnnotatedPdf (DirichletOn a)
 
 instance Sampleable (DirichletOn a) where
     sample (DirichletOn concentrations) = do

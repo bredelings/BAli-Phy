@@ -34,8 +34,7 @@ instance MaybeVariance NegativeBinomial where
 
 instance Variance NegativeBinomial
 
-instance HasAnnotatedPdf NegativeBinomial where
-    annotatedDensities dist = make_densities $ pdf dist
+instance HasAnnotatedPdf NegativeBinomial
 
 instance Sampleable NegativeBinomial where
     sample dist@(NegativeBinomial r p) = RanDistribution2 dist (negative_binomial_effect r)

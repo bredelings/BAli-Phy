@@ -35,8 +35,7 @@ instance MaybeVariance Binomial where
 
 instance Variance Binomial
 
-instance HasAnnotatedPdf Binomial where
-    annotatedDensities dist = make_densities $ pdf dist
+instance HasAnnotatedPdf Binomial
 
 instance Sampleable Binomial where
     sample dist@(Binomial n _) = RanDistribution2 dist (binomial_effect n)

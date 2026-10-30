@@ -50,7 +50,7 @@ instance Variance Bernoulli
 instance HasAnnotatedPdf Bernoulli where
     annotatedDensities dist@(Bernoulli p) n = do
        in_edge "p" p
-       return ([fromLogDensity $ pdf dist n],())
+       return (densityWithProperties dist n)
 
 instance Sampleable Bernoulli where
     sample dist = RanDistribution2 dist bernoulli_effect

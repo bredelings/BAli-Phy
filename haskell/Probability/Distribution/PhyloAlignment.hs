@@ -115,9 +115,8 @@ data PhyloAlignmentProperties = PhyloAlignmentProperties
       get_length_prs :: IntMap (Log Double)
     }
 
-annotated_alignment_prs tree hmms model alignment = do
-  in_edge "tree" tree
-  in_edge "imodel" model
+-- Return the factors and alignment properties from the same calculation.
+alignmentDensityWithProperties hmms model alignment =
   let prs = alignment_prs hmms model alignment
       pr = product prs
       as = pairwiseAlignments alignment
@@ -125,7 +124,7 @@ annotated_alignment_prs tree hmms model alignment = do
       lengthp = snd model
       length_prs = fmap lengthp ls
       props = PhyloAlignmentProperties pr hmms lengthp as ls length_prs
-  return $ (map fromLogDensity prs, props)
+  in (map fromLogDensity prs, props)
 
 alignment_effect (AlignmentOnTree tree n ls as) = do
   SamplingRate 1 $ add_move $ walkTreeSampleAlignments tree as
@@ -140,9 +139,17 @@ instance Dist (PhyloAlignment t) where
 instance Sampleable (PhyloAlignment t) where
     sample dist@(PhyloAlignment tree model tip_lengths hmms) = RanDistribution3 dist alignment_effect triggeredModifiableAlignment (sample_alignment tree hmms tip_lengths)
 
-instance HasAnnotatedPdf (PhyloAlignment t) where
+instance HasPdf (PhyloAlignment t) where
     type DistProperties (PhyloAlignment t) = PhyloAlignmentProperties
-    annotatedDensities dist@(PhyloAlignment tree model tip_lengths hmms) a = annotated_alignment_prs tree hmms model a
+    densityWithProperties (PhyloAlignment tree model tip_lengths hmms) a =
+        alignmentDensityWithProperties hmms model a
+
+instance HasAnnotatedPdf (PhyloAlignment t) where
+    -- Keep parameter annotations separate from the shared alignment calculation.
+    annotatedDensities dist@(PhyloAlignment tree model tip_lengths hmms) a = do
+        in_edge "tree" tree
+        in_edge "imodel" model
+        return (densityWithProperties dist a)
 
 instance SampleableWithProps (PhyloAlignment t) where
     sampleWithProps dist = do

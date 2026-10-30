@@ -18,8 +18,9 @@ instance IOSampleable UniqueDist where
 instance HasPdf UniqueDist where
     pdf UniqueDist u = 1
 
-instance HasAnnotatedPdf UniqueDist where
-    annotatedDensities UniqueDist u = return ([],())
+    densityWithProperties UniqueDist _ = ([], ())
+
+instance HasAnnotatedPdf UniqueDist
 
 instance Sampleable UniqueDist where
     sample UniqueDist = RanDistribution2 UniqueDist doNothing
