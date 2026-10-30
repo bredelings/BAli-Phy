@@ -2,6 +2,7 @@
     "name": "letter_pairs",
     "result_type": "Set<String>",
     "call": "Set.fromList(letter_pair_names(@a))",
+    "import": ["SModel.ReversibleMarkov"],
     "args": [
         {
             "name": "a",

@@ -2,6 +2,7 @@
     "name": "sort",
     "result_type": "List<a>",
     "no_log": true,
+    "constraints": ["Ord<a>"],
     "call": "sort(@xs)",
     "args": [
         {

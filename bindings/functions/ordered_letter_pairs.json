@@ -2,6 +2,7 @@
     "name": "ordered_letter_pairs",
     "result_type": "Set<String>",
     "call": "Set.fromList(orderedLetterPairNames(@a))",
+    "import": ["SModel.Markov"],
     "args": [
         {
             "name": "a",
