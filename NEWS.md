@@ -2,11 +2,15 @@
 
 ## Breaking changes
 
+ - The M1a–M8a families, BranchModel, and BranchSite now default to GTR, multi-nucleotide
+   mutations, and amino-acid fitnesses instead of GY94. Explicit submodels are unchanged.
+ - Use 10 instead of 4 Beta categories by default in M7, M8, M8a, and M8a_test.
  - Remove `alignment-convert` in favor of `alignment-cat -o <format>`.
 
 ## Features
 
  - Depict length of branches inside consensus polytomies by default.
+ - Report mean pairwise differences and per-site parsimony scores in alignment summaries.
  - Allow running Python tools from Git Bash and MSYS2 Bash on Windows.
 
 ## Fixes
@@ -18,7 +22,7 @@
  - Improve tree layouts and keep labels clear of branches, nodes, and other labels.
  - Make estimation of branch lengths and "node lengths" faster and more robust.
  - Fix tree consensus, support, and convergence summaries, including sample and taxon matching.
- - Fix alignment comparisons, ancestral sequence summaries, and indel reports.
+ - Fix sequence handling, alignment comparison and thinning, ancestral summaries, and indel reports.
  - Fix coordinates and missing-data handling in population-genetic reports from `alignment-smc`.
  - Fix marginal-likelihood estimation and uncertainty reporting in `model_P`.
  - Fix and extend distribution densities, CDFs, and quantiles, including numerical edge cases.
@@ -28,10 +32,11 @@
  - Update and fill out man pages.
  - Add function help to the website.
  - Expand help for models, distributions, and model-language functions.
+ - Expand the user guide and tutorials on selection tests and per-letter evolutionary properties.
  
 ## Internal
 
- - Remove unused program `alignment-indices`.
+ - Remove obsolete analysis tools.
  - Switch from Boost.Program_options -> CLI11 for command line parsing.
  - Replace range-v3 with standard ranges; Linux builds now need libstdc++ 14 or newer.
  
