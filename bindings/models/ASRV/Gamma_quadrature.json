@@ -25,5 +25,5 @@
     ],
     "examples": ["GTR +> ASRV.Gamma_quadrature(4) +> Inv"],
     "title": "The quadrature-discretized Gamma rate heterogeneity model",
-    "description": "This model uses Gaussian quadrature to approximate Gamma-distributed rates across sites."
+    "description": "This model uses Gaussian quadrature to approximate Gamma-distributed rates across sites. The category probabilities are generally unequal, and the rates have weighted mean one, preserving the base model's mean rate."
 }

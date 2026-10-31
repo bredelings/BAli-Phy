@@ -25,7 +25,7 @@
     ],
     "examples": ["GTR +> ASRV.Gamma_mean(4) +> Inv"],
     "title": "The conditional-mean Gamma rate heterogeneity model",
-    "description": "This model divides a unit-mean Gamma distribution into equal-probability categories and represents each category by its conditional mean.",
+    "description": "This model divides a unit-mean Gamma distribution into equal-probability categories and represents each category by its conditional mean. The resulting rate multipliers preserve the base model's mean rate.",
     "citation":{"type": "article",
                 "title": "Maximum likelihood phylogenetic estimation from DNA sequences with variable rates over sites: approximate methods",
                 "year": "1994",

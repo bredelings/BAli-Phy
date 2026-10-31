@@ -25,7 +25,7 @@
     ],
     "examples": ["GTR +> ASRV.Gamma_median(4) +> Inv"],
     "title": "The median-discretized Gamma rate heterogeneity model",
-    "description": "This model uses equal-probability categories represented by their medians to approximate Gamma-distributed rates across sites. The rates are normalized to have mean one when applied to the substitution model.",
+    "description": "This model uses equal-probability categories represented by their medians to approximate Gamma-distributed rates across sites. The rate multipliers are normalized to mean one, preserving the base model's mean rate.",
     "citation":{"type": "article",
                 "title": "Maximum likelihood phylogenetic estimation from DNA sequences with variable rates over sites: approximate methods",
                 "year": "1994",

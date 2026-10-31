@@ -14,10 +14,10 @@
             "name": "frequencies",
             "type": "List<Double>",
             "default_value": "~SymmetricDirichlet(length(@models), 3)",
-	    "description": "The frequencies for each model"
+	    "description": "The probabilities of the models, summing to one"
         }
     ],
     "title": "Mixture model",
-    "description": "A scaled and weighted mixture of other mixture models.",
+    "description": "A weighted mixture of substitution models across sites. Each site uses one component model throughout the tree. Component rates are preserved when the mixtures are combined.",
     "extract": "all"
 }

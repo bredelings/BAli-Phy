@@ -22,6 +22,6 @@
             "description": "The number of bins for discretizing the rate distribution"
         }
     ],
-    "description": "An across-site rate variation (ASRV) model where the rate distribution can be specified directly.",
+    "description": "An across-site rate variation (ASRV) model where the rate distribution can be specified directly. The distribution is divided into equal-probability categories, represented by their medians. These rate multipliers are normalized to mean one, preserving the base model's mean rate.",
     "examples": ["GTR +> MultiRate(Gamma(1,1))","GTR +> MultiRate(Beta(2,2),6)"]
 }

@@ -17,5 +17,5 @@
         }
     ],
     "title":"The scaleTo function",
-    "description": "Returns a version of submodel with the desired rate"
+    "description": "Returns a version of `submodel` with the desired mean substitution rate. For a mixture, this is the weighted mean rate across components; all component rates are multiplied by the same factor."
 }

@@ -8,7 +8,8 @@
     "args": [
         {
             "name": "submodel",
-            "type": "DiscreteDist<CTMC<a>>"
+            "type": "DiscreteDist<CTMC<a>>",
+            "description": "The model for variable sites"
         },
         {
             "name": "pInv",
@@ -20,5 +21,6 @@
     "title": "Invariable sites model",
     "examples": ["HKY85 +> Inv",
 		 "GTR +> ASRV.Gamma +> Inv"],
-    "extract": "all"
+    "extract": "all",
+    "description": "Adds a category of invariable sites with probability `pInv`. Rates at variable sites are multiplied by 1/(1-pInv), preserving the base model's overall mean rate. The invariable category uses the base model's starting frequencies, averaged using its mixture probabilities."
 }

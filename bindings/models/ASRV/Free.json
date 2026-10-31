@@ -15,17 +15,17 @@
             "name": "rateDist",
             "type": "DiscreteDist<Double>",
             "default_value": "~DirichletOnDirichlet(@n,2,2)",
-	    "description" : "Rates for each category"
+	    "description" : "The distribution of category rates and their probabilities"
         },
         {
             "name": "n",
             "type": "Int",
             "default_value": "4",
-	    "description": "Number of categories, if not specified"
+	    "description": "The number of categories in the default rate distribution"
         }
     ],
     "title": "Free rates model",
-    "description":"Rate heterogeneity model where the rate and frequency of each category can be estimated from the data.",
+    "description":"Rate heterogeneity model where the rate and frequency of each category can be estimated from the data. Rate multipliers are normalized to weighted mean one, preserving the base model's mean rate.",
     "examples": ["HKY85 +> ASRV.Free(n=3)"],
     "citation":{"type": "article",
 		"title": "A space-time process model for the evolution of DNA sequences.",

@@ -23,5 +23,7 @@
             "default_value": "~LogLaplace(-3,1)"
         }
     ],
-    "examples": ["GTR +> ASRV.LogNormal(4) +> Inv"]
+    "examples": ["GTR +> ASRV.LogNormal(4) +> Inv"],
+    "title": "Log-normal rate heterogeneity model",
+    "description": "An across-site rate variation model that uses Gaussian quadrature to approximate a log-normal rate distribution. Rate multipliers are normalized to weighted mean one, preserving the base model's mean rate."
 }

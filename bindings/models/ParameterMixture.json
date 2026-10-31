@@ -8,22 +8,22 @@
         {
             "name": "submodel",
             "type": "b -> DiscreteDist<CTMC<a>>",
-	    "description": "The models to mix"
+	    "description": "The substitution model as a function of the parameter"
         },
         {
             "name": "values",
             "type": "List<b>",
-	    "description": "The frequencies for each model"
+	    "description": "The parameter values"
         },
         {
             "name": "frequencies",
             "type": "List<Double>",
             "default_value": "replicate(n, 1.0 / intToDouble(n)) where {n=length(@values)}",
-	    "description": "The frequencies for each model"
+	    "description": "The probabilities of the parameter values, summing to one"
         }
     ],
     "title": "Mixture model",
-    "description": "A scaled and weighted mixture of other mixture models.",
+    "description": "A mixture of substitution models obtained by evaluating `submodel` at each parameter value. Each site uses one resulting component throughout the tree. Component rates are preserved when the mixtures are combined.",
     "examples":
     [
         "|k:HKY85(kappa=k)| +> ParameterMixture([1.0,2.0],[0.5,0.5])",
