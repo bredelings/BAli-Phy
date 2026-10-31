@@ -1,9 +1,9 @@
 {
     "name": "getQ",
     "deprecated-synonyms": ["get_q"],
-    "result_type": "Matrix<a>",
-    "call": "getQ(@q)",
-    "import": ["SModel"],
+    "result_type": "Matrix<Double>",
+    "call": "Markov.getQ(@q)",
+    "import": ["qualified Markov"],
     "args": [
         {
             "name": "q",
