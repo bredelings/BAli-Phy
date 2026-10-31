@@ -72,7 +72,7 @@
 		 "journal": {"name": "Mol. Biol. Evol.", "volume": "37", "number": "8", "pages": "2430--2439"},
 		 "link": [{"url":"https://doi.org/10.1093/molbev/msaa037"}]
 		},
-    "see": ["BranchSiteMixture", "BUSTED"],
+    "see": [ "BUSTED"],
     "examples": ["|w: TN93 +> x3 +> dNdS(omega=w)| +> BUSTED_S",
 		 "|w: TN93 +> MNM +> dNdS(omega=w)| +> BUSTED_S"]
 }

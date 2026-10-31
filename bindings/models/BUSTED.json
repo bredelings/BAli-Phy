@@ -73,5 +73,5 @@
 		 "BUSTED +> ASRV.Free",
 		 "|w: GTR +> MNM +> dNdS(omega=w)| +> BUSTED              // with multi-nucleotide mutations",
 		 "|w: GTR +> x3 +> dNdS(omega=w) +> MutSel| +> BUSTED    // with mutation-selection-balance"],
-    "see": ["BranchSiteMixture","BUSTED_S"]
+    "see": ["BUSTED_S"]
 }

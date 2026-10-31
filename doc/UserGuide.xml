@@ -2335,8 +2335,8 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	    <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://bali-phy.org/reference/models/FMutSel0/">FMutSel0</link> with default arguments is equivalent to <code language="bali-phy-model">GTR +> x3 +> MutSelAA +> dNdS</code>.</listitem>
             <listitem><code language="bali-phy-model">M3</code> is equivalent to <code language="bali-phy-model">|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M3</code>.</listitem>
             <listitem><code language="bali-phy-model">M3_test</code> is equivalent to <code language="bali-phy-model">|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M3_test</code>.</listitem>
-	    <listitem><code language="bali-phy-model">BUSTED</code> is equivalent to <code language="bali-phy-model">|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture</code>.</listitem>
-	    <listitem><code language="bali-phy-model">BUSTED_S</code> is equivalent to <code language="bali-phy-model">|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture +> ASRV.Gamma(n=3)</code>.</listitem>
+	    <!-- <listitem><code language="bali-phy-model">BUSTED</code> is equivalent to <code language="bali-phy-model">|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture</code>.</listitem> -->
+	    <!-- <listitem><code language="bali-phy-model">BUSTED_S</code> is equivalent to <code language="bali-phy-model">|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture +> ASRV.Gamma(n=3)</code>.</listitem> -->
 	  </itemizedlist>
 	  </para>
 
@@ -2402,12 +2402,6 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 		</entry>
 	      </row>
 
-	      <row>
-		<entry><code language="bali-phy-model"><replaceable>codon_mixture_model</replaceable> +> BranchSiteMixture</code></entry>
-		<entry>df(<replaceable>codon_mixture_model</replaceable>)</entry>
-		<entry><para>Codon model where the rate matrix for each branch and site is chosen from the mixture distribution.</para>
-		</entry>
-	      </row>
 
 	    </tbody>
 	  </tgroup>
