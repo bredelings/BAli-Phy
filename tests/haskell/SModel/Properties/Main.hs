@@ -2,6 +2,7 @@
 
 import Bio.Alphabet
 import Compiler.Error (error)
+import Compiler.Floating (exp, sqrt)
 import Compiler.Fractional
 import Compiler.Num
 import Compiler.RealFloat (isNaN)
@@ -293,4 +294,29 @@ main = do
     , CoreMarkov.checkStationary (CoreMarkov.getQ mnmCyclic) (CoreMarkov.getStartFreqs mnmCyclic)
     , getReversibility mnmRoot == NonEq
     , and $ zipWith near (toList productRoot) (toList $ CoreMarkov.getStartFreqs mnmRoot)
+    ])
+
+  -- Frequency attachment must agree with its endpoint formulas and retain finite zero-frequency
+  -- F81 transitions. Positive-frequency model tests miss removable singularities in this kernel.
+  -- Retain while F and gwF share the native frequency-factor calculation.
+  let ps = [0.25,0.75]
+      indices = [0,1]
+      factor f = toList $ flatten $ CoreMarkov.plus_gwf_matrix (fromList ps) f
+      zeroFactor f = toList $ flatten $ CoreMarkov.plus_gwf_matrix (fromList [0,1]) f
+      zeroPs = [0,0.25,0.25,0.5]
+      zeroModel = f81 zeroPs dna
+      decay = exp (-1/0.625)
+  putStrLn $ show ("frequency factors",
+    [ and $ zipWith near (factor 0) [0,4,4/3,0]
+    , and $ zipWith near (factor 1) [0,0.75,0.25,0]
+    , and $ zipWith near (factor 0.5)
+        [if i == j then 0 else sqrt ((ps!!j)/(ps!!i)) | i <- indices, j <- indices]
+    , and $ zipWith near (zeroFactor 1) [0,1,0,0]
+    , and $ zipWith near (zeroFactor 2) [0,0,0,0]
+    , and $ zipWith near (toList $ flatten $ CoreMarkov.getQ zeroModel)
+        [(if i == j then zeroPs!!j-1 else zeroPs!!j)/0.625
+        | i <- [0,1,2,3], j <- [0,1,2,3]]
+    , and $ zipWith near (toList $ flatten $ CoreMarkov.qExp zeroModel)
+        [(if i == j then decay else 0) + (1-decay)*(zeroPs!!j)
+        | i <- [0,1,2,3], j <- [0,1,2,3]]
     ])

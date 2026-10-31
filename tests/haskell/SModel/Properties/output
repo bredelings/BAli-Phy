@@ -37,3 +37,4 @@ True
 ("dNdS frequencies",[True,True,True,True,True])
 ("MutSel frequencies",[True,True,True,True])
 ("MNM frequencies",[True,True,True,True])
+("frequency factors",[True,True,True,True,True,True,True])

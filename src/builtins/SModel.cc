@@ -1284,18 +1284,36 @@ extern "C" closure builtin_function_plus_gwf_matrix(OperationArgs& Args)
     // compute frequencies
     pi /= pi.sum();
     
-    // compute transition rates
-    valarray<double> pi_f(n);
-    for(int i=0;i<n;i++)
-	pi_f[i] = pow(pi[i],f);
-
-    for(int i=0;i<n;i++)
-	for(int j=0;j<n;j++)
-	    (*R)(i,j) = pi_f[i]/pi[i] * pi_f[j];
-
-    // diagonal entries should have no effect
-    for(int i=0;i<n;i++)
-	(*R)(i,i) = 0;
+    // The off-diagonal frequency factor is pi[i]^(f-1) * pi[j]^f.
+    // Handle the endpoints without powers; in particular f=1 has no singularity at pi[i]=0.
+    // The diagonal is ignored by the caller, so never evaluate the factor there.
+    if (f == 1)
+    {
+        for(int i=0;i<n;i++)
+            for(int j=0;j<n;j++)
+                (*R)(i,j) = i == j ? 0 : pi[j];
+    }
+    else if (f == 0)
+    {
+        for(int i=0;i<n;i++)
+        {
+            double inv_pi = 1 / pi[i];
+            for(int j=0;j<n;j++)
+                (*R)(i,j) = i == j ? 0 : inv_pi;
+        }
+    }
+    else
+    {
+        valarray<double> pi_f(n), pi_f_minus_one(n);
+        for(int i=0;i<n;i++)
+        {
+            pi_f[i] = pow(pi[i],f);
+            pi_f_minus_one[i] = pow(pi[i],f-1);
+        }
+        for(int i=0;i<n;i++)
+            for(int j=0;j<n;j++)
+                (*R)(i,j) = i == j ? 0 : pi_f_minus_one[i] * pi_f[j];
+    }
 
     return R;
 }
