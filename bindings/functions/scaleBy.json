@@ -2,8 +2,8 @@
     "name": "scaleBy",
     "result_type": "b",
     "no_log": true,
-    "constraints": ["Num<a>"],
-    "call": "scaleBy(@factor,@submodel)",
+    "import": ["SModel.Rate"],
+    "call": "SModel.Rate.scaleBy(@factor,@submodel)",
     "args": [
         {
             "name": "submodel",
@@ -12,7 +12,7 @@
         },
         {
             "name": "factor",
-	    "type": "a",
+	    "type": "Double",
             "description": "The factor by which to scale the rate"
         }
     ],
