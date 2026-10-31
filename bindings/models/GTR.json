@@ -1,7 +1,7 @@
 {
     "name": "GTR",
     "deprecated-synonyms": ["gtr"],
-    "title":"The General Time-Reversible rate matrix",
+    "title":"The general time-reversible rate matrix",
     "result_type": "CTMC<a>",
     "call": "gtr'(@sym,@pi,@a)",
     "import": ["SModel"],
@@ -17,13 +17,13 @@
             "name": "sym",
             "type": "Map<String,Double>",
 	    "default_value":"~SymmetricDirichletOn(letter_pairs(@a),1)",
-	    "description":"Symmetric exchangability matrix"
+	    "description":"Relative exchangeabilities, keyed by unordered letter pair"
         },
         {
             "name": "pi",
             "type": "Map<String,Double>",
             "default_value": "~SymmetricDirichletOn(letters(@a),1)",
-	    "description": "Letter frequencies"
+	    "description": "Equilibrium frequencies, keyed by alphabet symbol"
         },
         {
             "name": "a",
@@ -32,7 +32,7 @@
 	    "description": "The alphabet"
         }
     ],
-    "description": "The general time-reversible rate matrix:\n  Q(i,j) = sym(i,j) * pi[j]",
+    "description": "A reversible rate matrix with a separate exchangeability for each unordered pair of letters and specified equilibrium frequencies. Off-diagonal rates are proportional to sym(i,j) * pi[j]; the matrix is scaled to have mean substitution rate 1. For codon alphabets, the rate is measured per nucleotide site. Pair keys concatenate the letters, such as AC or CA; supply one entry per pair.",
     "examples": ["GTR({\"AC\":1,\"AG\":2,\"AT\":3,\"CG\":4,\"CT\":5,\"GT\":6},pi={\"A\":0.1,\"C\":0.2,\"T\":0.3,\"G\":0.4})"],
     "extract": "all"
 }

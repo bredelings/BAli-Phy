@@ -1,7 +1,7 @@
 {
     "name": "GTR_sym",
     "deprecated-synonyms": ["gtr_sym"],
-    "title":"The GTR exchangability matrix",
+    "title":"The GTR exchangeability matrix",
     "result_type": "ExchangeModel<a>",
     "call": "gtr_sym'(@sym,@a)",
     "import": ["SModel"],
@@ -11,14 +11,16 @@
             "name": "sym",
             "type": "Map<String,Double>",
 	    "default_value":"~SymmetricDirichletOn(letter_pairs(@a),1)",
-	    "description":"Symmetric exchangability matrix"
+	    "description":"Relative exchangeabilities, keyed by unordered letter pair"
         },
         {
             "name": "a",
             "type": "a",
-            "default_value": "get_state(alphabet)"
+            "default_value": "get_state(alphabet)",
+            "description": "The alphabet"
         }
     ],
-    "description": "Symmetric exchangability matrix from GTR",
-    "extract": "all"
+    "description": "Symmetric matrix with a separate relative exchangeability for each unordered pair of letters. Pair keys concatenate the letters, such as AC or CA; supply one entry per pair. Combine with F to supply equilibrium frequencies, or FE for equal frequencies.",
+    "extract": "all",
+    "examples": ["GTR_sym +> F"]
 }

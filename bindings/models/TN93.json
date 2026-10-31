@@ -18,19 +18,19 @@
             "name": "kappaPur",
             "type": "Double",
             "default_value": "~LogNormal(log(2),0.25)",
-            "description": "A<->G Transition\/transversion ratio"
+            "description": "Relative rate of A↔G transitions"
         },
         {
             "name": "kappaPyr",
             "type": "Double",
             "default_value": "~LogNormal(log(2),0.25)",
-            "description": "C<->T Transition\/transversion ratio"
+            "description": "Relative rate of C↔T transitions (C↔U for RNA)"
         },
         {
             "name": "pi",
             "type": "Map<String,Double>",
             "default_value": "~SymmetricDirichletOn(letters(@a),1)",
-	    "description": "Letter frequencies"
+	    "description": "Equilibrium frequencies, keyed by alphabet symbol"
         },
         {
             "name": "a",
@@ -39,6 +39,6 @@
             "description": "The alphabet"
         }
     ],
-    "description":"The Tamura-Nei model.",
+    "description":"Nucleotide rate matrix with separate A↔G and C↔T transition rates (C↔U for RNA) and specified equilibrium frequencies. Before accounting for base frequencies, transversions have relative rate 1.",
     "extract": "all"
 }

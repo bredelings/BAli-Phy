@@ -12,7 +12,7 @@
             "name": "kappa",
             "type": "Double",
             "default_value": "~LogNormal(log(2),0.25)",
-            "description": "Transition\/transversion ratio"
+            "description": "Transition rate relative to transversion rate"
         },
         {
             "name": "a",
@@ -21,7 +21,7 @@
 	    "description": "The alphabet"
         }
     ],
-    "description":"Rate matrix with separate transition & transversion rates, equal base frequencies",
+    "description":"Nucleotide rate matrix with separate transition and transversion rates and equal base frequencies.",
     "citation":{"type": "article",
 		"title": "A simple method for estimating evolutionary rates of base substitutions through comparative studies of nucleotide sequences",
 		"year": "1980",

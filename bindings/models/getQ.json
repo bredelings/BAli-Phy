@@ -7,7 +7,11 @@
     "args": [
         {
             "name": "q",
-            "type": "CTMC<a>"
+            "type": "CTMC<a>",
+            "description": "The substitution model"
         }
-    ]
+    ],
+    "title": "The substitution rate matrix",
+    "description": "Returns the model’s rate matrix. Off-diagonal entry Q(i,j) is the rate of changing from state i to state j; diagonal entries make each row sum to zero.",
+    "examples": ["getQ(JC69)"]
 }

@@ -8,13 +8,13 @@
         {
             "name": "submodel",
             "type": "ExchangeModel<a>",
-	    "description": "Symmetric (exchangability) matrix"
+	    "description": "The symmetric exchangeability matrix"
         },
         {
             "name": "pi",
             "type": "Map<String,Double>",
             "default_value": "~SymmetricDirichletOn(letters(@a),1)",
-	    "description": "Letter frequencies"
+	    "description": "Equilibrium frequencies, keyed by alphabet symbol"
         },
         {
             "name": "a",
@@ -24,7 +24,7 @@
         }
     ],
     "title": "The +F frequency model",
-    "description": "The +F frequency model species the rate matrix Q as:\n  Q(i,j) = s(i,j) * pi[j].",
+    "description": "Attaches equilibrium frequencies to an exchangeability matrix. Off-diagonal rates are proportional to s(i,j) * pi[j], where s is the exchangeability matrix. The resulting rate matrix is scaled to have mean substitution rate 1. For codon alphabets, the rate is measured per nucleotide site.",
     "examples": ["WAG +> F"],
     "extract": "all",
     "see":["FE"]

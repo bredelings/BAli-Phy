@@ -7,9 +7,12 @@
         {
             "name": "a",
             "type": "a",
-            "default_value": "get_state(alphabet)"
+            "default_value": "get_state(alphabet)",
+            "description": "The alphabet"
         }
     ],
-    "examples": ["HKY85[pi=Frequencies.uniform]"],
-    "extract": "all"
+    "examples": ["HKY85(pi=Frequencies.uniform)"],
+    "extract": "all",
+    "title": "Equal letter frequencies",
+    "description": "Returns a map from each alphabet symbol to its frequency, with equal frequencies summing to one."
 }

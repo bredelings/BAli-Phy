@@ -7,23 +7,29 @@
         {
             "name": "submodel",
             "type": "ExchangeModel<a>",
-            "description": "Symmetric (exchangability) matrix"
+            "description": "The symmetric exchangeability matrix"
         },
         {
             "name": "pi",
             "type": "Map<String,Double>",
-            "default_value": "~SymmetricDirichletOn(letters(@a),1.0)"
+            "default_value": "~SymmetricDirichletOn(letters(@a),1.0)",
+            "description": "Equilibrium frequencies, keyed by alphabet symbol"
         },
         {
             "name": "f",
             "type": "Double",
-            "default_value": "~Uniform(0,1)"
+            "default_value": "~Uniform(0,1)",
+            "description": "Frequency exponent (1 gives the +F form)"
         },
         {
             "name": "a",
             "type": "a",
-            "default_value": "get_state(alphabet)"
+            "default_value": "get_state(alphabet)",
+            "description": "The alphabet"
         }
     ],
-    "extract": "all"
+    "extract": "all",
+    "title": "Generalized frequency weighting",
+    "description": "Attaches equilibrium frequencies to an exchangeability matrix using off-diagonal rates Q(i,j) = s(i,j) * pi[i]^(f-1) * pi[j]^f, where s is the exchangeability matrix. At f=1 this has the +F form; at f=0 rates are proportional to the inverse source frequency. Unlike F, this modifier does not scale the matrix to mean rate 1.",
+    "examples": ["HKY85_sym +> gwF(f=0.5)"]
 }

@@ -9,7 +9,7 @@
             "name": "pi",
             "type": "Map<String,Double>",
             "default_value": "~SymmetricDirichletOn(letters(@a),1.0)",
-	    "description": "Letter frequencies"
+	    "description": "Equilibrium frequencies, keyed by alphabet symbol"
         },
         {
             "name": "a",
@@ -19,10 +19,10 @@
         }
     ],
     "title": "The Felsenstein (1981) rate matrix",
-    "description": "Rate matrix with equal exchangabilities, unequal frequencies.",
+    "description": "Rate matrix with equal exchangeabilities and specified equilibrium frequencies.",
     "citation":{"type": "article",
 		"title": "Evolutionary trees from DNA sequences: A maximum likelihood approach",
-		"year": "1993",
+		"year": "1981",
 		"author": [{"name": "Felsenstein, Joseph"}],
 		"journal": {"name": "Journal of Molecular Evolution", "volume": "17", "number": "6", "pages": "368--376"},
 		"identifier": [{"type":"doi","id":"10.1007%2FBF01734359"}]

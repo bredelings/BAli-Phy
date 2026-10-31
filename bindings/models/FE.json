@@ -8,7 +8,7 @@
         {
             "name": "submodel",
             "type": "ExchangeModel<a>",
-	    "description": "Symmetric (exchangability) matrix"
+	    "description": "The symmetric exchangeability matrix"
         },
         {
             "name": "a",
@@ -18,7 +18,7 @@
         }
     ],
     "title": "The +FE frequency model",
-    "description": "This model uses the +F frequency model with equal frequencies.\n\nIt is equivalent to  +> F(Frequencies.uniform)",
+    "description": "Uses the +F frequency model with equal frequencies. Equivalent to +> F(pi=Frequencies.uniform).",
     "examples": ["WAG +> FE"],
     "extract": "all",
     "see": ["F","Frequencies.uniform"]

@@ -1,7 +1,7 @@
 {
     "name": "HKY85_sym",
     "deprecated-synonyms": ["hky85_sym"],
-    "title": "The Hasegawa-Kishino-Yano (1985) nucleotide exchangabilty matrix",
+    "title": "The Hasegawa-Kishino-Yano (1985) nucleotide exchangeability matrix",
     "result_type": "ExchangeModel<a>",
     "constraints": ["Nucleotides<a>"],
     "citation":{"type": "article",
@@ -18,14 +18,16 @@
             "name": "kappa",
             "type": "Double",
             "default_value": "~LogNormal(log(2),0.25)",
-            "description": "Transition\/transversion ratio"
+            "description": "Transition rate relative to transversion rate, before accounting for base frequencies"
         },
         {
             "name": "a",
             "type": "a",
-	    "default_value": "get_state(alphabet)"
+	    "default_value": "get_state(alphabet)",
+            "description": "The alphabet"
         }
     ],
-    "description":"Symmetric exchangability matrix from HKY",
-    "extract": "all"
+    "description":"Symmetric exchangeability matrix with relative rate kappa for transitions and 1 for transversions. Combine with F to supply equilibrium frequencies, or FE for equal frequencies.",
+    "extract": "all",
+    "examples": ["HKY85_sym(kappa=2) +> F"]
 }

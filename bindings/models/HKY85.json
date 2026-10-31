@@ -18,13 +18,13 @@
             "name": "kappa",
             "type": "Double",
             "default_value": "~LogNormal(log(2),0.25)",
-            "description": "Transition\/transversion ratio"
+            "description": "Transition rate relative to transversion rate, before accounting for base frequencies"
         },
         {
             "name": "pi",
             "type": "Map<String,Double>",
             "default_value": "~SymmetricDirichletOn(letters(@a),1)",
-	    "description": "Letter frequencies"
+	    "description": "Equilibrium frequencies, keyed by alphabet symbol"
         },
         {
             "name": "a",
@@ -33,6 +33,6 @@
 	    "description": "The alphabet"
         }
     ],
-    "description":"The HKY85 model",
+    "description":"Nucleotide rate matrix with separate transition and transversion rates and specified equilibrium frequencies.",
     "extract": "all"
 }
