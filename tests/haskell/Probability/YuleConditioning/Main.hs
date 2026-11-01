@@ -69,3 +69,9 @@ main = do
         return []
     prior <- runContextAction logPrior state
     print $ close prior (-4)
+
+    -- Tree-rate wrappers must not affect a density on node ages. Concrete pdf tests above
+    -- cannot catch representation restrictions or accidental use of substitution lengths.
+    let rated = rate_time_tree three (IntMap.fromSet (\_ -> 7) (getUEdgesSet three))
+    print $ yulePrFactors 3 2 Origin Flat (Tips 3) rated
+         == yulePrFactors 3 2 Origin Flat (Tips 3) three

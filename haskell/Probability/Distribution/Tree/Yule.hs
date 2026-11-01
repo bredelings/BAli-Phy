@@ -43,8 +43,8 @@ validYuleParameters lambda age = lambda > 0 && not (isInfinite lambda) && case a
 -- Origin adds the stem t-rootAge; Crown fixes the root and has n-2 free ages.
 -- For Tips n, cancel the start-age exponential analytically against P(N_t=n).
 -- Flat integrates the origin stem and normalizes by integral P(N_t=n) dt = 1/(n*lambda).
-yulePrFactors :: Int -> Rate -> Start -> AgeTreatment -> Condition
-              -> WithNodeTimes (WithRoots (Tree l)) -> [Log Double]
+yulePrFactors :: (HasRoot t, HasNodeTimes t)
+              => Int -> Rate -> Start -> AgeTreatment -> Condition -> t -> [Log Double]
 yulePrFactors n lambda start age condition tree =
     validateYule n start age condition `seq`
     if validTree then [expTo logDensity] else [0]
