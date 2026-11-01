@@ -1,0 +1,21 @@
+{
+    "title": "String to text conversion",
+    "name": "stringToText",
+    "result_type": "Text",
+    "no_log": true,
+    "call": "Text.pack(@x)",
+    "import": [
+        "qualified Data.Text as Text"
+    ],
+    "args": [
+        {
+            "name": "x",
+            "type": "String",
+            "description": ""
+        }
+    ],
+    "description": "Converts a string to Text. Applied implicitly when Text is required.",
+    "examples": [
+        "stringToText(\"A\")"
+    ]
+}

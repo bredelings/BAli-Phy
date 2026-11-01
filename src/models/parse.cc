@@ -722,7 +722,7 @@ string unparse(const UntypedExpr& expr)
             else if (is_model_infix_name(s) and x.args.size() == 2 and x.args[0].value and x.args[1].value
                      and x.args[0].name.empty() and x.args[1].name.empty())
                 return "(" + unparse(*x.args[0].value) + " " + s + " " + unparse(*x.args[1].value) + ")";
-            else if (s == "intToDouble")
+            else if (s == "intToDouble" or s == "stringToText")
             {
                 for(auto& arg: x.args)
                     if (arg.name == "x")
@@ -915,7 +915,7 @@ string unparse_annotated(const TypedExpr& expr)
             else if (is_model_infix_name(s) and x.args.size() == 2 and x.args[0].value and x.args[1].value)
                 return "(" + unparse_annotated(*x.args[0].value) + " " + s + " "
                      + unparse_annotated(*x.args[1].value) + ")";
-            else if (s == "intToDouble")
+            else if (s == "intToDouble" or s == "stringToText")
             {
                 for(auto& arg: x.args)
                     if (arg.name == "x")

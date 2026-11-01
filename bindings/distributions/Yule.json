@@ -39,8 +39,8 @@
     ],
     "description": "A pure-birth tree model with speciation rate lambda and no extinction. Returns a rooted tree on the supplied taxa, with tips at age zero. Origin starts with one lineage; Crown fixes the root at the supplied starting age. Tips(n) conditions on the number of taxa; Unconditioned retains its probability as evidence about the rate and starting age. Surviving is equivalent to Unconditioned for Yule.\n\nOrigin with Flat and Tips(n) integrates over a flat origin-age measure before conditioning on n. Other Flat combinations are not supported. Origin permits one taxon; Crown requires at least two.\n\nTemporarily, sampling always generates a tree conditional on the supplied taxon count. Without Tips(n), this is an MCMC initializer rather than direct simulation of the declared law, and the tree variable must not be created or destroyed during MCMC.",
     "examples": [
-        "~Yule(taxa,1,Origin,Flat,Tips(length(taxa))) # taxa from the alignment",
-        "~Yule(taxa,1,Crown,AtAge(2),Tips(length(taxa)))"
+        "~Yule([\"A\",\"B\",\"C\"],1,Origin,Flat,Tips(3))",
+        "~Yule([\"A\",\"B\",\"C\"],1,Crown,AtAge(2),Tips(3))"
     ],
     "see": [
         "Origin",

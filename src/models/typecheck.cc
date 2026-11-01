@@ -94,6 +94,12 @@ equations convertible_to(CM::UntypedExpr& model, const type_t& t1, type_t t2)
         if (E)
             model = conversion_call("intToDouble", "x", std::move(model));
     }
+    else if (t2 == "Text")
+    {
+        E = unify(t1, type_t("String"));
+        if (E)
+            model = conversion_call("stringToText", "x", std::move(model));
+    }
     else if (head2 == "DiscreteDist" and args2.size() == 1)
     {
         auto [head3,args3] = get_type_apps(args2[0]);
