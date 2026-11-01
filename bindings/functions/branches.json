@@ -3,12 +3,20 @@
     "result_type": "IntSet",
     "no_log": true,
     "call": "getUEdgesSet(@tree)",
-    "import": ["Tree"],
+    "import": [
+        "Tree"
+    ],
     "args": [
         {
             "name": "tree",
             "type": "Tree<t>",
             "description": "The tree"
         }
+    ],
+    "description": "Return the set of branch identifiers, with one positive identifier for each undirected branch.",
+    "see": [
+        "branches_list",
+        "num_branches",
+        "branch_length"
     ]
 }

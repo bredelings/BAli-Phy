@@ -3,12 +3,20 @@
     "result_type": "List<Int>",
     "no_log": true,
     "call": "getUEdges(@tree)",
-    "import": ["Tree"],
+    "import": [
+        "Tree"
+    ],
     "args": [
         {
             "name": "tree",
             "type": "Tree<t>",
             "description": "The tree"
         }
+    ],
+    "description": "Return the branch identifiers as a list in ascending order, with one positive identifier for each undirected branch.",
+    "see": [
+        "branches",
+        "num_branches",
+        "branch_length"
     ]
 }

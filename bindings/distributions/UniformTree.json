@@ -1,21 +1,34 @@
 {
     "name": "UniformTree",
-    "deprecated-synonyms": ["uniform_tree"],
+    "deprecated-synonyms": [
+        "uniform_tree"
+    ],
     "result_type": "Distribution<Tree<Lengths>>",
     "call": "uniformLabelledTree(@taxa,@branchLengthDist)",
-    "import": ["Probability"],
-    "title": "The uniform_topology distribution on trees",
+    "import": [
+        "Probability"
+    ],
+    "title": "Uniform unrooted tree topology with independent branch lengths",
     "args": [
         {
             "name": "taxa",
             "type": "List<Text>",
-	    "description": "The taxa for the tree"
+            "description": "The taxa for the tree"
         },
-	{
-	    "name": "branchLengthDist",
-	    "type": "Distribution<Double>",
-	    "description": "The distribution for branch lengths",
-	    "default_value": "Gamma(0.5,1/length(@taxa))"
-	}
+        {
+            "name": "branchLengthDist",
+            "type": "Distribution<Double>",
+            "description": "The distribution used independently for each branch length",
+            "default_value": "Gamma(0.5,1/length(@taxa))"
+        }
+    ],
+    "description": "Choose uniformly among labelled unrooted binary topologies on the supplied taxa, then draw each branch length independently from branchLengthDist. Standalone density evaluation with pdf is currently unavailable.",
+    "examples": [
+        "~UniformTree([\"A\",\"B\",\"C\",\"D\"])"
+    ],
+    "see": [
+        "FixedTopologyTree",
+        "UniformRootedTree",
+        "Yule"
     ]
 }

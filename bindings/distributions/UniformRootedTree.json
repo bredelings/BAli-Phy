@@ -1,21 +1,34 @@
 {
     "name": "UniformRootedTree",
-    "deprecated-synonyms": ["uniform_rooted_tree"],
+    "deprecated-synonyms": [
+        "uniform_rooted_tree"
+    ],
     "result_type": "Distribution<Tree<Lengths>>",
     "call": "uniformRootedTree(@taxa,@branchLengthDist)",
-    "import": ["Probability"],
-    "title": "The uniform_topology distribution on trees",
+    "import": [
+        "Probability"
+    ],
+    "title": "Uniform unrooted tree with a randomly chosen root",
     "args": [
         {
             "name": "taxa",
             "type": "List<Text>",
-	    "description": "The taxa for the tree"
+            "description": "The taxa for the tree"
         },
-	{
-	    "name": "branchLengthDist",
-	    "type": "Distribution<Double>",
-	    "description": "The distribution for branch lengths",
-	    "default_value": "Gamma(0.5,1/length(@taxa))"
-	}
+        {
+            "name": "branchLengthDist",
+            "type": "Distribution<Double>",
+            "description": "The distribution used independently for each branch length",
+            "default_value": "Gamma(0.5,1/length(@taxa))"
+        }
+    ],
+    "description": "Choose a labelled unrooted binary topology uniformly, draw independent branch lengths from branchLengthDist, and choose the root uniformly among all existing nodes, including tips. Standalone density evaluation with pdf is currently unavailable.",
+    "examples": [
+        "~UniformRootedTree([\"A\",\"B\",\"C\",\"D\"])"
+    ],
+    "see": [
+        "UniformTree",
+        "FixedTopologyTree",
+        "Yule"
     ]
 }

@@ -1,21 +1,33 @@
 {
     "name": "FixedTopologyTree",
-    "deprecated-synonyms": ["fixed_topology_tree"],
+    "deprecated-synonyms": [
+        "fixed_topology_tree"
+    ],
     "result_type": "Distribution<Tree<Lengths>>",
     "call": "fixedTopologyTree(@topology,@branchLengthDist)",
-    "import": ["Probability"],
-    "title": "The uniform_topology distribution on trees",
+    "import": [
+        "Probability"
+    ],
+    "title": "Independent branch lengths on a fixed topology",
     "args": [
         {
             "name": "topology",
             "type": "Tree<Nothing>",
-	    "description": "The topology for the tree"
+            "description": "The topology for the tree"
         },
-	{
-	    "name": "branchLengthDist",
-	    "type": "Distribution<Double>",
-	    "description": "The distribution for branch lengths",
-	    "default_value": "Gamma(0.5,2/num_branches(@topology))"
-	}
+        {
+            "name": "branchLengthDist",
+            "type": "Distribution<Double>",
+            "description": "The distribution used independently for each branch length",
+            "default_value": "Gamma(0.5,2/num_branches(@topology))"
+        }
+    ],
+    "description": "Assign independent branch lengths to the supplied topology. The topology may include multifurcations. Standalone density evaluation with pdf is currently unavailable.",
+    "examples": [
+        "bali-phy alignment.fasta --fix topology=tree.nwk  # Uses FixedTopologyTree"
+    ],
+    "see": [
+        "UniformTree",
+        "UniformRootedTree"
     ]
 }

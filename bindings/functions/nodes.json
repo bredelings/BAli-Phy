@@ -3,12 +3,15 @@
     "result_type": "IntSet",
     "no_log": true,
     "call": "getNodesSet(@tree)",
-    "import": ["Tree"],
+    "import": [
+        "Tree"
+    ],
     "args": [
         {
             "name": "tree",
             "type": "Tree<t>",
             "description": "The tree"
         }
-    ]
+    ],
+    "description": "Return the set of node identifiers, including both tips and internal nodes."
 }
