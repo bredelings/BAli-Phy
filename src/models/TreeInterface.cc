@@ -71,7 +71,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
 	    tree = tree[0];
 	}
 
-	if (Runtime::has_constructor(tree.head(), "Tree.Tree"))
+	if (Runtime::has_constructor(tree.head(), "Tree.Types.Tree"))
 	{
 	    tree = tree[0];
 	}
