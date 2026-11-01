@@ -1,0 +1,14 @@
+{
+    "name": "Unconditioned",
+    "result_type": "Condition",
+    "call": "Unconditioned",
+    "import": [
+        "Probability.Distribution.Tree.Conditioning"
+    ],
+    "args": [],
+    "title": "Retain the tip-count probability",
+    "description": "Applies no additional conditioning beyond the starting specification. The observed tip count contributes evidence about the process parameters.",
+    "see": [
+        "Yule"
+    ]
+}

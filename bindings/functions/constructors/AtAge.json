@@ -1,0 +1,20 @@
+{
+    "name": "AtAge",
+    "result_type": "AgeTreatment",
+    "call": "AtAge(@t)",
+    "import": [
+        "Probability.Distribution.Tree.Conditioning"
+    ],
+    "args": [
+        {
+            "name": "t",
+            "type": "Double",
+            "description": "The age at which the process starts"
+        }
+    ],
+    "title": "Specify the starting age",
+    "description": "Supplies the origin or crown age, according to the starting condition.",
+    "see": [
+        "Yule"
+    ]
+}

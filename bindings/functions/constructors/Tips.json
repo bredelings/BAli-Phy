@@ -1,0 +1,20 @@
+{
+    "name": "Tips",
+    "result_type": "Condition",
+    "call": "Tips(@n)",
+    "import": [
+        "Probability.Distribution.Tree.Conditioning"
+    ],
+    "args": [
+        {
+            "name": "n",
+            "type": "Int",
+            "description": "The number of tips"
+        }
+    ],
+    "title": "Condition on the tip count",
+    "description": "Conditions the process on having n tips. For Yule, n must match the supplied taxa.",
+    "see": [
+        "Yule"
+    ]
+}

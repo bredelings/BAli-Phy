@@ -5,7 +5,7 @@
 
  # Keep model declarations before and after options, and ensure command-line scalars take precedence.
 configBeforeOption = 1;
-:tree ~Yule(taxa,1)
+:tree ~Yule(taxa,1,Origin,Flat,Tips(length(taxa)))
 
  # The first partition comes from the command line; these follow it without duplicating it.
 :align rna.fasta

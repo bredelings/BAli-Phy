@@ -1,0 +1,14 @@
+{
+    "name": "Flat",
+    "result_type": "AgeTreatment",
+    "call": "Flat",
+    "import": [
+        "Probability.Distribution.Tree.Conditioning"
+    ],
+    "args": [],
+    "title": "Integrate over a flat origin-age measure",
+    "description": "With Origin and Tips(n), integrates over the origin age before conditioning on the tip count. Crown with Flat is not implemented.",
+    "see": [
+        "Yule"
+    ]
+}

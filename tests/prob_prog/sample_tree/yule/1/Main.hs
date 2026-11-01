@@ -10,7 +10,7 @@ import Options.Applicative
 model taxa = do
     lambda <- sample $ logLaplace 0 2
 
-    tree <- sample $ yule taxa lambda
+    tree <- sample $ yule taxa lambda Origin Flat (Tips (length taxa))
 
     let loggers   = ["tree" %=% writeNewick tree, "lambda" %=% lambda]
     return (tree, loggers)

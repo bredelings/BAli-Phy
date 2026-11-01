@@ -18,7 +18,7 @@ allStrings = [ c : s | s <- "" : allStrings, c <- ['a'..'j'] ]
 
 model taxa = do
     let lambda = 1
-    tree <- sample $ yule taxa lambda
+    tree <- sample $ yule taxa lambda Origin Flat (Tips (length taxa))
 
     let rootValue = 0
 
