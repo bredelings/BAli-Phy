@@ -1,3 +1,8 @@
 (A_B,'C D');
  (A:0.1[&note=[inner[deep]]],B);
  (A:0.1[&a=(x,y),foreground={1,2},note=[x,y],z=3],B);
+(C,'A B');
+(C,'A B');
+(C:0.5,'A B':0.5);
+(C:1,'A B':1);
+(C:2,'A B':2);

@@ -69,3 +69,20 @@ writeNewick_node tree node = write_branches_and_node tree (edgesOutOfNode tree n
 
     write_branch tree branch = write_branches_and_node tree (edgesAfterEdge tree branch) (targetNode tree branch) (Just branch)
 
+-- Serialize the complete wrapper stack so lengths, node times, and rates are retained.
+-- These instances are available through Tree without importing the Newick parser.
+instance Display l => Show (Tree l) where
+    show = T.unpack . writeNewick
+
+instance WriteNewickNode t => Show (WithRoots t) where
+    show = T.unpack . writeNewick
+
+instance (HasRoot (Rooted t), WriteNewickNode (Rooted t), IsTree t) => Show (WithBranchLengths t) where
+    show = T.unpack . writeNewick
+
+instance (HasRoot (Rooted t), WriteNewickNode (Rooted t), IsTree t) => Show (WithNodeTimes t) where
+    show = T.unpack . writeNewick
+
+instance (HasRoot (Rooted t), WriteNewickNode (Rooted t), HasBranchLengths (Rooted t), IsTree t)
+      => Show (WithBranchRates t) where
+    show = T.unpack . writeNewick
