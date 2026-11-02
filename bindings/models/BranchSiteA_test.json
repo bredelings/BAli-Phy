@@ -1,7 +1,7 @@
 {
-    "see": ["BranchModel", "BranchModel_test", "GTR", "MNM", "MutSelAA", "dNdS"],
-    "name": "BranchSite",
-    "deprecated-synonyms": ["branch_site"],
+    "see": ["BranchSiteA", "BranchModel", "BranchModel_test", "GTR", "MNM", "MutSelAA", "dNdS"],
+    "name": "BranchSiteA_test",
+    "deprecated-synonyms": ["BranchSite", "branch_site"],
     "title": "Bayesian branch-site test for positive selection",
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "citation": {
@@ -12,7 +12,7 @@
 	"journal": { "name": "Molecular biology and evolution", "volume": "22", "number": "12", "pages": "2472--2479"},
 	"identifier": [{"type":"doi","id":"10.1093/molbev/msi237"}]
     },
-    "call": "branchSiteTest(@fs,@omegas,@posP,@posW,@posSelection,@branchCats,@submodel)",
+    "call": "branchSiteATest(@fs,@omegas,@posP,@posW,@posSelection,@branchCats,@submodel)",
     "import": ["MCMC", "SModel"],
     "args": [
         {
@@ -64,6 +64,6 @@
             "context": "object"
         }
     ],
-    "description": "A Bayesian comparison based on branch-site model A. Background branches have, by default, a conserved category with 0 < omega < 1 and a neutral category with omega=1. A fraction posP of sites switches on foreground branches to omega=1 under the null (posSelection=0), or to omega=posW under the alternative (posSelection=1). The default prior places posW above 1 and gives each hypothesis probability 0.5.\n\nThe default background uses GTR, MNM, and MutSelAA. Here omega scales nonsynonymous rates after accounting for amino-acid fitnesses. Thus omega=1 retains these fitness effects; neutrality and positive selection are assessed relative to this background.\n\nThe posterior probability that posSelection=1 is the posterior probability that some sites undergo positive selection on the foreground branches.\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of this probability than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)",
+    "description": "A Bayesian comparison of BranchSiteA with its null model fixing the foreground selection omega to 1, corresponding to Test 2 of Zhang, Nielsen, and Yang (2005). Background branches have, by default, a conserved category with 0 < omega < 1 and a neutral category with omega=1. A fraction posP of sites switches on foreground branches to omega=1 under the null (posSelection=0), or to omega=posW under the alternative (posSelection=1). The default prior places posW above 1 and gives each hypothesis probability 0.5.\n\nAdditional background categories can be supplied through omegas and fs, extending model A. The foreground and background mixtures are each normalized to mean rate 1. All component models must share equilibrium frequencies. Use a fixed topology when branch categories come from tree annotations.\n\nThe default background uses GTR, MNM, and MutSelAA. Here omega scales nonsynonymous rates after accounting for amino-acid fitnesses. Thus omega=1 retains these fitness effects; neutrality and positive selection are assessed relative to this background.\n\nThe posterior probability that posSelection=1 is the posterior probability that some sites undergo positive selection on the foreground branches.\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of this probability than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)",
     "extract": "all"
 }

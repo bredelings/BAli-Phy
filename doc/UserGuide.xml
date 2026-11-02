@@ -2660,7 +2660,7 @@ If the genetic code is not specified, then the standard code is used:
 	      </row>
 
 	      <row>
-		<entry><code language="bali-phy-model">BranchSite</code></entry>
+		<entry><code language="bali-phy-model">BranchSiteA_test</code></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry><para>A Bayesian test for positive selection at unknown sites on designated
 		foreground branches. See <xref linkend="selection-branch-site"/> for instructions.</para>
@@ -3221,7 +3221,7 @@ By default each partition has a separate scale, but you can force groups of part
       much probability the analysis assigns to each hypothesis, given the data and priors.</para>
 
       <para>The site models, <code language="bali-phy-model">BranchModel</code>,
-      <code language="bali-phy-model">BranchModel_test</code>, and <code language="bali-phy-model">BranchSite</code>
+      <code language="bali-phy-model">BranchModel_test</code>, and <code language="bali-phy-model">BranchSiteA_test</code>
       share the default background <code language="bali-phy-model">GTR +> MNM +> MutSelAA</code>.
       Their ω values scale nonsynonymous rates relative to that background. A category called
       neutral (ω=1) retains amino-acid fitness effects; positive selection refers to excess
@@ -3384,8 +3384,9 @@ By default each partition has a separate scale, but you can force groups of part
 
       <para>A branch-site model distinguishes branches of interest, called foreground branches,
       from the remaining background branches. Some sites can have ω at or below one on background
-      branches but ω above one on foreground branches. <code language="bali-phy-model">BranchSite</code>
-      compares this with a null hypothesis in which those sites have ω equal to one on the
+      branches but ω above one on foreground branches. <code language="bali-phy-model">BranchSiteA_test</code>
+      uses <code language="bali-phy-model">BranchSiteA</code> to compare this with a null
+      hypothesis in which those sites have ω equal to one on the
       foreground branches. The analysis estimates which sites are affected and the ω shared by
       these sites on foreground branches.</para>
 
@@ -3393,7 +3394,7 @@ By default each partition has a separate scale, but you can force groups of part
       as in the first tree above, not the <literal>{0,1}</literal> label used for
       <code language="bali-phy-model">BranchModel_test</code>. Leave background branches unlabelled:</para>
 <screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons --fix topology=branches.tree \
-  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> BranchSite'</screen>
+  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> BranchSiteA_test'</screen>
       <para>Read model support as in <xref linkend="selection-model-support-report"/> and the two
       posterior views as in <xref linkend="selection-locations"/>. In the alignment
       viewer, <literal>foreground-posSelection</literal> gives selection probabilities and
@@ -3656,7 +3657,7 @@ By default each partition has a separate scale, but you can force groups of part
       <para>The shared-ω versus foreground/background comparison in
       <xref linkend="selection-branches"/> corresponds to CODEML's M0
       (<literal>model=0, NSsites=0</literal>) versus a labelled branch model
-      (<literal>model=2, NSsites=0</literal>). The default <code language="bali-phy-model">BranchSite</code>
+      (<literal>model=2, NSsites=0</literal>). The default <code language="bali-phy-model">BranchSiteA_test</code>
       compares branch-site model A (<literal>model=2, NSsites=2, fix_omega=0</literal>)
       with its null model fixing ω₂ to one (<literal>fix_omega=1, omega=1</literal>).
       These identify the hypotheses; BAli-Phy compares them using Bayesian model support.</para>

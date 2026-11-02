@@ -204,8 +204,8 @@ main = do
         setConstantStateProperty posSelectionPropertyName (if omega > 1 then 1 else 0) $
         setConstantStateProperty dNdSPropertyName omega $
         scaleBy omega (jukes_cantor dna)
-      branchModel = branchSiteTest [0.6, 0.4] [0.25] 0.2 3.0 1 branchCategories modelForOmega
-      nullBranchModel = branchSiteTest [0.6, 0.4] [0.25] 0.2 3.0 0 branchCategories modelForOmega
+      branchModel = branchSiteATest [0.6, 0.4] [0.25] 0.2 3.0 1 branchCategories modelForOmega
+      nullBranchModel = branchSiteATest [0.6, 0.4] [0.25] 0.2 3.0 0 branchCategories modelForOmega
       Discrete branchComponents = branchModel
       branchWeights = [probability | (_, probability) <- branchComponents]
       scaledBranchModel = scaleBy 2.0 branchModel

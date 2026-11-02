@@ -537,12 +537,12 @@ specifically for ω above one.</para>
 </section>
 
 <section><info><title>Testing for selection at some sites on foreground branches</title></info>
-<para>BranchSite is a test, despite having no <literal>_test</literal> suffix. It allows some
+<para>BranchSiteA_test compares branch-site model A with its null model. It allows some
 sites to have ω above one on foreground branches while their background ω remains at or below
 one, and compares this with a null hypothesis that fixes their foreground ω to one.
 Use the scalar <literal>foreground=1</literal> labels in <filename>Mx_foreground.tree</filename>,
 rather than the hypothesis lists used for BranchModel_test.</para>
-% bali-phy Mx_aln.nonstop.fasta -A Codons --fix topology=Mx_foreground.tree -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> BranchSite' --name Mx-branch-site-freeA &amp;
+% bali-phy Mx_aln.nonstop.fasta -A Codons --fix topology=Mx_foreground.tree -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> BranchSiteA_test' --name Mx-branch-site-freeA &amp;
 % bpy-summarize Mx-branch-site-freeA-1/ Mx-branch-site-freeA-2/
 % mv Results Mx-branch-site-freeA.Results
 

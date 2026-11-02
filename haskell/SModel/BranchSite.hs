@@ -104,7 +104,7 @@ omegaBranchModel branchCats omegas modelFunc =
 
 -- Transposes the background and foreground mixtures into site components,
 -- preserving each branch regime's properties under a distinguishing prefix.
-branchSite fs ws posP posW branchCats modelFunc =
+branchSiteA fs ws posP posW branchCats modelFunc =
     Discrete [(makeBranchModel branchCats
                   [(T.pack "background-", background), (T.pack "foreground-", foreground)],
                probability)
@@ -118,6 +118,7 @@ branchSite fs ws posP posW branchCats modelFunc =
     normalizedForeground = scaleTo 1 foregroundMixture
     normalizedModels = zip (unpackDiscrete normalizedBackground) (unpackDiscrete normalizedForeground)
 
-branchSiteTest fs ws posP posW posSelection branchCats modelFunc =
-    branchSite fs ws posP posW' branchCats modelFunc
+-- Select the alternative foreground omega or the null value of one.
+branchSiteATest fs ws posP posW posSelection branchCats modelFunc =
+    branchSiteA fs ws posP posW' branchCats modelFunc
     where posW' = if (posSelection == 1) then posW else 1
