@@ -10,10 +10,10 @@
             "type": "List<Double>",
 
             "default_value": "~SymmetricDirichlet(2,2)",
-	    "description" : "Relative frequencies for mixture component"
+	    "description" : "Mixture proportions for the two components"
         }
     ],
-    "description": "Empirically derived collection of 2 rate matrices.",
+    "description": "A mixture of two empirical amino-acid substitution models, with fixed amino-acid frequencies, exchangeabilities, and relative rates for each component. The mixture proportions can be inferred.",
     "citation": {"type": "article",
 		 "title": "Phylogenetic mixture models for proteins",
 		 "year": "2008",
