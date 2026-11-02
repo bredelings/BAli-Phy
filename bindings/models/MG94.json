@@ -11,7 +11,7 @@
             "name": "omega",
             "type": "Double",
             "default_value": "~LogNormal(0,1)",
-            "description": "Relative rate of non-synonymous changes relative to synonymous changes"
+            "description": "Rate multiplier for nonsynonymous substitutions relative to synonymous substitutions"
         },
         {
             "name": "pi",
@@ -23,7 +23,7 @@
             "name": "a",
             "type": "Codons<n>",
             "default_value": "get_state(alphabet)",
-	    "description": "The alphabet"
+	    "description": "The codon alphabet"
         }
     ],
     "citation": {
@@ -34,7 +34,7 @@
 	"journal": {"name": "Molecular biology and evolution", "volume": "11", "number": "5", "pages": "715--724"},
 	"link": [{"url":"https://academic.oup.com/mbe/article/11/5/715/1008710"}]
     },
-    "description": "The MG94 model describes codon frequencies in terms of 4 nucleotide frequencies.  It is thus similar to the GY94+F1x4 model where codon frequencies are constructed from 4 nucleotide frequencies.  However, in the MG94 model rates from codon i to codon j only depend on the frequency of the affected nucleotide, and not on the frequencies of its neighbors.\n\nThe original MG94 model did not account for different rates in transitions and transversions.  See the `MG94K` model that is extended to account for a ts/tv rate ratio, and the `MG94_ext model that is extended to use an arbitrary nucleotide rate matrix.\n\nThe MG94 model is equivalent to the following models:\n\n  F81 +> x3 +> dNdS\n\n  MG94K[kappa=1]\n\n  MG94_ext(F81)",
+    "description": "The MG94 model describes codon frequencies in terms of four nucleotide frequencies. It is thus similar to GY94 with F1x4 frequencies. However, in MG94, rates from codon i to codon j depend on the frequency of the affected nucleotide, not on the frequencies of its neighbors. Each instantaneous substitution changes one nucleotide, and nonsynonymous rates are multiplied by omega.\n\nThe original MG94 model did not distinguish transition and transversion exchangeabilities. MG94K adds this distinction, and MG94_ext accepts an arbitrary nucleotide substitution model.\n\nMG94 is equivalent to:\n\n    F81 +> x3 +> dNdS\n    MG94K(kappa=1)\n    MG94_ext(F81)",
     "see": ["MG94K","MG94_ext"],
     "extract": "all"
 }

@@ -10,16 +10,16 @@
             "name": "submodel",
             "type": "CTMC<a>",
             "alphabet": "getNucleotides(@a)",
-	    "description": "Nucleotide rates"
+	    "description": "The nucleotide substitution model applied at both positions"
         },
         {
             "name": "a",
             "type": "Doublets<a>",
             "default_value": "get_state(alphabet)",
-	    "description": "The Doublets alphabet"
+	    "description": "The doublet alphabet"
         }
     ],
-    "description":"Rate matrix on doublets, constructed from a rate matrix on nucleotides.\n\nThus function can be used to build up doublet models incrementally.",
+    "description":"Construct a doublet substitution model by applying the same nucleotide model at both positions. Each instantaneous substitution changes one nucleotide. Root frequencies are the products of the nucleotide root frequencies; stationary inputs produce stationary doublet models.",
     "examples": ["F81 +> x2","GTR +> x2"],
     "see": ["x2_sym"]
 }

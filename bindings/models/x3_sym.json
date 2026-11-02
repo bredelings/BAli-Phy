@@ -2,7 +2,7 @@
     "name": "x3_sym",
     "constraints": [ "Triplets<a,b>" ],
     "result_type": "ExchangeModel<a>",
-    "title": "Exchangability matrix on triplets/codon constructed from nucleotide exchange rates",
+    "title": "Triplet exchangeabilities constructed from nucleotide exchangeabilities",
     "call": "SModel.x3_sym(@a,@submodel)",
     "import": ["SModel"],
     "args": [
@@ -10,16 +10,16 @@
             "name": "submodel",
             "type": "ExchangeModel<b>",
             "alphabet": "getNucleotides(@a)",
-	    "description": "The singlet exchange model"
+	    "description": "Nucleotide exchangeabilities"
         },
         {
             "name": "a",
             "type": "a",
             "default_value": "get_state(alphabet)",
-	    "description": "The Triplets alphabet"
+	    "description": "The triplet alphabet, including a codon alphabet"
         }
     ],
-    "description": "Exchangability matrix on triplets or codons constructed from an exchangability matrix on nucleotides.\n\nThus function can be used to build up triplet and codon models incrementally.",
-    "examples": ["HKY85_sym +> x3_sym +> F +> dNdS      // equivalent to GY94","GTR_sym +> x3_sym +> F","x3_sym(HKY85_sym)"],
+    "description": "Construct exchangeabilities on a triplet alphabet, including a codon alphabet, from nucleotide exchangeabilities. Each instantaneous substitution changes one nucleotide, with the same exchangeabilities at all three positions. Combine with F to supply triplet or codon frequencies and obtain a substitution model.",
+    "examples": ["HKY85_sym +> x3_sym +> F +> dNdS      # equivalent to GY94", "GTR_sym +> x3_sym +> F", "x3_sym(HKY85_sym)"],
     "see": ["GY94","GY94_ext"]
 }

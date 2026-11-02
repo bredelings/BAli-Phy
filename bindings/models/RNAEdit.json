@@ -3,7 +3,7 @@
     "deprecated-synonyms": ["rna_edit"],
     "result_type": "CTMC<RNAEdits<a>>",
     "constraints": [ "Nucleotides<a>" ],
-    "title": "RNA editting model",
+    "title": "RNA editing model",
     "call": "siteEdit(@a,@submodel,@rnaRate,@edits)",
     "import": ["SModel"],
     "args": [
@@ -11,27 +11,26 @@
             "name": "submodel",
             "type": "CTMC<a>",
             "alphabet": "getNucleotides(@a)",
-	    "description": "Nucleotide rates"
+	    "description": "The genomic nucleotide substitution model"
         },
         {
             "name": "edits",
             "type": "Map<String,String>",
-            "description": "Map from source nucleotide to edited nucleotide"
+            "description": "Map from genomic nucleotide to RNA product"
         },
 	{
 	    "name": "rnaRate",
 	    "type": "Double",
-	    "description": "scaling factor for rates that change the RNA",
+	    "description": "Multiplier for substitution rates that change the RNA product",
 	    "default_value":"1"
 	},
         {
             "name": "a",
             "type": "RNAEdits<a>",
             "default_value": "get_state(alphabet)",
-	    "description": "The RNAEdits alphabet"
+	    "description": "The RNA-edit alphabet"
         }
     ],
-    "description":"Rate matrix on a doublets, constructed from a rate matrix on nucleotides.\n\nThus model describes RNA editing (or lack thereof) at a single site.",
-    "examples": ["HKY85 +> RNAEdit({})                  # no editting",
-                 "HKY85 +> RNAEdit({\"C\":\"U\"})           # C->U editting"]
+    "description":"Construct a substitution model whose states pair a genomic nucleotide with its RNA product. The edits map specifies the RNA product for each edited nucleotide; omitted nucleotides are unchanged. Only states consistent with this map have nonzero root frequencies or substitution rates.\n\nRates come from the genomic nucleotide model. Substitutions that also change the RNA product are multiplied by rnaRate. The RNA-edit alphabet supports C-to-U and U-to-C editing, with T replacing U for DNA.\n\nStationary inputs produce stationary models. Non-equilibrium inputs retain their root frequencies, mapped onto the editing states.",
+    "examples": ["HKY85 +> RNAEdit({})                  # no editing", "HKY85 +> RNAEdit({\"C\":\"U\"})           # C-to-U editing with an RNA alphabet"]
 }

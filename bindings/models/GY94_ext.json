@@ -17,13 +17,13 @@
             "name": "omega",
             "type": "Double",
             "default_value": "~LogNormal(0,1)",
-            "description": "Relative rate of non-synonymous changes relative to synonymous changes"
+            "description": "Rate multiplier for nonsynonymous substitutions relative to synonymous substitutions"
         },
         {
             "name": "pi",
             "type": "Map<String,Double>",
             "default_value": "~SymmetricDirichletOn(letters(@a),1)",
-	    "description": "Letter frequencies"
+	    "description": "Codon frequencies"
         },
         {
             "name": "a",
@@ -32,18 +32,9 @@
 	    "description": "The codon alphabet"
         }
     ],
-    "description": "This is a version of the GY94 model that has been extended to use user-supplied exchangabilty matrix `nucModel` on nucleotides.  The original GY94 model distinguishes only between transitions and transversions, and is equivalent to `GY94_ext(HKY85_sym)`.",
+    "description": "This is a version of the GY94 model extended to use a user-supplied nucleotide exchangeability matrix nucModel. GY94 distinguishes only transitions and transversions and is equivalent to GY94_ext(HKY85_sym). Rates are proportional to the destination codon frequency and are multiplied by omega for nonsynonymous changes.",
     "examples": ["GY94_ext(HKY85_sym(kappa=2),omega=2)","GY94_ext(GTR_sym,pi=F1x4)"],
-    "citation": {"type": "article",
-		 "title": "A codon-based model of nucleotide substitution for protein-coding DNA sequences",
-		 "author": [{"name": "Goldman, Nick"},{"name": "Yang, Ziheng"}],
-		 "journal": {"name": "Molecular biology and evolution",
-			     "volume":"11",
-			     "number":"5",
-			     "pages":"725--736"},
-		 "year":"1994",
-		 "link":[{"url":"http://www.genetics.org/content/148/3/929.short"}]
-		},
+    "citation": {"type": "article", "title": "A codon-based model of nucleotide substitution for protein-coding DNA sequences", "author": [{"name": "Goldman, Nick"}, {"name": "Yang, Ziheng"}], "journal": {"name": "Molecular biology and evolution", "volume": "11", "number": "5", "pages": "725--736"}, "year": "1994", "link": [{"url": "https://doi.org/10.1093/oxfordjournals.molbev.a040153"}]},
     "see": ["GY94"],
     "extract": "all"
 }

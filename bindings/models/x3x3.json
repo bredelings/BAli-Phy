@@ -28,10 +28,10 @@
             "name": "a",
             "type": "t",
             "default_value": "get_state(alphabet)",
-	    "description": "The Triplets alphabet"
+	    "description": "The triplet alphabet, including a codon alphabet"
         }
     ],
-    "description":"A triplet rate matrix constructed from separate nucleotide rate matrices for the first, second, and third codon position",
-    "examples": ["q=HKY85(a=getNucleotides); x3x3(q,q,q)"],
+    "description":"Construct a substitution model on a triplet alphabet, including a codon alphabet, from separate nucleotide models for the three positions. Each instantaneous substitution changes one nucleotide.\n\nStationary inputs produce stationary models. For stationary non-reversible inputs, equilibrium frequencies are recalculated from the constructed rates. For non-equilibrium inputs, root frequencies are the products of the nucleotide root frequencies, normalized over the allowed triplets or codons.",
+    "examples": ["x3x3(HKY85(kappa=2),HKY85(kappa=3),HKY85(kappa=4))"],
     "see": ["x3"]
 }

@@ -28,11 +28,12 @@
             "name": "a",
             "type": "a",
             "default_value":"get_state(alphabet)",
-	    "description": "The (codon) alphabet"
+	    "description": "The triplet alphabet, including a codon alphabet"
         }
     ],
-    "description": "The F3x4 model describes codon frequencies pi' in terms of nucleotide frequencies pi1, pi2, and pi3:\n   pi'[ijk] = pi1[i]*pi2[l]*pi3[k].",
+    "description": "Construct frequencies on a triplet alphabet, including a codon alphabet, from separate nucleotide frequencies for each position. The frequency of ijk is proportional to pi1[i]*pi2[j]*pi3[k]. Frequencies are normalized over the supplied alphabet; for codon alphabets, stop codons are excluded.",
     "examples": ["GY94(pi=F3x4)","F3x4(a=codons(DNA))"],
     "see": ["F1x4","GY94"],
-    "extract": "all"
+    "extract": "all",
+    "title": "F3x4 codon frequencies"
 }

@@ -22,10 +22,10 @@
             "name": "a",
             "type": "a",
             "default_value": "get_state(alphabet)",
-	    "description": "The Triplets alphabet"
+	    "description": "The doublet alphabet"
         }
     ],
-    "description":"A doublet rate matrix constructed from separate nucleotide rate matrices for the first and second doublet positions",
-    "examples": ["q=HKY85(a=getNucleotides); x2x2(q,q)"],
+    "description":"Construct a doublet substitution model from separate nucleotide models for the two positions. Each instantaneous substitution changes one nucleotide. Root frequencies are the products of the two nucleotide root distributions; stationary inputs produce stationary doublet models.",
+    "examples": ["x2x2(HKY85(kappa=2),HKY85(kappa=4))"],
     "see": ["x2"]
 }

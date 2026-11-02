@@ -4,7 +4,7 @@
     "deprecated-synonyms": ["RNA.m16a"],
     "constraints": [ "Doublets<a,b>" ],
     "result_type": "CTMC<a>",
-    "title": "Exchangability matrix on doublets constructed from nucleotide exchange rates",
+    "title": "M16A substitution model for paired RNA sites",
     "call": "rna_stem_16a(@a,@aS,@aD,@b,@g,@e,frequenciesFromDict(@a,@pi))",
     "import": ["SModel"],
     "citation":{"type": "article",
@@ -19,31 +19,31 @@
             "name": "aS",
             "type": "Double",
             "default_value": "~LogNormal(log(2),0.25)",
-	    "description": "Exchange rate: 1 change, match <-> match"
+	    "description": "Exchangeability for one-nucleotide changes between matches"
         },
         {
             "name": "aD",
             "type": "Double",
             "default_value": "~LogNormal(log(2),0.25)",
-	    "description": "Exchange rate: 2 changes, match <-> match, both transitions"
+	    "description": "Exchangeability for two transitions between matches"
         },
         {
             "name": "b",
             "type": "Double",
             "default_value": "~LogNormal(log(2),0.25)",
-	    "description": "Exchange rate: 2 changes, match <-> match, both transversions"
+	    "description": "Exchangeability for two transversions between matches"
         },
         {
             "name": "g",
             "type": "Double",
             "default_value": "~LogNormal(log(2),0.25)",
-	    "description": "Exchange rate: 1 changes, match <-> mismatch"
+	    "description": "Exchangeability for one-nucleotide changes between a match and a mismatch"
         },
         {
             "name": "e",
             "type": "Double",
             "default_value": "~LogNormal(log(2),0.25)",
-	    "description": "Exchange rate: 1 changes, mismatch <-> mismatch"
+	    "description": "Exchangeability for one-nucleotide changes between mismatches"
         },
         {
             "name": "pi",
@@ -55,10 +55,10 @@
             "name": "a",
             "type": "a",
             "default_value": "get_state(alphabet)",
-	    "description": "The Doublets alphabet"
+	    "description": "The doublet alphabet"
         }
     ],
-    "description": "Exchangability matrix for rna stems that allows 2 simultaneous changes.\n\nNote the exchange rate for double changes involving a mismatch is 0.",
+    "description": "A substitution model on the 16 nucleotide pairs in an RNA stem. Matches include Watson–Crick pairs (AU, UA, CG, GC) and wobble pairs (GU, UG); all other pairs are mismatches. With a DNA alphabet, T replaces U.\n\nSingle-nucleotide changes have separate exchangeabilities for match–match, match–mismatch, and mismatch–mismatch changes. Simultaneous changes at both positions are allowed only between matches, with separate exchangeabilities for two transitions and two transversions. Rates combine these exchangeabilities with the destination doublet frequencies.",
     "examples": ["RNA.M16A","RNA.M16A +> ASRV.Free"],
     "see": ["x2_sym"]
 }

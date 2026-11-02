@@ -10,13 +10,13 @@
             "name": "kappa",
             "type": "Double",
             "default_value": "~LogNormal(log(2),0.25)",
-            "description": "Transition\/transversion ratio"
+            "description": "Transition rate relative to transversion rate, before accounting for frequencies"
         },
         {
             "name": "omega",
             "type": "Double",
             "default_value": "~LogNormal(0,1)",
-            "description": "Relative rate of non-synonymous changes relative to synonymous changes"
+            "description": "Rate multiplier for nonsynonymous substitutions relative to synonymous substitutions"
         },
         {
             "name": "pi",
@@ -28,10 +28,10 @@
             "name": "a",
             "type": "Codons<n>",
             "default_value": "get_state(alphabet)",
-	    "description": "The alphabet"
+	    "description": "The codon alphabet"
         }
     ],
-    "title": "The Muse & Gaut (1994) model of codon substitution.",
+    "title": "Muse–Gaut codon model with transition/transversion bias",
     "citation": {
 	"type": "article",
 	"title": "A likelihood approach for comparing synonymous and nonsynonymous nucleotide substitution rates, with application to the chloroplast genome.",
@@ -40,7 +40,7 @@
 	"journal": {"name": "Molecular biology and evolution", "volume": "11", "number": "5", "pages": "715--724"},
 	"link": [{"url":"https://academic.oup.com/mbe/article/11/5/715/1008710"}]
     },
-    "description": "The MG94K model extends the MG94 model to account for different rates of transitions and transversions.\n\nThe MG94K model is equivalent to the following models:\n\n  HKY85 +> x3 +> dNdS\n\n  MG94_ext[HKY85]",
+    "description": "The MG94K model extends MG94 to allow different transition and transversion exchangeabilities. Rates depend on the frequency of the affected nucleotide; nonsynonymous rates are multiplied by omega.\n\nMG94K is equivalent to:\n\n    HKY85 +> x3 +> dNdS\n    MG94_ext(HKY85)",
     "see": ["MG94","MG94_ext"],
     "extract": "all"
 }

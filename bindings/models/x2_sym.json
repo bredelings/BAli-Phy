@@ -2,7 +2,7 @@
     "name": "x2_sym",
     "constraints": [ "Doublets<a,b>" ],
     "result_type": "ExchangeModel<a>",
-    "title": "Exchangability matrix on doublets constructed from nucleotide exchange rates",
+    "title": "Doublet exchangeabilities constructed from nucleotide exchangeabilities",
     "call": "SModel.x2_sym(@a,@submodel)",
     "import": ["SModel"],
     "args": [
@@ -10,16 +10,16 @@
             "name": "submodel",
             "type": "ExchangeModel<b>",
             "alphabet": "getNucleotides(@a)",
-	    "description": "The singlet exchange model"
+	    "description": "Nucleotide exchangeabilities"
         },
         {
             "name": "a",
             "type": "a",
             "default_value": "get_state(alphabet)",
-	    "description": "The Doublets alphabet"
+	    "description": "The doublet alphabet"
         }
     ],
-    "description": "Exchangability matrix on doublets constructed from an exchangability matrix on nucleotides.\n\nThus function can be used to build up doublet models incrementally.",
+    "description": "Construct doublet exchangeabilities from nucleotide exchangeabilities. Each instantaneous substitution changes one nucleotide, with the same exchangeabilities at both positions. Combine with F to supply doublet frequencies and obtain a substitution model.",
     "examples": ["HKY85_sym +> x2_sym +> F", "GTR_sym +> x2_sym +> F","x2_sym(HKY85_sym)"],
     "see": ["x2"]
 }

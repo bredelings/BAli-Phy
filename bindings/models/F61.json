@@ -8,13 +8,19 @@
         {
             "name": "pi",
             "type": "Map<String,Double>",
-            "default_value": "~SymmetricDirichletOn(letters(@a),1.0)"
+            "default_value": "~SymmetricDirichletOn(letters(@a),1.0)",
+            "description": "Codon frequencies"
         },
         {
             "name": "a",
             "type": "a",
-            "default_value": "get_state(alphabet)"
+            "default_value": "get_state(alphabet)",
+            "description": "The triplet alphabet, including a codon alphabet"
         }
     ],
-    "extract": "all"
+    "extract": "all",
+    "title": "Freely specified codon frequencies",
+    "description": "Supply a separate frequency for each codon, rather than deriving codon frequencies from nucleotide frequencies. By default, the frequencies are inferred jointly under a symmetric Dirichlet prior. The name refers to the 61 sense codons of the standard genetic code; the supplied alphabet determines the actual set of states.",
+    "examples": ["GY94(pi=F61)"],
+    "see": ["F1x4", "F3x4", "GY94"]
 }
