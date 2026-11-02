@@ -1323,13 +1323,6 @@ extern "C" closure builtin_function_plus_gwf_matrix(OperationArgs& Args)
     return R;
 }
 
-double bound(double low, double high, double x)
-{
-    if (x < low) return low;
-    if (x > high) return high;
-    return x;
-}
-
 // Q0 w
 // Here S[I,J] = F[J] - F[I] = 2Nf[j] - 2NF[i] = 2N*s[i,j]
 extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
@@ -1340,8 +1333,6 @@ extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
     int n = Q0.rows();
 
     DenseVector<double> F = Args.evaluate_slot_to_value(1).as_<Box<DenseVector<double>>>();
-    for(Eigen::Index i=0; i<F.size(); i++)
-	F[i] = bound(-20,20,F[i]);
 
     assert(F.size() == n);
 
@@ -1363,8 +1354,12 @@ extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
 	    double S = F[j] - F[i];
 	    if (std::abs(S) < 0.0001)
 		rate *= ( 1.0 + S/2 + (S*S)/12 - (S*S*S*S)/720 );
-	    else
-		rate *= -S/expm1(-S);
+            // S/(1-exp(-S)) is evaluated with a nonpositive exponential argument
+            // in either direction, avoiding overflow for large fitness differences.
+            else if (S > 0)
+                rate *= S / -expm1(-S);
+            else
+                rate *= (-S) * exp(S) / -expm1(S);
 
 	    Q(i,j) = rate;
 
@@ -1383,18 +1378,19 @@ extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
     const auto& pi0 = pi0_value.as_<Box<DenseVector<double>>>();
 
     DenseVector<double> F = Args.evaluate_slot_to_value(1).as_<Box<DenseVector<double>>>();
-    for(Eigen::Index i=0; i<F.size(); i++)
-	F[i] = bound(-20,20,F[i]);
 
     assert(pi0.size() == F.size());
 
-    // compute frequencies
+    // Equilibrium weights are pi0[i]*exp(F[i]). Normalize in log space so that
+    // large fitnesses do not overflow. Zero input frequencies have log weight -inf
+    // and remain zero, even when their fitness exceeds every supported state's.
     auto pi = new Box<DenseVector<double>>(pi0);
-
-    double Fmax = F.maxCoeff();
-
     for(int i=0; i<pi->size(); i++)
-	(*pi)[i] *= exp(F[i]-Fmax);
+        (*pi)[i] = log(pi0[i]) + F[i];
+
+    double maxLogWeight = pi->maxCoeff();
+    for(int i=0; i<pi->size(); i++)
+        (*pi)[i] = exp((*pi)[i] - maxLogWeight);
 
     *pi /= pi->sum();
     return pi;
