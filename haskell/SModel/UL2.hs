@@ -5,7 +5,9 @@ import Bio.Alphabet
 import SModel.ReversibleMarkov
 import Probability.Distribution.Discrete
 
-ul2 freqs = mkDiscrete [q1, q2] freqs
+ul2 freqs
+    | length freqs == 2 = mkDiscrete [q1, q2] freqs
+    | otherwise = error "UL2: expected 2 mixture weights"
 
 -- Tables from PhyloBayes sources/phylo.h, revision 407bcce, reordered from
 -- ACDEFGHIKLMNPQRSTVWY to ARNDCQEGHILKMFPSTWYV (lower triangle below).

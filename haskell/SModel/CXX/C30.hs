@@ -10,7 +10,9 @@ normalize xs = map (/sum xs) xs
     C30 frequency mixture model from Le, Gascuel & Lartillot (2008)
  --------------------------------------------------------------------}
     
-c30 weights = mkDiscrete [unscaled_f81 pi aa | pi <- c30_pis] weights
+c30 weights
+    | length weights == 30 = mkDiscrete [unscaled_f81 pi aa | pi <- c30_pis] weights
+    | otherwise = error "C30: expected 30 mixture weights"
 
 c30Fixed = c30 c30MixtureWeights
 

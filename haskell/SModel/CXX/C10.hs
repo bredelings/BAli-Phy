@@ -10,7 +10,9 @@ normalize xs = map (/sum xs) xs
     C10 frequency mixture model from Le, Gascuel & Lartillot (2008)
  --------------------------------------------------------------------}
     
-c10 weights = mkDiscrete [unscaled_f81 pi aa | pi <- c10_pis] weights
+c10 weights
+    | length weights == 10 = mkDiscrete [unscaled_f81 pi aa | pi <- c10_pis] weights
+    | otherwise = error "C10: expected 10 mixture weights"
 
 c10Fixed = c10 c10MixtureWeights
 

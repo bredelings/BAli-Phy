@@ -5,7 +5,9 @@ import Bio.Alphabet
 import SModel.ReversibleMarkov
 import Probability.Distribution.Discrete
 
-ul3 freqs = mkDiscrete [q1, q2, q3] freqs
+ul3 freqs
+    | length freqs == 3 = mkDiscrete [q1, q2, q3] freqs
+    | otherwise = error "UL3: expected 3 mixture weights"
 
 -- Tables from PhyloBayes sources/phylo.h, revision 407bcce, reordered from
 -- ACDEFGHIKLMNPQRSTVWY to ARNDCQEGHILKMFPSTWYV (lower triangle below).

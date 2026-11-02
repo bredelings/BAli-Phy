@@ -6,7 +6,11 @@ import SModel.ReversibleMarkov
 import SModel.Rate
 import Probability.Distribution.Discrete
 
-lg4x rates = Discrete [(scaleBy r q, p) | ((r, p), q) <- zip (unpackDiscrete rates) lg4x_qs]
+-- Pair each rate category with its fitted matrix; zip must not discard categories.
+lg4x rates
+    | length categories == 4 = Discrete [(scaleBy r q, p) | ((r, p), q) <- zip categories lg4x_qs]
+    | otherwise = error "LG4X: expected four rate categories"
+    where categories = unpackDiscrete rates
 
 lg4x_q1 = scaleTo 1 $ gtr aa eX1 piX1
 lg4x_q2 = scaleTo 1 $ gtr aa eX2 piX2
