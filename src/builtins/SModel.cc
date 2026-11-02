@@ -1245,6 +1245,8 @@ extern "C" closure builtin_function_singletToTripletSym(OperationArgs& Args)
 
     for(int i=0;i<n;i++) 
     {
+        // Elementwise frequency weighting reads the diagonal before rates are fixed up.
+        (*R)(i,i) = 0;
 	for(int j=0;j<i;j++) {
 	    int nmuts=0;
 	    int pos=-1;
