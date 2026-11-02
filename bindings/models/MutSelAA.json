@@ -5,7 +5,7 @@
     "result_type": "CTMC<Codons<a>>",
     "constraints": ["Nucleotides<a>"],
     "title": "Fitness modifier with amino-acid fitnesses",
-    "description": "Modify an input codon mutation rate matrix using one fitness per amino acid, shared by synonymous codons. This is a model component, not a complete codon model. The construction GTR +> x3 +> MutSelAA +> dNdS gives FMutSel0 with default arguments. Replacing x3 with MNM extends the mutation model to include multinucleotide changes.\n\nStationary inputs produce stationary models, whether reversible or not.\n\nNon-equilibrium inputs retain their root frequencies.",
+    "description": "Modify an input codon mutation rate matrix using one fitness per amino acid, shared by synonymous codons. Changes to higher-fitness states are favored; only fitness differences affect the model. Reported fitnesses have their mean subtracted. This is a model component, not a complete codon model. The construction GTR +> x3 +> MutSelAA +> dNdS gives FMutSel0 with default arguments. Replacing x3 with MNM extends the mutation model to include multinucleotide changes.\n\nStationary inputs produce stationary models, whether reversible or not.\n\nNon-equilibrium inputs retain their root frequencies.",
     "call": "mut_sel_aa'(@ss,@submodel)",
     "import": ["SModel"],
     "args": [

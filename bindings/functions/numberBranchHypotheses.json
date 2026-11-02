@@ -2,8 +2,15 @@
     "name": "numberBranchHypotheses",
     "result_type": "Int",
     "call": "numberBranchHypotheses(@branchCats)",
-    "import": ["SModel"],
+    "import": [
+        "SModel"
+    ],
     "args": [
-        {"name": "branchCats", "type": "IntMap<List<Int>>"}
-    ]
+        {
+            "name": "branchCats",
+            "type": "IntMap<List<Int>>",
+            "description": "Category assignments for each branch, one entry per hypothesis"
+        }
+    ],
+    "description": "Return the number of branch-assignment hypotheses: the common length of the nonempty category vectors. An empty vector represents category 0 under every hypothesis; at least one nonempty vector is needed."
 }

@@ -2,9 +2,20 @@
     "name": "selectBranchHypothesis",
     "result_type": "IntMap<Int>",
     "call": "selectBranchHypothesis(@hypothesis,@branchCats)",
-    "import": ["SModel"],
+    "import": [
+        "SModel"
+    ],
     "args": [
-        {"name": "hypothesis", "type": "Int"},
-        {"name": "branchCats", "type": "IntMap<List<Int>>"}
-    ]
+        {
+            "name": "hypothesis",
+            "type": "Int",
+            "description": "Zero-based hypothesis index"
+        },
+        {
+            "name": "branchCats",
+            "type": "IntMap<List<Int>>",
+            "description": "Category assignments for each branch, one entry per hypothesis"
+        }
+    ],
+    "description": "Select the category at the given zero-based position in each branch vector. Empty vectors give category 0. Nonempty vectors must have the same length."
 }

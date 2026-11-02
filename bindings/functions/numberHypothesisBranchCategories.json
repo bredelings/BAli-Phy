@@ -2,8 +2,15 @@
     "name": "numberHypothesisBranchCategories",
     "result_type": "Int",
     "call": "numberHypothesisBranchCategories(@branchCats)",
-    "import": ["SModel"],
+    "import": [
+        "SModel"
+    ],
     "args": [
-        {"name": "branchCats", "type": "IntMap<List<Int>>"}
-    ]
+        {
+            "name": "branchCats",
+            "type": "IntMap<List<Int>>",
+            "description": "Category assignments for each branch, one entry per hypothesis"
+        }
+    ],
+    "description": "Return the number of branch categories used across all hypotheses, including category 0. Categories must be numbered consecutively from 0."
 }

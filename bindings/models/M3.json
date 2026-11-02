@@ -15,7 +15,7 @@
             "name": "omegaDist",
             "type": "DiscreteDist<Double>",
             "default_value": "~DirichletMixture(Uniform(0,1), 2, @n)",
-	    "description": "The omega values"
+	    "description": "The background omega values and their relative proportions"
         },
         {
             "name": "n",

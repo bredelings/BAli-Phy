@@ -11,5 +11,5 @@
             "description": "The numbered category assigned to each branch."
         }
     ],
-    "description": "Return the number of consecutively numbered branch categories."
+    "description": "Return the number of branch categories, which must be numbered consecutively from 0."
 }
