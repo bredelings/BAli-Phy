@@ -4,7 +4,7 @@ import Bio.Alphabet
 import SModel.ReversibleMarkov
 import SModel.Nucleotides
 import qualified Markov
-import Markov (getQ, getEqFreqs)
+import Markov (getQ, getStartFreqs)
 import Reversible
 import Numeric.LinearAlgebra.Data
 
@@ -20,11 +20,13 @@ singlet_to_doublet_rates alphabet rates1 rates2 = overrideMatrixDims dimension d
     (doubletRatesNative alphabet rates1 rates2)
   where dimension = alphabetSize alphabet
 
+-- Independent positions have product root frequencies. On the full doublet alphabet,
+-- products of stationary input frequencies are also stationary under the constructed rates.
 x2x2 a m1 m2 = setReversibility rv $ markov a smap q pi where
     rv = minimum $ fmap getReversibility [m1,m2]
     smap = simpleSMap a
     q = singlet_to_doublet_rates a (getQ m1) (getQ m2)
-    pi = f2x4_frequencies_builtin a (getEqFreqs m1) (getEqFreqs m2)
+    pi = f2x4_frequencies_builtin a (getStartFreqs m1) (getStartFreqs m2)
 
 x2_sym a s = singlet_to_doublet_rates a s s
 x2 a q = x2x2 a q q
