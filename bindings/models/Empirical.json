@@ -1,18 +1,25 @@
 {
     "name": "Empirical",
-    "deprecated-synonyms": ["empirical"],
+    "deprecated-synonyms": [
+        "empirical"
+    ],
     "result_type": "ExchangeModel<a>",
     "call": "SModel.empirical(@a,@filename)",
-    "import": ["SModel"],
+    "import": [
+        "SModel"
+    ],
     "args": [
         {
             "name": "filename",
-            "type": "String"
+            "type": "String",
+            "description": "File containing the lower triangle of the exchangeability matrix"
         },
         {
             "name": "a",
             "type": "a",
-            "default_value": "get_state(alphabet)"
+            "default_value": "get_state(alphabet)",
+            "description": "Alphabet defining the matrix size and letter order"
         }
-    ]
+    ],
+    "description": "Read a symmetric exchangeability matrix from a text file. For an alphabet with n letters, supply n(n-1)/2 whitespace-separated values from the lower triangle, row by row, omitting the diagonal. Letter order follows the alphabet: `ARNDCQEGHILKMFPSTWYV` for `AA`. Any trailing values, including equilibrium frequencies, are ignored. Supply frequencies separately with `+> F`."
 }

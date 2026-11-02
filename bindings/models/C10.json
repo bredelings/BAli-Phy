@@ -9,7 +9,7 @@
             "name": "weights",
             "type": "List<Double>",
 	    "default_value":"~SymmetricDirichlet(10, 10)",
-	    "description": "The relative frequencies of the components"
+	    "description": "Mixture probabilities for the 10 components"
         }
     ],
     "title": "Mixture model",
@@ -19,14 +19,14 @@
         "C10 +> ASRV.Gamma"
     ],
     "citation": {"type": "article",
-		 "title": "Phylogenetic mixture models for proteins",
+		 "title": "Empirical profile mixture models for phylogenetic reconstruction",
 		 "year": "2008",
 		 "author": [{"name": "Le, Si Quang"}, {"name": "Gascuel, Olivier"}, {"name": "Lartillot, Nicolas"}],
-		 "journal": {"name": "Philosophical Transactions of the Royal Society B: Biological Sciences",
-			     "volume": "363",
-			     "number": "1512",
-			     "pages": "3965--3976"},
-		 "identifier": [{"type":"doi","id":"10.1098/rstb.2008.0180"}]
+		 "journal": {"name": "Bioinformatics",
+			     "volume": "24",
+			     "number": "20",
+			     "pages": "2317--2323"},
+		 "identifier": [{"type":"doi","id":"10.1093/bioinformatics/btn445"}]
 		},
     "see": ["C10_fixed", "C20", "C30", "C40", "C50", "C60"],
     "extract": "all"

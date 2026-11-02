@@ -17,7 +17,7 @@
     "citation": {"type": "article",
 		 "title": "Phylogenetic mixture models for proteins",
 		 "year": "2008",
-		 "author": [{"name": "Le, Si Quang"}, {"name": "Gascuel, Olivier"}, {"name": "Lartillot, Nicolas"}],
+		 "author": [{"name": "Le, Si Quang"}, {"name": "Lartillot, Nicolas"}, {"name": "Gascuel, Olivier"}],
 		 "journal": {"name": "Philosophical Transactions of the Royal Society B: Biological Sciences",
 			     "volume": "363",
 			     "number": "1512",

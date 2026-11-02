@@ -12,7 +12,7 @@
             "description": "The shape parameter for the Gamma distribution"
         }
     ],
-    "description": "Empirically derived collection of 4 rate matrices, designed for gamma-distributed ASRV.",
+    "description": "A mixture of four empirical amino-acid substitution models fitted to sites with different evolutionary rates. The four components have equal weights and are paired, in order, with increasing rates from four equal-probability gamma categories. This implementation represents each category by its median rate.",
     "citation":{"type": "article",
 		"title": "Modeling Protein Evolution with Several Amino Acid Replacement Matrices Depending on Site Rates",
 		"year": "2012",

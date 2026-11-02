@@ -9,10 +9,10 @@
             "name": "rateDist",
             "type": "DiscreteDist<Double>",
             "default_value": "~DirichletOnDirichlet(4,2,2)",
-	    "description" : "Rates for each category"
+	    "description" : "A discrete distribution with exactly four categories, supplying component rates and probabilities"
         }
     ],
-    "description": "Empirically derived collection of 4 rate matrices, designed for free ASRV.",
+    "description": "A mixture of four empirical amino-acid substitution models fitted to sites with different evolutionary rates. The rate distribution supplies a rate and a mixture probability for each of the four matrices, in matrix order. Unlike LG4M, the rates are not constrained to follow a gamma distribution.",
     "citation":{"type": "article",
 		"title": "Modeling Protein Evolution with Several Amino Acid Replacement Matrices Depending on Site Rates",
 		"year": "2012",

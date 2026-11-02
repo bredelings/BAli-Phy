@@ -10,5 +10,6 @@
             "type": "AA",
             "default_value": "get_state(alphabet)"
         }
-    ]
+    ],
+    "description": "Dayhoff/PAM empirical amino-acid exchangeabilities. These define a substitution model, not a finite-time PAM scoring matrix. Equilibrium frequencies are supplied separately, for example with `+> F`."
 }

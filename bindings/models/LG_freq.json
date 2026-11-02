@@ -13,7 +13,7 @@
             "description": "The alphabet"
         }
     ],
-    "description": "A fixed frequency vector from the dataset in the WAG paper.",
+    "description": "A fixed frequency vector from the dataset in the LG paper.",
     "citation":{"type": "article",
 		"title": "An Improved General Amino Acid Replacement Matrix",
 		"year": "2008",
@@ -21,7 +21,7 @@
 		"journal": {"name": "Molecular Biology and Evolution", "volume": "25", "number": "7", "pages": "1307--1320"},
 		"identifier": [{"type":"doi","id":"10.1093/molbev/msn067"}]
 	       },
-    "examples": ["LG +> F(lg08_frequencies)"],
+    "examples": ["LG +> F(LG_freq)"],
     "see": ["LG"],
     "extract": "all"
 }

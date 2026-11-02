@@ -9,13 +9,13 @@
             "name": "weights",
             "type": "List<Double>",
 	    "default_value":"~SymmetricDirichlet(60, @alpha)",
-	    "description": "The relative frequencies of the components"
+	    "description": "Mixture probabilities for the 60 components"
         },
         {
             "name": "alpha",
             "type": "Double",
 	    "default_value":"2",
-	    "description": "Concentration parameter"
+	    "description": "Concentration parameter of the default symmetric Dirichlet prior on weights"
         }
     ],
     "title": "Mixture model",
@@ -25,14 +25,14 @@
         "C60 +> ASRV.Gamma"
     ],
     "citation": {"type": "article",
-		 "title": "Phylogenetic mixture models for proteins",
-		 "year": "6008",
+		 "title": "Empirical profile mixture models for phylogenetic reconstruction",
+		 "year": "2008",
 		 "author": [{"name": "Le, Si Quang"}, {"name": "Gascuel, Olivier"}, {"name": "Lartillot, Nicolas"}],
-		 "journal": {"name": "Philosophical Transactions of the Royal Society B: Biological Sciences",
-			     "volume": "363",
-			     "number": "1512",
-			     "pages": "3965--3976"},
-		 "identifier": [{"type":"doi","id":"10.1098/rstb.6008.0180"}]
+		 "journal": {"name": "Bioinformatics",
+			     "volume": "24",
+			     "number": "20",
+			     "pages": "2317--2323"},
+		 "identifier": [{"type":"doi","id":"10.1093/bioinformatics/btn445"}]
 		},
     "see": ["C60_fixed", "C10", "C20", "C30", "C40", "C50"],
     "extract": "all"

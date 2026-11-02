@@ -12,7 +12,7 @@
             "description": "The alphabet."
         }
     ],
-    "description": "Empirically derived exchangability matrix for general proteins",
+    "description": "JTT empirical amino-acid exchangeabilities for general proteins. Equilibrium frequencies are supplied separately, for example with `+> F`.",
     "citation":{"type": "article",
 		"title": "The rapid generation of mutation data matrices from protein sequences",
 		"year": "1992",

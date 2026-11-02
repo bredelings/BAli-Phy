@@ -11,5 +11,6 @@
             "default_value": "get_state(alphabet)"
         }
     ],
-    "title": "The equal-exchangeabilities matrix"
+    "title": "The equal-exchangeabilities matrix",
+    "description": "Equal exchangeabilities between all pairs of letters in the alphabet. Equilibrium frequencies are supplied separately, for example with `+> F`; unequal frequencies can give unequal substitution rates."
 }

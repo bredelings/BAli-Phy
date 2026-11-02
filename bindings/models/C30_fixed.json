@@ -12,14 +12,14 @@
         "C30_fixed +> ASRV.Gamma"
     ],
     "citation": {"type": "article",
-		 "title": "Phylogenetic mixture models for proteins",
-		 "year": "3008",
+		 "title": "Empirical profile mixture models for phylogenetic reconstruction",
+		 "year": "2008",
 		 "author": [{"name": "Le, Si Quang"}, {"name": "Gascuel, Olivier"}, {"name": "Lartillot, Nicolas"}],
-		 "journal": {"name": "Philosophical Transactions of the Royal Society B: Biological Sciences",
-			     "volume": "363",
-			     "number": "1512",
-			     "pages": "3965--3976"},
-		 "identifier": [{"type":"doi","id":"10.1098/rstb.3008.0180"}]
+		 "journal": {"name": "Bioinformatics",
+			     "volume": "24",
+			     "number": "20",
+			     "pages": "2317--2323"},
+		 "identifier": [{"type":"doi","id":"10.1093/bioinformatics/btn445"}]
 		},
     "see": ["C30", "C10_fixed", "C20_fixed", "C40_fixed", "C50_fixed", "C60_fixed"],
     "extract": "all"
