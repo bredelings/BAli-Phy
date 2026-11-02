@@ -181,10 +181,10 @@ public:
     virtual std::string letter_name() const {return "nucleotide";};
 
     /// Is the letter a purine?
-    bool purine(int i) const {return i==0 or i==1;}
+    bool purine(int i) const {return i==A() or i==G();}
 
-    /// Is the letter a pyrimadine?
-    bool pyrimidine(int i) const {return i==2 or i==3;}
+    /// Is the letter a pyrimidine?
+    bool pyrimidine(int i) const {return i==C() or i==T();}
 
     /// Is i -> j a transition?
     bool transition(int i, int j) const {return (purine(i) and purine(j))
