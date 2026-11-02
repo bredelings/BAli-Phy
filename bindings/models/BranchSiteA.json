@@ -54,13 +54,13 @@
         {
             "name": "fs",
             "type": "List<Double>",
-            "default_value": "~SymmetricDirichlet(2,1)",
+            "default_value": "~SymmetricDirichlet(length(@omegas)+1,1)",
             "description": "Background category proportions; one entry for each omega plus the final neutral category"
         },
         {
             "name": "omegas",
             "type": "List<Double>",
-            "default_value": "~IID(1,Uniform(0,1))",
+            "default_value": "~IID(@n-1,Uniform(0,1))",
             "description": "Background omega values, excluding the final value fixed at 1; length(fs)-1 entries"
         },
         {
@@ -80,12 +80,15 @@
             "type": "IntMap<Int>",
             "default_value": "get_state(branch_categories)",
             "description": "Branch categories: 0 for background, 1 for foreground. By default, read from tree annotations such as [&foreground=1]; unlabelled branches use 0"
+        },
+        {
+            "name": "n",
+            "type": "Int",
+            "default_value": "2",
+            "description": "Number of background categories, including the neutral category, when omegas is not supplied; at least 1"
         }
     ],
-    "description": "Branch-site model A of Zhang, Nielsen, and Yang (2005), with an estimated conserved category (0 < omega < 1) and a neutral category (omega=1). A fraction posP of sites switches from its background omega to posW on foreground branches. Other sites retain their background omega on every branch.\n\nAdditional background categories can be supplied through omegas and fs, extending model A. The foreground and background mixtures are each normalized to mean rate 1. All component models must share equilibrium frequencies. Use a fixed topology when branch categories come from tree annotations.\n\nThe default background uses GTR, MNM, and MutSelAA. Here omega scales nonsynonymous rates after accounting for amino-acid fitnesses. Thus omega=1 retains these fitness effects; neutrality and positive selection are assessed relative to this background.",
+    "description": "Branch-site model A of Zhang, Nielsen, and Yang (2005), with an estimated conserved category (0 < omega < 1) and a neutral category (omega=1). A fraction posP of sites switches from its background omega to posW on foreground branches. Other sites retain their background omega on every branch.\n\nUse n to add background categories, extending model A. Supplying omegas instead determines the category count and the default length of fs; the neutral category remains last. For random n, use --log-format=json to allow the number of logged parameters to change. The foreground and background mixtures are each normalized to mean rate 1. All component models must share equilibrium frequencies. Use a fixed topology when branch categories come from tree annotations.\n\nThe default background uses GTR, MNM, and MutSelAA. Here omega scales nonsynonymous rates after accounting for amino-acid fitnesses. Thus omega=1 retains these fitness effects; neutrality and positive selection are assessed relative to this background.",
     "extract": "all",
-    "examples": [
-        "BranchSiteA",
-        "BranchSiteA(omegas=[0.1,0.5],fs=[0.2,0.3,0.5])"
-    ]
+    "examples": ["BranchSiteA(n=3)", "BranchSiteA(omegas=[0.1,0.5])"]
 }
