@@ -816,6 +816,9 @@ object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, istream&
 
     object_ptr<Box<DenseMatrix<double>>> R(new Box<DenseMatrix<double>>(n,n));
   
+    for (int i=0; i<n; i++)
+        (*R)(i,i) = 0;
+
     int k=0;
     for(int i=0;i<n;i++)
 	for(int j=0;j<i;j++)
