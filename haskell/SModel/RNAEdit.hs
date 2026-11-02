@@ -5,7 +5,7 @@ import qualified Data.Map as Map
 import SModel.ReversibleMarkov
 import SModel.Nucleotides
 import qualified Markov
-import Markov (getQ, getEqFreqs)
+import Markov (getQ, getStartFreqs)
 import Probability.Distribution.Mixture
 import SModel.Doublets
 import Reversible    
@@ -23,12 +23,18 @@ rna_editting_rates alphabet rates edits rate = overrideMatrixDims dimension dime
 rna_editting_pi alphabet frequencies edits = overrideVectorSize (alphabetSize alphabet)
     (rnaEditingPiNative alphabet frequencies edits)
 
-siteEdit alphabet nucModel rnaRate edits = setReversibility rv $ markov alphabet smap q pi
+-- Map root frequencies to the editing states. Symmetric rate changes preserve detailed
+-- balance, but can change a non-reversible equilibrium. Seed its recalculation with the
+-- mapped frequencies to retain the appropriate class masses when the rates are reducible.
+siteEdit alphabet nucModel rnaRate edits =
+    case rv of
+        EqNonRev -> eqMarkovFrom alphabet smap q pi
+        _        -> setReversibility rv $ markov alphabet smap q pi
     where rv = getReversibility nucModel
           smap = simpleSMap alphabet
           nucs = getNucleotides alphabet
           qNuc = getQ nucModel
-          piNuc = getEqFreqs nucModel
+          piNuc = getStartFreqs nucModel
           q = rna_editting_rates alphabet qNuc edits' rnaRate
           pi = rna_editting_pi alphabet piNuc edits'
           edits' = toVector [ c_pair (findLetter nucs i) (findLetter nucs j) | (i,j) <- Map.toAscList edits]
