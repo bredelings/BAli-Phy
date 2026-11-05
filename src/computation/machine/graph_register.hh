@@ -748,10 +748,30 @@ public:
     bool reg_is_forced(int r) const;
     int inc_count(int r);
     int dec_count(int r);
+
+    // Account for a recorded FORCE edge after evaluation. Bypassing an unforced single-force
+    // reference transfers its outgoing count to this edge; replay may already supply another.
+    void count_new_force_edge(int evaluated_reg, int destination, bool count_already_restored)
+    {
+        const bool supplied_by_wrapper =
+            destination != evaluated_reg and not reg_is_forced(evaluated_reg);
+
+        if (count_already_restored)
+        {
+            // Both counts describe the same replacement edge. Removing the duplicate must
+            // leave the destination forced, so no outgoing counts need to be released.
+            if (supplied_by_wrapper)
+                dec_count(destination);
+        }
+        else if (not supplied_by_wrapper)
+            inc_count(destination);
+
+        assert(reg_is_forced(destination));
+    }
     int result_for_reg(int r) const;
     bool reg_has_call(int r) const;
     int call_for_reg(int r) const;
-    bool force_regs_check_same_inputs(int r);
+    bool force_regs_check_same_inputs(int r, int& replayed_prefix);
     void force_reg_no_call(int r);
     void force_reg_with_call(int r);
 

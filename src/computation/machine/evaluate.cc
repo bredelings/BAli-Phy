@@ -771,12 +771,24 @@ EvalResult reg_heap::incremental_evaluate1_(int r)
         return incremental_evaluate1_unevaluated_(r);
 }
 
-/// Evaluate regs when called from a changeable reg.
-/// Since the reg has already been marked changeable, dependencies have already been recorded.
-/// USE and FORCE edges should already be up-to-date, having been forced by force_regs_check_same_inputs( ).
+/// Reexecute a changeable reg after validating its fixed inputs and a dependent prefix.
+/// Fixed dependencies are already up to date. Dependent edges belong to the new step;
+/// their replayed prefix may already supply counts that must not be incremented again.
 class RegOperationArgs2Changeable final: public OperationArgs
 {
     const int s;
+    // If old counts are still live, count every replacement edge normally; unsharing removes
+    // the old demands later. Otherwise, replay has already restored this prefix's counts.
+    const int restored_prefix;
+
+    // The new edge's position identifies a replayed demand, including repeated destinations.
+    // Its back-reference is new, but a restored prefix count transfers without another increment.
+    bool count_already_restored() const
+    {
+        assert(not M.steps[s].used_forced_regs.empty());
+        return M.steps[s].used_forced_regs.size() <= restored_prefix;
+    }
+
 
     bool evaluate_changeables() const override {return true;}
 
@@ -791,7 +803,7 @@ class RegOperationArgs2Changeable final: public OperationArgs
         }
 
     /// Evaluate r2 as an edge-contingent FORCE discovered by this step.
-    /// The new step records the edge and immediately restores its force count.
+    /// Record the new edge, transferring a replayed count or supplying a new one.
     int evaluate_reg_contingent_force(int r2) override
         {
             // Count after recording the edge, because ref-with-force flattening can
@@ -802,13 +814,7 @@ class RegOperationArgs2Changeable final: public OperationArgs
             {
                 int r4 = M.set_forced_reg_for_step(s, r3);
 
-                // Case 1: r4 == r3 -> new force edge to r3!
-                // Case 2: r3 != r4, r3 is forced -> new force edge to r4!
-                // Case 3: r3 != r4  r3 is not forced -> new force edge to r4, force edge from r3->r4 stops counting.
-                if (r4 == r3 or M.reg_is_forced(r3))
-                    M.inc_count(r4);
-                else
-                    assert(M.reg_is_forced(r4));
+                M.count_new_force_edge(r3, r4, count_already_restored());
             }
 
             return result;
@@ -840,21 +846,16 @@ class RegOperationArgs2Changeable final: public OperationArgs
 
             if (M.reg_is_to_changeable(r3))
             {
-                M.inc_count(r3);
                 M.set_used_reg_for_step(s, r3);
+                if (not count_already_restored())
+                    M.inc_count(r3);
                 contingency = EdgeContingency::contingent;
             }
             else if (M.reg_is_changeable_or_forcing(r3))
             {
                 int r4 = M.set_forced_reg_for_step(s, r3);
 
-                // Case 1: r4 == r3 -> new force edge to r3!
-                // Case 2: r3 != r4, r3 is forced -> new force edge to r4!
-                // Case 3: r3 != r4  r3 is not forced -> new force edge to r4, force edge from r3->r4 stops counting.
-                if (r4 == r3 or M.reg_is_forced(r3))
-                    M.inc_count(r4);
-                else
-                    assert(M.reg_is_forced(r4));
+                M.count_new_force_edge(r3, r4, count_already_restored());
             }
 
             return {result, contingency};
@@ -875,8 +876,9 @@ public:
             M._register_effect_at_reg(r_effect, s);
         }
 
-    RegOperationArgs2Changeable(int r_, int s_, reg_heap& m)
-        :OperationArgs(m, r_), s(s_)
+    RegOperationArgs2Changeable(int r_, int s_, reg_heap& m, int replayed_prefix)
+        :OperationArgs(m, r_), s(s_),
+         restored_prefix(m.prog_unshare[r_].test(step_edges_decremented_bit) ? replayed_prefix : 0)
         {
 	    creator_step = s;
         }
@@ -1404,7 +1406,8 @@ EvalResult reg_heap::incremental_evaluate2_changeable_(int r)
     assert( not has_step2(r) );
 
     // Evaluate the regs from non-changeable reduction steps leading to this changeable step.
-    bool same_inputs = force_regs_check_same_inputs(r);
+    int replayed_prefix = 0;
+    bool same_inputs = force_regs_check_same_inputs(r, replayed_prefix);
     if (same_inputs)
     {
         // FIXME -- merge with has_step2( )?
@@ -1415,9 +1418,8 @@ EvalResult reg_heap::incremental_evaluate2_changeable_(int r)
         int s = prog_steps[r];
         int r2 = steps[s].call;
 
-        if (prog_unshare[r].test(step_edges_decremented_bit))
-            for(const auto& edge: steps[s].used_forced_regs)
-                inc_count(edge.reg);
+        // Validation already restored any removed dependent counts before retaining this step.
+        assert(replayed_prefix == steps[s].used_forced_regs.size());
 
         // Since the call is unchanged, we only need to increment the call count if its been decremented
         auto [call,result] = incremental_evaluate2(r2, prog_unshare[r].test(step_edges_decremented_bit));
@@ -1443,7 +1445,7 @@ EvalResult reg_heap::incremental_evaluate2_changeable_(int r)
     int s = get_shared_step(r);
     try
     {
-        RegOperationArgs2Changeable Args(r, s, *this);
+        RegOperationArgs2Changeable Args(r, s, *this, replayed_prefix);
         auto O = operation_for_reduction(closure_at(r));
         closure value = (*O)(Args);
         total_reductions2++;

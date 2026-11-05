@@ -1684,8 +1684,10 @@ bool reg_heap::has_result2(int r) const
     return (not prog_unshare[r].test(unshare_result_bit)) and has_result1(r);
 }
 
-bool reg_heap::force_regs_check_same_inputs(int r)
+// Validate fixed inputs, then the dependent prefix justified by their unchanged values.
+bool reg_heap::force_regs_check_same_inputs(int r, int& replayed_prefix)
 {
+    replayed_prefix = 0;
     assert(reg_is_changeable(r));
 
     // We can't use a range-for here because regs[r] can be moved
@@ -1732,10 +1734,26 @@ bool reg_heap::force_regs_check_same_inputs(int r)
 
     int s = step_index_for_reg(r);
 
-    // NOTE: Conservative limitation.  We cannot safely retain old dependent
-    // edges until replay tracks which old demands have been reactivated.
-    if (not steps[s].used_forced_regs.empty())
-        return false;
+    bool restore_counts = prog_unshare[r].test(step_edges_decremented_bit);
+
+    // Unchanged fixed inputs justify replaying the old dependent sequence up to and including
+    // the first changed USE. Later demands might depend on its new value, so leave them alone.
+    // Restore removed counts one edge at a time: evaluating a later demand can visit shared
+    // children whose earlier demands must already be counted. Still-live counts need no increment.
+    for(int i=0; i < steps[s].used_forced_regs.size(); ++i)
+    {
+        auto edge = steps[s].used_forced_regs[i]; // Recursive evaluation can move the step pool.
+        auto [destination, result] = incremental_evaluate2(edge.reg, restore_counts);
+        assert(destination == edge.reg);
+        assert(reg_is_forced(edge.reg));
+        replayed_prefix = i + 1;
+        if (edge.mode == use_force_mode::use)
+        {
+            assert(follow_reg_ref_target(edge.reg) == edge.target);
+            if (prog_unshare[edge.target].test(different_result_bit))
+                return false;
+        }
+    }
 
     return same_inputs;
 }
