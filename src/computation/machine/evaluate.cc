@@ -985,13 +985,7 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
 	    {
                 int r4 = M.set_forced_reg(r, r3);
 
-                // Case 1: r4 == r3 -> new force edge to r3!
-                // Case 2: r3 != r4, r3 is forced -> new force edge to r4!
-                // Case 3: r3 != r4  r3 is not forced -> new force edge to r4, force edge from r3->r4 stops counting.
-                if (r4 == r3 or M.reg_is_forced(r3))
-                    M.inc_count(r4);
-                else
-                    assert(M.reg_is_forced(r4));
+                M.count_new_force_edge(r3, r4, false);
 	    }
 
             return result;
@@ -1014,13 +1008,7 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
             {
                 int r4 = M.set_forced_reg_for_step(s, r3);
 
-                // Case 1: r4 == r3 -> new force edge to r3!
-                // Case 2: r3 != r4, r3 is forced -> new force edge to r4!
-                // Case 3: r3 != r4  r3 is not forced -> new force edge to r4, force edge from r3->r4 stops counting.
-                if (r4 == r3 or M.reg_is_forced(r3))
-                    M.inc_count(r4);
-                else
-                    assert(M.reg_is_forced(r4));
+                M.count_new_force_edge(r3, r4, false);
             }
 
 #ifdef DEBUG_DEPENDENT_REPLAY
@@ -1050,13 +1038,7 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
 	    {
                 int r4 = M.set_forced_reg(r, r3);
 
-                // Case 1: r4 == r3 -> new force edge to r3!
-                // Case 2: r3 != r4, r3 is forced -> new force edge to r4!
-                // Case 3: r3 != r4  r3 is not forced -> new force edge to r4, force edge from r3->r4 stops counting.
-                if (r4 == r3 or M.reg_is_forced(r3))
-                    M.inc_count(r4);
-                else
-                    assert(M.reg_is_forced(r4));
+                M.count_new_force_edge(r3, r4, false);
 	    }
 
             return {result, contingency};
@@ -1087,13 +1069,7 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
             {
                 int r4 = M.set_forced_reg_for_step(s, r3);
 
-                // Case 1: r4 == r3 -> new force edge to r3!
-                // Case 2: r3 != r4, r3 is forced -> new force edge to r4!
-                // Case 3: r3 != r4  r3 is not forced -> new force edge to r4, force edge from r3->r4 stops counting.
-                if (r4 == r3 or M.reg_is_forced(r3))
-                    M.inc_count(r4);
-                else
-                    assert(M.reg_is_forced(r4));
+                M.count_new_force_edge(r3, r4, false);
             }
 
 #ifdef DEBUG_DEPENDENT_REPLAY
@@ -1277,15 +1253,7 @@ EvalResult reg_heap::incremental_evaluate2_unevaluated_(int r)
 	    {
 		int r5 = set_forced_reg(r,r3);
 
-                // Case 1: r5 == r3 -> new force edge to r3!
-                // Case 2: r3 != r5, r3 is forced -> new force edge to r5!
-                // Case 3: r3 != r5  r3 is not forced -> new force edge to r5,
-		//         but we already incremented the force count when evaluating r3->r5
-		//         when r3 calls force_reg_no_call( ).
-		if (r5 == r3 or reg_is_forced(r3))
-		    inc_count(r5);
-		else
-		    assert(reg_is_forced(r5));
+                count_new_force_edge(r3, r5, false);
 	    }
 
             assert(not has_result1(r));

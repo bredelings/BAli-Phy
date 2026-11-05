@@ -1934,37 +1934,29 @@ void reg_heap::set_used_reg(int r1, int r2)
 }
 
 
+// Bypass a reference with a single FORCE dependency. Stored FORCE edges are already flattened,
+// so one hop suffices; this selects the edge destination without changing any force counts.
 int reg_heap::follow_single_force_ref(int r) const
 {
     assert(regs.is_used(r));
-
     assert(closure_at(r));
-
     assert(reg_is_evaluated(r));
-
     assert(reg_is_changeable_or_forcing(r));
-
     assert(reg_has_value(r));
+    assert(not reg_is_ref_no_force(r));
 
-    while(reg_is_ref_with_force(r) and regs[r].used_forced_regs.size() == 1)
+    if (auto destination = reg_has_single_force(r))
     {
-        const auto& edge = regs[r].used_forced_regs[0];
-        assert(edge.mode == use_force_mode::force);
-	r = edge.reg;
-
-	assert(regs.is_used(r));
-
-	assert(closure_at(r));
-
-	assert(reg_is_evaluated(r));
-
-	assert(reg_is_changeable_or_forcing(r));
-
-	assert(reg_has_value(r));
+        r = *destination;
+        assert(regs.is_used(r));
+        assert(closure_at(r));
+        assert(reg_is_evaluated(r));
+        assert(reg_is_changeable_or_forcing(r));
+        assert(not reg_is_ref_no_force(r));
+        assert(not reg_has_single_force(r));
+        // incremental_evaluate1 need not have evaluated the destination in this context.
+        // Do not require reg_has_value(r) here.
     }
-
-    assert(reg_is_changeable(r) or regs[r].used_forced_regs.size() > 1);
-
     return r;
 }
 
@@ -1982,40 +1974,7 @@ std::optional<int> reg_heap::reg_has_single_force(int r1) const
 
 int reg_heap::set_forced_reg(int r1, int r2)
 {
-    assert(regs.is_used(r2));
-
-    assert(reg_is_evaluated(r2));
-
-    assert(closure_at(r2));
-
-    assert(reg_is_changeable_or_forcing(r2));
-
-    assert(reg_has_value(r2));
-
-    // A register reference's value only changes if the thing it points to also changes.
-    // So, we may as well forbid using a no-force reference as an input.
-    assert(not reg_is_ref_no_force(r2));
-
-    if (auto r3 = reg_has_single_force(r2))
-    {
-	assert(not reg_has_single_force(*r3));
-
-	r2 = *r3;
-
-	assert(regs.is_used(r2));
-
-	assert(reg_is_evaluated(r2));
-
-	assert(closure_at(r2));
-
-	assert(reg_is_changeable_or_forcing(r2));
-
-        // If we have force edges r1 ---> r2 ---> r3, then
-        //   `incremental_evaluate1` does NOT guarantee that r3 is evaluated.
-	// assert(reg_has_value(r2));
-
-	assert(not reg_is_ref_no_force(r2));
-    }
+    r2 = follow_single_force_ref(r2);
 
     regs[r1].used_forced_regs.push_back({use_force_mode::force, r2, 0, 0});
 
@@ -2072,36 +2031,8 @@ int reg_heap::set_forced_reg_for_step(int s1, int r2)
     // builtin returns, so step edges may be recorded while it is still unevaluated.
     assert(reg_is_changeable(r1) or reg_is_unevaluated(r1));
 
-    assert(reg_is_evaluated(r2));
-
-    assert(closure_at(r2));
-
-    assert(reg_is_changeable_or_forcing(r2));
-
+    r2 = follow_single_force_ref(r2);
     assert(reg_has_value(r2));
-
-    // A register reference's value only changes if the thing it points to also changes.
-    // So, we may as well forbid using a no-force reference as an input.
-    assert(not reg_is_ref_no_force(r2));
-
-    if (auto r3 = reg_has_single_force(r2))
-    {
-        assert(not reg_has_single_force(*r3));
-
-        r2 = *r3;
-
-        assert(regs.is_used(r2));
-
-        assert(reg_is_evaluated(r2));
-
-        assert(closure_at(r2));
-
-        assert(reg_is_changeable_or_forcing(r2));
-
-        assert(reg_has_value(r2));
-
-        assert(not reg_is_ref_no_force(r2));
-    }
 
     steps[s1].used_forced_regs.push_back({use_force_mode::force, r2, 0, 0});
 
