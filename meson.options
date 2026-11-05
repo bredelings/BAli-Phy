@@ -5,3 +5,6 @@ option('cpu-arch', type: 'string', value: 'baseline', description: 'Enable CPU i
 option('test_seed', type: 'string', value: '', description: 'Random seed for tests')
 option('build-rpath', type: 'string', value: '',
        description: 'Additional runtime library search path for build-tree executables, removed on install')
+
+option('debug-dependent-replay', type: 'boolean', value: false,
+       description: 'Check dependent replay edges and requests, and enable optional tracing')

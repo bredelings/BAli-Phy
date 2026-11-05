@@ -4,6 +4,26 @@
 
 using std::optional;
 
+#ifdef DEBUG_DEPENDENT_REPLAY
+// Save a position rather than a reference: nested evaluation can move the step pool.
+int OperationArgs::begin_dependent_demand() const
+{
+    assert(creator_step);
+    return M.steps[*creator_step].used_forced_regs.size();
+}
+
+// Record which requests produced edges, including constant requests and USEs recorded as FORCEs.
+void OperationArgs::end_dependent_demand(use_force_mode mode, int begin)
+{
+    auto& step = M.steps[*creator_step];
+    int end = step.used_forced_regs.size();
+    if (end != begin and end != begin + 1)
+        throw myexception() << "dependent request created multiple edges: source=" << r
+                            << " begin=" << begin << " end=" << end;
+    step.dependent_observations.push_back({mode, end == begin ? -1 : begin});
+}
+#endif
+
 int OperationArgs::reg_for_slot(int slot) const
 {
     return current_closure().reg_for_operation_slot(slot);

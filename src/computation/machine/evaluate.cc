@@ -89,11 +89,17 @@ class RegOperationArgs1Changeable final: public OperationArgs
     /// The edge is recorded on the step because it was not a fixed operation input.
     int evaluate_reg_contingent_force(int r2) override
         {
+#ifdef DEBUG_DEPENDENT_REPLAY
+            int demand_begin = begin_dependent_demand();
+#endif
             auto [r3, result] = M.incremental_evaluate1(r2);
 
             if (M.reg_is_changeable_or_forcing(r3))
                 M.set_forced_reg_for_step(s, r3);
 
+#ifdef DEBUG_DEPENDENT_REPLAY
+            end_dependent_demand(use_force_mode::force, demand_begin);
+#endif
             return result;
         }
 
@@ -112,6 +118,9 @@ class RegOperationArgs1Changeable final: public OperationArgs
     /// Non-USE changeable refs are recorded as step-owned FORCE edges.
     UseWithContingency evaluate_reg_contingent_use_with_contingency(int r2) override
         {
+#ifdef DEBUG_DEPENDENT_REPLAY
+            int demand_begin = begin_dependent_demand();
+#endif
             auto contingency = EdgeContingency::fixed;
             auto [r3, result] = M.incremental_evaluate1(r2);
 
@@ -123,6 +132,9 @@ class RegOperationArgs1Changeable final: public OperationArgs
             else if (M.reg_is_changeable_or_forcing(r3))
                 M.set_forced_reg_for_step(s, r3);
 
+#ifdef DEBUG_DEPENDENT_REPLAY
+            end_dependent_demand(use_force_mode::use, demand_begin);
+#endif
             return {result, contingency};
         }
 
@@ -169,6 +181,9 @@ class RegOperationArgs1Unevaluated final: public OperationArgs
     /// Evaluate an edge-contingent FORCE and record it on this operation's step.
     int evaluate_reg_contingent_force(int r2) override
         {
+#ifdef DEBUG_DEPENDENT_REPLAY
+            int demand_begin = begin_dependent_demand();
+#endif
             assert(used_changeable);
             assert(creator_step and *creator_step == s);
 
@@ -177,6 +192,9 @@ class RegOperationArgs1Unevaluated final: public OperationArgs
             if (M.reg_is_changeable_or_forcing(r3))
                 M.set_forced_reg_for_step(s, r3);
 
+#ifdef DEBUG_DEPENDENT_REPLAY
+            end_dependent_demand(use_force_mode::force, demand_begin);
+#endif
             return result;
         }
 
@@ -205,6 +223,9 @@ class RegOperationArgs1Unevaluated final: public OperationArgs
     /// Evaluate an edge-contingent USE and record it on this operation's step.
     UseWithContingency evaluate_reg_contingent_use_with_contingency(int r2) override
     {
+#ifdef DEBUG_DEPENDENT_REPLAY
+            int demand_begin = begin_dependent_demand();
+#endif
             assert(used_changeable);
             assert(creator_step and *creator_step == s);
 
@@ -219,6 +240,9 @@ class RegOperationArgs1Unevaluated final: public OperationArgs
             else if (M.reg_is_changeable_or_forcing(r3))
                 M.set_forced_reg_for_step(s, r3);
 
+#ifdef DEBUG_DEPENDENT_REPLAY
+            end_dependent_demand(use_force_mode::use, demand_begin);
+#endif
             return {result, contingency};
     }
 
@@ -780,13 +804,33 @@ class RegOperationArgs2Changeable final: public OperationArgs
     // If old counts are still live, count every replacement edge normally; unsharing removes
     // the old demands later. Otherwise, replay has already restored this prefix's counts.
     const int restored_prefix;
+#ifdef DEBUG_DEPENDENT_REPLAY
+    const int old_step;
+    const int checked_prefix;
+#endif
 
     // The new edge's position identifies a replayed demand, including repeated destinations.
     // Its back-reference is new, but a restored prefix count transfers without another increment.
     bool count_already_restored() const
     {
         assert(not M.steps[s].used_forced_regs.empty());
-        return M.steps[s].used_forced_regs.size() <= restored_prefix;
+        int position = M.steps[s].used_forced_regs.size() - 1;
+#ifdef DEBUG_DEPENDENT_REPLAY
+        if (position < checked_prefix)
+        {
+            const auto& expected = M.steps[old_step].used_forced_regs[position];
+            const auto& actual = M.steps[s].used_forced_regs[position];
+            if (expected.reg != actual.reg or expected.target != actual.target or expected.mode != actual.mode)
+                throw myexception() << "dependent replay edge mismatch: source=" << r
+                                    << " old_step=" << old_step << " new_step=" << s << " edge=" << position
+                                    << " expected=" << expected.reg << "/" << expected.target << "/" << int(expected.mode)
+                                    << " actual=" << actual.reg << "/" << actual.target << "/" << int(actual.mode);
+            if (trace_dependent_replay())
+                std::cerr << "replay replace source=" << r << " old_step=" << old_step << " new_step=" << s
+                          << " edge=" << position << " transferred=" << (position < restored_prefix) << "\n";
+        }
+#endif
+        return position < restored_prefix;
     }
 
 
@@ -806,6 +850,9 @@ class RegOperationArgs2Changeable final: public OperationArgs
     /// Record the new edge, transferring a replayed count or supplying a new one.
     int evaluate_reg_contingent_force(int r2) override
         {
+#ifdef DEBUG_DEPENDENT_REPLAY
+            int demand_begin = begin_dependent_demand();
+#endif
             // Count after recording the edge, because ref-with-force flattening can
             // change which reg actually owns the dynamic FORCE demand.
             auto [r3, result] = M.incremental_evaluate2(r2, false);
@@ -817,6 +864,9 @@ class RegOperationArgs2Changeable final: public OperationArgs
                 M.count_new_force_edge(r3, r4, count_already_restored());
             }
 
+#ifdef DEBUG_DEPENDENT_REPLAY
+            end_dependent_demand(use_force_mode::force, demand_begin);
+#endif
             return result;
         }
 
@@ -838,6 +888,9 @@ class RegOperationArgs2Changeable final: public OperationArgs
     /// Non-USE changeable refs are recorded as step-owned FORCE edges.
     UseWithContingency evaluate_reg_contingent_use_with_contingency(int r2) override
         {
+#ifdef DEBUG_DEPENDENT_REPLAY
+            int demand_begin = begin_dependent_demand();
+#endif
             auto contingency = EdgeContingency::fixed;
 
             // Evaluate without an incoming count first; the dynamic edge below
@@ -858,10 +911,38 @@ class RegOperationArgs2Changeable final: public OperationArgs
                 M.count_new_force_edge(r3, r4, count_already_restored());
             }
 
+#ifdef DEBUG_DEPENDENT_REPLAY
+            end_dependent_demand(use_force_mode::use, demand_begin);
+#endif
             return {result, contingency};
         }
 
 public:
+#ifdef DEBUG_DEPENDENT_REPLAY
+    // Check request/edge correspondence through the validated prefix, including requests with
+    // no edge. Ignore the suffix: after the first changed USE, a different path is legitimate.
+    void check_replay_complete() const
+    {
+        if (M.steps[s].used_forced_regs.size() < checked_prefix)
+            throw myexception() << "dependent replay prefix incomplete: source=" << r
+                                << " old_step=" << old_step << " new_step=" << s
+                                << " expected=" << checked_prefix
+                                << " actual=" << M.steps[s].used_forced_regs.size();
+        if (checked_prefix == 0) return;
+        const auto& old_requests = M.steps[old_step].dependent_observations;
+        const auto& new_requests = M.steps[s].dependent_observations;
+        for(int i=0; i < old_requests.size(); ++i)
+        {
+            const auto& expected = old_requests[i];
+            if (i >= new_requests.size() or expected.mode != new_requests[i].mode or
+                expected.edge_index != new_requests[i].edge_index)
+                throw myexception() << "dependent replay request mismatch: source=" << r
+                                    << " old_step=" << old_step << " new_step=" << s << " request=" << i;
+            if (expected.edge_index == checked_prefix - 1) return;
+        }
+        throw myexception() << "dependent replay prefix missing from request observations: source=" << r;
+    }
+#endif
 
     void make_changeable() override {}
 
@@ -876,9 +957,13 @@ public:
             M._register_effect_at_reg(r_effect, s);
         }
 
+    // The old step and its decrement flag remain installed until this replacement finishes.
     RegOperationArgs2Changeable(int r_, int s_, reg_heap& m, int replayed_prefix)
         :OperationArgs(m, r_), s(s_),
          restored_prefix(m.prog_unshare[r_].test(step_edges_decremented_bit) ? replayed_prefix : 0)
+#ifdef DEBUG_DEPENDENT_REPLAY
+        ,old_step(m.step_index_for_reg(r_)), checked_prefix(replayed_prefix)
+#endif
         {
 	    creator_step = s;
         }
@@ -915,6 +1000,9 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
     /// Evaluate an edge-contingent FORCE and restore its step-owned count.
     int evaluate_reg_contingent_force(int r2) override
         {
+#ifdef DEBUG_DEPENDENT_REPLAY
+            int demand_begin = begin_dependent_demand();
+#endif
             assert(used_changeable);
             assert(creator_step and *creator_step == s);
 
@@ -935,6 +1023,9 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
                     assert(M.reg_is_forced(r4));
             }
 
+#ifdef DEBUG_DEPENDENT_REPLAY
+            end_dependent_demand(use_force_mode::force, demand_begin);
+#endif
             return result;
         }
 
@@ -974,6 +1065,9 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
     /// Evaluate an edge-contingent USE and restore its step-owned count.
     UseWithContingency evaluate_reg_contingent_use_with_contingency(int r2) override
         {
+#ifdef DEBUG_DEPENDENT_REPLAY
+            int demand_begin = begin_dependent_demand();
+#endif
             assert(used_changeable);
             assert(creator_step and *creator_step == s);
 
@@ -1002,6 +1096,9 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
                     assert(M.reg_is_forced(r4));
             }
 
+#ifdef DEBUG_DEPENDENT_REPLAY
+            end_dependent_demand(use_force_mode::use, demand_begin);
+#endif
             return {result, contingency};
         }
 
@@ -1448,6 +1545,9 @@ EvalResult reg_heap::incremental_evaluate2_changeable_(int r)
         RegOperationArgs2Changeable Args(r, s, *this, replayed_prefix);
         auto O = operation_for_reduction(closure_at(r));
         closure value = (*O)(Args);
+#ifdef DEBUG_DEPENDENT_REPLAY
+        Args.check_replay_complete();
+#endif
         total_reductions2++;
         total_changeable_reductions2++;
 

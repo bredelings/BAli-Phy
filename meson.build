@@ -26,6 +26,7 @@ endif
 
 # 2. Write a 'config.h'
 conf_data = configuration_data()
+conf_data.set('DEBUG_DEPENDENT_REPLAY', get_option('debug-dependent-replay'))
 
 # 2.1. Write some info to 'config.h'
 conf_data.set_quoted('PACKAGE_VERSION', meson.project_version())

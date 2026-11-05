@@ -919,7 +919,14 @@ void reg_heap::unshare_regs2(int t)
     //     OPTIMIZATION: This avoids decrementing and re-incrementing invalid steps that are
     //       retained after execution.
     //
-    evaluate_unconditional_regs(unshared_regs);
+#ifdef DEBUG_DEPENDENT_REPLAY
+    // Exercise replay after count removal by disabling only the early-evaluation optimization.
+    // Stage 5 still evaluates every required register; ordinary builds retain the usual schedule.
+    static const bool late_replay = [] { const char* v = std::getenv("BALI_PHY_REPLAY_LATE");
+                                        return v and std::string(v) == "1"; }();
+    if (not late_replay)
+#endif
+        evaluate_unconditional_regs(unshared_regs);
 
     // 4c. Decrement counts from bumped and invalid-but-not-bumped step demands
     //

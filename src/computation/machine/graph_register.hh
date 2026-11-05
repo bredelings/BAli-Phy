@@ -1,6 +1,8 @@
 #ifndef GRAPH_REGISTER_H
 #define GRAPH_REGISTER_H
 
+#include "config.h"
+
 #include <string>
 #include <vector>
 #include <unordered_set>
@@ -45,6 +47,18 @@ struct use_force_edge
     int back_index;
 };
 
+#ifdef DEBUG_DEPENDENT_REPLAY
+// Requests need not create an edge; a USE request can also produce a FORCE edge.
+// Only kinds and edge positions are retained: raw request addresses may be reclaimed by GC.
+struct DependentDemandObservation
+{
+    use_force_mode mode;
+    int edge_index;
+};
+
+bool trace_dependent_replay();
+#endif
+
 struct Step
 {
     int source_reg = -1;
@@ -59,6 +73,9 @@ struct Step
 
     /// Dependent USE/FORCE edges discovered while executing this step.
     boost::container::small_vector<use_force_edge, 2> used_forced_regs;
+#ifdef DEBUG_DEPENDENT_REPLAY
+    std::vector<DependentDemandObservation> dependent_observations;
+#endif
 
     boost::container::small_vector< int, 2 > created_regs;
 
@@ -374,6 +391,9 @@ private:
 
     void note_step_in_root(int s);
 
+#ifdef DEBUG_DEPENDENT_REPLAY
+    friend class OperationArgs;
+#endif
     friend class RegOperationArgs1Changeable;
     friend class RegOperationArgs1Unevaluated;
     friend class RegOperationArgs2Changeable;

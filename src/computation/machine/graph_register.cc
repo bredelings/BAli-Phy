@@ -101,6 +101,16 @@ long total_tokens = 0;
  *    loop until no more regs (and thus computations) are being freed.
  */
 
+#ifdef DEBUG_DEPENDENT_REPLAY
+// Request verbose replay messages only in a build containing replay diagnostics.
+bool trace_dependent_replay()
+{
+    static const bool enabled = [] { const char* v = std::getenv("BALI_PHY_REPLAY_TRACE");
+                                    return v and std::string(v) == "1"; }();
+    return enabled;
+}
+#endif
+
 bool Step::has_effect() const
 {
     return flags.test(6);
@@ -147,6 +157,9 @@ void Step::clear()
     call = 0;
     truncate(call_edge);
     truncate(used_forced_regs);
+#ifdef DEBUG_DEPENDENT_REPLAY
+    dependent_observations.clear();
+#endif
     // We are clearing created_regs in clear_back_edges_for_step.
     assert(created_regs.empty());
 
@@ -160,6 +173,9 @@ void Step::check_cleared() const
     assert(not call);
     assert(not call_edge);
     assert(used_forced_regs.empty());
+#ifdef DEBUG_DEPENDENT_REPLAY
+    assert(dependent_observations.empty());
+#endif
     assert(created_regs.empty());
     assert(flags.none());
 }
@@ -170,6 +186,9 @@ Step& Step::operator=(Step&& S) noexcept
     call = S.call;
     call_edge = S.call_edge;
     used_forced_regs = std::move( S.used_forced_regs );
+#ifdef DEBUG_DEPENDENT_REPLAY
+    dependent_observations = std::move(S.dependent_observations);
+#endif
     created_regs  = std::move( S.created_regs );
     flags = S.flags;
 
@@ -181,6 +200,9 @@ Step::Step(Step&& S) noexcept
      call ( S.call ),
      call_edge (S.call_edge),
      used_forced_regs ( std::move(S.used_forced_regs) ),
+#ifdef DEBUG_DEPENDENT_REPLAY
+     dependent_observations(std::move(S.dependent_observations)),
+#endif
      created_regs ( std::move(S.created_regs) ),
      flags ( S.flags )
 { }
@@ -1744,9 +1766,18 @@ bool reg_heap::force_regs_check_same_inputs(int r, int& replayed_prefix)
     {
         auto edge = steps[s].used_forced_regs[i]; // Recursive evaluation can move the step pool.
         auto [destination, result] = incremental_evaluate2(edge.reg, restore_counts);
-        assert(destination == edge.reg);
         assert(reg_is_forced(edge.reg));
         replayed_prefix = i + 1;
+#ifdef DEBUG_DEPENDENT_REPLAY
+        if (destination != edge.reg)
+            throw myexception() << "dependent replay destination changed: source=" << r
+                                << " step=" << s << " edge=" << i
+                                << " expected=" << edge.reg << " actual=" << destination;
+        if (trace_dependent_replay())
+            std::cerr << "replay validate source=" << r << " step=" << s << " edge=" << i
+                      << " destination=" << destination << " restored=" << restore_counts << "\n";
+#endif
+        assert(destination == edge.reg);
         if (edge.mode == use_force_mode::use)
         {
             assert(follow_reg_ref_target(edge.reg) == edge.target);

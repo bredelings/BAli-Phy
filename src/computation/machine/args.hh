@@ -39,6 +39,11 @@ struct ValueWithContingency
 class OperationArgs
 {
 protected:
+#ifdef DEBUG_DEPENDENT_REPLAY
+    int begin_dependent_demand() const;
+    void end_dependent_demand(use_force_mode mode, int begin);
+#endif
+
     reg_heap& M;
 
     int n_allocated = 0;
