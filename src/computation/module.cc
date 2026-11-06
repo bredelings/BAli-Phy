@@ -2506,8 +2506,6 @@ const_symbol_ptr Module::lookup_external_symbol(const std::string& symbol_name) 
 
     auto mod_name = get_module_name(symbol_name);
 
-    auto uname = get_unqualified_name(symbol_name);
-
     auto mod_iter = transitively_imported_modules.find(mod_name);
     if (mod_iter == transitively_imported_modules.end())
         return nullptr;
@@ -2635,8 +2633,6 @@ const_type_ptr Module::lookup_external_type(const std::string& type_name) const
     assert(is_qualified_symbol(type_name));
 
     auto mod_name = get_module_name(type_name);
-
-    auto uname = get_unqualified_name(type_name);
 
     auto mod_iter = transitively_imported_modules.find(mod_name);
     if (mod_iter == transitively_imported_modules.end())
