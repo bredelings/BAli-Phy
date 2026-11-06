@@ -137,7 +137,7 @@ namespace
             auto module = std::make_shared<Module>(parsed.module, extensions,
                                                    FileContents{*filename, parsed.source});
             // Source locations borrow the filename, as in module_loader::load_module_from_file.
-            module->filename = std::move(filename);
+            module->full_pathname = std::move(filename);
             return module;
         };
         Program program(loader, {parse("module Owner where\ndata T = MkT\nf x = x\n")});

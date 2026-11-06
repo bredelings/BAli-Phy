@@ -22,7 +22,7 @@ class module_loader: public simplifier_options
     struct source_record
     {
         FileContents file;
-        std::shared_ptr<std::string> filename;
+        std::shared_ptr<std::string> full_pathname;
         LanguageExtensions extensions;
         std::shared_ptr<const Module> parsed;
         bool warnings_shown = false;
@@ -34,7 +34,6 @@ class module_loader: public simplifier_options
     struct module_load
     {
         source_record* source = nullptr;
-        std::filesystem::path path;
         std::shared_ptr<CompiledModule> cached;
         std::string archive;
         std::streamoff body_offset = 0;
@@ -44,7 +43,7 @@ class module_loader: public simplifier_options
 
     friend class Program;
     source_record& prepare_source(const std::filesystem::path&) const;
-    void parse_source(source_record&, const std::filesystem::path&) const;
+    void parse_source(source_record&) const;
     module_load discover_module(const std::string&) const;
     std::shared_ptr<CompiledModule> compile_module(const Program&, module_load&) const;
     void read_cached_prefix(const std::string&, module_load&) const;

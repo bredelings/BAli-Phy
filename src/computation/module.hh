@@ -106,7 +106,7 @@ public:
 
     std::string name;
 
-    std::shared_ptr<std::string> filename;
+    std::shared_ptr<std::string> full_pathname;
 
     // For error messages, and also computing the source file SHA.
     FileContents file;

@@ -145,19 +145,6 @@ LanguageExtensions check_language_options(const string& filename, const string& 
     return lang_exts;
 }
 
-fs::path pretty_module_path(const fs::path& filepath)
-{
-    fs::path hpath;
-    // if there's a path element called "haskell", split after that.
-    for(const auto& p: filepath)
-    {
-        hpath /= p;
-        if (p == "haskell")
-            return filepath.lexically_relative(hpath);
-    }
-    return filepath.filename();
-}
-
 vector<fs::path> path_components(const fs::path& path)
 {
     vector<fs::path> components;
@@ -224,18 +211,18 @@ module_loader::source_record& module_loader::prepare_source(const fs::path& file
     try
     {
         source_record entry;
-        entry.filename = std::make_shared<string>(pretty_module_path(filename).string());
+        entry.full_pathname = std::make_shared<string>(filename.string());
         string source = normalize_haskell_newlines(read_file(filename.string(), "module"));
         auto options = language_options(source);
         if (force_cpp or options.count("CPP"))
         {
-            auto preprocessed = Haskell::CPP::conditionals(source, *entry.filename, cpp_options);
-            show_messages({*entry.filename, source}, std::cerr, preprocessed.messages);
+            auto preprocessed = Haskell::CPP::conditionals(source, *entry.full_pathname, cpp_options);
+            show_messages({*entry.full_pathname, source}, std::cerr, preprocessed.messages);
             source = std::move(preprocessed.source);
             if (dump_cpp)
-                std::cout<<"===== CPP: "<<*entry.filename<<" =====\n"<<source;
+                std::cout<<"===== CPP: "<<pretty_module_path(*entry.full_pathname).string()<<" =====\n"<<source;
         }
-        entry.extensions = check_language_options(*entry.filename, source, language_options(source));
+        entry.extensions = check_language_options(*entry.full_pathname, source, language_options(source));
         source = normalize_haskell_newlines(source);
         entry.file = {filename.filename().string(), std::move(source)};
         return modules.emplace(filename.string(), std::move(entry)).first->second;
@@ -248,18 +235,19 @@ module_loader::source_record& module_loader::prepare_source(const fs::path& file
 }
 
 // Build an AST only for callers that need one; cached warnings may already have been displayed.
-void module_loader::parse_source(source_record& entry, const fs::path& filename) const
+void module_loader::parse_source(source_record& entry) const
 {
     if (not entry.parsed)
     {
         try
         {
-            auto parsed = parse_module_file(entry.file.contents, *entry.filename, entry.extensions, !entry.warnings_shown);
+            auto parsed = parse_module_file(entry.file.contents, *entry.full_pathname,
+                                            entry.extensions, !entry.warnings_shown);
             entry.warnings_shown = true;
             if (dump_parsed) std::cout<<parsed.module.print()<<std::endl;
             auto module = std::make_shared<Module>(parsed.module, entry.extensions,
                                                   FileContents{entry.file.name, std::move(parsed.source)});
-            module->filename = entry.filename;
+            module->full_pathname = entry.full_pathname;
             module->parser_warnings = std::move(parsed.warnings);
             entry.file.contents.clear();
             entry.file.contents.shrink_to_fit();
@@ -267,7 +255,7 @@ void module_loader::parse_source(source_record& entry, const fs::path& filename)
         }
         catch (myexception& e)
         {
-            e.prepend("Loading module from file '"+filename.string()+"':\n  ");
+            e.prepend("Loading module from file '"+*entry.full_pathname+"':\n  ");
             throw;
         }
     }
@@ -277,7 +265,7 @@ void module_loader::parse_source(source_record& entry, const fs::path& filename)
 shared_ptr<Module> module_loader::load_module_from_file(const fs::path& filename) const
 {
     auto& entry = prepare_source(filename);
-    parse_source(entry, filename);
+    parse_source(entry);
     return std::make_shared<Module>(*entry.parsed);
 }
 

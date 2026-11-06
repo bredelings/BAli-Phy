@@ -46,7 +46,8 @@ tuple<map<Hs::LVar,Hs::LType>, map<Hs::LVar, Hs::inline_pragma_t>, Hs::Decls> gr
             for(auto& lvar: sd->vars)
             {
                 if (type_sigs.count(lvar))
-                    throw myexception()<<"Second signature for var '"<<unloc(lvar).name<<"' at location "<<*lvar.loc;
+                    throw myexception()<<"Second signature for var '"<<unloc(lvar).name
+                                       <<"' at location "<<print_location(*lvar.loc);
                 else
                     type_sigs.insert({lvar, sd->type});
             }

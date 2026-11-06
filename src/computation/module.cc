@@ -855,8 +855,7 @@ set<string> module_loader::module_load::dependencies() const
 module_loader::module_load module_loader::discover_module(const string& name) const
 {
     module_load result;
-    result.path = find_module(name);
-    auto& source = prepare_source(result.path);
+    auto& source = prepare_source(find_module(name));
     result.source = &source;
     read_cached_prefix(name, result);
     const auto& text = source.parsed ? source.parsed->file.contents : source.file.contents;
@@ -866,13 +865,13 @@ module_loader::module_load module_loader::discover_module(const string& name) co
         std::string{}.swap(result.archive);
     }
     if (dump_parsed or not result.cached)
-        parse_source(source, result.path);
+        parse_source(source);
     if (source.parsed and source.parsed->name != name)
-        throw myexception()<<"Loading module file "<<result.path<<"\n  Expected module '"<<name
+        throw myexception()<<"Loading module file "<<*source.full_pathname<<"\n  Expected module '"<<name
                            <<"'\n  Found module    '"<<source.parsed->name<<"'";
     if (result.cached and not source.warnings_shown)
     {
-        result.cached->show_parser_warnings(*source.filename, text);
+        result.cached->show_parser_warnings(*source.full_pathname, text);
         source.warnings_shown = true;
     }
     return result;
@@ -893,7 +892,7 @@ shared_ptr<CompiledModule> module_loader::compile_module(const Program& P, modul
             return module;
         }
     }
-    parse_source(source, entry.path);
+    parse_source(source);
     return compile_parsed_module(P, std::make_shared<Module>(*source.parsed));
 }
 

@@ -142,9 +142,13 @@ namespace
         require(notes(unterminated).find("unterminated") != std::string::npos,
                 "unterminated conditional was not diagnosed");
 
-        auto warning = Haskell::CPP::conditionals("#warning careful\nx\n", "Warning.hs", {});
+        const std::string warning_path = (std::filesystem::path("project") / "Warning.hs").string();
+        auto warning = Haskell::CPP::conditionals("#warning careful\nx\n", warning_path, {});
         require(warning.messages.size() == 1 and warning.messages.front().is_warning(),
                 "#warning did not produce a warning");
+        require(warning.messages.front().print({warning_path, "#warning careful\nx\n"})
+                    .find("Warning.hs:1.") != std::string::npos,
+                "CPP warnings should display a shortened pathname");
 
         auto structural = Haskell::CPP::conditionals(
             "#if 1\n#else\n#else\n#endif\n#include \"x.h\"\n#define 9BAD 1\n#error stopped\n",

@@ -214,7 +214,8 @@ def main():
             if stage == "forced":
                 extra += ["--recompile=Warn"]
             log = run_program(args.wrapper, args.executable, sources, args.package_path, home, extra, command)
-            if log.count("Unknown pragma") != 1 or "Warn.hs:2" not in log:
+            plain_log = re.sub(r"\x1b\[[0-9;]*m", "", log)
+            if log.count("Unknown pragma") != 1 or not re.search(r"(?m)^Warn\.hs:2\.", plain_log):
                 raise AssertionError(f"{stage}: parser warning missing, duplicated, or misplaced:\n{log}")
             expected = {"cold": "1", "warm": "1", "corrupt": "1", "dependency-changed": "2",
                         "cpp-changed": "3", "dump": "3", "forced": "3"}[stage]

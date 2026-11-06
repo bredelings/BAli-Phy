@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <filesystem>
 #include "computation/parser/located.hh"
 
 struct Note
@@ -55,6 +56,9 @@ struct Message
 
     Message(MessageType t, std::optional<yy::location> l, const Notes& e);
 };
+
+std::filesystem::path pretty_module_path(const std::filesystem::path& filepath);
+std::string print_location(const yy::location& loc);
 
 void show_messages(const FileContents& file, std::ostream& out, std::vector<Message> messages);
 

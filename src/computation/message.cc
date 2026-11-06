@@ -13,6 +13,38 @@ using std::vector;
 
 namespace views = std::views;
 
+// Display paths below a haskell directory relative to it; otherwise display the file's basename.
+std::filesystem::path pretty_module_path(const std::filesystem::path& filepath)
+{
+    std::filesystem::path hpath;
+    // if there's a path element called "haskell", split after that.
+    for (const auto& p: filepath)
+    {
+        hpath /= p;
+        if (p == "haskell")
+            return filepath.lexically_relative(hpath);
+    }
+    return filepath.filename();
+}
+
+// Render Bison's half-open ranges with shortened filenames, leaving stored locations untouched.
+// Compare original filenames so distinct files are not conflated when their display names match.
+string print_location(const yy::location& loc)
+{
+    std::ostringstream out;
+    if (loc.begin.filename)
+        out<<pretty_module_path(*loc.begin.filename).string()<<':';
+    out<<loc.begin.line<<'.'<<loc.begin.column;
+    auto end_col = loc.end.column > 0 ? loc.end.column - 1 : 0;
+    if (loc.end.filename and (not loc.begin.filename or *loc.begin.filename != *loc.end.filename))
+        out<<'-'<<pretty_module_path(*loc.end.filename).string()<<':'<<loc.end.line<<'.'<<end_col;
+    else if (loc.begin.line < loc.end.line)
+        out<<'-'<<loc.end.line<<'.'<<end_col;
+    else if (loc.begin.column < end_col)
+        out<<'-'<<end_col;
+    return out.str();
+}
+
 // Advance one source column position using the same tab convention as RE/flex:
 // UTF-8 scalar values count as one column, and tabs advance to an 8-column stop.
 static int column_after_source_char(int column, char32_t code_point)
@@ -139,7 +171,7 @@ string Message::print(const FileContents& file) const
 
     out<<ANSI::bold;
     if (loc)
-        out<<(*loc)<<":";
+        out<<print_location(*loc)<<":";
     else
         out<<"<unknown>"<<":";
 
