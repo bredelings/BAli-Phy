@@ -160,8 +160,18 @@ std::optional<std::size_t> skip_conid_dot(string_view s, std::size_t i)
     i = first->next_byte;
     while(i < s.size())
     {
-        if (s[i] == '.')
+        auto byte = static_cast<unsigned char>(s[i]);
+        if (byte == '.')
             return i;
+
+        // ASCII bytes are complete scalar values; keep the decoder for non-ASCII sequences.
+        if (byte <= 0x7F)
+        {
+            if (not is_haskell_id_char(static_cast<char32_t>(byte)))
+                return {};
+            ++i;
+            continue;
+        }
 
         auto decoded = utf8::decode_next(s, i);
         if (not decoded or not is_haskell_id_char(decoded->code_point))
