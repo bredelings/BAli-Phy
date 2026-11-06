@@ -195,7 +195,7 @@ pair<Type,vector<Type>> decompose_type_apps(Type t)
         t = A.head;
     }
     std::reverse(args.begin(), args.end());
-    return {t,args};
+    return {std::move(t), std::move(args)};
 }
 
 
