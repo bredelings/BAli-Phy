@@ -242,24 +242,12 @@ int Program::count_module(const string& module_name) const
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/strong_components.hpp>
 
-vector<string> sort_modules_by_dependencies(const module_loader& L, vector<string>& new_module_names)
+using ModuleGraph = boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS>;
+
+// Check cycles and order the already discovered graph without performing any loader operations.
+vector<string> sort_modules_by_dependencies(const ModuleGraph& graph, const vector<string>& new_module_names)
 {
-    typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS> Graph;
-    typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
-
-    // Construct the dependency graph.  (i,j) means that i imports j
-    Graph graph;
-    vector<boost::adjacency_list<>::vertex_descriptor> vertices;
-    for(int i=0; i<new_module_names.size(); i++)
-	vertices.push_back( add_vertex(graph) );
-
-    for(int i=0;i<new_module_names.size();i++)
-    {
-	auto& name = new_module_names[i];
-	for(auto& import_name: L.load_module(name)->dependencies())
-	    if (auto j = find_index(new_module_names, import_name))
-		boost::add_edge(vertices[i], vertices[*j], graph);
-    }
+    using Vertex = boost::graph_traits<ModuleGraph>::vertex_descriptor;
 
     // Find connected components
     vector<int> component(new_module_names.size());
@@ -312,43 +300,50 @@ void Program::check_dependencies()
     }
 }
 
-set<string> new_module_names(const module_loader& L, const set<string>& old_module_names, const set<string>& modules_to_import)
-{
-    vector<string> modules_to_consider;
-    for(auto& module: modules_to_import)
-	modules_to_consider.push_back(module);
-
-    set<string> new_module_names;
-    for(int i=0; i<modules_to_consider.size(); i++)
-    {
-	auto& module = modules_to_consider[i];
-
-	// This one is already included
-	if (old_module_names.count(module) or new_module_names.count(module)) continue;
-
-	// Add it to the list of new modules
-	new_module_names.insert(module);
-
-	for(auto& import: L.load_module(module)->dependencies())
-	    modules_to_consider.push_back(import);
-    }
-
-    return new_module_names;
-}
-
+// Retain each discovered archive or parsed source through graph ordering and compilation.
+// Only completed discovery results enter the map; each new module is visited once per operation.
 void Program::add(const std::string& name)
 {
-    auto new_names = new_module_names(*loader, module_names_set(), {name});
+    std::map<string, module_loader::module_load> discovered;
+    vector<string> to_visit{name};
+    const auto old_names = module_names_set();
+    for (size_t i = 0; i < to_visit.size(); ++i)
+    {
+        // Copy the name because appending dependencies can reallocate the work list.
+        auto module_name = to_visit[i];
+        if (old_names.count(module_name) or discovered.count(module_name)) continue;
+        auto entry = loader->discover_module(module_name);
+        for (const auto& dependency: entry.dependencies())
+            to_visit.push_back(dependency);
+        discovered.emplace(module_name, std::move(entry));
+    }
 
-    vector<string> new_names1;
-    for(auto& name: new_names)
-	new_names1.push_back(name);
-
-    vector<string> new_names2 = sort_modules_by_dependencies(*loader, new_names1);
+    vector<string> names;
+    for (const auto& [module_name, entry]: discovered)
+        names.push_back(module_name);
+    // Construct the dependency graph: edge (i,j) means that i imports j.
+    ModuleGraph graph(names.size());
+    for (size_t i = 0; i < names.size(); ++i)
+        for (const auto& dependency: discovered.at(names[i]).dependencies())
+            if (auto j = find_index(names, dependency))
+                boost::add_edge(i, *j, graph);
+    auto ordered_names = sort_modules_by_dependencies(graph, names);
 
     // Add the new modules, processing them as we go.
-    for(auto& name: new_names2)
-	add(loader->load_module(name));
+    for (const auto& name: ordered_names)
+    {
+        try
+        {
+            push_back(loader->compile_module(*this, discovered.at(name)));
+            discovered.erase(name);
+            check_dependencies();
+        }
+        catch (myexception& e)
+        {
+            e.prepend("In module '"+name+"':\n");
+            throw;
+        }
+    }
 }
 
 void Program::add(const vector<string>& module_names)

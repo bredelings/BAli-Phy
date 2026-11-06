@@ -772,58 +772,129 @@ static string decompress_compile_artifact(std::string_view compressed)
     return data;
 }
 
-std::shared_ptr<CompiledModule> read_cached_module(const Program& program, const std::string& modid, const std::string& required_xxhash)
+// Validate a complete cache snapshot before exposing its source-derived prefix.
+// Retaining these bytes keeps dependency discovery and body loading on the same version.
+void module_loader::read_cached_prefix(const string& modid, module_load& entry) const
 {
-    const auto& loader = *program.get_module_loader();
-    if (loader.recompile_all or loader.recompile_modules.count(modid)) return {};
-
-    if (auto path = loader.find_cached_module(modid))
+    entry.cached.reset();
+    std::string{}.swap(entry.archive);
+    if (recompile_all or recompile_modules.count(modid)) return;
+    if (auto path = find_cached_module(modid))
     {
         try
         {
             std::ifstream infile(*path, std::ios::binary);
-            std::string compressed = std::string(std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>());
-            std::string data = decompress_compile_artifact(compressed);
-            string stored_archive_xxhash = extract_xxhash(data);
-
-            string computed_archive_xxhash = xxhash64_hex(data);
-            if (log_verbose >= 4)
-                std::cerr<<"    Read archive for "<<modid<<":    length = "<<data.size()<<"    stored_archive_hash = "<<stored_archive_xxhash<<"     computed_archive_hash = "<<computed_archive_xxhash<<"\n";
-
-            if (stored_archive_xxhash != computed_archive_xxhash)
-                throw myexception()<<"archive failed integrity check: stored and computed archive integrity hash did not match.";
-
-            std::istringstream data2(data);
-            cereal::UserDataAdapter<const Program, cereal::BinaryInputArchive> archive( program, data2 );
-
-            std::shared_ptr<CompiledModule> M;
-
-            std::string hash;
-            archive(hash);
-
-            if (hash == required_xxhash)
-            {
-                archive(M);
-
-                if (hash == M->all_inputs_hash())
-                    return M;
-
-                throw myexception()<<"Beginning and ending integrity hash inside the archive do not match!";
-            }
+            string compressed{std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>()};
+            auto data = decompress_compile_artifact(compressed);
+            auto stored_hash = extract_xxhash(data);
+            if (stored_hash != xxhash64_hex(data))
+                throw myexception()<<"archive failed integrity check";
+            std::istringstream input(data);
+            cereal::BinaryInputArchive prefix(input);
+            auto module = shared_ptr<CompiledModule>(new CompiledModule);
+            module->load_prefix(prefix);
+            if (module->name() != modid)
+                throw myexception()<<"cached module name does not match '"<<modid<<"'";
+            entry.body_offset = input.tellg();
+            entry.cached = std::move(module);
+            entry.archive = std::move(data);
         }
         catch (std::exception& e)
         {
             if (log_verbose >= 2)
-                std::cerr<<"Failure loading cached compile artifact for "<<modid<<".\n   File = "<<*path<<"\n  exception = "<<e.what()<<"\n";
-        }
-        catch (...)
-        {
-            if (log_verbose >= 2)
-                std::cerr<<"Failure loading cached compile artifact for "<<modid<<".\n   File = "<<*path<<"\n";
+                std::cerr<<"Failure reading cached prefix for "<<modid<<": "<<e.what()<<"\n";
         }
     }
+}
 
-    return {};
+// Read the pointer-bearing body only after dependencies are available in Program.
+// A fresh archive is valid because the prefix and body were written independently.
+shared_ptr<CompiledModule> module_loader::read_cached_body(const Program& P, module_load& entry,
+                                                         const string& required_hash) const
+{
+    auto module = std::move(entry.cached);
+    std::istringstream input(std::move(entry.archive));
+    std::string{}.swap(entry.archive);
+    if (not module or module->all_inputs_hash() != required_hash) return {};
+    try
+    {
+        input.seekg(entry.body_offset);
+        cereal::UserDataAdapter<const Program, cereal::BinaryInputArchive> body(P, input);
+        // cereal normally dispatches using the base archive type. Keep that type here too,
+        // so get_user_data finds this adapter rather than looking for an adapter of an adapter.
+        module->load_body<cereal::BinaryInputArchive>(body);
+        return module;
+    }
+    catch (std::exception& e)
+    {
+        if (log_verbose >= 2)
+            std::cerr<<"Failure loading cached body for "<<module->name()<<": "<<e.what()<<"\n";
+        return {};
+    }
+}
+
+// Already parsed modules and direct compiler callers use the same two-section cache format.
+shared_ptr<CompiledModule> module_loader::read_cached_module(const Program& P, const string& modid,
+                                                           const string& required_hash) const
+{
+    module_load entry;
+    read_cached_prefix(modid, entry);
+    return read_cached_body(P, entry, required_hash);
+}
+
+// Graph discovery and ordering inspect the same result, without repeating source or cache reads.
+set<string> module_loader::module_load::dependencies() const
+{
+    assert(source);
+    assert(source->parsed or cached);
+    return source->parsed ? source->parsed->dependencies() : cached->dependencies();
+}
+
+// Finish discovery before publishing a result: a matching prefix or an AST supplies dependencies.
+// Keep the validated archive snapshot until body loading, even if an explicit dump also needs an AST.
+module_loader::module_load module_loader::discover_module(const string& name) const
+{
+    module_load result;
+    result.path = find_module(name);
+    auto& source = prepare_source(result.path);
+    result.source = &source;
+    read_cached_prefix(name, result);
+    const auto& text = source.parsed ? source.parsed->file.contents : source.file.contents;
+    if (result.cached and result.cached->source_hash() != xxhash64_hex(text))
+    {
+        result.cached.reset();
+        std::string{}.swap(result.archive);
+    }
+    if (dump_parsed or not result.cached)
+        parse_source(source, result.path);
+    if (source.parsed and source.parsed->name != name)
+        throw myexception()<<"Loading module file "<<result.path<<"\n  Expected module '"<<name
+                           <<"'\n  Found module    '"<<source.parsed->name<<"'";
+    if (result.cached and not source.warnings_shown)
+    {
+        result.cached->show_parser_warnings(*source.filename, text);
+        source.warnings_shown = true;
+    }
+    return result;
+}
+
+// Consume discovered work after dependencies enter Program. Rejected archives never get read again.
+shared_ptr<CompiledModule> module_loader::compile_module(const Program& P, module_load& entry) const
+{
+    auto& source = *entry.source;
+    if (entry.cached)
+    {
+        const auto& text = source.parsed ? source.parsed->file.contents : source.file.contents;
+        auto hash = module_inputs_hash(P, text, entry.dependencies());
+        if (auto module = read_cached_body(P, entry, hash))
+        {
+            if (log_verbose) std::cerr<<"[ Loading "<<module->name()<<" ]\n";
+            module->inflate(P);
+            return module;
+        }
+    }
+    parse_source(source, entry.path);
+    return compile_source(P, std::make_shared<Module>(*source.parsed));
 }
 
 #ifdef _WIN32
@@ -862,9 +933,12 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
         {
             std::ostringstream buffer;
             {
-                cereal::BinaryOutputArchive archive( buffer );
-                archive(CM->all_inputs_hash());
-                archive(CM);
+                cereal::BinaryOutputArchive prefix(buffer);
+                CM->save_prefix(prefix);
+            }
+            {
+                cereal::BinaryOutputArchive body(buffer);
+                CM->save_body(body);
             }
             string data = buffer.str();
             string archive_hash = xxhash64_hex(data);
@@ -1152,17 +1226,24 @@ Core::Decls<> rename_top_level(const Core::Decls<>& decls, const string& module_
     return decls2;
 }
 
+// Parsed entry modules retain their ordinary cache path before compiling source on a miss.
 std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module> MM)
+{
+    if (auto C = P.get_module_loader()->read_cached_module(P, MM->name, MM->all_inputs_hash(P)))
+    {
+        if (log_verbose) std::cerr<<"[ Loading "<<MM->name<<" ]\n";
+        C->inflate(P);
+        return C;
+    }
+    return compile_source(P, std::move(MM));
+}
+
+// Compile an already parsed module after its cache has been rejected.
+std::shared_ptr<CompiledModule> compile_source(const Program& P, std::shared_ptr<Module> MM)
 {
     auto& loader = *P.get_module_loader();
     simplifier_options& opts = loader;
-
-    if (auto C = read_cached_module(P, MM->name, MM->all_inputs_hash(P)))
-    {
-	if (log_verbose) std::cerr<<"[ Loading "<<MM->name<<" ]\n";
-	C->inflate(P);
-	return C;
-    }
+    MM->all_inputs_hash(P);
 
     if (log_verbose)
 	std::cerr<<"[ Compiling "<<MM->name<<" ]\n";
@@ -1359,7 +1440,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // Check the compile artifact
     if (log_verbose)
     {
-	if (auto CM2 = read_cached_module(P, MM->name, MM->all_inputs_hash(P)))
+	if (auto CM2 = loader.read_cached_module(P, MM->name, MM->all_inputs_hash(P)))
 	{
 	    CM2->inflate(P);
 	    if (CM2->all_inputs_hash() != CM->all_inputs_hash())
@@ -3325,33 +3406,30 @@ const string& module_loader::executable_hash()
     return *str;
 }
 
-std::string Module::all_inputs_hash(const Program& P) const
+// Use identical source and ordered dependency inputs with or without an AST.
+std::string module_inputs_hash(const Program& P, const string& source, const set<string>& dependencies)
 {
-    if (not _cached_hash)
+    XXH3_state_t* state = XXH3_createState();
+    XXH3_64bits_reset(state);
+    const auto& exe = module_loader::executable_hash();
+    XXH3_64bits_update(state, exe.data(), exe.size());
+    XXH3_64bits_update(state, source.data(), source.size());
+    for (const auto& name: dependencies)
     {
-        XXH3_state_t* state = XXH3_createState();
-        XXH3_64bits_reset(state);
-
-        auto exe = module_loader::executable_hash();
-        XXH3_64bits_update(state, exe.data(), exe.size());
-        XXH3_64bits_update(state, file.contents.data(), file.contents.size());
-
-	for(auto& dep_modid: dependencies())
-	{
-	    auto M2 = P.get_module( dep_modid );
-            auto input_hash = M2->all_inputs_hash();
-            XXH3_64bits_update(state, input_hash.data(), input_hash.size());
-	}
-        uint64_t hash = XXH3_64bits_digest(state);
-	_cached_hash = xxhash_to_hex(hash);
-
-        XXH3_freeState(state);
+        const auto& hash = P.get_module(name)->all_inputs_hash();
+        XXH3_64bits_update(state, hash.data(), hash.size());
     }
-
-    return _cached_hash.value();
+    auto hash = xxhash_to_hex(XXH3_64bits_digest(state));
+    XXH3_freeState(state);
+    return hash;
 }
 
-
+// Memoize the same input hash used by the loader's AST-free path.
+std::string Module::all_inputs_hash(const Program& P) const
+{
+    if (not _cached_hash) _cached_hash = module_inputs_hash(P, file.contents, dependencies());
+    return *_cached_hash;
+}
 // A name of "" means that we are defining a top-level program, or a piece of a top-level program.
 Module::Module(const string& n)
     :fresh_var_state_(std::make_shared<FreshVarState>()),
@@ -3529,6 +3607,12 @@ CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
      fresh_var_state_(m->fresh_var_state_ptr())
 {
     assert(fresh_var_state_);
+    source_hash_ = xxhash64_hex(m->file.contents);
+    parser_warnings_ = m->parser_warnings;
+    // Retained warnings must not borrow the parsed module's filename storage.
+    for (auto& message: parser_warnings_)
+        if (message.loc)
+            message.loc->begin.filename = message.loc->end.filename = nullptr;
 
     std::swap(symbols, m->symbols);
 
@@ -3553,4 +3637,15 @@ CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
 	throw myexception()<<"Module "<<m->name<<" has no integrity hash!";
 
     m->clear_symbol_table();
+}
+
+// Rebind cached numeric locations to this invocation's filename for ordinary diagnostic rendering.
+void CompiledModule::show_parser_warnings(const string& filename, const string& source) const
+{
+    if (parser_warnings_.empty()) return;
+    auto messages = parser_warnings_;
+    for (auto& message: messages)
+        if (message.loc)
+            message.loc->begin.filename = message.loc->end.filename = &filename;
+    show_messages({filename, source}, std::cerr, std::move(messages));
 }

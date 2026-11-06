@@ -8,13 +8,47 @@
 #include <filesystem>
 #include <optional>
 #include "computation/haskell/cpp.hh"
+#include "computation/haskell/extensions.hh"
+#include <memory>
 #include "computation/optimization/simplifier_options.hh" // for simplifier_options
 
 class Module;
+class CompiledModule;
+class Program;
 
 class module_loader: public simplifier_options
 {
-    mutable std::map<std::string, std::shared_ptr<const Module>> modules;
+    // Source and parser diagnostics can be reused across Programs without retaining compiled objects.
+    struct source_record
+    {
+        FileContents file;
+        std::shared_ptr<std::string> filename;
+        LanguageExtensions extensions;
+        std::shared_ptr<const Module> parsed;
+        bool warnings_shown = false;
+    };
+    mutable std::map<std::string, source_record> modules;
+
+    // One discovery/loading operation owns the archive until dependencies are available.
+    // A discovered module has a cache candidate or a parsed source, and can have both.
+    struct module_load
+    {
+        source_record* source = nullptr;
+        std::filesystem::path path;
+        std::shared_ptr<CompiledModule> cached;
+        std::string archive;
+        std::streamoff body_offset = 0;
+
+        std::set<std::string> dependencies() const;
+    };
+
+    friend class Program;
+    source_record& prepare_source(const std::filesystem::path&) const;
+    void parse_source(source_record&, const std::filesystem::path&) const;
+    module_load discover_module(const std::string&) const;
+    std::shared_ptr<CompiledModule> compile_module(const Program&, module_load&) const;
+    void read_cached_prefix(const std::string&, module_load&) const;
+    std::shared_ptr<CompiledModule> read_cached_body(const Program&, module_load&, const std::string&) const;
 
 public:
     std::vector<std::filesystem::path> plugins_path;
@@ -48,6 +82,8 @@ public:
     /// Add the hard-coded elements to the module.
     std::shared_ptr<Module> load_module_from_file(const std::filesystem::path&) const;
     std::shared_ptr<Module> load_module(const std::string&) const;
+
+    std::shared_ptr<CompiledModule> read_cached_module(const Program&, const std::string&, const std::string&) const;
 
     void* load_builtin_ptr(const std::string& lib_name, const std::string& func_name, const std::string& call_conv) const;
 

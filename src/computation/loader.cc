@@ -215,51 +215,70 @@ void module_loader::set_user_source_root_for_file(const fs::path& filename, cons
         user_source_root = root;
 }
 
+// Read and preprocess once, keeping the exact source used for hashing and any later parse.
+module_loader::source_record& module_loader::prepare_source(const fs::path& filename) const
+{
+    if (auto found = modules.find(filename.string()); found != modules.end())
+        return found->second;
+
+    try
+    {
+        source_record entry;
+        entry.filename = std::make_shared<string>(pretty_module_path(filename).string());
+        string source = normalize_haskell_newlines(read_file(filename.string(), "module"));
+        auto options = language_options(source);
+        if (force_cpp or options.count("CPP"))
+        {
+            auto preprocessed = Haskell::CPP::conditionals(source, *entry.filename, cpp_options);
+            show_messages({*entry.filename, source}, std::cerr, preprocessed.messages);
+            source = std::move(preprocessed.source);
+            if (dump_cpp)
+                std::cout<<"===== CPP: "<<*entry.filename<<" =====\n"<<source;
+        }
+        entry.extensions = check_language_options(*entry.filename, source, language_options(source));
+        source = normalize_haskell_newlines(source);
+        entry.file = {filename.filename().string(), std::move(source)};
+        return modules.emplace(filename.string(), std::move(entry)).first->second;
+    }
+    catch (myexception& e)
+    {
+        e.prepend("Loading module from file '"+filename.string()+"':\n  ");
+        throw;
+    }
+}
+
+// Build an AST only for callers that need one; cached warnings may already have been displayed.
+void module_loader::parse_source(source_record& entry, const fs::path& filename) const
+{
+    if (not entry.parsed)
+    {
+        try
+        {
+            auto parsed = parse_module_file(entry.file.contents, *entry.filename, entry.extensions, !entry.warnings_shown);
+            entry.warnings_shown = true;
+            if (dump_parsed) std::cout<<parsed.module.print()<<std::endl;
+            auto module = std::make_shared<Module>(parsed.module, entry.extensions,
+                                                  FileContents{entry.file.name, std::move(parsed.source)});
+            module->filename = entry.filename;
+            module->parser_warnings = std::move(parsed.warnings);
+            entry.file.contents.clear();
+            entry.file.contents.shrink_to_fit();
+            entry.parsed = std::move(module);
+        }
+        catch (myexception& e)
+        {
+            e.prepend("Loading module from file '"+filename.string()+"':\n  ");
+            throw;
+        }
+    }
+}
+
+// Explicit source requests parse once; compilation receives a copy because it consumes symbol tables.
 shared_ptr<Module> module_loader::load_module_from_file(const fs::path& filename) const
 {
-    if (not modules.count(filename.string()))
-    {
-	try
-	{
-            auto fname = std::make_shared<string>( pretty_module_path(filename).string() );
-
-	    string file_contents = normalize_haskell_newlines(read_file(filename.string(), "module"));
-
-            auto raw_options = language_options(file_contents);
-            if (force_cpp or raw_options.count("CPP"))
-            {
-                auto preprocessed = Haskell::CPP::conditionals(file_contents, *fname, cpp_options);
-                show_messages({*fname, file_contents}, std::cerr, preprocessed.messages);
-                file_contents = std::move(preprocessed.source);
-                if (dump_cpp)
-                    std::cout<<"===== CPP: "<<*fname<<" =====\n"<<file_contents;
-            }
-
-	    auto lang_exts = check_language_options(*fname, file_contents,
-                                                    language_options(file_contents));
-
-	    auto parsed = parse_module_file(file_contents, *fname, lang_exts);
-
-	    if (dump_parsed)
-		std::cout<<parsed.module.print()<<std::endl;
-
-            string short_file_name = filename.filename().string();
-
-            auto M = std::make_shared<Module>(Module(parsed.module, lang_exts,
-                                                     {short_file_name, parsed.source}));
-            // Save a reference to the string that we allocated, so we can clean it up later.
-            M->filename = fname;
-            modules.insert( {filename.string(), M} );
-	}
-	catch (myexception& e)
-	{
-	    e.prepend("Loading module from file '"+filename.string()+"':\n  ");
-	    throw;
-	}
-    }
-
-    // Return a COPY of the cached module.
-    return std::make_shared<Module>( *modules.at(filename.string()) );
+    auto& entry = prepare_source(filename);
+    parse_source(entry, filename);
+    return std::make_shared<Module>(*entry.parsed);
 }
 
 shared_ptr<Module> module_loader::load_module(const string& module_name) const

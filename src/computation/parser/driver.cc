@@ -553,7 +553,7 @@ driver::parse_file (const std::string &filename)
 }
 
 int
-driver::parse_string (const string& file_contents, const std::string &input_name)
+driver::parse_string (const string& file_contents, const std::string &input_name, bool show_warnings)
 {
   source = normalize_haskell_newlines(file_contents);
   file = input_name;
@@ -564,16 +564,20 @@ driver::parse_string (const string& file_contents, const std::string &input_name
   int res = parser.parse ();
   scan_end ();
 
-  show_messages( {input_name, source}, std::cerr, messages);
+  if (show_warnings)
+      show_messages({input_name, source}, std::cerr, messages);
+  else
+      for (const auto& message: messages)
+          if (message.is_error()) show_messages({input_name, source}, std::cerr, {message});
   exit_on_error(messages);
 
   return res;
 }
 
 ParsedModule parse_module_file(const string& content, const std::string& input_name,
-                               const LanguageExtensions& lang_exts)
+                               const LanguageExtensions& lang_exts, bool show_warnings)
 {
     driver D(lang_exts);
-    D.parse_string(content, input_name);
-    return {std::move(D.result), std::move(D.source)};
+    D.parse_string(content, input_name, show_warnings);
+    return {std::move(D.result), std::move(D.source), D.take_messages()};
 }

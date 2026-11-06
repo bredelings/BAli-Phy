@@ -54,6 +54,8 @@ class Module;
 typechecker_result typecheck(FreshVarState&, Hs::ModuleDecls, Module&);
 
 std::shared_ptr<CompiledModule> compile(const Program&, std::shared_ptr<Module>);
+std::shared_ptr<CompiledModule> compile_source(const Program&, std::shared_ptr<Module>);
+std::string module_inputs_hash(const Program&, const std::string&, const std::set<std::string>&);
 
 class Module
 {
@@ -64,6 +66,7 @@ class Module
 
     // only to look at the symbols variable!
     friend std::shared_ptr<CompiledModule> compile(const Program&, std::shared_ptr<Module>);
+    friend std::shared_ptr<CompiledModule> compile_source(const Program&, std::shared_ptr<Module>);
 
     std::map<std::string, symbol_ptr> symbols;
 
@@ -88,6 +91,7 @@ public:
     DefaultEnv effective_defaults;
 
     std::vector<Message> messages;
+    std::vector<Message> parser_warnings;
 
     LanguageExtensions language_extensions;
 
@@ -286,6 +290,8 @@ class CompiledModule
     EqInstanceEnv local_eq_instances_;
 
     std::string all_inputs_hash_;
+    std::string source_hash_;
+    std::vector<Message> parser_warnings_;
 
     std::map<std::string, std::shared_ptr<const CompiledModule>> transitively_imported_modules_;
 
@@ -317,6 +323,8 @@ public:
     }
 
     const std::string& all_inputs_hash() const {return all_inputs_hash_;}
+    const std::string& source_hash() const {return source_hash_;}
+    void show_parser_warnings(const std::string& filename, const std::string& source) const;
 
     const std::set<std::string>& dependencies() const {return dependencies_;}
 
@@ -352,12 +360,74 @@ public:
 
     void inflate(const Program& P);
 
-    // Store owned definitions once; alias/export entries retain their keys but refer to definitions
-    // by canonical name. This avoids recursively copying imported objects into every module archive.
+    // The prefix is readable without Program: discovery fields and hashes contain no object references.
+    // Warning locations are stored without borrowed filename pointers.
+    template <class Archive>
+    void save_prefix(Archive& ar) const
+    {
+        ar(modid, source_hash_, dependencies_, all_inputs_hash_, cereal::size_type(parser_warnings_.size()));
+        for (const auto& message: parser_warnings_)
+        {
+            ar(message.loc.has_value());
+            if (message.loc)
+                ar(message.loc->begin.line, message.loc->begin.column,
+                   message.loc->end.line, message.loc->end.column);
+            ar(cereal::size_type(message.notes.size()));
+            for (const auto& note: message.notes) ar(note.ctx);
+        }
+    }
+
+    // Decode discovery information independently of symbols and imported references.
+    template <class Archive>
+    void load_prefix(Archive& ar)
+    {
+        cereal::size_type count;
+        ar(modid, source_hash_, dependencies_, all_inputs_hash_, count);
+        parser_warnings_.clear();
+        for (cereal::size_type i = 0; i < count; ++i)
+        {
+            bool located;
+            ar(located);
+            std::optional<yy::location> loc;
+            if (located)
+            {
+                loc.emplace();
+                ar(loc->begin.line, loc->begin.column, loc->end.line, loc->end.column);
+            }
+            cereal::size_type n;
+            ar(n);
+            Notes notes;
+            for (cereal::size_type j = 0; j < n; ++j)
+            {
+                std::string text;
+                ar(text);
+                notes.emplace_back(text);
+            }
+            parser_warnings_.emplace_back(WarningMsg, loc, notes);
+        }
+    }
+
+    // Preserve the ordinary cereal interface for callers serializing complete modules.
     template <class Archive>
     void save(Archive& ar) const
     {
-        ar(modid, dependencies_, prepared_value_decls, symbols, types);
+        save_prefix(ar);
+        save_body(ar);
+    }
+
+    // Complete modules still resolve imported references through the archive's Program.
+    template <class Archive>
+    void load(Archive& ar)
+    {
+        load_prefix(ar);
+        load_body(ar);
+    }
+
+    // Store owned definitions once and references by canonical name.
+    template <class Archive>
+    void save_body(Archive& ar) const
+    {
+        ar(prepared_value_decls, symbols, types);
         ar(cereal::size_type(aliases.size()));
         for (const auto& [key, symbol]: aliases)
             ar(key, symbol->name);
@@ -368,16 +438,16 @@ public:
         for (const auto& [key, type]: exported_types_)
             ar(key, type->name);
         ar(exported_fields_, exported_defaults_, local_instances_, local_eq_instances_, fresh_var_state_);
-        ar(all_inputs_hash_, foreign_infos_);
+        ar(foreign_infos_);
     }
 
     // Definitions precede references, and dependencies are already in Program. Resolve each entry
     // directly into its final map, preserving ambiguous aliases without exposing an unresolved module.
     template <class Archive>
-    void load(Archive& ar)
+    void load_body(Archive& ar)
     {
         const auto& program = cereal::get_user_data<const Program>(ar);
-        ar(modid, dependencies_, prepared_value_decls, symbols, types);
+        ar(prepared_value_decls, symbols, types);
         cereal::size_type count;
         std::string key, name;
         aliases.clear();
@@ -404,7 +474,7 @@ public:
             exported_types_.emplace(key, resolve_type_reference(program, name));
         }
         ar(exported_fields_, exported_defaults_, local_instances_, local_eq_instances_, fresh_var_state_);
-        ar(all_inputs_hash_, foreign_infos_);
+        ar(foreign_infos_);
     }
 
     CompiledModule(const std::shared_ptr<Module>& m);
@@ -413,6 +483,7 @@ private:
     const_symbol_ptr resolve_symbol_reference(const Program&, const std::string&) const;
     const_type_ptr resolve_type_reference(const Program&, const std::string&) const;
 
+    friend class module_loader;
     friend class cereal::access;
     CompiledModule() = default;
 };

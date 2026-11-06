@@ -89,6 +89,7 @@ struct ParsedModule
 {
     Haskell::Module module;
     std::string source;
+    std::vector<Message> warnings;
 };
 
 // Conducting the whole scanning and parsing of Calc++.
@@ -159,7 +160,8 @@ public:
     std::string source;
     // Run the parser on file F.  Return 0 on success.
     int parse_file (const std::string& filename);
-    int parse_string (const std::string& content, const std::string& input_name);
+    int parse_string (const std::string& content, const std::string& input_name, bool show_warnings = true);
+    std::vector<Message> take_messages() { return std::move(messages); }
     // The name of the file being parsed.
     std::string file;
     // Whether to generate parser debug traces.
@@ -177,7 +179,7 @@ public:
 };
 
 ParsedModule parse_module_file(const std::string& content, const std::string& input_name,
-                               const LanguageExtensions& lang_exts);
+                               const LanguageExtensions& lang_exts, bool show_warnings = true);
 
 // Normalize the newline forms accepted in Haskell source to LF.
 std::string normalize_haskell_newlines(std::string_view source);

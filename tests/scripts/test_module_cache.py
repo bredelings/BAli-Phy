@@ -25,10 +25,10 @@ def test_cache_root(home, wrapper):
 
 
 # Run the fixture with an isolated user cache and return its complete log.
-def run_program(wrapper, executable, fixture, package_path, home):
+def run_program(wrapper, executable, fixture, package_path, home, extra_args=(), command=("run", "Main")):
     env = os.environ.copy()
     env["HOME"] = str(home)
-    command = wrapper + [executable, "-V", package_path, "run", "Main"]
+    command = wrapper + [executable, "-V", package_path, *extra_args, *command]
     result = subprocess.run(command, cwd=fixture, env=env,
                             encoding="utf-8", capture_output=True)
     if result.returncode != 0:
@@ -168,6 +168,70 @@ def main():
             raise AssertionError("the repaired cached module was not loaded")
         if "[ Compiling Main ]" in fourth_log:
             raise AssertionError("the repaired cached module was recompiled")
+
+        # Cached dependency discovery must preserve source invalidation and parser diagnostics.
+        # Execution-only tests miss warm warning loss and stale import lists; retain these checks
+        # while dependencies can be discovered without parsing source.
+        sources = home / "sources"
+        sources.mkdir()
+        (sources / "Main.hs").write_text("import Warn\nmain = print value\n", encoding="utf-8")
+        warning_source = (
+            "{-# LANGUAGE CPP, NoImplicitPrelude #-}\n{-# UNKNOWN #-}\nmodule Warn where\n"
+            "#if SELECT_OTHER\nimport Other\n#else\nimport Choice\n#endif\n"
+            "value = choice\n")
+        (sources / "Warn.hs").write_text(warning_source, encoding="utf-8")
+        (sources / "Choice.hs").write_text(
+            "{-# LANGUAGE NoImplicitPrelude #-}\nmodule Choice where\nimport Compiler.Num\nchoice = 1 :: Int\n",
+            encoding="utf-8")
+        (sources / "Other.hs").write_text(
+            "{-# LANGUAGE NoImplicitPrelude #-}\nmodule Other where\nimport Compiler.Num\nchoice = 3 :: Int\n",
+            encoding="utf-8")
+
+        # Exercise the same dependency with and without an AST, including a body-cache failure
+        # caused by a changed dependency after the cached parser warning has already been replayed.
+        for stage in ("cold", "warm", "corrupt", "dependency-changed", "cpp-changed", "dump", "forced"):
+            extra = []
+            if stage == "corrupt":
+                artifact = current / "Warn.hs.mod"
+                artifact.write_bytes(artifact.read_bytes()[:-1])
+            if stage == "dependency-changed":
+                source = sources / "Choice.hs"
+                timestamp = source.stat().st_mtime_ns
+                source.write_text(
+                    "{-# LANGUAGE NoImplicitPrelude #-}\nmodule Choice where\nimport Compiler.Num\nchoice = 2 :: Int\n",
+                    encoding="utf-8")
+                os.utime(source, ns=(timestamp, timestamp))
+            if stage in {"cpp-changed", "dump", "forced"}:
+                extra += ["-DSELECT_OTHER=1"]
+            command = ("run", "Main")
+            if stage == "dump":
+                # Limit the parsed dump to the small imported chain, rather than all of Prelude.
+                (sources / "DumpRoot.hs").write_text(
+                    "{-# LANGUAGE NoImplicitPrelude #-}\nmodule DumpRoot where\nimport Warn\nf = value\n",
+                    encoding="utf-8")
+                command = ("test-module", "DumpRoot.hs")
+                extra += ["--dump-parsed"]
+            if stage == "forced":
+                extra += ["--recompile=Warn"]
+            log = run_program(args.wrapper, args.executable, sources, args.package_path, home, extra, command)
+            if log.count("Unknown pragma") != 1 or "Warn.hs:2" not in log:
+                raise AssertionError(f"{stage}: parser warning missing, duplicated, or misplaced:\n{log}")
+            expected = {"cold": "1", "warm": "1", "corrupt": "1", "dependency-changed": "2",
+                        "cpp-changed": "3", "dump": "3", "forced": "3"}[stage]
+            if stage != "dump" and expected not in log.splitlines():
+                raise AssertionError(f"{stage}: expected result {expected}:\n{log}")
+            action = "Loading" if stage in {"warm", "dump"} else "Compiling"
+            if f"[ {action} Warn ]" not in log:
+                raise AssertionError(f"{stage}: expected {action} Warn:\n{log}")
+            if stage == "dump" and "module Warn" not in log:
+                raise AssertionError(f"parsed dump omitted the cached dependency:\n{log}")
+
+        # Plain source import edits must also replace the cached dependency list.
+        (sources / "Warn.hs").write_text(
+            "{-# UNKNOWN #-}\nmodule Warn where\nimport Choice\nvalue = choice\n", encoding="utf-8")
+        log = run_program(args.wrapper, args.executable, sources, args.package_path, home)
+        if "2" not in log.splitlines() or "[ Compiling Warn ]" not in log:
+            raise AssertionError(f"source import edit did not invalidate the cached prefix:\n{log}")
 
     return 0
 
