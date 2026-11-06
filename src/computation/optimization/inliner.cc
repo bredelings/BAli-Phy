@@ -646,7 +646,7 @@ optional<Occ::Exp> SimplifierState::call_site_inline(const Unfolding& unfolding,
     auto cu = to<CoreUnfolding>(unfolding);
     if (not cu) return {};
 
-    auto& rhs = cu->expr;
+    auto& rhs = cu->expression();
     const id_info_lookup lookup = [this, &bound_vars](const Occ::Var& variable) {
         return get_id_info(variable, bound_vars);
     };
@@ -789,9 +789,9 @@ arg_info SimplifierState::interesting_arg(const Occ::Exp& E, const simplifier::s
                     return arg_info::value;
                 else if (auto cu = to<CoreUnfolding>(unfolding))
                 {
-                    if (cu->expr.to_conApp()) // uf_is_conlike
+                    if (cu->expression().to_conApp()) // uf_is_conlike
                         return arg_info::value;
-                    else if (cu->expr.to_lambda()) // uf_is_value
+                    else if (cu->expression().to_lambda()) // uf_is_value
                         return arg_info::non_trivial;
                     else
                         return arg_info::trivial;

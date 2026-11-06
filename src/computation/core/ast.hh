@@ -747,9 +747,14 @@ namespace Core
 	void load(Archive& ar)
 	{
 	    ar(lib_name, func_name, call_conv, args);
-            const auto& program = get_user_data<const Program>(ar);
-            const auto& loader = *program.get_module_loader();
-            op = loader.load_builtin_ptr(lib_name, func_name, call_conv);
+            // Deferred unfolding bodies retain the loader but do not retain their original Program.
+            if (dynamic_cast<cereal::UserDataAdapter<const module_loader, Archive>*>(&ar))
+                op = cereal::get_user_data<const module_loader>(ar).load_builtin_ptr(lib_name, func_name, call_conv);
+            else
+            {
+                const auto& program = get_user_data<const Program>(ar);
+                op = program.get_module_loader()->load_builtin_ptr(lib_name, func_name, call_conv);
+            }
             assert(not call_conv.empty());
             assert(op);
 	}

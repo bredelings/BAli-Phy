@@ -183,6 +183,75 @@ namespace
                 "local type exports must share the newly loaded definition");
     }
 
+    // Execution cannot detect duplicate decoding or a borrowed Program. Guard shared deferred
+    // ownership and builtin resolution; this test is unnecessary if Core bodies cease to be cached.
+    void check_deferred_unfolding(const std::shared_ptr<module_loader>& loader)
+    {
+        auto op = loader->load_builtin_ptr("Num", "add_int", "ecall");
+        Occ::Constant constant;
+        constant.value = 1;
+        Occ::Exp argument = constant;
+        Occ::Exp body = Occ::BuiltinOp("Num", "add_int", "ecall", {argument, argument}, op);
+        CoreUnfolding before(body, UnfoldWhen{true, true, 2});
+        std::stringstream buffer;
+        {
+            cereal::BinaryOutputArchive archive(buffer);
+            archive(before);
+        }
+        CoreUnfolding after;
+        {
+            auto module = std::make_shared<Module>("Serialization");
+            module->language_extensions.set_extension(LangExt::ImplicitPrelude, false);
+            const Program program(loader, {module});
+            cereal::UserDataAdapter<const Program, cereal::BinaryInputArchive> archive(program, buffer);
+            archive(after);
+
+            // Resaving unused bytes must work before any expression has been constructed.
+            std::stringstream retained;
+            { cereal::BinaryOutputArchive output(retained); output(after); }
+            cereal::UserDataAdapter<const Program, cereal::BinaryInputArchive> input(program, retained);
+            input(after);
+        }
+        auto copy = after;
+        require(std::get<UnfoldWhen>(copy.unf_guidance).arity == 2, "guidance must remain eager");
+        require(copy.expression() == body, "deferred builtin body must round-trip after Program destruction");
+        require(copy.expression().to_builtinOp()->op == op, "deferred builtin must resolve its function pointer");
+        require(&copy.expression() == &after.expression(), "unfolding copies must share one decoded expression");
+        const auto& args = copy.expression().to_builtinOp()->args;
+        require(args[0].to_constant() == args[1].to_constant(), "sharing within a body must survive decoding");
+    }
+
+    // A valid outer archive can contain an invalid deferred body. Guard delayed, contextual errors
+    // and failure atomicity, which checksum-corruption tests cannot exercise.
+    void check_deferred_unfolding_error()
+    {
+        std::stringstream body;
+        {
+            cereal::BinaryOutputArchive archive(body);
+            archive(UnfoldingGuidance(UnfoldNever{}), false, std::string{});
+        }
+        CoreUnfolding broken;
+        { cereal::BinaryInputArchive archive(body); archive(broken); }
+        symbol_info before("Serialization.broken", symbol_type_t::variable, {}, {});
+        before.unfolding = broken;
+        std::stringstream buffer;
+        { cereal::BinaryOutputArchive archive(buffer); archive(before); }
+        symbol_info after("Unused", symbol_type_t::variable, {}, {});
+        { cereal::BinaryInputArchive archive(buffer); archive(after); }
+        auto& unfolding = std::get<CoreUnfolding>(after.unfolding);
+        for (int attempt = 0; attempt < 2; ++attempt)
+        {
+            bool failed = false;
+            try { unfolding.expression(); }
+            catch (const myexception& e)
+            {
+                failed = std::string(e.what()).find("Core unfolding for 'Serialization.broken'")
+                         != std::string::npos;
+            }
+            require(failed, "invalid body must fail on each access with its owning symbol in the error");
+        }
+    }
+
     // Checks builtin serialization using loader metadata and inverse preprocessing.
     void check_builtin_serialization(const std::shared_ptr<module_loader>& loader)
     {
@@ -222,6 +291,8 @@ namespace
 void run_serialization_tests(const std::shared_ptr<module_loader>& loader)
 {
     check_builtin_serialization(loader);
+    check_deferred_unfolding(loader);
+    check_deferred_unfolding_error();
     check_module_reference_serialization(loader);
     check_constructor_serialization();
     check_intrusive_ptr_serialization_preserves_aliases();

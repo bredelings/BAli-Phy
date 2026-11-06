@@ -373,7 +373,7 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
         if (auto cu = to<CoreUnfolding>(unfolding); cu and not x.info.is_loop_breaker)
         {
             // Ideally we would only do this if x has arity zero (i.e. its not a function)
-            return exprIsConApp_worker(S, floats, cu->expr, cont);
+            return exprIsConApp_worker(S, floats, cu->expression(), cont);
         }
         else if (auto du = to<DFunUnfolding>(unfolding); du and count_cont_args(cont) == du->binders.size())
         {

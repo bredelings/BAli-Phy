@@ -319,7 +319,7 @@ int reg_heap::reg_for_id(const Runtime::GlobalVar& x)
             assert(x.index == 0);
 
             auto sym = lookup_builtin_symbol(name);
-            auto code = to_core_exp(to<CoreUnfolding>(sym->unfolding)->expr);
+            auto code = to_core_exp(to<CoreUnfolding>(sym->unfolding)->expression());
             add_identifier(x.name);
 
 	    // get the root for each identifier

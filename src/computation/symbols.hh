@@ -82,6 +82,10 @@ struct symbol_info
     void serialize(Archive& ar)
     {
 	ar(name, symbol_type, parent, arity, id_arity, fixity, type, unfolding, con_info, instance_info, eq_instance_info, record_selector, inline_pragma, visible);
+        // Diagnostic ownership follows the symbol, not the lifetime of the deserializing Program.
+        if constexpr (Archive::is_loading::value)
+            if (auto core = std::get_if<CoreUnfolding>(&unfolding); core and core->deferred_)
+                core->deferred_->owner = name;
     }
 
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, std::optional<int>,

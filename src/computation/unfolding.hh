@@ -85,7 +85,22 @@ struct OtherConUnfolding
 
 struct CoreUnfolding
 {
-    Occ::Exp expr;
+private:
+    // Cached copies share a single decode. The loader outlives Program when a body is retained.
+    struct deferred_body
+    {
+        std::string bytes;
+        std::optional<Occ::Exp> expression;
+        std::shared_ptr<module_loader> loader;
+        std::string owner;
+    };
+    Occ::Exp expr_;
+    std::shared_ptr<deferred_body> deferred_;
+    std::string serialized_expression() const;
+    friend struct symbol_info;
+
+public:
+    const Occ::Exp& expression() const;
 
     /* GHC distinguishes: (i)   vanilla (e.g. rhs)
                           (ii)  stable (INLINE or INLINEABLE)
@@ -106,14 +121,27 @@ struct CoreUnfolding
        (iv)  exprIsExpandable
     */
 
+    // Each expression has its own pointer-ID scope; guidance remains available without decoding it.
     template <class Archive>
-    void serialize(Archive& ar)
+    void save(Archive& ar) const
     {
-	ar(expr, unf_guidance, always_unfold);
+        ar(unf_guidance, always_unfold, serialized_expression());
+    }
+
+    // Retain owned bytes and builtin-resolution context without borrowing Program or its archive.
+    template <class Archive>
+    void load(Archive& ar)
+    {
+        ar(unf_guidance, always_unfold);
+        deferred_ = std::make_shared<deferred_body>();
+        ar(deferred_->bytes);
+        if (dynamic_cast<cereal::UserDataAdapter<const Program, Archive>*>(&ar))
+            deferred_->loader = cereal::get_user_data<const Program>(ar).get_module_loader();
+        expr_ = Occ::Exp{};
     }
 
     CoreUnfolding() = default; // for cereal
-    CoreUnfolding(const Occ::Exp& e, const UnfoldingGuidance& g, bool b=false):expr(e),unf_guidance(g), always_unfold(b) {}
+    CoreUnfolding(const Occ::Exp& e, const UnfoldingGuidance& g, bool b=false):expr_(e),unf_guidance(g), always_unfold(b) {}
 };
 
 

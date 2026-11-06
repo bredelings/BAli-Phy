@@ -1,4 +1,6 @@
 #include "symbols.hh"
+#include <cereal/archives/binary.hpp>
+#include <sstream>
 #include "util/variant.hh"
 
 using std::string;
@@ -80,4 +82,50 @@ const type_info::data_fam_info* type_info::is_data_fam() const
 type_info::data_fam_info* type_info::is_data_fam()
 {
     return to<data_fam_info>(info);
+}
+
+// Decode once across copies, publishing only a complete expression. A failed decode retains its
+// input for diagnostics; it does not restart compilation or publish a partially constructed body.
+const Occ::Exp& CoreUnfolding::expression() const
+{
+    if (not deferred_) return expr_;
+    if (not deferred_->expression)
+    {
+        try
+        {
+            std::istringstream input(deferred_->bytes);
+            Occ::Exp result;
+            if (deferred_->loader)
+            {
+                cereal::UserDataAdapter<const module_loader, cereal::BinaryInputArchive> archive(*deferred_->loader, input);
+                archive(result);
+            }
+            else
+            {
+                cereal::BinaryInputArchive archive(input);
+                archive(result);
+            }
+            deferred_->expression = std::move(result);
+            std::string{}.swap(deferred_->bytes);
+            deferred_->loader.reset();
+        }
+        catch (const std::bad_alloc&) { throw; }
+        catch (const std::exception& e)
+        {
+            auto context = deferred_->owner.empty() ? string("Core unfolding")
+                         : "Core unfolding for '" + deferred_->owner + "'";
+            throw myexception()<<"Decoding cached "<<context<<": "<<e.what();
+        }
+    }
+    return *deferred_->expression;
+}
+
+// Saving an unused cached unfolding reuses its bytes; constructed expressions get an independent archive.
+std::string CoreUnfolding::serialized_expression() const
+{
+    if (deferred_ and not deferred_->expression) return deferred_->bytes;
+    std::ostringstream output;
+    cereal::BinaryOutputArchive archive(output);
+    archive(expression());
+    return output.str();
 }
