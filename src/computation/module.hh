@@ -270,11 +270,8 @@ class CompiledModule
     std::map<Core::Var<>, Runtime::Exp> prepared_value_decls;
 
     std::multimap<std::string, const_symbol_ptr> aliases;
-    std::multimap<std::string, FieldInfo> field_aliases;
 
     std::map<std::string, symbol_ptr> symbols;
-
-    std::multimap<std::string, const_type_ptr> type_aliases;
 
     std::map<std::string, type_ptr> types;
 
@@ -283,8 +280,6 @@ class CompiledModule
 
     std::map<std::string, const_type_ptr> exported_types_;
     DefaultEnv exported_defaults_;
-
-    LanguageExtensions language_extensions_;
 
     InstanceEnv local_instances_;
 
@@ -325,8 +320,6 @@ public:
 
     const std::set<std::string>& dependencies() const {return dependencies_;}
 
-    const LanguageExtensions& language_extensions() const {return language_extensions_;}
-
     const std::string& name() const {return modid;}
 
     const InstanceEnv& local_instances() const {return local_instances_;}
@@ -363,8 +356,8 @@ public:
     void serialize(Archive& ar)
     {
 	ar( modid, dependencies_, prepared_value_decls, symbols, types, exported_symbols_, exported_fields_, exported_types_ );
-        ar( aliases, field_aliases, type_aliases, exported_defaults_ );
-	ar( language_extensions_, local_instances_, local_eq_instances_, fresh_var_state_ );
+        ar( aliases, exported_defaults_ );
+	ar( local_instances_, local_eq_instances_, fresh_var_state_ );
 	ar( all_inputs_hash_, foreign_infos_ );
 
 	// Maybe we should write the SHA at both beginning and end and then check them when we read it back.

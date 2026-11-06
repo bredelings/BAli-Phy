@@ -3474,8 +3474,6 @@ void CompiledModule::clear_symbol_table()
     exported_types_.clear();
     exported_defaults_.clear();
 
-    // language_extensions_ = keep
-
     local_instances_.clear();
 
     local_eq_instances_.clear();
@@ -3515,13 +3513,6 @@ CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
     std::swap(exported_defaults_, m->exported_defaults_);
 
     std::swap(aliases, m->aliases);
-
-    std::swap(field_aliases, m->field_aliases);
-
-    std::swap(type_aliases, m->type_aliases);
-
-    // Why can't we clear the language extensions on m?
-    language_extensions_ = m->language_extensions;
 
     std::swap(local_instances_, m->local_instances);
 
