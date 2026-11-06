@@ -185,8 +185,10 @@ foreach mode, name : {'standalone': 'generated program runtime modes',
 endforeach
 
 # When running on very slow autobuilders these tests could take a long time.
+# Populate the compiled-module cache before other tests start to avoid duplicate cold compilation.
 test('bali-phy 5d test', baliphy,
-     args:['--seed', randomseed, packagepath, small_fasta, '--test'], timeout: 300)
+     args:['--seed', randomseed, packagepath, small_fasta, '--test'], timeout: 300,
+     priority: 100, is_parallel: false)
 test('bali-phy 5d +A 50', baliphy,
      args:['--seed', randomseed, '-V', packagepath, small_fasta, '--iterations=50'], timeout: 300)
 test('bali-phy 48 +A 3', baliphy,
