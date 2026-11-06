@@ -1717,6 +1717,8 @@ SimplifierState::simplify_module_one(const Core::Binds<>& binds_in)
     // Decompose the decls, remove unused decls, and occurrence-analyze the decls.
     auto binds = occurrence_analyze_binds(this_mod, binds_in, free_vars);
 
+#ifndef NDEBUG
+    // These name lookups only check the imported-symbol invariant.
     for(auto& x: free_vars)
     {
         if (is_qualified_symbol(x.name) and not is_qualified_by_module(x.name, this_mod.name))
@@ -1725,6 +1727,7 @@ SimplifierState::simplify_module_one(const Core::Binds<>& binds_in)
             assert(special_prelude_symbol(x.name) or S);
         }
     }
+#endif
 
     in_scope_set bound_vars;
 
