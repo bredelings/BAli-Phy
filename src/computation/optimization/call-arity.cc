@@ -32,12 +32,9 @@ struct co_call_graph
     // Merge all nodes and edges from another co-call graph.
     void merge(const co_call_graph& other)
     {
+        // Each graph already stores both directions; union each adjacency set once.
         for (const auto& [node, neighbors]: other.edges)
-        {
-            edges[node];
-            for (const auto& neighbor: neighbors)
-                add_edge(node, neighbor);
-        }
+            edges[node].insert(neighbors.begin(), neighbors.end());
     }
 
     // Remove a binder and every edge incident on it.
@@ -75,9 +72,9 @@ struct co_call_graph
     // Mark every variable in a domain as mutually and multiply called.
     void make_complete(const set<Var>& variables)
     {
+        // Every row gets the whole domain, including its own node for repeated calls.
         for (const auto& x: variables)
-            for (const auto& y: variables)
-                add_edge(x, y);
+            edges[x].insert(variables.begin(), variables.end());
     }
 };
 
