@@ -247,14 +247,14 @@ bool is_haskell_conid(const std::string& s)
     return first and is_haskell_conid_start(first->code_point);
 }
 
+// Recognize identifier continuations with one Unicode category lookup per character.
 bool is_haskell_id_char(char32_t c)
 {
     auto category = unicode::category(c);
-    return is_haskell_varid_start(c) or
-           is_haskell_conid_start(c) or
-           category == unicode::Category::modifier_letter or
+    return unicode::is_letter(category) or
            category == unicode::Category::non_spacing_mark or
            unicode::is_number(category) or
+           c == U'_' or
            c == U'\'';
 }
 
