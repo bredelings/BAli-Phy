@@ -894,7 +894,7 @@ shared_ptr<CompiledModule> module_loader::compile_module(const Program& P, modul
         }
     }
     parse_source(source, entry.path);
-    return compile_source(P, std::make_shared<Module>(*source.parsed));
+    return compile_parsed_module(P, std::make_shared<Module>(*source.parsed));
 }
 
 #ifdef _WIN32
@@ -1235,11 +1235,11 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
         C->inflate(P);
         return C;
     }
-    return compile_source(P, std::move(MM));
+    return compile_parsed_module(P, std::move(MM));
 }
 
 // Compile an already parsed module after its cache has been rejected.
-std::shared_ptr<CompiledModule> compile_source(const Program& P, std::shared_ptr<Module> MM)
+std::shared_ptr<CompiledModule> compile_parsed_module(const Program& P, std::shared_ptr<Module> MM)
 {
     auto& loader = *P.get_module_loader();
     simplifier_options& opts = loader;

@@ -54,7 +54,7 @@ class Module;
 typechecker_result typecheck(FreshVarState&, Hs::ModuleDecls, Module&);
 
 std::shared_ptr<CompiledModule> compile(const Program&, std::shared_ptr<Module>);
-std::shared_ptr<CompiledModule> compile_source(const Program&, std::shared_ptr<Module>);
+std::shared_ptr<CompiledModule> compile_parsed_module(const Program&, std::shared_ptr<Module>);
 std::string module_inputs_hash(const Program&, const std::string&, const std::set<std::string>&);
 
 class Module
@@ -66,7 +66,7 @@ class Module
 
     // only to look at the symbols variable!
     friend std::shared_ptr<CompiledModule> compile(const Program&, std::shared_ptr<Module>);
-    friend std::shared_ptr<CompiledModule> compile_source(const Program&, std::shared_ptr<Module>);
+    friend std::shared_ptr<CompiledModule> compile_parsed_module(const Program&, std::shared_ptr<Module>);
 
     std::map<std::string, symbol_ptr> symbols;
 
