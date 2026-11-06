@@ -1,6 +1,8 @@
 #include "computation/loader.hh"
 #include "computation/module.hh"
 #include "computation/program.hh"
+#include "computation/parser/driver.hh"
+#include "computation/typecheck/env.hh"
 #include "computation/machine/graph_register.hh"
 #include "computation/operation.hh"
 #include "computation/preprocess.hh"
@@ -121,6 +123,56 @@ namespace
         require(threw, "runtime-only OperationApp serialization should throw a clear error");
     }
 
+    // Guard sharing across cached modules, which execution alone cannot detect. Remove this test if
+    // module interfaces no longer retain symbol/type pointers; it checks both local and re-exported names.
+    void check_module_reference_serialization(const std::shared_ptr<module_loader>& loader)
+    {
+        // Parse small modules directly so this check needs neither files nor the Prelude.
+        auto parse = [](const std::string& source)
+        {
+            LanguageExtensions extensions;
+            extensions.set_extension(LangExt::ImplicitPrelude, false);
+            auto filename = std::make_shared<std::string>("Serialization.hs");
+            auto parsed = parse_module_file(source, *filename, extensions);
+            auto module = std::make_shared<Module>(parsed.module, extensions,
+                                                   FileContents{*filename, parsed.source});
+            // Source locations borrow the filename, as in module_loader::load_module_from_file.
+            module->filename = std::move(filename);
+            return module;
+        };
+        Program program(loader, {parse("module Owner where\ndata T = MkT\nf x = x\n")});
+        auto owner = program.get_module("Owner");
+        auto reexport = compile(program, parse("module Reexport (module Owner) where\nimport Owner\n"));
+        program.push_back(reexport);
+        auto before = compile(program, parse(
+            "module Cached (module Reexport, local, U(..)) where\n"
+            "import Reexport\nlocal x = f x\ndata U = MkU\n"));
+        std::stringstream buffer;
+        {
+            cereal::BinaryOutputArchive archive(buffer);
+            archive(before);
+        }
+        std::shared_ptr<CompiledModule> after;
+        {
+            cereal::UserDataAdapter<const Program, cereal::BinaryInputArchive> archive(program, buffer);
+            archive(after);
+        }
+        require(after->lookup_symbol("f") == owner->lookup_local_symbol("Owner.f"),
+                "imported aliases must share the defining module's symbol");
+        require(after->lookup_symbol("Reexport.f") == owner->lookup_local_symbol("Owner.f"),
+                "qualified alias keys must survive serialization");
+        require(after->exported_symbols().at("f") == owner->lookup_local_symbol("Owner.f"),
+                "re-exported symbols must share the original definition");
+        require(after->exported_types().at("T") == owner->lookup_local_type("Owner.T"),
+                "re-exported types must share the original definition");
+        require(after->lookup_symbol("local") == after->lookup_local_symbol("Cached.local"),
+                "local aliases must resolve against the newly loaded module");
+        require(after->exported_symbols().at("local") == after->lookup_local_symbol("Cached.local"),
+                "local symbol exports must share the newly loaded definition");
+        require(after->exported_types().at("U") == after->lookup_local_type("Cached.U"),
+                "local type exports must share the newly loaded definition");
+    }
+
     // Checks builtin serialization using loader metadata and inverse preprocessing.
     void check_builtin_serialization(const std::shared_ptr<module_loader>& loader)
     {
@@ -160,6 +212,7 @@ namespace
 void run_serialization_tests(const std::shared_ptr<module_loader>& loader)
 {
     check_builtin_serialization(loader);
+    check_module_reference_serialization(loader);
     check_constructor_serialization();
     check_intrusive_ptr_serialization_preserves_aliases();
     check_runtime_only_operation_app_serialization();

@@ -352,20 +352,67 @@ public:
 
     void inflate(const Program& P);
 
+    // Store owned definitions once; alias/export entries retain their keys but refer to definitions
+    // by canonical name. This avoids recursively copying imported objects into every module archive.
     template <class Archive>
-    void serialize(Archive& ar)
+    void save(Archive& ar) const
     {
-	ar( modid, dependencies_, prepared_value_decls, symbols, types, exported_symbols_, exported_fields_, exported_types_ );
-        ar( aliases, exported_defaults_ );
-	ar( local_instances_, local_eq_instances_, fresh_var_state_ );
-	ar( all_inputs_hash_, foreign_infos_ );
+        ar(modid, dependencies_, prepared_value_decls, symbols, types);
+        ar(cereal::size_type(aliases.size()));
+        for (const auto& [key, symbol]: aliases)
+            ar(key, symbol->name);
+        ar(cereal::size_type(exported_symbols_.size()));
+        for (const auto& [key, symbol]: exported_symbols_)
+            ar(key, symbol->name);
+        ar(cereal::size_type(exported_types_.size()));
+        for (const auto& [key, type]: exported_types_)
+            ar(key, type->name);
+        ar(exported_fields_, exported_defaults_, local_instances_, local_eq_instances_, fresh_var_state_);
+        ar(all_inputs_hash_, foreign_infos_);
+    }
 
-	// Maybe we should write the SHA at both beginning and end and then check them when we read it back.
+    // Definitions precede references, and dependencies are already in Program. Resolve each entry
+    // directly into its final map, preserving ambiguous aliases without exposing an unresolved module.
+    template <class Archive>
+    void load(Archive& ar)
+    {
+        const auto& program = cereal::get_user_data<const Program>(ar);
+        ar(modid, dependencies_, prepared_value_decls, symbols, types);
+        cereal::size_type count;
+        std::string key, name;
+        aliases.clear();
+        // Match cereal's multimap insertion order, including the order of ambiguous-name diagnostics.
+        auto hint = aliases.begin();
+        ar(count);
+        for (cereal::size_type i = 0; i < count; ++i)
+        {
+            ar(key, name);
+            hint = aliases.emplace_hint(hint, key, resolve_symbol_reference(program, name));
+        }
+        exported_symbols_.clear();
+        ar(count);
+        for (cereal::size_type i = 0; i < count; ++i)
+        {
+            ar(key, name);
+            exported_symbols_.emplace(key, resolve_symbol_reference(program, name));
+        }
+        exported_types_.clear();
+        ar(count);
+        for (cereal::size_type i = 0; i < count; ++i)
+        {
+            ar(key, name);
+            exported_types_.emplace(key, resolve_type_reference(program, name));
+        }
+        ar(exported_fields_, exported_defaults_, local_instances_, local_eq_instances_, fresh_var_state_);
+        ar(all_inputs_hash_, foreign_infos_);
     }
 
     CompiledModule(const std::shared_ptr<Module>& m);
 
 private:
+    const_symbol_ptr resolve_symbol_reference(const Program&, const std::string&) const;
+    const_type_ptr resolve_type_reference(const Program&, const std::string&) const;
+
     friend class cereal::access;
     CompiledModule() = default;
 };

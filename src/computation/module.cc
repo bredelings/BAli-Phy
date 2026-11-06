@@ -3458,6 +3458,34 @@ const_symbol_ptr CompiledModule::lookup_symbol(const std::string& name) const
     }
 }
 
+// Reconnect an archived symbol name to this module's definition or an already loaded dependency.
+const_symbol_ptr CompiledModule::resolve_symbol_reference(const Program& program, const std::string& name) const
+{
+    if (is_haskell_builtin_con_name(name))
+        return lookup_builtin_symbol(name);
+
+    auto owner = get_module_name(name);
+    auto symbol = owner == modid ? lookup_local_symbol(name)
+                                : program.get_module(owner)->lookup_local_symbol(name);
+    if (not symbol)
+        throw myexception()<<"Cached module '"<<modid<<"' refers to missing symbol '"<<name<<"'";
+    return symbol;
+}
+
+// Reconnect an archived type name without constructing another copy of imported type metadata.
+const_type_ptr CompiledModule::resolve_type_reference(const Program& program, const std::string& name) const
+{
+    if (is_haskell_builtin_type_name(name))
+        return lookup_builtin_type(name);
+
+    auto owner = get_module_name(name);
+    auto type = owner == modid ? lookup_local_type(name)
+                              : program.get_module(owner)->lookup_local_type(name);
+    if (not type)
+        throw myexception()<<"Cached module '"<<modid<<"' refers to missing type '"<<name<<"'";
+    return type;
+}
+
 void CompiledModule::clear_symbol_table()
 {
     dependencies_.clear();
