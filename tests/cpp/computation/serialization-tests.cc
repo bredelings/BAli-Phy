@@ -157,6 +157,16 @@ namespace
             cereal::UserDataAdapter<const Program, cereal::BinaryInputArchive> archive(program, buffer);
             archive(after);
         }
+        // Saving before lookup must preserve deferred aliases without resolving them first.
+        std::stringstream retained;
+        {
+            cereal::BinaryOutputArchive archive(retained);
+            archive(after);
+        }
+        {
+            cereal::UserDataAdapter<const Program, cereal::BinaryInputArchive> archive(program, retained);
+            archive(after);
+        }
         require(after->lookup_symbol("f") == owner->lookup_local_symbol("Owner.f"),
                 "imported aliases must share the defining module's symbol");
         require(after->lookup_symbol("Reexport.f") == owner->lookup_local_symbol("Owner.f"),

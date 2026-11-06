@@ -7,6 +7,7 @@
 #include <vector>
 #include <utility>                                  // for pair
 #include <iostream>
+#include <cereal/archives/binary.hpp>
 #include "computation/haskell/haskell.hh"
 #include "computation/haskell/extensions.hh"
 #include "computation/core/ast.hh"
@@ -273,7 +274,9 @@ class CompiledModule
 
     std::map<Core::Var<>, Runtime::Exp> prepared_value_decls;
 
-    std::multimap<std::string, const_symbol_ptr> aliases;
+    mutable std::multimap<std::string, const_symbol_ptr> aliases;
+    mutable std::optional<std::string> alias_bytes_;
+    void load_aliases() const;
 
     std::map<std::string, symbol_ptr> symbols;
 
@@ -428,9 +431,15 @@ public:
     void save_body(Archive& ar) const
     {
         ar(prepared_value_decls, symbols, types);
-        ar(cereal::size_type(aliases.size()));
-        for (const auto& [key, symbol]: aliases)
-            ar(key, symbol->name);
+        if (alias_bytes_) ar(*alias_bytes_);
+        else
+        {
+            std::ostringstream buffer;
+            cereal::BinaryOutputArchive section(buffer);
+            section(cereal::size_type(aliases.size()));
+            for (const auto& [key, symbol]: aliases) section(key, symbol->name);
+            ar(buffer.str());
+        }
         ar(cereal::size_type(exported_symbols_.size()));
         for (const auto& [key, symbol]: exported_symbols_)
             ar(key, symbol->name);
@@ -441,8 +450,8 @@ public:
         ar(foreign_infos_);
     }
 
-    // Definitions precede references, and dependencies are already in Program. Resolve each entry
-    // directly into its final map, preserving ambiguous aliases without exposing an unresolved module.
+    // Resolve exports eagerly, retaining aliases as an independent archive until lookup.
+    // Own dependency references before returning so deferred lookup does not need Program.
     template <class Archive>
     void load_body(Archive& ar)
     {
@@ -451,14 +460,8 @@ public:
         cereal::size_type count;
         std::string key, name;
         aliases.clear();
-        // Match cereal's multimap insertion order, including the order of ambiguous-name diagnostics.
-        auto hint = aliases.begin();
-        ar(count);
-        for (cereal::size_type i = 0; i < count; ++i)
-        {
-            ar(key, name);
-            hint = aliases.emplace_hint(hint, key, resolve_symbol_reference(program, name));
-        }
+        alias_bytes_.emplace();
+        ar(*alias_bytes_);
         exported_symbols_.clear();
         ar(count);
         for (cereal::size_type i = 0; i < count; ++i)
@@ -475,6 +478,7 @@ public:
         }
         ar(exported_fields_, exported_defaults_, local_instances_, local_eq_instances_, fresh_var_state_);
         ar(foreign_infos_);
+        inflate(program);
     }
 
     CompiledModule(const std::shared_ptr<Module>& m);

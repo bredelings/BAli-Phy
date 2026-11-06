@@ -888,7 +888,6 @@ shared_ptr<CompiledModule> module_loader::compile_module(const Program& P, modul
         if (auto module = read_cached_body(P, entry, hash))
         {
             if (log_verbose) std::cerr<<"[ Loading "<<module->name()<<" ]\n";
-            module->inflate(P);
             return module;
         }
     }
@@ -1231,7 +1230,6 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     if (auto C = P.get_module_loader()->read_cached_module(P, MM->name, MM->all_inputs_hash(P)))
     {
         if (log_verbose) std::cerr<<"[ Loading "<<MM->name<<" ]\n";
-        C->inflate(P);
         return C;
     }
     return compile_parsed_module(P, std::move(MM));
@@ -1441,7 +1439,6 @@ std::shared_ptr<CompiledModule> compile_parsed_module(const Program& P, std::sha
     {
 	if (auto CM2 = loader.read_cached_module(P, MM->name, MM->all_inputs_hash(P)))
 	{
-	    CM2->inflate(P);
 	    if (CM2->all_inputs_hash() != CM->all_inputs_hash())
 		std::cerr<<"Compiled module "<<MM->name<<" changed between writing and rereading!";
 	}
@@ -3514,11 +3511,46 @@ const_type_ptr CompiledModule::lookup_local_type(const std::string& type_name) c
         return iter->second;
 }
 
+// Decode into a temporary map: references use already owned dependencies, and failures leave
+// the retained archive intact. Match cereal's insertion order for ambiguous-name diagnostics.
+void CompiledModule::load_aliases() const
+{
+    if (not alias_bytes_) return;
+    try
+    {
+        std::istringstream input(*alias_bytes_);
+        cereal::BinaryInputArchive archive(input);
+        cereal::size_type count;
+        archive(count);
+        std::multimap<string, const_symbol_ptr> result;
+        auto hint = result.begin();
+        for (cereal::size_type i = 0; i < count; ++i)
+        {
+            string key, name;
+            archive(key, name);
+            auto owner = get_module_name(name);
+            auto symbol = is_haskell_builtin_con_name(name) ? lookup_builtin_symbol(name)
+                        : owner == modid ? lookup_local_symbol(name)
+                        : transitively_imported_modules_.at(owner)->lookup_local_symbol(name);
+            if (not symbol) throw myexception()<<"Missing symbol '"<<name<<"'";
+            hint = result.emplace_hint(hint, key, symbol);
+        }
+        aliases = std::move(result);
+        alias_bytes_.reset();
+    }
+    catch (const std::bad_alloc&) { throw; }
+    catch (const std::exception& e)
+    {
+        throw myexception()<<"Decoding aliases for cached module '"<<modid<<"': "<<e.what();
+    }
+}
+
 const_symbol_ptr CompiledModule::lookup_symbol(const std::string& name) const
 {
     if (is_haskell_builtin_con_name(name))
         return lookup_builtin_symbol(name);
 
+    load_aliases();
     int count = aliases.count(name);
     if (count == 0)
         throw myexception()<<"Indentifier '"<<name<<"' not declared.";
@@ -3565,6 +3597,9 @@ const_type_ptr CompiledModule::resolve_type_reference(const Program& program, co
 
 void CompiledModule::clear_symbol_table()
 {
+    aliases.clear();
+    alias_bytes_.reset();
+
     dependencies_.clear();
 
     // modid = keep
