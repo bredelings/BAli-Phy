@@ -203,12 +203,11 @@ class call_arity_analyzer
         auto co_called_with_binder = body_result.co_calls.neighbors(binder);
         co_called_with_binder.erase(binder);
         remove_variable(body_result, binder);
-        auto result = body_result;
-        merge_paths(result, rhs.result);
-        result.co_calls.add_bipartite(call_domain(rhs.result), co_called_with_binder);
+        merge_paths(body_result, rhs.result);
+        body_result.co_calls.add_bipartite(call_domain(rhs.result), co_called_with_binder);
 
         binder.id.call_arity = safe_call_arity;
-        return {Core::NonRec<>{{binder, std::move(rhs.expression)}}, std::move(result)};
+        return {Core::NonRec<>{{binder, std::move(rhs.expression)}}, std::move(body_result)};
     }
 
     // Analyze a recursive group conservatively without attempting an arity fixed point.
