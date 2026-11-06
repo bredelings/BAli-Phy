@@ -27,6 +27,7 @@
 #define CEREAL_FUTURE_EXPERIMENTAL 1
 #include <cereal/archives/adapters.hpp>
 
+#include "computation/program.hh"
 #include "computation/loader.hh" // for module_loader
 
 
@@ -746,7 +747,8 @@ namespace Core
 	void load(Archive& ar)
 	{
 	    ar(lib_name, func_name, call_conv, args);
-            const module_loader& loader = get_user_data<const module_loader>(ar);
+            const auto& program = get_user_data<const Program>(ar);
+            const auto& loader = *program.get_module_loader();
             op = loader.load_builtin_ptr(lib_name, func_name, call_conv);
             assert(not call_conv.empty());
             assert(op);

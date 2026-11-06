@@ -13,6 +13,7 @@
 #include "computation/closure.hh"
 #include "pool.hh"
 #include "computation/program.hh"
+#include "computation/fresh_vars.hh"
 #include <boost/container/small_vector.hpp>
 #include "computation/loader.hh"
 #include "computation/machine/eval_result.hh"

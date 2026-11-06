@@ -1,4 +1,6 @@
 #include "computation/loader.hh"
+#include "computation/module.hh"
+#include "computation/program.hh"
 #include "computation/machine/graph_register.hh"
 #include "computation/operation.hh"
 #include "computation/preprocess.hh"
@@ -122,6 +124,10 @@ namespace
     // Checks builtin serialization using loader metadata and inverse preprocessing.
     void check_builtin_serialization(const std::shared_ptr<module_loader>& loader)
     {
+        auto module = std::make_shared<Module>("Serialization");
+        module->language_extensions.set_extension(LangExt::ImplicitPrelude, false);
+        const Program program(loader, {module});
+
         auto op = loader->load_builtin_ptr("Num", "add_int", "ecall");
         std::vector<Core::Exp<>> args = {int_constant(1), int_constant(2)};
         Core::BuiltinOp<> builtin("Num", "add_int", "ecall", args, op);
@@ -136,8 +142,8 @@ namespace
 
         Runtime::Exp after;
         {
-            cereal::UserDataAdapter<const module_loader, cereal::BinaryInputArchive> archive(
-                *loader, buffer);
+            cereal::UserDataAdapter<const Program, cereal::BinaryInputArchive> archive(
+                program, buffer);
             archive(after);
         }
 

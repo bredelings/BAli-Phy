@@ -1,4 +1,5 @@
 #include "computation/program.hh"
+#include "computation/fresh_vars.hh"
 #include "computation/haskell/ids.hh"
 #include "computation/module.hh"
 #include "computation/loader.hh"

@@ -9,7 +9,8 @@
 #include <optional>
 #include <filesystem>
 #include "computation/object.hh"
-#include "computation/fresh_vars.hh"
+
+class FreshVarState;
 
 class module_loader;
 

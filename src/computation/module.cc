@@ -772,8 +772,9 @@ static string decompress_compile_artifact(std::string_view compressed)
     return data;
 }
 
-std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, const std::string& modid, const std::string& required_xxhash)
+std::shared_ptr<CompiledModule> read_cached_module(const Program& program, const std::string& modid, const std::string& required_xxhash)
 {
+    const auto& loader = *program.get_module_loader();
     if (loader.recompile_all or loader.recompile_modules.count(modid)) return {};
 
     if (auto path = loader.find_cached_module(modid))
@@ -793,7 +794,7 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
                 throw myexception()<<"archive failed integrity check: stored and computed archive integrity hash did not match.";
 
             std::istringstream data2(data);
-            cereal::UserDataAdapter<const module_loader, cereal::BinaryInputArchive> archive( loader, data2 );
+            cereal::UserDataAdapter<const Program, cereal::BinaryInputArchive> archive( program, data2 );
 
             std::shared_ptr<CompiledModule> M;
 
@@ -1156,7 +1157,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     auto& loader = *P.get_module_loader();
     simplifier_options& opts = loader;
 
-    if (auto C = read_cached_module(loader, MM->name, MM->all_inputs_hash(P)))
+    if (auto C = read_cached_module(P, MM->name, MM->all_inputs_hash(P)))
     {
 	if (log_verbose) std::cerr<<"[ Loading "<<MM->name<<" ]\n";
 	C->inflate(P);
@@ -1358,7 +1359,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // Check the compile artifact
     if (log_verbose)
     {
-	if (auto CM2 = read_cached_module(loader, MM->name, MM->all_inputs_hash(P)))
+	if (auto CM2 = read_cached_module(P, MM->name, MM->all_inputs_hash(P)))
 	{
 	    CM2->inflate(P);
 	    if (CM2->all_inputs_hash() != CM->all_inputs_hash())

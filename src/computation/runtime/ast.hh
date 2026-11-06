@@ -23,6 +23,7 @@
 #include <cereal/archives/adapters.hpp>
 #include "computation/haskell/Integer.hh"
 #include "computation/haskell/integer_container.hh"
+#include "computation/program.hh"
 #include "computation/loader.hh"
 #include "computation/object.hh"
 #include "computation/operation.hh"
@@ -821,7 +822,8 @@ namespace Runtime
         {
             ar(lib_name, func_name, call_conv, args);
 
-            const module_loader& loader = get_user_data<const module_loader>(ar);
+            const auto& program = get_user_data<const Program>(ar);
+            const auto& loader = *program.get_module_loader();
             void* op = loader.load_builtin_ptr(lib_name, func_name, call_conv);
             head = operation_from_builtin(op, lib_name, func_name, call_conv);
         }
