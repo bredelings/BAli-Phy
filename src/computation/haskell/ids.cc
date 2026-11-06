@@ -101,9 +101,12 @@ bool is_haskell_id_char(char32_t c);
 // Modifier letters and marks are allowed only after the first character.
 static bool is_haskell_varid_start(char32_t c)
 {
+    // ASCII categories are fixed, so these characters need no Unicode table lookup.
+    if (c <= 0x7F)
+        return (c >= U'a' and c <= U'z') or c == U'_';
+
     auto category = unicode::category(c);
-    return c == U'_' or
-           category == unicode::Category::lowercase_letter or
+    return category == unicode::Category::lowercase_letter or
            category == unicode::Category::other_letter;
 }
 
@@ -111,6 +114,10 @@ static bool is_haskell_varid_start(char32_t c)
 // controls which source text reaches this validator.
 static bool is_haskell_conid_start(char32_t c)
 {
+    // ASCII constructor identifiers start only with upper-case letters.
+    if (c <= 0x7F)
+        return c >= U'A' and c <= U'Z';
+
     auto category = unicode::category(c);
     return category == unicode::Category::uppercase_letter or
            category == unicode::Category::titlecase_letter;
@@ -247,15 +254,17 @@ bool is_haskell_conid(const std::string& s)
     return first and is_haskell_conid_start(first->code_point);
 }
 
-// Recognize identifier continuations with one Unicode category lookup per character.
+// Recognize ASCII continuations directly and classify other characters with one Unicode lookup.
 bool is_haskell_id_char(char32_t c)
 {
+    if (c <= 0x7F)
+        return (c >= U'a' and c <= U'z') or (c >= U'A' and c <= U'Z') or
+               (c >= U'0' and c <= U'9') or c == U'_' or c == U'\'';
+
     auto category = unicode::category(c);
     return unicode::is_letter(category) or
            category == unicode::Category::non_spacing_mark or
-           unicode::is_number(category) or
-           c == U'_' or
-           c == U'\'';
+           unicode::is_number(category);
 }
 
 bool is_haskell_symbol_char(char32_t c)
