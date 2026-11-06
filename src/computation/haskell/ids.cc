@@ -1,5 +1,6 @@
 #include "ids.hh"
 
+#include <algorithm>
 #include <cassert>
 #include <optional>
 #include <string_view>
@@ -61,10 +62,11 @@ std::string read_read_punctuation_name = "Text.Read.readPunctuation";
 std::string coercible_class_name = "Compiler.Prim.Coercible";
 std::string coerce_name = "Compiler.Prim.coerce";
 
+// Recognize tuple constructors directly without allocating a comparison string for each name.
 bool is_tuple_name(const string& s)
 {
-    if (s.size() < 3) return false;
-    return s == tuple_name(s.size()-1);
+    return s.size() >= 3 and s.front() == '(' and s.back() == ')' and
+           std::all_of(s.begin() + 1, s.end() - 1, [](char c) { return c == ','; });
 }
 
 int tuple_arity(const string& s)
