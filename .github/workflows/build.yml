@@ -617,38 +617,21 @@ jobs:
         test -s token0.dot
 
         # Use a reduced suite for DEBUG_MACHINE and sanitizer builds.
-        skip=none
-        case "${{ matrix.name }}" in
-          *-DEBUG_MACHINE) skip=some ;;
-          *-sanitize) skip=most ;;
-        esac
+        echo ::group::Test suite
+        meson test -C build --no-rebuild --print-errorlogs --num-processes 2 "${test_wrapper[@]}"
+        echo ::endgroup::
 
-        if [ "$skip" = "none" ] ; then
-            echo ::group::Test suite
-            meson test -C build --no-rebuild --print-errorlogs --num-processes 2 "${test_wrapper[@]}"
-            echo ::endgroup::
-        else
-            echo ::group::Reduced test suite
-            meson test -C build --no-rebuild --print-errorlogs --num-processes 2 \
-              'bali-phy testsuite prob_prog/demos/*' \
-              'bali-phy testsuite prob_prog/coal_mining' \
-              'bali-phy testsuite prob_prog/cluster/*'
-            echo ::endgroup::
-        fi
 
-        if [ "$skip" != "most" ] ; then
-           cd
-           cd testiphy
-           rm -rf tests/likelihood/one-sequence
+        cd ~/testiphy
+        rm -rf tests/likelihood/one-sequence
 
-           echo ::group::testiphy variable A
-           ./testiphy ${BALIPHY} --seed=$seed
-           echo ::endgroup::
+        echo ::group::testiphy variable A
+        ./testiphy ${BALIPHY} --seed=$seed
+        echo ::endgroup::
 
-             echo ::group::testiphy fixed A
-             ./testiphy ${BALIPHY} --seed=$seed -Inone
-             echo ::endgroup::
-        fi
+        echo ::group::testiphy fixed A
+        ./testiphy ${BALIPHY} --seed=$seed -Inone
+        echo ::endgroup::
 
     - name: Upload tests if they failed
       uses: actions/upload-artifact@v4
