@@ -593,10 +593,17 @@ std::optional<Type> TypeChecker::expand_type_synonym(const Type& type) const
 
     if (type.is_a<TypeCon>() or type.is_a<TypeApp>())
     {
-        auto [head, args] = decompose_type_apps(type);
+        // Most applications are not synonyms. Follow their heads without allocating arguments,
+        // including filled metavariables at each step, just as decompose_type_apps does.
+        Type head = follow_meta_type_var(type);
+        while(auto app = head.to<TypeApp>())
+            head = follow_meta_type_var(app->head);
 
         if (auto tsyn = maybe_find_type_synonym(head))
+        {
+            auto [_, args] = decompose_type_apps(type);
             return tsyn->expand(args);
+        }
     }
 
     return {};
