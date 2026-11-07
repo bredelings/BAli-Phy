@@ -182,24 +182,25 @@ foreach mode, name : {'standalone': 'generated program runtime modes',
              python_test_wrapper_args +
              ['--', baliphy.full_path(), packagepath],
        timeout: 600,
-       suite: 'heavy')
+       suite: 'long-running')
 endforeach
 
 # When running on very slow autobuilders these tests could take a long time.
-# They are tagged into the 'heavy' suite, so that a slow machine can skip them
-# with "meson test --no-suite heavy" instead of waiting for them to time out.
+# They are tagged into the 'long-running' suite, so that a slow machine can
+# skip them with "meson test --no-suite long-running" instead of waiting for
+# them to time out.
 test('bali-phy 5d test', baliphy,
      args:['--seed', randomseed, packagepath, small_fasta, '--test'], timeout: 300,
-     suite: 'heavy')
+     suite: 'long-running')
 test('bali-phy 5d +A 50', baliphy,
      args:['--seed', randomseed, '-V', packagepath, small_fasta, '--iterations=50'], timeout: 300,
-     suite: 'heavy')
+     suite: 'long-running')
 test('bali-phy 48 +A 3', baliphy,
      args:['--seed', randomseed, '-V', packagepath, big_fasta, '--iterations=3'], timeout: 600,
-     suite: 'heavy')
+     suite: 'long-running')
 test('bali-phy 5d -A 200', baliphy,
      args:['--seed', randomseed, '-V', packagepath, small_fasta, '--iterations=200', '-Inone'], timeout:300,
-     suite: 'heavy')
+     suite: 'long-running')
 
 all_progs = ['bali-phy']
 
