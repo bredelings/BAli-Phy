@@ -1815,6 +1815,7 @@ void Module::perform_exports()
 
 void Module::clear_symbol_table()
 {
+    resolved_type_cache.clear();
     effective_defaults.clear();
     symbols.clear();
     aliases.clear();
@@ -2673,17 +2674,27 @@ const_type_ptr Module::lookup_type(const std::string& name) const
 
 const_type_ptr Module::lookup_resolved_type(const std::string& type_name) const
 {
+    if (auto it = resolved_type_cache.find(type_name); it != resolved_type_cache.end())
+        return it->second;
+
+    const_type_ptr result;
     // 1. Handle builtin names
     if (is_haskell_builtin_type_name(type_name))
-        return lookup_builtin_type(type_name);
+        result = lookup_builtin_type(type_name);
 
     // 2. Handle local names
     else if (name == get_module_name(type_name))
-        return lookup_local_type(type_name);
+        result = lookup_local_type(type_name);
 
     // 3. Handle external names
     else
-        return lookup_external_type(type_name);
+        result = lookup_external_type(type_name);
+
+    // Declarations and imports add objects without replacing existing lookup targets.
+    // Do not cache misses: the declaration may become available later.
+    if (result)
+        resolved_type_cache.emplace(type_name, result);
+    return result;
 }
 
 const_type_ptr Module::lookup_local_type(const std::string& type_name) const

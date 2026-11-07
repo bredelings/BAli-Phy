@@ -3,6 +3,7 @@
 
 #include <set>
 #include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 #include <utility>                                  // for pair
@@ -75,6 +76,9 @@ class Module
     std::multimap<std::string, FieldInfo> field_aliases;
 
     std::map<std::string, type_ptr> types;
+
+    // Successful lookups retain the objects whose metadata is filled in during typechecking.
+    mutable std::unordered_map<std::string, const_type_ptr> resolved_type_cache;
 
     std::multimap<std::string, const_type_ptr> type_aliases;
 
