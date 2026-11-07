@@ -288,7 +288,7 @@ foreach tool: tools + prefixed_tools
   tool_exe = executable(name,
 			sources,
 			include_directories: [root_inc, libutil_inc, libmcon_inc],
-			dependencies: deps,
+			dependencies: [allocator_dep] + deps,
 			link_with: [libutil,libcommon,libmcon],
 			build_rpath: build_rpath,
                              install_rpath: extra_rpath,

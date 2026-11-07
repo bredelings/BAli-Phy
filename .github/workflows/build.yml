@@ -164,7 +164,7 @@ jobs:
 
         sudo apt-get update
         sudo apt-get install -y pandoc
-        sudo apt-get install -y libeigen3-dev libcairo2-dev libcli11-dev libzstd-dev
+        sudo apt-get install -y libeigen3-dev libcairo2-dev libcli11-dev libzstd-dev libjemalloc-dev
         sudo apt-get install -y r-base
 
         if [ "${{ matrix.compiler }}" = "gcc" ] ; then
@@ -266,7 +266,7 @@ jobs:
 
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 # Don't try and install python3.12
           brew install pandoc ccache coreutils
-          brew install eigen cairo cli11 fmt zstd
+          brew install eigen cairo cli11 fmt zstd jemalloc
           brew install r
           if [ "${{ matrix.compiler }}" = "llvm" ] ; then
             brew install llvm
@@ -548,6 +548,18 @@ jobs:
         if [ -n "${BOOST_ROOT}" -a -e "${BOOST_ROOT}/lib" ] ; then
             cp ${BOOST_ROOT}/lib/libboost*dylib* ${OUTPUT}/lib/bali-phy/
         fi
+
+    - name: Bundle jemalloc (Linux)
+      if: runner.os == 'Linux' && matrix.name != 'windows-cross'
+      run: |
+        python3 scripts/package-jemalloc.py "$HOME/local" \
+          --license /usr/share/doc/libjemalloc2/copyright
+
+    - name: Bundle jemalloc (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        python3 scripts/package-jemalloc.py "$HOME/local" \
+          --license "$(brew --prefix jemalloc)/COPYING"
 
     - name: Ad hoc sign Mac executables
       if: runner.os == 'macOS'

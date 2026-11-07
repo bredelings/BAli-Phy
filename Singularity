@@ -13,7 +13,7 @@ From: ubuntu:26.04
     python3 -m venv /venv
     /venv/bin/pip install meson ninja
 
-    apt-get install -y libboost-all-dev nlohmann-json3-dev libeigen3-dev libcairo2-dev libcli11-dev
+    apt-get install -y libboost-all-dev nlohmann-json3-dev libeigen3-dev libcairo2-dev libcli11-dev libjemalloc-dev
 
     # For run-time environment.
     apt-get install -y gnuplot r-base
@@ -27,7 +27,7 @@ From: ubuntu:26.04
     cd /bali-phy
     git clone https://github.com/bredelings/BAli-Phy.git git
     ( cd git; git checkout {{ version }} )
-    meson setup git build --prefix=${SCIF_APPROOT} --buildtype=release
+    meson setup git build --prefix=${SCIF_APPROOT} --buildtype=release -Dallocator=jemalloc
     ninja -C build install
 
 %labels

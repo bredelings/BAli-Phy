@@ -13,13 +13,21 @@ else
   extension = 'so'
 endif
 
+builtin_rpath = ''
+if host_machine.system() == 'darwin'
+  builtin_rpath = '@loader_path'
+elif host_machine.system() == 'linux'
+  builtin_rpath = '$ORIGIN'
+endif
+
 foreach mod : builtins
   shared_module(mod,
 		mod + '.cc',
 		include_directories: [source_inc, root_inc, libmcon_inc, libutil_inc],
-		dependencies: [boost, eigen, immer, cereal],
+		dependencies: [allocator_dep, boost, eigen, immer, cereal],
 		link_with: implibs,
 		install_dir: 'lib/bali-phy',
+		install_rpath: builtin_rpath,
 		name_prefix: '',
 		name_suffix: extension,
 		install: true)

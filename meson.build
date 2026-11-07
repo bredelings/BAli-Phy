@@ -85,6 +85,42 @@ endif
 
 # 4. Dependencies
 
+# Select for the host, including Windows cross-builds on Linux. AddressSanitizer
+# must retain its own allocation interception instead of linking jemalloc.
+allocator_request = get_option('allocator')
+allocator_used = 'system'
+allocator_dep = declare_dependency()
+allocator_supported = host_machine.system() in ['linux', 'darwin']
+address_sanitizer = get_option('b_sanitize').contains('address')
+if allocator_request == 'jemalloc' and (not allocator_supported or address_sanitizer)
+  error('jemalloc requires Linux/macOS without AddressSanitizer; use -Dallocator=system')
+endif
+if allocator_request != 'system' and allocator_supported and not address_sanitizer
+  jemalloc_dep = dependency('jemalloc', method: 'pkg-config', static: false,
+                           required: allocator_request == 'jemalloc', allow_fallback: false)
+  if jemalloc_dep.found()
+    # Compiler drivers may enable --as-needed even when Meson's b_asneeded is false.
+    # Retain jemalloc for targets without direct allocation calls as well.
+    if host_machine.system() == 'linux'
+      jemalloc_library = jemalloc_dep.get_variable(pkgconfig: 'libdir') / 'libjemalloc.so'
+      # Keep this sequence in one argument so Meson cannot deduplicate or reorder the
+      # library away from its flags. Restore the linker state before other dependencies.
+      allocator_keep = ['-Wl,--push-state,--no-as-needed,' + jemalloc_library + ',--pop-state']
+    else
+      jemalloc_library = jemalloc_dep.get_variable(pkgconfig: 'libdir') / 'libjemalloc.dylib'
+      allocator_keep = ['-Wl,-needed_library,' + jemalloc_library]
+    endif
+    allocator_dep = declare_dependency(dependencies: jemalloc_dep, link_args: allocator_keep)
+    allocator_used = 'jemalloc ' + jemalloc_dep.version()
+  else
+    warning('jemalloc was not found; using the system allocator. ' +
+            'Install jemalloc development files or select -Dallocator=system.')
+  endif
+elif allocator_request == 'auto' and address_sanitizer
+  message('AddressSanitizer enabled: using the system allocator')
+endif
+
+
 threads = dependency('threads')
 
 if host_machine.system() == 'darwin'
@@ -304,6 +340,7 @@ summary({'optimization': get_option('optimization'),
         },section: 'Configuration')
 
 summary({
+         'allocator': allocator_used,
          'cairo': used_cairo,
          'RE/flex': 'bundled 6.3.0 (portable runtime)'
         },section: 'Libraries')

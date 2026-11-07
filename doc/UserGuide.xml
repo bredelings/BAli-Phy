@@ -4327,9 +4327,11 @@ The stabilization criterion is the same one described above for numerical values
     is used to draw consensus trees won&apos;t be built. See also <xref linkend="software_req"/>.
     </para>
 
+    <para>Jemalloc is an optional memory allocator that can improve performance.</para>
+
     <section><info><title>Linux</title></info>
     <para>On Debian and Ubuntu, you can type:
-<screen><prompt>%</prompt> <userinput>sudo apt-get install g++-14 git libcairo2-dev pandoc libboost-all-dev libcli11-dev</userinput>
+<screen><prompt>%</prompt> <userinput>sudo apt-get install g++-14 git libcairo2-dev pandoc libboost-all-dev libcli11-dev libjemalloc-dev</userinput>
 <prompt>%</prompt> <userinput>export CC=gcc-14 CXX=g++-14</userinput></screen>
 
     </para>
@@ -4361,7 +4363,7 @@ Otherwise you can install meson through pip3:
     <section><info><title>Mac</title></info>
     <para>On macOS, the simplest way to get a compiler is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">Xcode</link> version 16 (or newer) command line tools, which come with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://clang.llvm.org/">Clang</link>.
  <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>    To get the other tools, first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://brew.sh/">Homebrew</link>, and then type:
-<screen><prompt>%</prompt> <userinput>brew install git meson cairo pandoc</userinput></screen>
+<screen><prompt>%</prompt> <userinput>brew install git meson cairo pandoc jemalloc</userinput></screen>
     </para>
     <!-- para>You can also install BAli-Phy with homebrew.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>. However, this recipe may not install the latest version.</para -->
 
@@ -4426,6 +4428,9 @@ The command <command>bali-phy</command> and its associated tools should then be 
  For example, you can set the CPPFLAGS and LDFLAGS variables to instruct the compiler where to look for libraries, such as cairo:
 	  <screen><prompt>%</prompt> <userinput>CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" meson setup build --prefix="$HOME/Applications/bali-phy-&version;" --buildtype=release</userinput></screen>
       </para>
+      <para>To use the system memory allocator, pass <option>-Dallocator=system</option> to Meson.
+        To require jemalloc, pass <option>-Dallocator=jemalloc</option>; configuration will fail
+        if it cannot be used.</para>
       </section>
 
     </section>

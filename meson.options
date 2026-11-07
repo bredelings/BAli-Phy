@@ -8,3 +8,6 @@ option('build-rpath', type: 'string', value: '',
 
 option('debug-dependent-replay', type: 'boolean', value: false,
        description: 'Check dependent replay edges and requests, and enable optional tracing')
+
+option('allocator', type: 'combo', choices: ['auto', 'jemalloc', 'system'], value: 'auto',
+       description: 'Memory allocator (auto prefers jemalloc on Linux/macOS, except with AddressSanitizer)')

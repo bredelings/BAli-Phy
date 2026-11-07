@@ -129,11 +129,15 @@ def exec_show(cmd, **kwargs):
             exit(code)
     return (out_message, result)
 
-def configure(source_dir, build_dir, install_parent):
+# Forward an explicit allocator choice; omit it when benchmarking older revisions.
+def configure(source_dir, build_dir, install_parent, allocator):
+    allocator_args = [] if allocator is None else [f'-Dallocator={allocator}']
 
     if not os.path.isdir(build_dir):
         os.mkdir(build_dir)
-        meson_out, meson_result = exec_show(['meson','setup', source_dir, build_dir, f'--prefix={install_parent}', '--reconfigure'])
+        meson_out, meson_result = exec_show(
+            ['meson', 'setup', source_dir, build_dir, f'--prefix={install_parent}', '--reconfigure']
+            + allocator_args)
         if meson_result.returncode != 0:
             sys.stderr.write(f"Removing directory {build_dir}!\n")
             logging.warning(f"Removing directory {build_dir}!")
@@ -142,7 +146,9 @@ def configure(source_dir, build_dir, install_parent):
         else:
             return True
     else:
-        meson_out, meson_result = exec_show(['meson','setup', source_dir, build_dir, f'--prefix={install_parent}', '--reconfigure'])
+        meson_out, meson_result = exec_show(
+            ['meson', 'setup', source_dir, build_dir, f'--prefix={install_parent}', '--reconfigure']
+            + allocator_args)
         if meson_result.returncode != 0:
             return False
         else:
@@ -152,8 +158,8 @@ def do_compile(build_dir):
     meson_out, meson_result = exec_show(['meson','install', '-C', build_dir])
     return meson_result.returncode == 0
 
-def build(source_dir, build_dir, install_parent):
-    if configure(source_dir, build_dir, install_parent):
+def build(source_dir, build_dir, install_parent, allocator):
+    if configure(source_dir, build_dir, install_parent, allocator):
         logging.info("configure: OK")
         if do_compile(build_dir):
             logging.info("compile: OK")
@@ -187,6 +193,8 @@ parser.add_argument("--reps", type=int, default=10, help="Be verbose")
 #parser.add_argument("--min-mapping-quality", default=1, type=int,nargs='+',help="Skip reads with a lower mapping quality (default is 1)")
 #parser.add_argument("--max-soft-clipped", type=int, default=0, help="Skip reads with a higher number of soft-clipped bases (default is 0)")
 #parser.add_argument("output", help="Output prefix")
+parser.add_argument('--allocator', choices=['auto', 'jemalloc', 'system'],
+                    help='Allocator for revisions supporting the Meson allocator option')
 args = parser.parse_args()
 
 if args.verbose:
@@ -209,7 +217,7 @@ for commit in commits:
     repo.git.checkout(commit)
 
     logging.info(f"Building executable {commit}")
-    exe = build(args.repo, build_dir, install_dir)
+    exe = build(args.repo, build_dir, install_dir, args.allocator)
 
     cmd = [exe, '48-muscle.fasta', '--pre-burnin=0', '--iterations=25']
     #cmd = ['ls','/dev/']

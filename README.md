@@ -22,14 +22,16 @@ Install Prerequisites
 ---------------------
 On Ubuntu 24.04 (or higher), or on Debian testing, you can use apt-get:
 ```bash
-sudo apt-get install g++-14 libcairo2-dev meson libboost-all-dev libcli11-dev pandoc
+sudo apt-get install g++-14 libcairo2-dev meson libboost-all-dev libcli11-dev libjemalloc-dev pandoc
 export CC=gcc-14 CXX=g++-14
 ```
 
 On Mac (or Linux, actually) you can use homebrew:
 ```bash
-brew install cairo meson boost cli11
+brew install cairo meson boost cli11 jemalloc
 ```
+
+Jemalloc is an optional memory allocator that can improve performance.
 
 On miniconda, you can use:
 ```

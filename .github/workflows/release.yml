@@ -99,7 +99,7 @@ jobs:
 
         sudo apt-get update
         sudo apt-get install -y pandoc
-        sudo apt-get install -y libeigen3-dev libcairo2-dev libcli11-dev libzstd-dev
+        sudo apt-get install -y libeigen3-dev libcairo2-dev libcli11-dev libzstd-dev libjemalloc-dev
         sudo apt-get install -y r-base
 
         if [ "${{ matrix.compiler }}" = "gcc" ] ; then
@@ -201,7 +201,7 @@ jobs:
 
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 # Don't try and install python3.12
           brew install pandoc ccache coreutils
-          brew install eigen cairo cli11 fmt zstd
+          brew install eigen cairo cli11 fmt zstd jemalloc
           brew install r
           if [ "${{ matrix.compiler }}" = "llvm" ] ; then
             brew install llvm
@@ -295,6 +295,7 @@ jobs:
     - name: Configure
       if: matrix.name != 'windows-native-mingw'
       run: |
+        ARGS="${ARGS} -Dallocator=jemalloc"
         CPPARGS=""
         if [ "${{ matrix.sanitize }}" != "" ] ; then
            # Keep symbols in instrumented builds so sanitizer reports name their source locations.
@@ -402,6 +403,18 @@ jobs:
         if [ -n "${BOOST_ROOT}" -a -e "${BOOST_ROOT}/lib" ] ; then
             cp ${BOOST_ROOT}/lib/libboost*dylib* ${OUTPUT}/lib/bali-phy/
         fi
+
+    - name: Bundle jemalloc (Linux)
+      if: runner.os == 'Linux' && matrix.name != 'windows-cross'
+      run: |
+        python3 scripts/package-jemalloc.py "$HOME/local" --required \
+          --license /usr/share/doc/libjemalloc2/copyright
+
+    - name: Bundle jemalloc (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        python3 scripts/package-jemalloc.py "$HOME/local" --required \
+          --license "$(brew --prefix jemalloc)/COPYING"
 
     - name: Ad hoc sign Mac executables
       if: runner.os == 'macOS'
@@ -568,6 +581,25 @@ jobs:
         cp -a "$OUTPUT" "$PACKAGE"
         tar -zcf "$TAR" "$PACKAGE"
         echo "archive=${TAR}" >> $GITHUB_OUTPUT
+
+    # Check relocation and the bundled allocator; installed-prefix tests can hide missing libraries.
+    # Keep this check while Unix archives ship their own jemalloc shared library.
+    - name: Test extracted Unix archive
+      if: runner.os != 'Windows'
+      env:
+        ARCHIVE: ${{ steps.create_tarball.outputs.archive }}
+        PACKAGE_VERSION: ${{ steps.get_version.outputs.version }}
+      run: |
+        unpack="$RUNNER_TEMP/release archive check"
+        mkdir -p "$unpack"
+        tar -xzf "$ARCHIVE" -C "$unpack"
+        package="$unpack/bali-phy-$PACKAGE_VERSION"
+        unset LD_PRELOAD LD_LIBRARY_PATH DYLD_INSERT_LIBRARIES DYLD_LIBRARY_PATH DYLD_FALLBACK_LIBRARY_PATH
+        python3 scripts/package-jemalloc.py "$package" --check
+        cd "$unpack"
+        "$package/bin/bali-phy" "$package/share/doc/bali-phy/examples/5S-rRNA/5d-muscle.fasta" \
+          --seed="$seed" --iterations=50 --name=archive-run
+        "$package/bin/statreport" archive-run-1/C1.log
 
     - name: Test extracted Windows archive
       if: runner.os == 'Windows'

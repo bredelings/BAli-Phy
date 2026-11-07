@@ -32,7 +32,7 @@ endif
 baliphy = executable('bali-phy',
 		     baliphy_sources,
 		     include_directories: [root_inc, libutil_inc],
-		     dependencies: [boost, cli11, eigen, libdl, math_dep, fmt, cereal, immer],
+		     dependencies: [allocator_dep, boost, cli11, eigen, libdl, math_dep, fmt, cereal, immer],
 		     link_whole: [libutil, libmcon, libcommon, libcomputation, libbaliphy],
 		     link_args: baliphy_link_args,
 		     build_rpath: build_rpath,
