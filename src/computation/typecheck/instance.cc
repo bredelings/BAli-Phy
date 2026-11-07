@@ -272,7 +272,7 @@ void TypeChecker::add_type_instance(const TypeFamEqnInfo& equation)
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
 
-    this_mod().local_instances.insert( {dvar, *S.instance_info} );
+    add_local_instance(dvar, *S.instance_info);
     this_mod().local_eq_instances.insert( {dvar, *S.eq_instance_info} );
 }
 
@@ -701,7 +701,7 @@ TypeChecker::infer_type_for_instances1(const Hs::Decls& decls)
                 assert(inst_info);
 
                 named_instances.push_back({dfun, *I});
-                this_mod().local_instances.insert( {dfun, *inst_info} );
+                add_local_instance(dfun, *inst_info);
             }
         }
         else if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
@@ -1157,6 +1157,32 @@ TypeFamEqnInfo TypeChecker::freshen(TypeFamEqnInfo info)
 // 7. Unless we actually FORBID unification of variables at any higher level, then this won't work.
 // 8. Simply forbidding substitution to a deeper depth won't cut it.
 
+// Keep an already-built index current when adding local instances. References to map
+// entries also observe later constraint updates made by deriving.
+void TypeChecker::add_local_instance(const Core::Var<>& dfun, const InstanceInfo& info)
+{
+    auto [it, inserted] = this_mod().local_instances.insert({dfun, info});
+    if (inserted and global_state->instances_by_class)
+        (*global_state->instances_by_class)[info.class_con.name].push_back(&*it);
+}
+
+// Index local and imported instances once, retaining references rather than copying metadata.
+// Lookup still compares all candidates for specificity; their order does not break ties.
+const vector<const InstanceEnv::value_type*>& TypeChecker::instances_for_class(const TypeCon& class_con)
+{
+    auto& index = global_state->instances_by_class;
+    if (not index)
+    {
+        index.emplace();
+        for(const auto& entry: this_mod().local_instances)
+            (*index)[entry.second.class_con.name].push_back(&entry);
+        for(const auto& [_, mod]: this_mod().transitively_imported_modules)
+            for(const auto& entry: mod->local_instances())
+                (*index)[entry.second.class_con.name].push_back(&entry);
+    }
+    return (*index)[class_con.name];
+}
+
 // FIXME! Change this to take a Constraint, which includes the tc_state for the constraint we are trying to satisfy.
 optional<pair<Core::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target_pred)
 {
@@ -1169,36 +1195,29 @@ optional<pair<Core::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target_
     // It IS possible to have an instance like (HasRoots t, IsTree t) => HasRoot t.
     // So we can't bail just because all the arguments in target_pred are type variables.
 
-    vector<const InstanceEnv*> instance_envs({&this_mod().local_instances});
-    for(auto& [modid, mod]: this_mod().transitively_imported_modules)
-        instance_envs.push_back(&mod->local_instances());
-
-    for(auto& instance_env: instance_envs)
+    for(const auto* entry: instances_for_class(target_class))
     {
-        for(auto& [dfun, info_]: *instance_env)
+        const auto& [dfun, info_] = *entry;
+
+        auto info = freshen(info_);
+
+        auto instance_head = ::instance_head(info);
+
+        if (auto subst = maybe_match(instance_head, target_pred))
         {
-            if (info_.class_con != target_class) continue;
+            auto preds = apply_subst(*subst, info.constraints);
 
-            auto info = freshen(info_);
+            auto wanteds = preds_to_constraints(InstanceOrigin(), Wanted, preds);
 
-            auto instance_head = ::instance_head(info);
+            auto type = apply_subst(*subst, instance_head);
 
-            if (auto subst = maybe_match(instance_head, target_pred))
-            {
-                auto preds = apply_subst(*subst, info.constraints);
+            Core::Exp<> dfun_exp = make_apply<>(Core::Exp<>(dfun), dict_vars_from_lie(wanteds));
 
-                auto wanteds = preds_to_constraints(InstanceOrigin(), Wanted, preds);
-
-                auto type = apply_subst(*subst, instance_head);
-
-                Core::Exp<> dfun_exp = make_apply<>(Core::Exp<>(dfun), dict_vars_from_lie(wanteds));
-
-                matching_instances.push_back({{dfun_exp, wanteds}, type, instance_head, info_});
-            }
-            else if (auto subst = maybe_unify(instance_head, target_pred))
-            {
-                unifying_instances.push_back(info);
-            }
+            matching_instances.push_back({{dfun_exp, wanteds}, type, instance_head, info_});
+        }
+        else if (auto subst = maybe_unify(instance_head, target_pred))
+        {
+            unifying_instances.push_back(info);
         }
     }
 

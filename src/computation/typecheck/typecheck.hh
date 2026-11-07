@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <bitset>
 #include "immer/map.hpp" // for immer::map
 #include "kindcheck.hh"
@@ -71,6 +72,9 @@ struct global_tc_state
 
     DefaultEnv default_env;
 
+    // Imports are fixed before typechecking; local map entries keep their addresses.
+    std::optional<std::unordered_map<std::string, std::vector<const InstanceEnv::value_type*>>> instances_by_class;
+
     std::optional<int> unification_level;
 
     global_tc_state(Module& m);
@@ -103,6 +107,9 @@ class TypeChecker: FreshVarSource
 
     //------- local state ------------//
     cow_ptr<TypeCheckerContext> local_state;
+
+    void add_local_instance(const Core::Var<>& dfun, const InstanceInfo& info);
+    const std::vector<const InstanceEnv::value_type*>& instances_for_class(const TypeCon& class_con);
 
 public:
           Module& this_mod()        {return global_state->this_mod;}
