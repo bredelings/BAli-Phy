@@ -225,7 +225,7 @@ subdir('doc')
 run_tests = meson.project_source_root()/'tests/run-tests.py'
 test_dir = meson.project_source_root()/'tests'
 
-test_list = run_command(python, run_tests, 'listdir', test_dir, baliphy.full_path(), check: false).stdout().split()
+test_list = run_command(python, run_tests, 'listdir', test_dir, baliphy.full_path(), check: true).stdout().split()
 foreach test: test_list
   test('bali-phy testsuite ' + test,
        python,

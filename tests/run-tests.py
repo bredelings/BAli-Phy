@@ -212,12 +212,21 @@ class Tester:
     def rundir_for_test(self, test_subdir):
         return self.top_test_dir / test_subdir
 
+    # Discover all cases before execution and reject layouts that would run descendants twice.
     def get_test_dirs(self):
         test_dirs = []
         for root, dirs, files in os.walk(self.top_test_dir):
             if self.method.control_file() in files:
                 path = os.path.relpath(root, self.top_test_dir)
                 test_dirs.insert(0,path)
+        test_paths = {pathlib.Path(path) for path in test_dirs}
+        for path in sorted(test_paths):
+            for parent in path.parents:
+                if parent in test_paths:
+                    raise ValueError(
+                        f"Nested tests are not allowed: '{self.top_test_dir / parent}' "
+                        f"contains test '{self.top_test_dir / path}' "
+                        f"({self.method.control_file()}).")
         return test_dirs
 
     def run_test_cmd(self,test_subdir):
@@ -538,7 +547,8 @@ def build_argument_parser():
   %(prog)s run tests/haskell -j7 -- bali-phy --seed=0
   %(prog)s listdir tests/haskell bali-phy
 
-The run and test commands require the tested program after `--`.""",
+The run and test commands require the tested program after `--`.
+For each tested program, a test directory must not contain another test directory.""",
         formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = parser.add_subparsers(dest='command', required=True)
 
@@ -657,8 +667,12 @@ def main(arguments=None):
         print_test_matrix(test_matrix_from_dict(
             results_dict(top_test_dir, data_dir, options.programs),
             options.programs))
-    return 1
+    return 0
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except ValueError as e:
+        error(str(e))
+        sys.exit(1)
