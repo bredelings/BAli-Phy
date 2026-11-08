@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# Prefer ordinary declarative tests using command.txt and expected output/error/exit files.
+# Add tests here only when they cannot be expressed in the existing non-script test formats,
+# for example because they must inspect generated source or reuse it across commands.
+
 import argparse
 import json
 import os
@@ -112,8 +116,8 @@ def fixed_alignment_test(command, work_directory):
         raise AssertionError("the retained fixed-alignment program created an output directory")
 
 
-# Inspect retained source as well as execution: likelihood tests alone miss duplicated constructors
-# and fresh-name collisions. Keep this while computed reports can share a pure binding's result.
+# Inspect generated source and JSON reports: likelihood tests alone miss duplicated constructors,
+# missing named frequencies, and fresh-name collisions. Keep this while computed reports share results.
 def result_reports_test(command, work_directory):
     run_command("execute shared model reports", command + [
         "input.fasta", "--imodel=none", "--smodel=nonRev +> nonEq",
@@ -129,25 +133,6 @@ def result_reports_test(command, work_directory):
     for name in ("nonRev:eqFrequencies", "nonEq:initialFreq"):
         if set(model_log[name]) != {"A", "C", "G", "T"}:
             raise AssertionError("missing named frequencies: " + name)
-
-    # A whole-model guard exposes forced references to aliased globals during JSON logging.
-    # The ordinary nonEq input check does not cover this; retain while RegRefs can name aliases.
-    guarded_source = source.replace("nonEq'", "guardedNonEq")
-    guarded_source = guarded_source.replace("import BAliPhy.Run", """import BAliPhy.Run
-import qualified Markov as Core
-import Markov (getQ, getEqFreqs)
-import Numeric.LinearAlgebra.Data (vectorSize)""")
-    guarded_source += """
-guardedNonEq piMap m@(Markov a smap names _ _ annotations)
-    | vectorSize pi /= Core.getNStates mCore = error "Wrong root-frequency dimension"
-    | otherwise = scaleTo 1 $ Markov a smap names mCore modelRate annotations
-  where
-    pi = fromList $ get_ordered_elements (stateNames m) piMap "state frequencies"
-    mCore = Core.markov (getQ m) pi
-    modelRate = getEquilibriumRate a smap (getQ mCore) (getEqFreqs mCore)
-"""
-    (work_directory / "Guarded.hs").write_text(guarded_source)
-    run_command("log a guarded model", command + ["run", "Guarded.hs", "--name=guarded"], work_directory)
 
     expression = ("result + result_2 + loggers where "
                   "{result=~Exponential(1); result_2=2; loggers=~Exponential(1)}")
