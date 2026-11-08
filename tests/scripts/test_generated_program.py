@@ -130,6 +130,25 @@ def result_reports_test(command, work_directory):
         if set(model_log[name]) != {"A", "C", "G", "T"}:
             raise AssertionError("missing named frequencies: " + name)
 
+    # A whole-model guard exposes forced references to aliased globals during JSON logging.
+    # The ordinary nonEq input check does not cover this; retain while RegRefs can name aliases.
+    guarded_source = source.replace("nonEq'", "guardedNonEq")
+    guarded_source = guarded_source.replace("import BAliPhy.Run", """import BAliPhy.Run
+import qualified Markov as Core
+import Markov (getQ, getEqFreqs)
+import Numeric.LinearAlgebra.Data (vectorSize)""")
+    guarded_source += """
+guardedNonEq piMap m@(Markov a smap names _ _ annotations)
+    | vectorSize pi /= Core.getNStates mCore = error "Wrong root-frequency dimension"
+    | otherwise = scaleTo 1 $ Markov a smap names mCore modelRate annotations
+  where
+    pi = fromList $ get_ordered_elements (stateNames m) piMap "state frequencies"
+    mCore = Core.markov (getQ m) pi
+    modelRate = getEquilibriumRate a smap (getQ mCore) (getEqFreqs mCore)
+"""
+    (work_directory / "Guarded.hs").write_text(guarded_source)
+    run_command("log a guarded model", command + ["run", "Guarded.hs", "--name=guarded"], work_directory)
+
     expression = ("result + result_2 + loggers where "
                   "{result=~Exponential(1); result_2=2; loggers=~Exponential(1)}")
     for attempt in range(2):

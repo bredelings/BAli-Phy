@@ -609,13 +609,12 @@ EvalResult reg_heap::incremental_evaluate1_unevaluated_(int r)
 
             assert( not has_step1(r) );
 
-            bool was_index_var = is_index_var_code(closure_at(r));
             int r2 = closure_at(r).reg_for_ref();
 
             auto [r3, result] = incremental_evaluate1(r2);
 
-            // If this is an index_var, update it to point to the end of the ref_no_force chain.
-            if (was_index_var and r2 != r3) regs[r].C.Env[0] = r3;
+            // Bypass no-force aliases for either reference representation.
+            if (r2 != r3) retarget_reg_ref(r, r3);
 
             if (regs[r].used_forced_regs.empty())
             {
@@ -627,8 +626,10 @@ EvalResult reg_heap::incremental_evaluate1_unevaluated_(int r)
                 assert(edge.mode == use_force_mode::force);
 
             int r4 = follow_reg_ref(r3);
-            if (was_index_var and r3 != r4) regs[r].C.Env[0] = r4;
+            if (r3 != r4) retarget_reg_ref(r, r4);
 
+            assert(closure_at(r).reg_for_ref() == r4);
+            assert(not closure_at(r4).is_reg_ref());
             mark_reg_ref_with_force(r);
 
             if (not reg_is_constant(r3))
@@ -1228,12 +1229,11 @@ EvalResult reg_heap::incremental_evaluate2_unevaluated_(int r)
 
             assert( not has_step1(r) );
 
-            bool was_index_var = is_index_var_code(closure_at(r));
             int r2 = closure_at(r).reg_for_ref();
             auto [r3, result] = incremental_evaluate2(r2, false);
 
-            // If this is an index_var, update it to point to the end of the ref_no_force chain.
-            if (was_index_var and r2 != r3) regs[r].C.Env[0] = r3;
+            // Bypass no-force aliases for either reference representation.
+            if (r2 != r3) retarget_reg_ref(r, r3);
 
             if (regs[r].used_forced_regs.empty())
             {
@@ -1245,8 +1245,10 @@ EvalResult reg_heap::incremental_evaluate2_unevaluated_(int r)
                 assert(edge.mode == use_force_mode::force);
 
 	    int r4 = follow_reg_ref(r3);
-	    if (was_index_var and r3 != r4) regs[r].C.Env[0] = r4;
+	    if (r3 != r4) retarget_reg_ref(r, r4);
 
+            assert(closure_at(r).reg_for_ref() == r4);
+            assert(not closure_at(r4).is_reg_ref());
 	    mark_reg_ref_with_force(r);
 
             if (not reg_is_constant(r3))

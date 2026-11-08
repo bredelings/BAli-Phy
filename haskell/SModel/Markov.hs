@@ -142,7 +142,6 @@ nonEq pi m@(Markov a smap names _ _ annotations) =
     scaleTo 1 $ Markov a smap names mCore modelRate annotations
   where
     -- Check the input vector without making the whole model depend on this check.
-    -- Workaround: guarding the whole model triggers a runtime reference-chain assertion.
     checkedPi | vectorSize pi == Markov.getNStates m = pi
               | otherwise = error "nonEq: expected one frequency per CTMC state"
     mCore = Markov.markov (getQ m) checkedPi

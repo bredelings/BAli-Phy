@@ -766,6 +766,27 @@ public:
     int follow_reg_ref_target(int r) const;
     int follow_reg_ref_no_force(int r) const;
     int follow_single_force_ref(int r) const;
+
+    // Retarget only the value reference, leaving FORCE edges and counts unchanged.
+    // Embedded RegRefs require pinned targets; other targets belong in the closure environment.
+    void retarget_reg_ref(int r, int target)
+    {
+        assert(regs.is_used(target));
+        auto& C = regs[r].C;
+        if (auto index = C.get_code().to<Runtime::IndexVar>())
+        {
+            assert(index->index >= 0 and index->index < C.Env.size());
+            C.Env[C.Env.size() - 1 - index->index] = target;
+        }
+        else
+        {
+            assert(C.get_code().to<Runtime::RegRef>());
+            if (reg_is_pinned(target))
+                C = closure(Runtime::RegRef(target));
+            else
+                C = closure(Runtime::IndexVar(0), {target});
+        }
+    }
     bool reg_is_forced(int r) const;
     int inc_count(int r);
     int dec_count(int r);
