@@ -41,3 +41,4 @@ True
 ("frequency factors",[True,True,True,True,True,True,True])
 ("state names",[True,True,True,True,True,True,True,True,True,True,True])
 ("named MutSel fitnesses",[True,True,True])
+("matrix report labels",[True,True])

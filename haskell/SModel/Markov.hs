@@ -166,20 +166,20 @@ labelledEqFrequencies m = labelledStateFrequencies m (getEqFreqs m)
 
 labelledStartFrequencies m = labelledStateFrequencies m (getStartFreqs m)
 
-labelledUpperTriangle alphabet matrix = if n == rows matrix && n == cols matrix
-                                        then Map.fromList
-                                             [ ((letters V.! i) ++ (letters V.! j), atIndex matrix (i,j))
-                                             | (i, j) <- Markov.all_pairs [0..n-1]]
-                                        else error $ "Expected an "++ show (n,n) ++ "  matrix by got an " ++
-                                             show (cols matrix,rows matrix) ++" matrix!"
-    where letters = V.fromList (getLetters alphabet)
-          n = V.length letters
+-- Label each pair once in matrix order. The caller chooses a separator suitable for the names.
+labelledUpperTriangle names separator matrix
+    | n /= rows matrix || n /= cols matrix =
+        error $ "Expected an " ++ show (n,n) ++ " matrix but got " ++ show (cols matrix,rows matrix) ++ " matrix!"
+    | otherwise = Map.fromList
+        [ ((names V.! i) ++ separator ++ (names V.! j), atIndex matrix (i,j))
+        | (i, j) <- Markov.all_pairs [0..n-1]]
+  where n = V.length names
 
-labelledOffDiagonal alphabet matrix = if n == rows matrix && n == cols matrix
-                                      then Map.fromList
-                                           [ ((letters V.! i) ++ (letters V.! j), atIndex matrix (i,j))
-                                           | i <- [0..n-1], j <- [0..n-1], i /= j]
-                                      else error $ "Expected an "++ show (n,n) ++ "  matrix by got an " ++
-                                             show (cols matrix,rows matrix) ++" matrix!"
-    where letters = V.fromList (getLetters alphabet)
-          n = V.length letters
+-- Label both orientations of each pair, omitting the diagonal.
+labelledOffDiagonal names separator matrix
+    | n /= rows matrix || n /= cols matrix =
+        error $ "Expected an " ++ show (n,n) ++ " matrix but got " ++ show (cols matrix,rows matrix) ++ " matrix!"
+    | otherwise = Map.fromList
+        [ ((names V.! i) ++ separator ++ (names V.! j), atIndex matrix (i,j))
+        | i <- [0..n-1], j <- [0..n-1], i /= j]
+  where n = V.length names

@@ -18,7 +18,7 @@ import Data.OldList ((!!), and, drop, length, replicate, reverse, take, zipWith)
 import Data.Ord
 import Data.Text (pack)
 import qualified EigenExp
-import Numeric.LinearAlgebra (cols, flatten, fromList, fromLists, rows, toList)
+import Numeric.LinearAlgebra (Matrix, cols, flatten, fromList, fromLists, rows, toList)
 import qualified Markov as CoreMarkov
 import Probability.Distribution.PhyloCTMC.FixedA.Properties
 import Probability.Distribution.PhyloCTMC.Properties
@@ -357,4 +357,17 @@ main = do
                         (toList $ flatten $ CoreMarkov.getQ orderedSelected)
     , and $ zipWith near (toList $ CoreMarkov.getStartFreqs namedSelected)
                         (toList $ CoreMarkov.getStartFreqs orderedSelected)
+    ])
+
+  -- Matrix reports must preserve pair orientation with multi-character names. Frequency reports
+  -- do not cover pair labels; retain while these helpers generate keyed matrix reports.
+  let reportNames = V.fromList ["ON:A", "OFF:A", "C"]
+      reportMatrix :: Matrix Double
+      reportMatrix = fromLists [[0,1,2], [3,0,4], [5,6,0]]
+  putStrLn $ show ("matrix report labels",
+    [ labelledUpperTriangle reportNames ">" reportMatrix ==
+        Map.fromList [("ON:A>OFF:A",1), ("ON:A>C",2), ("OFF:A>C",4)]
+    , labelledOffDiagonal reportNames "|" reportMatrix ==
+        Map.fromList [("ON:A|OFF:A",1), ("ON:A|C",2), ("OFF:A|ON:A",3),
+                      ("OFF:A|C",4), ("C|ON:A",5), ("C|OFF:A",6)]
     ])
