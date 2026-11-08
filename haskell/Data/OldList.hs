@@ -37,9 +37,9 @@ uncons (x:xs) = Just (x,xs)
 null []          =  True
 null (_:_)       =  False
 
+-- Force the count at each cons without evaluating elements or retaining pending additions.
 length :: [a] -> Int
-length []        =  0
-length (_:l)     =  1 + length l
+length = foldl' (\n _ -> n + 1) 0
 
 ---
 
