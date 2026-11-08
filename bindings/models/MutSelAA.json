@@ -17,16 +17,10 @@
         {
             "name": "ss",
             "type": "Map<String,Double>",
-            "default_value": "~IIDOn(letters(getAminoAcids(@a)), Laplace(0,1))",
+            "default_value": "~IIDOn(letters(getAminoAcids(getAlphabet(@submodel))), Laplace(0,1))",
 	    "reported_value": "centerFitnesses(@value)",
 	    "description": "Scaled selection coefficients (2Ns)"
-        },
-	{
-	    "name": "a",
-	    "type": "Codons<a>",
-	    "default_value": "get_state(alphabet)",
-	    "description": "The alphabet"
-	}
+        }
     ],
     "examples": ["GTR +> x3 +> dNdS +> MutSelAA"],
     "extract": "all",

@@ -1,0 +1,11 @@
+{
+    "name": "getAlphabet",
+    "result_type": "a",
+    "call": "getAlphabet(@submodel)",
+    "import": ["Bio.Alphabet", "SModel"],
+    "args": [{"name": "submodel", "type": "CTMC<a>", "description": "The substitution model"}],
+    "title": "A model's observable alphabet",
+    "description": "Returns the observable alphabet of a substitution model. Hidden-state models can have more states than the alphabet has letters; use stateNames to obtain their state names.",
+    "examples": ["letters(getAlphabet(JC69))"],
+    "see": ["stateNames", "letters"]
+}
