@@ -22,7 +22,7 @@ singlet_to_doublet_rates alphabet rates1 rates2 = overrideMatrixDims dimension d
 
 -- Independent positions have product root frequencies. On the full doublet alphabet,
 -- products of stationary input frequencies are also stationary under the constructed rates.
-x2x2 a m1 m2 = setReversibility rv $ markov a smap q pi where
+x2x2 a m1 m2 = setReversibility rv $ markov a smap (getLettersVector a) q pi where
     rv = minimum $ fmap getReversibility [m1,m2]
     smap = simpleSMap a
     q = singlet_to_doublet_rates a (getQ m1) (getQ m2)

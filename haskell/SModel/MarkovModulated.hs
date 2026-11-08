@@ -11,6 +11,7 @@ import qualified Markov
 import Markov (getQ, getStartFreqs, getEqFreqs)
 import Numeric.LinearAlgebra -- for fromLists and scale
 import qualified Data.Map as Map
+import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
 import Numeric.LinearAlgebra.Data
 
@@ -40,7 +41,13 @@ modulatedMarkovPi pis levelProbs = overrideVectorSize stateCount
    QUESTION: How would we record this?
  -}
 
-modulatedMarkov models between = setModulatedConditions conditions $ setModulatedProperties properties baseModel where
+modulatedMarkov models between = modulatedMarkovNamed (map show [1..length models]) models between
+
+-- Match the native component-major order, retaining each component's state names under a unique prefix.
+-- The prefixes supplied here are regime indices, or OFF/ON for the Tuffley-Steel construction.
+modulatedMarkovNamed prefixes models between =
+    setModulatedConditions conditions $ setModulatedProperties properties baseModel
+  where
     a = getAlphabet $ head models
     qs = map getQ models
     pis = map getStartFreqs models
@@ -48,8 +55,9 @@ modulatedMarkov models between = setModulatedConditions conditions $ setModulate
     q = modulatedMarkovRates qs (getQ between)
     pi = modulatedMarkovPi pis (getStartFreqs between)
     smap = U.concat smaps
+    names = V.fromList [prefix ++ ":" ++ name | (prefix, model) <- zip prefixes models, name <- stateNames model]
     rev = (minimum $ fmap getReversibility models) `min` (getReversibility between)
-    baseModel = setReversibility rev $ markov a smap q pi
+    baseModel = setReversibility rev $ markov a smap names q pi
     properties = modulateCommonProperties $ fmap getStatePropertyFunctions models
     conditions = commonOrConditionMap $ fmap getComponentConditions models
 
@@ -80,7 +88,10 @@ markovModulateMixture nu dist = modulatedMarkov models (Markov.gtr ratesBetween 
 -- We need to scaleTo submodels to have substitution rate `1`.
 -- Otherwise class-switching rates are not relative to the substitution rate.
 
-tuffleySteel98Unscaled s01 s10 q = modulatedMarkov [scaleBy 0 q, q] (setReversibility EqRev $ Markov.markov ratesBetween (fromList levelProbs)) where
+tuffleySteel98Unscaled s01 s10 q =
+    modulatedMarkovNamed ["OFF", "ON"] [scaleBy 0 q, q]
+        (setReversibility EqRev $ Markov.markov ratesBetween (fromList levelProbs))
+  where
     levelProbs = [s10/total, s01/total] where total = s10 + s01
     ratesBetween = fromLists [[-s01,s01],[s10,-s10]]
 

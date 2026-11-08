@@ -67,8 +67,8 @@ mg94  a   pi w  = f81     pi nuc_a & mg94_ext a w where nuc_a = getNucleotides a
 -- for reducible matrices. For NonEq, retain the normalized products as root frequencies.
 x3x3 a m1 m2 m3 =
     case rv of
-        EqNonRev -> eqMarkovFrom a smap q pi
-        _        -> setReversibility rv $ markov a smap q pi
+        EqNonRev -> eqMarkovFrom a smap (getLettersVector a) q pi
+        _        -> setReversibility rv $ markov a smap (getLettersVector a) q pi
   where
     rv = minimum $ fmap getReversibility [m1,m2,m3]
     smap = simpleSMap a
@@ -83,8 +83,8 @@ x3 a q = x3x3 a q q q
 -- matrices. For NonEq, retain root frequencies calculated from the nucleotide root distribution.
 mnm a v2 v3 nucModel =
     case rv of
-        EqNonRev -> eqMarkovFrom a smap q pi
-        _        -> setReversibility rv $ markov a smap q pi
+        EqNonRev -> eqMarkovFrom a smap (getLettersVector a) q pi
+        _        -> setReversibility rv $ markov a smap (getLettersVector a) q pi
   where
     rv = getReversibility nucModel
     smap = simpleSMap a
@@ -99,13 +99,13 @@ mnm a v2 v3 nucModel =
 -- equilibrium limit starting from the input frequencies, including for reducible matrices.
 -- For NonEq, leave root frequencies unchanged.
 -- NOTE: maybe this should be t*(q * dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.
-dNdS omega m@(Markov a s _ _ _) =
+dNdS omega m@(Markov a s names _ _ _) =
     setComponentCondition positiveSelectionInModelConditionName (omega > 1) $
     setConstantStateProperty posSelectionPropertyName posSelection $
     setConstantStateProperty dNdSPropertyName omega $
     case rv of
-        EqNonRev -> eqMarkovFrom a s q pi
-        _        -> setReversibility rv $ markov a s q pi
+        EqNonRev -> eqMarkovFrom a s names q pi
+        _        -> setReversibility rv $ markov a s names q pi
   where
     rv = getReversibility m
     pi = getStartFreqs m

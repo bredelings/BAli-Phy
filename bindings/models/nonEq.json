@@ -9,29 +9,24 @@
             "name": "submodel",
             "type": "CTMC<a>",
 	    "default_value":"nonRev",
-	    "description":"rate matrix"
+	    "description":"The substitution model"
         },
         {
             "name": "initialFreq",
             "type": "Map<String,Double>",
-            "default_value": "~SymmetricDirichletOn(letters(@a),1)",
-	    "description": "Initial letter frequencies"
+            "default_value": "~SymmetricDirichletOn(setFromList(stateNames(@submodel)),1)",
+	    "description": "Root-state frequencies, keyed by the submodel’s state names"
 
-        },
-	{
-            "name": "a",
-            "type": "a",
-            "default_value": "get_state(alphabet)",
-	    "description": "The alphabet"
         }
     ],
-    "description": "A markov model with initial letter frequencies different from the equilibrium frequencies.  Requires a rooted tree.\n\nNote that even reversible models are directional if the initial frequencies are the equilibrium frequencues.",
+    "description": "Sets a substitution model’s root-state frequencies and normalizes its rate matrix to mean substitution rate 1 at equilibrium. Requires a rooted tree. Even a reversible rate matrix gives a directional model when the root frequencies differ from equilibrium.\n\nSupply one frequency for every name returned by stateNames(submodel). For ordinary DNA models these are A, C, G, and T; covarion models have separate names such as OFF:A and ON:A for their hidden states.",
     "examples": [
 	"nonEq",
 	"GTR +> nonEq",
+        "JC69 +> Covarion.TuffleySteel98 +> nonEq",
 	"nonRev +> nonEq",
 	"nonRev +> nonEq +> ASRV.Gamma(4) +> Inv"
     ],
-    "see": ["GTR","nonRev"],
+    "see": ["GTR","nonRev","stateNames"],
     "extract": "all"
 }

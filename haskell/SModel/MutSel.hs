@@ -35,9 +35,9 @@ mut_sel_pi frequencies fitness =
 
 -- MutSel changes Q and pi without changing components or state identities, so
 -- carry construction annotations onto the reconstructed numerical model.
-mut_sel ws' m0@(Markov a smap _ _ annotations) =
+mut_sel ws' m0@(Markov a smap names _ _ annotations) =
     case model of
-      Markov a' smap' process modelRate _ -> Markov a' smap' process modelRate annotations
+      Markov a' smap' names' process modelRate _ -> Markov a' smap' names' process modelRate annotations
   where
     rv = getReversibility m0
     q0 = getQ m0
@@ -50,15 +50,15 @@ mut_sel ws' m0@(Markov a smap _ _ annotations) =
     -- This agrees with the reversible formula even when the matrix is reducible.
     -- For NonEq, leave root frequencies unchanged.
     model = case rv of
-        EqRev    -> setReversibility EqRev $ markov a smap q pi
-        EqNonRev -> eqMarkovFrom a smap q pi
-        NonEq    -> markov a smap q pi0
+        EqRev    -> setReversibility EqRev $ markov a smap names q pi
+        EqNonRev -> eqMarkovFrom a smap names q pi
+        NonEq    -> markov a smap names q pi0
 
 mut_sel' w' q0 = mut_sel w q0 where
     w = get_ordered_elements (getLetters a) w' "fitnesses"
     a = getAlphabet q0
 
-mut_sel_aa ws q@(Markov codon_a _ _ _ _) = mut_sel (aa_to_codon codon_a ws) q
+mut_sel_aa ws q@(Markov codon_a _ _ _ _ _) = mut_sel (aa_to_codon codon_a ws) q
 
 mut_sel_aa' ws' q0 = mut_sel_aa ws q0 where
     ws = get_ordered_elements (getLetters amino_alphabet) ws' "fitnesses"

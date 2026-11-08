@@ -242,8 +242,8 @@ main = do
   -- Successful MCMC and property logging can miss a model incorrectly marked stationary.
   -- Retain while x3 supports stationary non-reversible and non-equilibrium inputs.
   let cyclicRates = fromLists [[-7,5,1,1],[1,-7,5,1],[1,1,-7,5],[5,1,1,-7]]
-      cyclicNuc = eqMarkov dna (simpleSMap dna) cyclicRates
-      rootNuc = markov dna (simpleSMap dna) cyclicRates (fromList [0.1,0.2,0.3,0.4])
+      cyclicNuc = eqMarkov dna (simpleSMap dna) (getLettersVector dna) cyclicRates
+      rootNuc = markov dna (simpleSMap dna) (getLettersVector dna) cyclicRates (fromList [0.1,0.2,0.3,0.4])
       cyclicCodon = x3 codons cyclicNuc
       rootCodon = x3 codons rootNuc
       productRoot = f3x4_frequencies_builtin codons
@@ -319,4 +319,24 @@ main = do
     , and $ zipWith near (toList $ flatten $ CoreMarkov.qExp zeroModel)
         [(if i == j then decay else 0) + (1-decay)*(zeroPs!!j)
         | i <- [0,1,2,3], j <- [0,1,2,3]]
+    ])
+
+  -- Ordinary models do not expose hidden-state naming errors. Check expanded ordering and
+  -- annotation-preserving root replacement here alongside the existing model-property checks.
+  let hidden = tuffleySteel98 0.2 0.3 model1
+      namedRoots = Map.fromList [(name, 0.125) | name <- stateNames hidden]
+      rootedHidden = nonEq' namedRoots (setComponentCondition (pack "flag") True hidden)
+      nested = modulatedMarkov [hidden, hidden] between
+  putStrLn $ show ("state names",
+    [ stateNames (jukes_cantor dna) == getLetters dna
+    , stateNames hidden == ["OFF:A","OFF:C","OFF:G","OFF:T","ON:A","ON:C","ON:G","ON:T"]
+    , length (stateNames nested) == 16
+    , take 2 (stateNames nested) == ["1:OFF:A","1:OFF:C"]
+    , stateNames (scaleBy 2 hidden) == stateNames hidden
+    , stateNames rootedHidden == stateNames hidden
+    , Map.size (labelledStartFrequencies rootedHidden) == 8
+    , and $ zipWith near (toList $ CoreMarkov.getStartFreqs rootedHidden) (replicate 8 0.125)
+    , Map.member (pack "dNdS") (getStatePropertyFunctions rootedHidden)
+    , lookupCondition "flag" (getComponentConditions rootedHidden)
+    , stateNames selected == getLetters codons
     ])

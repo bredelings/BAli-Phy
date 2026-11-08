@@ -1,0 +1,11 @@
+{
+    "name": "stateNames",
+    "result_type": "List<String>",
+    "call": "stateNames(@submodel)",
+    "import": ["SModel"],
+    "args": [{"name": "submodel", "type": "CTMC<a>", "description": "The substitution model"}],
+    "title": "Names of a model’s states",
+    "description": "Returns state names in rate-matrix order. Ordinary models use alphabet symbols. Tuffley–Steel models prefix each input state name with OFF: or ON:; general Markov modulation prefixes it with a one-based regime index. Nested modulation retains these prefixes. These names can be used as keys for nonEq root frequencies.",
+    "examples": ["stateNames(JC69)", "stateNames(JC69 +> Covarion.TuffleySteel98)"],
+    "see": ["nonEq", "getQ"]
+}

@@ -18,6 +18,7 @@ True
 True
 [True,True]
 [False,True]
+True
 False
 [True,True]
 True
@@ -38,3 +39,4 @@ True
 ("MutSel frequencies",[True,True,True,True])
 ("MNM frequencies",[True,True,True,True])
 ("frequency factors",[True,True,True,True,True,True,True])
+("state names",[True,True,True,True,True,True,True,True,True,True,True])

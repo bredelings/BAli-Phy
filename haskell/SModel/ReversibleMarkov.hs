@@ -19,7 +19,7 @@ equ a = Markov.equ (alphabetSize a) 1.0
 gtr_sym exchange a = Markov.gtr_sym (alphabetSize a) exchange 
 
 gtr a s pi = scaleTo 1 $ unscaled_gtr a s pi
-unscaled_gtr a s pi = wrapMarkov a (simpleSMap a) $ Markov.gtr s pi
+unscaled_gtr a s pi = wrapMarkov a (simpleSMap a) (getLettersVector a) $ Markov.gtr s pi
 
 f81     pi a = gtr a (equ a) pi
 
@@ -43,7 +43,7 @@ gtr_sym' es' a = gtr_sym es a where lpairs = Markov.all_pairs (getLetters a)
 
 plus_f   a pi s   = gtr a s pi
 plus_fe  a s      = plus_f a (uniform_frequencies a) s
-plus_gwf a pi f s = setReversibility EqRev $ markov a (simpleSMap a) (s * plus_gwf_matrix pi' f) pi' where pi' = fromList pi
+plus_gwf a pi f s = setReversibility EqRev $ markov a (simpleSMap a) (getLettersVector a) (s * plus_gwf_matrix pi' f) pi' where pi' = fromList pi
 
 plus_f'  a pi s   = plus_f a (frequenciesFromDict a pi) s
 plus_gwf'  a pi f s = plus_gwf a (frequenciesFromDict a pi) f s

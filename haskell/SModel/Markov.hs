@@ -9,6 +9,7 @@ import           SModel.Rate
 import           SModel.Frequency
 import           Bio.Alphabet
 import           Numeric.LinearAlgebra hiding ((<>))
+import           Numeric.LinearAlgebra.Data (vectorSize)
 import           Tree
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
@@ -44,49 +45,60 @@ getEquilibriumRate alphabet states rates frequencies =
 --   that is, all transition_p matricies in component m satisfy detailed balance with respect to the root frequences in component m
 --
 
--- Fields are: alphabet, smap, q, and cached rate.
+-- Fields: observable alphabet, state-to-letter map, state names, process, cached rate, annotations.
 -- PROBLEM: caching the rate is not quite right, since there are different rates:
 --    DNA rate, AA rate, Codon rate, synonymous rate, etc.
-data Markov = Markov Alphabet (U.Vector Int) Markov.Markov Double ComponentAnnotations
+data Markov = Markov Alphabet (U.Vector Int) (V.Vector String) Markov.Markov Double ComponentAnnotations
 
-wrapMarkov a smap m = Markov a smap m (getEquilibriumRate a smap (getQ m) (getEqFreqs m)) emptyComponentAnnotations
+-- Names identify matrix rows independently of the observable letters emitted by those states.
+class HasStateNames m where
+    getStateNames :: m -> V.Vector String
+
+instance HasStateNames Markov where
+    getStateNames (Markov _ _ names _ _ _) = names
+
+-- Expose names in matrix order, including for expanded hidden-state models.
+stateNames :: HasStateNames m => m -> [String]
+stateNames = V.toList . getStateNames
+
+wrapMarkov a smap names m = Markov a smap names m (getEquilibriumRate a smap (getQ m) (getEqFreqs m)) emptyComponentAnnotations
 
 instance CheckReversible Markov where
-    getReversibility (Markov _ _ m _ _) = getReversibility m
+    getReversibility (Markov _ _ _ m _ _) = getReversibility m
 
 instance CanMakeReversible Markov where
-    setReversibility rv (Markov a smap m rate properties) = Markov a smap (setReversibility rv m) rate properties
+    setReversibility rv (Markov a smap names m rate properties) = Markov a smap names (setReversibility rv m) rate properties
 
 -- This is used both for observations, and also to determine which states are the same for computing rates.
 instance HasSMap Markov where
-    getSMap (Markov _ s _ _ _) = s
+    getSMap (Markov _ s _ _ _ _) = s
 
 instance CTMC Markov where
-    qExp (Markov _ _ m _ _) = qExp m
-    getStartFreqs (Markov _ _ m _ _) = getStartFreqs m
-    getEqFreqs (Markov _ _ m _ _) = getEqFreqs m
-    getQ (Markov _ _ m _ _) = getQ m
+    qExp (Markov _ _ _ m _ _) = qExp m
+    getStartFreqs (Markov _ _ _ m _ _) = getStartFreqs m
+    getEqFreqs (Markov _ _ _ m _ _) = getEqFreqs m
+    getQ (Markov _ _ _ m _ _) = getQ m
 
 simpleSMap a = U.fromList [0..(alphabetSize a)-1]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 
-markov a smap q pi = wrapMarkov a smap (Markov.markov q pi)
+markov a smap names q pi = wrapMarkov a smap names (Markov.markov q pi)
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
-eqMarkov a smap q = wrapMarkov a smap (Markov.eqMarkov q)
+eqMarkov a smap names q = wrapMarkov a smap names (Markov.eqMarkov q)
 
 -- Mark the core model stationary before wrapping, so its rate uses the stored equilibrium frequencies.
-eqMarkovFrom a smap q pi0 = wrapMarkov a smap (Markov.eqMarkovFrom q pi0)
+eqMarkovFrom a smap names q pi0 = wrapMarkov a smap names (Markov.eqMarkovFrom q pi0)
 
-eqFlow (Markov _ _ m _ _) = Markov.eqFlow m
+eqFlow (Markov _ _ _ m _ _) = Markov.eqFlow m
 
-eqFlux (Markov _ _ m _ _) = Markov.eqFlux m
+eqFlux (Markov _ _ _ m _ _) = Markov.eqFlux m
 
-eqRelFlux (Markov _ _ m _ _) = Markov.eqRelFlux m
+eqRelFlux (Markov _ _ _ m _ _) = Markov.eqRelFlux m
 
 instance HasAlphabet Markov where
-    getAlphabet (Markov a _ _ _ _) = a
+    getAlphabet (Markov a _ _ _ _ _) = a
 
 instance HasBranchLengths t => SimpleSModel t Markov where
     branchTransitionP (SModelOnTree tree smodel) b = [qExp $ scaleBy (branchLength tree b) smodel]
@@ -94,22 +106,22 @@ instance HasBranchLengths t => SimpleSModel t Markov where
     componentFrequencies (SModelOnTree _ smodel) = [getStartFreqs smodel]
 
 instance Scalable Markov where
-    scaleBy x (Markov a s rm r annotations) =
-        Markov a s (scaleBy x rm) (x*r) (scaleComponentAnnotations x annotations)
+    scaleBy x (Markov a s names rm r annotations) =
+        Markov a s names (scaleBy x rm) (x*r) (scaleComponentAnnotations x annotations)
 
 instance RateModel Markov where
-    rate (Markov _ _ _ r _) = r
+    rate (Markov _ _ _ _ r _) = r
 
 instance HasStateProperties Markov where
-    getStatePropertyFunctions (Markov _ _ _ _ (ComponentAnnotations properties _)) = properties
-    setStateProperty name property (Markov a s rm r (ComponentAnnotations properties conditions)) =
-        Markov a s rm r (ComponentAnnotations (Map.insert name property properties) conditions)
-    nPropertyStates (Markov _ _ m _ _) = Markov.getNStates m
+    getStatePropertyFunctions (Markov _ _ _ _ _ (ComponentAnnotations properties _)) = properties
+    setStateProperty name property (Markov a s names rm r (ComponentAnnotations properties conditions)) =
+        Markov a s names rm r (ComponentAnnotations (Map.insert name property properties) conditions)
+    nPropertyStates (Markov _ _ _ m _ _) = Markov.getNStates m
 
 instance HasComponentConditions Markov where
-    getComponentConditions (Markov _ _ _ _ (ComponentAnnotations _ conditions)) = conditions
-    setComponentCondition name value (Markov a s rm r (ComponentAnnotations properties conditions)) =
-        Markov a s rm r (ComponentAnnotations properties (Map.insert name value conditions))
+    getComponentConditions (Markov _ _ _ _ _ (ComponentAnnotations _ conditions)) = conditions
+    setComponentCondition name value (Markov a s names rm r (ComponentAnnotations properties conditions)) =
+        Markov a s names rm r (ComponentAnnotations properties (Map.insert name value conditions))
 
 instance HasProperties t Markov where
     getProperties (SModelOnTree _ model) = statePropertyMapToComponentPropertyMap $ getStateProperties model
@@ -122,9 +134,19 @@ instance HasProperties t Markov where
 -- a codon, and then collapse the codons to either (i) amino acids or (ii) codons, and then divide by three.
 
 instance Show Markov where
-    show (Markov _ _ m _ _) = show m
+    show (Markov _ _ _ m _ _) = show m
 
-nonEq pi m = scaleTo 1 $ markov (getAlphabet m) (getSMap m) (getQ m) pi
+-- Replace the root distribution without changing state identities or construction annotations.
+-- Recompute the equilibrium rate as before, then propagate normalization to the retained properties.
+nonEq pi m@(Markov a smap names _ _ annotations) =
+    scaleTo 1 $ Markov a smap names mCore modelRate annotations
+  where
+    -- Check the input vector without making the whole model depend on this check.
+    -- Workaround: guarding the whole model triggers a runtime reference-chain assertion.
+    checkedPi | vectorSize pi == Markov.getNStates m = pi
+              | otherwise = error "nonEq: expected one frequency per CTMC state"
+    mCore = Markov.markov (getQ m) checkedPi
+    modelRate = getEquilibriumRate a smap (getQ mCore) (getEqFreqs mCore)
 
 pairNames ls = [l1 ++ l2 | (l1,l2) <- ls]
 
@@ -133,15 +155,17 @@ allOrderedPairs l = [(x,y) | x <- l, y <- l, x /= y]
 orderedLetterPairNames a = pairNames $ allOrderedPairs (getLetters a)
 
 nonEq' pi' m = nonEq pi m
-    where pi = fromList $ frequenciesFromDict (getAlphabet m) pi'
+    where pi = fromList $ get_ordered_elements (stateNames m) pi' "state frequencies"
 
-labelledEqFrequencies m = Map.fromList $ zip (getLetters a) frequencies
-    where frequencies = toList $ getEqFreqs m
-          a = getAlphabet m
+-- Pair every numerical state with its name; never silently truncate an expanded state space.
+labelledStateFrequencies m frequencies
+    | V.length names /= vectorSize frequencies = error "State names and frequencies have different sizes"
+    | otherwise = Map.fromList $ zip (V.toList names) (toList frequencies)
+  where names = getStateNames m
 
-labelledStartFrequencies m = Map.fromList $ zip (getLetters a) frequencies
-    where frequencies = toList $ getStartFreqs m
-          a = getAlphabet m
+labelledEqFrequencies m = labelledStateFrequencies m (getEqFreqs m)
+
+labelledStartFrequencies m = labelledStateFrequencies m (getStartFreqs m)
 
 labelledUpperTriangle alphabet matrix = if n == rows matrix && n == cols matrix
                                         then Map.fromList

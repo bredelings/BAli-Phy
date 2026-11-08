@@ -28,8 +28,8 @@ rna_editting_pi alphabet frequencies edits = overrideVectorSize (alphabetSize al
 -- mapped frequencies to retain the appropriate class masses when the rates are reducible.
 siteEdit alphabet nucModel rnaRate edits =
     case rv of
-        EqNonRev -> eqMarkovFrom alphabet smap q pi
-        _        -> setReversibility rv $ markov alphabet smap q pi
+        EqNonRev -> eqMarkovFrom alphabet smap (getLettersVector alphabet) q pi
+        _        -> setReversibility rv $ markov alphabet smap (getLettersVector alphabet) q pi
     where rv = getReversibility nucModel
           smap = simpleSMap alphabet
           nucs = getNucleotides alphabet
