@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 import pathlib
 import shlex
 import subprocess
@@ -111,10 +112,73 @@ def fixed_alignment_test(command, work_directory):
         raise AssertionError("the retained fixed-alignment program created an output directory")
 
 
+# Inspect retained source as well as execution: likelihood tests alone miss duplicated constructors
+# and fresh-name collisions. Keep this while computed reports can share a pure binding's result.
+def result_reports_test(command, work_directory):
+    run_command("execute shared model reports", command + [
+        "input.fasta", "--imodel=none", "--smodel=nonRev +> nonEq",
+        "--tree=~UniformRootedTree(taxa)", "--iterations=0", "--log-format=json",
+        "--name=reports",
+    ], work_directory)
+    directory = work_directory / "reports-1"
+    source = (directory / "BAliPhy.Main.hs").read_text()
+    if source.count("nonRev'") != 1:
+        raise AssertionError("computed reports duplicated the nonRev constructor")
+    records = (directory / "C1.log.json").read_text().splitlines()
+    model_log = json.loads(records[1])["parameters//"]["S1/"]
+    for name in ("nonRev:eqFrequencies", "nonEq:initialFreq"):
+        if set(model_log[name]) != {"A", "C", "G", "T"}:
+            raise AssertionError("missing named frequencies: " + name)
+
+    expression = ("result + result_2 + loggers where "
+                  "{result=~Exponential(1); result_2=2; loggers=~Exponential(1)}")
+    for attempt in range(2):
+        run_command("allocate readable final names", command + ["print", expression], work_directory)
+        source = (work_directory / "Print.Main.hs").read_text()
+        if "result_3" not in source or "loggers_2" not in source:
+            raise AssertionError("final packaging reused occupied local names")
+        if attempt == 0:
+            first_source = source
+        elif source != first_source:
+            raise AssertionError("independent generation changed local name numbering")
+
+    # Catalogue reports do not contain colliding lambda binders. Exercise substitution under
+    # nested lambdas and function-call heads, then force the reports in the retained program.
+    bindings = work_directory / "capture-package" / "bindings"
+    bindings.mkdir(parents=True)
+    binding = {"name": "captureTest", "result_type": "Bool", "call": "not(@x)",
+               "args": [{"name": "x", "type": "Bool"}], "computed": [
+        {"name": "direct", "value": "map(|captureTest_model: @result|,[False])"},
+        {"name": "nested", "value":
+         "map(|captureTest_model: map(|captureTest_model: @result|,[False])|,[False])"},
+        {"name": "adjacent", "value":
+         "map(|f: map(f,[False])|,map(|z: (|z: @result|)|,[False]))"},
+        {"name": "functions", "value":
+         "map(|x: (x(@x),map(|x: @x|,[True]),(x(@x),map(|x_2: x(@x)|,[True])))|,[not])"},
+    ]}
+    (bindings / "capture.json").write_text(json.dumps(binding))
+    separator = ";" if os.name == "nt" or any(";" in arg for arg in command) else ":"
+    capture_command = [arg + separator + "capture-package" if arg.startswith("--package-path=")
+                       else arg for arg in command]
+    run_command("generate capture-free reports", capture_command + [
+        "print", "captureTest(x) where {x=1<0}"], work_directory)
+    source = (work_directory / "Print.Main.hs").read_text()
+    source = "import qualified Data.JSON as J\nimport qualified Data.Text as Text\n" + source
+    source = source.replace("show $ fst result",
+                            "Text.unpack $ J.encode $ J.Object $ parameterLogValues $ snd result")
+    (work_directory / "Capture.hs").write_text(source)
+    result = run_command("evaluate capture-free reports", command + ["run", "Capture.hs"], work_directory)
+    if json.loads(result.stdout) != {
+        "captureTest:direct": [True], "captureTest:nested": [[True]], "captureTest:adjacent": [[True]],
+        "captureTest:functions": [[True, [False], [True, [True]]]],
+    }:
+        raise AssertionError("template lambdas captured substituted variables: " + result.stdout)
+
+
 # Each Meson case owns its work directory; only commands that reuse generated source run together.
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--case", required=True, choices=["standalone", "fixed-alignment"])
+    parser.add_argument("--case", required=True, choices=["standalone", "fixed-alignment", "result-reports"])
     parser.add_argument("--wrapper", action="append", default=[])
     parser.add_argument("executable")
     parser.add_argument("package_path")
@@ -126,8 +190,10 @@ def main():
         command = args.wrapper + [args.executable, "--seed=1", args.package_path]
         if args.case == "standalone":
             standalone_test(command, work_directory)
-        else:
+        elif args.case == "fixed-alignment":
             fixed_alignment_test(command, work_directory)
+        else:
+            result_reports_test(command, work_directory)
     return 0
 
 

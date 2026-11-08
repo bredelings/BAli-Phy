@@ -172,10 +172,11 @@ test('compiled module cache',
             packagepath],
      timeout: 120)
 
-# Only retained-source workflows need Python: each case reuses source between commands.
+# Retained-source checks use Python to inspect generated code or reuse it between commands.
 # Keep them independently scheduled; remove each case when its documented contract is retired.
 foreach mode, name : {'standalone': 'generated program runtime modes',
-                     'fixed-alignment': 'generated fixed-alignment rejection'}
+                     'fixed-alignment': 'generated fixed-alignment rejection',
+                     'result-reports': 'generated result reports'}
   test(name,
        python,
        args: [files('../tests/scripts/test_generated_program.py'), '--case=' + mode] +

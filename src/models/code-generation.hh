@@ -15,6 +15,10 @@
 
 class Rules;
 
+// Allocate a readable local name, starting independently at the preferred base each time.
+Hs::Var fresh_generated_var(std::set<Hs::Var>& used, std::string name);
+std::set<Hs::Var> get_generated_free_vars(const Hs::Exp& expression);
+
 struct generated_code_t
 {
     Hs::Stmts stmts;
@@ -93,18 +97,7 @@ struct CodeGenState
 
     Hs::Var get_var(std::string name)
     {
-        // Prefix identifier-shaped names where sufficient; symbols need a neutral
-        // base because spellings such as "_+" are not valid Haskell variables.
-        if (not is_haskell_varid(name))
-        {
-            auto prefixed_name = "_" + name;
-            name = not name.empty() and is_haskell_varid(prefixed_name) ? prefixed_name : "_local_operator";
-        }
-        Hs::Var x(name);
-        for(int i=2; haskell_vars.count(x); i++)
-            x = Hs::Var(name+"_"+std::to_string(i));
-        haskell_vars.insert(x);
-        return x;
+        return fresh_generated_var(haskell_vars, std::move(name));
     }
 
     void set_state(const std::string& name, const Hs::Var& x)

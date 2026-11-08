@@ -358,6 +358,68 @@ RuleModelExpr parse_rule_template_expr(const Rules& R, const string& text, const
     return expr;
 }
 
+// Collect template references without interpreting function names or ordinary variables as arguments.
+// The same traversal covers defaults so result-dependent constructor inputs can be rejected early.
+static std::set<string> template_references(const RuleModelExpr& expression)
+{
+    std::set<string> references;
+    if (auto ref = expression.to<CM::ArgRef>())
+        references.insert(ref->name);
+    CM::for_each_child(expression, [&](const auto& child) {
+        auto child_refs = template_references(child);
+        references.insert(child_refs.begin(), child_refs.end());
+    });
+    return references;
+}
+
+// Propagate result dependence through computed fields, then forbid it in constructor prerequisites.
+// This intentionally excludes productive lazy recursion: @result is a reporting facility only.
+static void check_result_references(Rule& rule)
+{
+    std::set<string> dependent = {"result"};
+    auto uses_result = [&](const RuleModelExpr& expression) {
+        for (const auto& name: template_references(expression))
+            if (dependent.contains(name)) return true;
+        return false;
+    };
+
+    for (const auto& arg: rule.args)
+        if (arg.name == "result")
+            throw myexception()<<"In rule for "<<rule.name<<": argument name 'result' is reserved";
+    for (const auto& field: rule.computed)
+        if (field.name == "result")
+            throw myexception()<<"In rule for "<<rule.name<<": computed name 'result' is reserved";
+
+    bool changed;
+    do
+    {
+        changed = false;
+        for (auto& field: rule.computed)
+            if (not field.depends_on_result and uses_result(field.value))
+            {
+                field.depends_on_result = true;
+                if (field.name) dependent.insert(*field.name);
+                changed = true;
+            }
+    } while (changed);
+
+    if (uses_result(rule.call))
+        throw myexception()<<"In rule for "<<rule.name
+                           <<": constructor cannot depend on @result, directly or through computed fields";
+    for (const auto& arg: rule.args)
+    {
+        if ((arg.default_value and uses_result(*arg.default_value)) or
+            (arg.alphabet and uses_result(*arg.alphabet)))
+            throw myexception()<<"In rule for "<<rule.name<<": input '"<<arg.name<<"' cannot depend on @result";
+        if (arg.reported_value and uses_result(*arg.reported_value))
+            throw myexception()<<"In rule for "<<rule.name<<": @result is supported only in computed reports";
+    }
+    if (rule.perform)
+        for (const auto& field: rule.computed)
+            if (field.depends_on_result)
+                throw myexception()<<"In rule for "<<rule.name<<": @result requires a pure binding";
+}
+
 /* NOTE: convert_rule parses and processes strings.  It converts:
 
    - "result_type" -> type
@@ -463,6 +525,7 @@ Rule convert_rule(const Rules& R, const RawRule& raw_rule)
     rule.no_log = optional_bool(fields, "no_log", false, name);
     rule.perform = optional_bool(fields, "perform", false, name);
     rule.extract = optional_string(fields, "extract", name);
+    check_result_references(rule);
 
     rule.synonyms = string_array(fields, "synonyms", name);
     rule.deprecated_synonyms = string_array(fields, "deprecated-synonyms", name);

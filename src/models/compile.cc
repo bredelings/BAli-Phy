@@ -198,6 +198,13 @@ Hs::Exp generated_code_t::generate() const
 
     auto R = simplify_intToDouble(E);
 
+    // Final packaging introduces binders too: avoid both existing locals and names referenced by
+    // the return/logger expressions. Nested logger bindings have already been added to code.
+    auto used_names = get_generated_free_vars(R);
+    add(used_names, get_generated_free_vars(L));
+    for (const auto& var: Hs::vars_bound_in_stmts(code)) used_names.insert(unloc(var));
+    for (const auto& var: haskell_lambda_vars) used_names.insert(var);
+
     if (not action)
     {
         if (has_loggers())
@@ -217,11 +224,8 @@ Hs::Exp generated_code_t::generate() const
     {
         if (has_loggers())
         {
-            // FIXME: technically, we should make sure that "result" and "loggers" are unique names
-            // FIXME: it would be nice to use e.g. tn93_model = ... instead of just result = ....
-            //        see:  var_name = (*func_name)+"_model";  for naming "submodel" arguments.
-            Hs::Var result_var("result");
-            Hs::Var loggers_var("loggers");
+            auto result_var = fresh_generated_var(used_names, "result");
+            auto loggers_var = fresh_generated_var(used_names, "loggers");
             HsG::Let(code, result_var, R);
             HsG::Let(code, loggers_var, L);
             R = HsG::Tuple({result_var, loggers_var});
@@ -238,7 +242,7 @@ Hs::Exp generated_code_t::generate() const
         if (has_loggers())
         {
             // result <- E
-            Hs::Var result_var("result");
+            auto result_var = fresh_generated_var(used_names, "result");
             HsG::Bind(code, HsG::VarPat(result_var), R);
             // return (result, loggers)
             HsG::Return(code, HsG::Tuple({result_var, L}));

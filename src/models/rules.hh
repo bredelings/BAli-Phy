@@ -38,6 +38,7 @@ struct ComputedRule
     std::optional<std::string> name;
     RuleModelExpr value;
     ComputedKind kind = ComputedKind::parameter;
+    bool depends_on_result = false;
 };
 
 struct RuleCitationAuthor

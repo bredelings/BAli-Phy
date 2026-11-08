@@ -20,6 +20,22 @@ using std::set;
 using std::multiset;
 using std::map;
 
+// Preserve descriptive bases while checking all allocated names, including explicitly suffixed ones.
+// Each generated function supplies its own set, so unrelated functions do not consume suffixes.
+Hs::Var fresh_generated_var(set<Hs::Var>& used, string name)
+{
+    if (not is_haskell_varid(name))
+    {
+        auto prefixed_name = "_" + name;
+        name = not name.empty() and is_haskell_varid(prefixed_name) ? prefixed_name : "_local_operator";
+    }
+    Hs::Var x(name);
+    for (int i = 2; used.count(x); ++i)
+        x = Hs::Var(name + "_" + std::to_string(i));
+    used.insert(x);
+    return x;
+}
+
 Hs::Binds make_generated_binds(const std::vector<std::pair<Hs::Var, Hs::Exp>>& decls);
 
 bool is_generated_var_expr(const Hs::Exp& E)
@@ -455,31 +471,36 @@ void get_generated_free_vars2(const Hs::Exp& E, multiset<Hs::Var>& bound, set<Hs
 
 void get_generated_free_vars2(const Hs::Binds& binds, multiset<Hs::Var>& bound, set<Hs::Var>& free);
 
-// Traverse generated statements for free variables in guards and do-blocks.
-// This mirrors the existing expression traversal without reintroducing legacy wrappers.
+// Each block has its own scope; statement bindings extend it for the rest of the block.
+// A copy preserves enclosing bindings, including shadowed names, when the block ends.
 void get_generated_free_vars2(const Hs::Stmts& stmts, multiset<Hs::Var>& bound, set<Hs::Var>& free)
 {
+    auto local_bound = bound;
     for(auto& [_, stmt]: stmts.stmts)
-        get_generated_free_vars2(stmt, bound, free);
+        get_generated_free_vars2(stmt, local_bound, free);
 }
 
-// Traverse one generated statement, accounting for variables bound by local lets.
-// Pattern binders are not recursively inspected because generated patterns bind names.
+// Pattern bindings start after their action; let and rec bindings are recursive.
+// Leave introduced names in scope for subsequent statements or a guarded RHS body.
 void get_generated_free_vars2(const Hs::Stmt& stmt, multiset<Hs::Var>& bound, set<Hs::Var>& free)
 {
     if (auto S = stmt.to<Hs::SimpleQual>())
         get_generated_free_vars2(unloc(S->exp), bound, free);
     else if (auto P = stmt.to<Hs::PatQual>())
+    {
         get_generated_free_vars2(unloc(P->exp), bound, free);
+        for (const auto& var: Hs::vars_in_pattern(P->bindpat)) bound.insert(unloc(var));
+    }
     else if (auto L = stmt.to<Hs::LetQual>())
     {
-        auto bound_ = get_generated_bound_vars(unloc(L->binds));
-        add_generated_bound_vars(bound_, bound);
+        add_generated_bound_vars(get_generated_bound_vars(unloc(L->binds)), bound);
         get_generated_free_vars2(unloc(L->binds), bound, free);
-        remove_generated_bound_vars(bound_, bound);
     }
     else if (auto R = stmt.to<Hs::RecStmt>())
+    {
+        for (const auto& var: Hs::vars_bound_in_stmts(R->stmts)) bound.insert(unloc(var));
         get_generated_free_vars2(R->stmts, bound, free);
+    }
     else
         throw myexception()<<"get_generated_free_vars: unsupported statement "<<stmt;
 }
@@ -491,9 +512,10 @@ void get_generated_free_vars2(const Hs::MultiGuardedRHS& rhs, multiset<Hs::Var>&
 
     for(auto& guarded_rhs: rhs.guarded_rhss)
     {
+        auto local_bound = bound;
         for(auto& guard: guarded_rhs.guards)
-            get_generated_free_vars2(unloc(guard), bound, free);
-        get_generated_free_vars2(unloc(guarded_rhs.body), bound, free);
+            get_generated_free_vars2(unloc(guard), local_bound, free);
+        get_generated_free_vars2(unloc(guarded_rhs.body), local_bound, free);
     }
 }
 
@@ -586,6 +608,12 @@ void get_generated_free_vars2(const Hs::Exp& E, multiset<Hs::Var>& bound, set<Hs
         get_generated_free_vars2(unloc(L->body), bound, free);
 
         remove_generated_bound_vars(bound_, bound);
+        return;
+    }
+
+    else if (auto D = E.to<Hs::Do>())
+    {
+        get_generated_free_vars2(D->stmts, bound, free);
         return;
     }
 
@@ -724,14 +752,21 @@ bool is_template_submodel_arg(const CM::Arg<CM::NoAnn>& arg)
 
 // Converts a rule call, computed value, or reported value from CmdModel to
 // Haskell expression code, preserving the old ptree template behavior.
-Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs::Exp>& simple_args)
+static Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs::Exp>& simple_args,
+                                      const set<Hs::Var>& replacement_free, set<Hs::Var>& used,
+                                      const map<string,Hs::Var>& lambda_vars)
 {
+    // Ordinary template references follow lexical renaming; @references bypass it below.
+    auto variable = [&](const string& name) {
+        auto it = lambda_vars.find(name);
+        return it == lambda_vars.end() ? Hs::Var(name) : it->second;
+    };
     return expr.visit(CM::overloaded{
         [](const CM::IntLiteral& x) -> Hs::Exp { return Hs::Literal(Hs::Integer{integer(x.value)}); },
         [](const CM::DoubleLiteral& x) -> Hs::Exp { return Hs::Literal(Hs::Floating{Hs::rationalFromDouble(x.value)}); },
         [](const CM::BoolLiteral& x) -> Hs::Exp { return x.value ? Hs::True() : Hs::False(); },
         [](const CM::StringLiteral& x) -> Hs::Exp { return Hs::Literal(Hs::String{x.value}); },
-        [](const CM::Var& x) -> Hs::Exp { return Hs::Var(x.name); },
+        [&](const CM::Var& x) -> Hs::Exp { return variable(x.name); },
         // Looks up a rule-template argument reference in the already generated
         // argument environment.
         [&](const CM::ArgRef& x) -> Hs::Exp
@@ -751,7 +786,7 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
         // legacy final-submodel rewrite.
         [&](const CM::Call<CM::NoAnn>& call) -> Hs::Exp
         {
-            Hs::Exp E = Hs::Var(call.function);
+            Hs::Exp E = variable(call.function);
             for(int i=0;i<call.args.size();i++)
             {
                 auto& arg = call.args[i];
@@ -760,7 +795,7 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
                 if (not arg.value)
                     throw myexception()<<"Missing arguments are not allowed in rule templates.";
 
-                auto arg_expr = make_rule_template_expr(*arg.value, simple_args);
+                auto arg_expr = make_rule_template_expr(*arg.value, simple_args, replacement_free, used, lambda_vars);
                 // Compatibility behavior: rule templates encode `submodel +> F`
                 // as a final @submodel argument. Remove when bindings spell this directly.
                 if (i == call.args.size()-1 and is_template_submodel_arg(arg))
@@ -776,7 +811,7 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
         {
             vector<Hs::Exp> args;
             for(auto& element: list.elements)
-                args.push_back(make_rule_template_expr(element, simple_args));
+                args.push_back(make_rule_template_expr(element, simple_args, replacement_free, used, lambda_vars));
             return HsG::List(args);
         },
         // Compile binding-template sets through the same Data.Set
@@ -785,7 +820,7 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
         {
             vector<Hs::Exp> elements;
             for(auto& element: set.elements)
-                elements.push_back(make_rule_template_expr(element, simple_args));
+                elements.push_back(make_rule_template_expr(element, simple_args, replacement_free, used, lambda_vars));
             return HsG::Apply(Hs::Var("Set.fromList"), {HsG::List(elements)});
         },
         // Compile binding-template maps through the same Map representation
@@ -794,7 +829,7 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
         {
             vector<Hs::Exp> entries;
             for(auto& element: map_expr.elements)
-                entries.push_back(make_rule_template_expr(element, simple_args));
+                entries.push_back(make_rule_template_expr(element, simple_args, replacement_free, used, lambda_vars));
             return HsG::Apply(Hs::Var("Map.fromList"), {HsG::List(entries)});
         },
         // Compiles a rule-template tuple by translating each element into a
@@ -803,7 +838,7 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
         {
             vector<Hs::Exp> args;
             for(auto& element: tuple.elements)
-                args.push_back(make_rule_template_expr(element, simple_args));
+                args.push_back(make_rule_template_expr(element, simple_args, replacement_free, used, lambda_vars));
             return HsG::Tuple(args);
         },
         [](const CM::Let<CM::NoAnn>&) -> Hs::Exp { throw myexception()<<"let expressions are not allowed in rule templates."; },
@@ -815,10 +850,18 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
             if (not pattern)
                 throw myexception()<<"Only variable lambda patterns are allowed in rule templates.";
 
-            auto body = make_rule_template_expr(lambda.body, simple_args);
-            Hs::LPat p = {noloc, Hs::VarPattern({noloc,Hs::Var(pattern->name)})};
+            // Rename only capture-prone binders. Substituted expressions retain their own names;
+            // this environment applies exclusively to ordinary variables in the template.
+            auto var = Hs::Var(pattern->name);
+            if (replacement_free.contains(var)) var = fresh_generated_var(used, pattern->name);
+            auto inner_vars = lambda_vars;
+            inner_vars.insert_or_assign(pattern->name, var);
+            auto body = make_rule_template_expr(lambda.body, simple_args, replacement_free, used, inner_vars);
+            Hs::LPat p = {noloc, Hs::VarPattern({noloc, var})};
 
-            if (auto L = body.to<Hs::Lambda>())
+            // Folding adjacent lambdas is safe only when it does not turn shadowing into
+            // duplicate binders in one pattern list.
+            if (auto L = body.to<Hs::Lambda>(); L and not Hs::vars_in_patterns(L->match.patterns).contains({noloc, var}))
             {
                 auto LE = *L;
                 auto& pats = LE.match.patterns;
@@ -832,7 +875,7 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
         // sample(@dist) is parsed as Sample but means a Haskell sample call here.
         [&](const CM::Sample<CM::NoAnn>& sample) -> Hs::Exp
         {
-            auto dist = make_rule_template_expr(sample.dist, simple_args);
+            auto dist = make_rule_template_expr(sample.dist, simple_args, replacement_free, used, lambda_vars);
             return HsG::Apply(Hs::Var("sample"), {dist});
         },
         // Reject parser-only syntax if rule-template parsing fails to resolve it.
@@ -846,6 +889,27 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
             throw myexception()<<"Internal error: unresolved prefix negation reached rule-template code generation.";
         }
     });
+}
+
+// Reserve both free and bound template names so a renamed lambda cannot capture another name.
+static void reserve_template_names(const CM::UntypedExpr& expr, set<Hs::Var>& used)
+{
+    if (auto var = expr.to<CM::Var>()) used.insert(Hs::Var(var->name));
+    if (auto call = expr.to<CM::Call<CM::NoAnn>>()) used.insert(Hs::Var(call->function));
+    if (auto lambda = expr.to<CM::Lambda<CM::NoAnn>>())
+        if (auto pattern = lambda->pattern.to<CM::VarPattern>()) used.insert(Hs::Var(pattern->name));
+    CM::for_each_child(expr, [&](const auto& child) { reserve_template_names(child, used); });
+}
+
+// Protect the free variables of supplied expressions from capture by template lambdas.
+// Keep the public conversion interface independent of the internal lexical-renaming environment.
+Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs::Exp>& simple_args)
+{
+    set<Hs::Var> replacement_free;
+    for (const auto& [_, value]: simple_args) add(replacement_free, get_generated_free_vars(value));
+    auto used = replacement_free;
+    reserve_template_names(expr, used);
+    return make_rule_template_expr(expr, simple_args, replacement_free, used, {});
 }
 
 vector<bool> get_args_referenced(const vector<string>& arg_names, const vector<set<string>>& used_args_for_arg)
@@ -1363,11 +1427,14 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
         add(scope2.haskell_vars, arg_scope.haskell_vars);
     }
 
-    if (not rule->computed.empty())
+    // Constructor prerequisites retain their existing order. Result-dependent reports are emitted
+    // afterward, using the same bound model that the caller receives.
+    auto emit_computed = [&](bool depends_on_result)
     {
         for(int i = 0; i < rule->computed.size(); i++)
         {
             auto& x = rule->computed[i];
+            if (x.depends_on_result != depends_on_result) continue;
             auto& value = x.value;
             if (x.kind == ComputedKind::context_object)
             {
@@ -1391,7 +1458,9 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
 
             argument_environment[x_name] = x_var;
         }
-    }
+    };
+
+    emit_computed(false);
 
     try
     {
@@ -1403,6 +1472,19 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
     {
         err.prepend("In call for function '"+name+"': ");
         throw;
+    }
+
+    if (std::ranges::any_of(rule->computed, [](const auto& field) { return field.depends_on_result; }))
+    {
+        // Reuse a variable-valued call; otherwise share one binding between reports and the caller.
+        if (not is_generated_var_expr(result.code.E))
+        {
+            auto model_result = scope2.get_var(name + "_model");
+            HsG::Let(result.code.stmts, model_result, result.code.E);
+            result.code.E = model_result;
+        }
+        argument_environment["result"] = result.code.E;
+        emit_computed(true);
     }
 
     add(result.haskell_vars, scope2.haskell_vars);

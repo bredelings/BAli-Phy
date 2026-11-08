@@ -176,6 +176,28 @@ def main():
                 "z: An explanation." not in details or "explanation.." in details):
             raise AssertionError("argument help lost defaults or retained empty/duplicate punctuation")
 
+        # Rule loading must reject result-dependent construction before Haskell evaluation.
+        # Existing catalogue rules exercise successful reports but cannot cover invalid dependencies.
+        base = {"name": "resultReferenceTest", "result_type": "Double", "call": "1.0", "args": [],
+                "computed": [{"name": "first", "value": "@result"},
+                             {"name": "second", "value": "@first"}]}
+        binding_file = bindings / "result.json"
+        binding_file.write_text(json.dumps(base))
+        run_help(local_args, "resultReferenceTest")
+        for changes, diagnostic in [
+            ({"call": "@result"}, "constructor cannot depend on @result"),
+            ({"call": "@second"}, "constructor cannot depend on @result"),
+            ({"perform": True}, "@result requires a pure binding"),
+            ({"args": [{"name": "result", "type": "Double"}]}, "name 'result' is reserved"),
+            ({"computed": [{"name": "result", "value": "1.0"}]}, "name 'result' is reserved"),
+            ({"args": [{"name": "x", "type": "Double", "default_value": "@result"}]},
+             "cannot depend on @result"),
+        ]:
+            binding_file.write_text(json.dumps(dict(base, **changes)))
+            result = command_result(local_args, "help", "resultReferenceTest")
+            if result.returncode == 0 or diagnostic not in result.stderr:
+                raise AssertionError("missing @result diagnostic: " + result.stdout + result.stderr)
+
     models = run_help(args, "models")
     if "Covarion/" not in models:
         raise AssertionError("model help did not mark Covarion as having subtopics")
