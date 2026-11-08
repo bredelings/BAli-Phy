@@ -138,13 +138,13 @@ instance Show Markov where
 
 -- Replace the root distribution without changing state identities or construction annotations.
 -- Recompute the equilibrium rate as before, then propagate normalization to the retained properties.
-nonEq pi m@(Markov a smap names _ _ annotations) =
-    scaleTo 1 $ Markov a smap names mCore modelRate annotations
+nonEq pi m@(Markov a smap names _ _ annotations)
+    | vectorSize pi /= Markov.getNStates m =
+        error "nonEq: expected one frequency per CTMC state"
+    | otherwise =
+        scaleTo 1 $ Markov a smap names mCore modelRate annotations
   where
-    -- Check the input vector without making the whole model depend on this check.
-    checkedPi | vectorSize pi == Markov.getNStates m = pi
-              | otherwise = error "nonEq: expected one frequency per CTMC state"
-    mCore = Markov.markov (getQ m) checkedPi
+    mCore = Markov.markov (getQ m) pi
     modelRate = getEquilibriumRate a smap (getQ mCore) (getEqFreqs mCore)
 
 pairNames ls = [l1 ++ l2 | (l1,l2) <- ls]
