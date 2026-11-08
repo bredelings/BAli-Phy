@@ -40,3 +40,4 @@ True
 ("MNM frequencies",[True,True,True,True])
 ("frequency factors",[True,True,True,True,True,True,True])
 ("state names",[True,True,True,True,True,True,True,True,True,True,True])
+("named MutSel fitnesses",[True,True,True])

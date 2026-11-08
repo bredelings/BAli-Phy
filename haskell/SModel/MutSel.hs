@@ -55,8 +55,7 @@ mut_sel ws' m0@(Markov a smap names _ _ annotations) =
         NonEq    -> markov a smap names q pi0
 
 mut_sel' w' q0 = mut_sel w q0 where
-    w = get_ordered_elements (getLetters a) w' "fitnesses"
-    a = getAlphabet q0
+    w = get_ordered_elements (stateNames q0) w' "fitnesses"
 
 mut_sel_aa ws q@(Markov codon_a _ _ _ _ _) = mut_sel (aa_to_codon codon_a ws) q
 

@@ -12,8 +12,9 @@ import Data.Foldable (all, sum)
 import Data.Function (($))
 import qualified Data.IntMap as IntMap
 import qualified Data.Map as Map
+import qualified Data.Vector as V
 import Data.Maybe
-import Data.OldList ((!!), and, drop, length, replicate, take, zipWith)
+import Data.OldList ((!!), and, drop, length, replicate, reverse, take, zipWith)
 import Data.Ord
 import Data.Text (pack)
 import qualified EigenExp
@@ -339,4 +340,21 @@ main = do
     , Map.member (pack "dNdS") (getStatePropertyFunctions rootedHidden)
     , lookupCondition "flag" (getComponentConditions rootedHidden)
     , stateNames selected == getLetters codons
+    ])
+
+  -- Named fitnesses must follow matrix order, including hidden states; list-only tests miss
+  -- alphabet-based truncation and map-order mistakes. Retain while MutSel accepts named maps.
+  let namedHidden = case hidden of
+        Markov a smap names process modelRate annotations ->
+          Markov a smap (V.fromList $ reverse $ V.toList names) process modelRate annotations
+      hiddenFitnesses = [0,1,-1,2,3,-2,0.5,1.5]
+      fitnessMap = Map.fromList $ zipWith (\name value -> (name,value)) (stateNames namedHidden) hiddenFitnesses
+      namedSelected = mut_sel' fitnessMap namedHidden
+      orderedSelected = mut_sel hiddenFitnesses namedHidden
+  putStrLn $ show ("named MutSel fitnesses",
+    [ stateNames namedSelected == stateNames namedHidden
+    , and $ zipWith near (toList $ flatten $ CoreMarkov.getQ namedSelected)
+                        (toList $ flatten $ CoreMarkov.getQ orderedSelected)
+    , and $ zipWith near (toList $ CoreMarkov.getStartFreqs namedSelected)
+                        (toList $ CoreMarkov.getStartFreqs orderedSelected)
     ])
