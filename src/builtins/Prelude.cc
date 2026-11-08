@@ -521,6 +521,10 @@ static void peel_closure_lambdas(closure& C, int n)
     C.set_code(Runtime::peel_lambdas(C.get_code(), n));
 }
 
+// TODO: Investigate catch interacting with incremental evaluation. An exception escaping a
+// changeable update can leave force counts and graph state incomplete, yet this catch resumes
+// evaluation in the same heap. Determine how to distinguish such fatal failures from locally
+// catchable exceptions and report them without further Haskell evaluation in the damaged heap.
 extern "C" closure builtin_function_catchRaw(OperationArgs& Args)
 {
     try
