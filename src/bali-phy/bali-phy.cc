@@ -521,6 +521,7 @@ std::string generate_print_program(const model_t& print, const Hs::Exp& a)
 {
     std::ostringstream program_file;
 
+    program_file<<"{-# LANGUAGE ExtendedDefaultRules #-}\n";
     program_file<<"-- Use the program `ormolu` (or `brittany` or `hindent`) to indent this file for readability\n";
     set<string> imports;
     imports.insert("Probability.Random");     // for runRandomLazy
