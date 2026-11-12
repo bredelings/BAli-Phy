@@ -3,7 +3,7 @@
     "result_type": "Set<String>",
     "call": "numberPairSet(@n)",
     "import": [
-        "Markov"
+        "Markov (numberPairSet)"
     ],
     "args": [
         {

@@ -3,7 +3,7 @@
     "deprecated-synonyms": ["Covarion.wssr07", "Covarion.wang07"],
     "title":"The WSSR (2007) Covarion Model",
     "result_type": "DiscreteDist<CTMC<a>>",
-    "call": "wssr07(@s01,@s10,@nu,@pi,@submodel)",
+    "call": "wssr07(@method,@s01,@s10,@nu,@pi,@submodel)",
     "import": ["SModel"],
     "citation":{"type": "article",
 		"title": "Testing for Covarion-like Evolution in Protein Sequences",
@@ -20,31 +20,37 @@
         {
             "name": "submodel",
             "type": "DiscreteDist<CTMC<a>>",
-	    "description": "The base mixture model"
+            "description": "The base mixture model"
         },
         {
             "name": "r",
             "type": "Double",
-	    "default_value":"~Gamma(2,1/4)",
-	    "description":"s01 + s10"
+            "default_value": "~Gamma(2,1/4)",
+            "description": "s01 + s10"
         },
         {
             "name": "pi1",
             "type": "Double",
-	    "default_value":"~Beta(2,2)",
-	    "description":"Fraction of time spent in the ON state"
+            "default_value": "~Beta(2,2)",
+            "description": "Fraction of time spent in the ON state"
         },
         {
             "name": "nu",
             "type": "Double",
-	    "default_value":"~Exponential(0.1)",
-	    "description":"Rate of class-switching"
+            "default_value": "~Exponential(0.1)",
+            "description": "Controls the rate of switching between components."
         },
         {
             "name": "pi",
             "type": "Double",
-	    "default_value":"~Uniform(0,1)",
-	    "description":"Fraction of sites undergoing class-switching"
+            "default_value": "~Uniform(0,1)",
+            "description": "Fraction of sites undergoing class-switching"
+        },
+        {
+            "name": "method",
+            "type": "SwitchingMethod",
+            "default_value": "AlwaysSwitch",
+            "description": "`AlwaysSwitch` keeps the supplied switching rates; `MetropolisSwitching` can preserve component and character frequencies by reducing switching rates."
         }
     ],
     "computed": [
@@ -61,7 +67,8 @@
 	    "value": "@r * (1 - @pi1)"
 	}
     ],
-    "description": "The WSSR covarion model implements both switching between ON/OFF states, and switching between classes.",
+    "description": "The WSSR covarion model implements both switching between ON/OFF states, and switching between classes. The `method` argument controls switching between mixture components, not ON/OFF switching. The switching methods coincide when component equilibrium frequencies are equal. With different frequencies, `AlwaysSwitch` can require a rooted tree even when the input models are reversible.",
     "examples": ["GTR +> ASRV.Gamma +> Covarion.Wang07","GTR +> ASRV.Free +> Covarion.Wang07"],
-    "extract": "all"
+    "extract": "all",
+    "see": ["AlwaysSwitch", "MetropolisSwitching"]
 }

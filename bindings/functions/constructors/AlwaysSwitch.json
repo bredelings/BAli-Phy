@@ -1,0 +1,14 @@
+{
+    "name": "AlwaysSwitch",
+    "result_type": "SwitchingMethod",
+    "call": "AlwaysSwitch",
+    "import": [
+        "SModel.MarkovModulated"
+    ],
+    "args": [],
+    "description": "Uses the supplied switching rates regardless of the current character. Switching between components with different equilibrium frequencies generally changes the long-run character frequencies within each component.",
+    "see": [
+        "MarkovModulate",
+        "Covarion.GTR"
+    ]
+}

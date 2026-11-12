@@ -1,0 +1,14 @@
+{
+    "name": "MetropolisSwitching",
+    "result_type": "SwitchingMethod",
+    "call": "MetropolisSwitching",
+    "import": [
+        "SModel.MarkovModulated"
+    ],
+    "args": [],
+    "description": "Reduces switches toward components where the current character has a lower equilibrium frequency. When the switching model is reversible and the components are stationary, this preserves both the long-run component proportions and the character frequencies within each component. Actual switching rates may be lower than those supplied.",
+    "see": [
+        "MarkovModulate",
+        "Covarion.GTR"
+    ]
+}

@@ -1,25 +1,31 @@
 {
     "name": "Covarion.GTR",
     "deprecated-synonyms": ["Covarion.gtr"],
-    "title":"The General Reversity Covarion Model",
+    "title":"Covarion model with general reversible switching",
     "result_type": "CTMC<a>",
-    "call": "covarionGtrSym(gtr_sym_from_numbers(nComponents(@submodel),@sym),@submodel)",
-    "import": ["SModel"],
+    "call": "covarionGtrSym(@method,gtr_sym_from_numbers(nComponents(@submodel),@sym),@submodel)",
+    "import": ["SModel", "Markov (gtr_sym_from_numbers)"],
     "args": [
         {
             "name": "submodel",
             "type": "DiscreteDist<CTMC<a>>",
-	    "description": "The base mixture model"
+            "description": "The base mixture model"
         },
         {
             "name": "sym",
             "type": "Map<String,Double>",
-	    "default_value":"~IIDOn(number_pairs(n_components(@submodel)),Gamma(0.5,1.0))",
-	    "description":"Symmetric class-switching exchangability matrix"
+            "default_value": "~IIDOn(number_pairs(n_components(@submodel)),Gamma(0.5,1.0))",
+            "description": "Symmetric exchangeabilities between mixture components"
+        },
+        {
+            "name": "method",
+            "type": "SwitchingMethod",
+            "default_value": "AlwaysSwitch",
+            "description": "`AlwaysSwitch` keeps the supplied switching rates; `MetropolisSwitching` can preserve component and character frequencies by reducing switching rates."
         }
     ],
-    "description": "The Galtier covarion model implements switching between classes at a rate `nu`.",
-    "examples": ["GTR +> ASRV.Gamma +> Covarion.Galtier01","GTR +> ASRV.Free +> Covarion.Galtier01"],
-    "see": ["MarkovModulate"],
+    "description": "Switches between mixture components using a general reversible switching matrix. The switching methods coincide when component equilibrium frequencies are equal. With different frequencies, `AlwaysSwitch` can require a rooted tree even when the input models are reversible.",
+    "examples": ["GTR +> ASRV.Gamma +> Covarion.GTR"],
+    "see": ["MarkovModulate", "AlwaysSwitch", "MetropolisSwitching"],
     "extract": "all"
 }

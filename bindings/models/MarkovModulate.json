@@ -2,7 +2,7 @@
     "name": "MarkovModulate",
     "deprecated-synonyms": ["markov_modulate"],
     "result_type": "CTMC<a>",
-    "call": "markov_modulate_mixture(@nu,@submodel)",
+    "call": "markovModulateMixture(@method,@nu,@submodel)",
     "import": ["SModel"],
     "args": [
         {
@@ -14,11 +14,17 @@
             "name": "nu",
             "type": "Double",
 	    "default_value":"~Exponential(0.1)",
-	    "description":"Rate of class-switching"
+	    "description":"Controls the rate of switching between components."
+        },
+        {
+            "name": "method",
+            "type": "SwitchingMethod",
+            "default_value": "AlwaysSwitch",
+            "description": "`AlwaysSwitch` keeps the supplied switching rates; `MetropolisSwitching` can preserve component and character frequencies by reducing switching rates."
         }
     ],
-    "description": "This constructs a modulated markov model that switches between classes in a mixture at a rate `nu`.",
-    "examples": ["GTR +> ASRV.Gamma +> MarkovModulate","GTR +> ASRV.Free +> MarkovModulate"],
-    "see": ["Covarion.Galtier01"],
+    "description": "Constructs a Markov-modulated model that switches between components of a mixture at a rate controlled by `nu`. The switching methods coincide when component equilibrium frequencies are equal. With different frequencies, `AlwaysSwitch` can require a rooted tree even when the input models are reversible.",
+    "examples": ["GTR +> ASRV.Gamma +> MarkovModulate", "GTR +> ASRV.Free +> MarkovModulate", "GTR +> ASRV.Gamma +> MarkovModulate(method=MetropolisSwitching)"],
+    "see": ["Covarion.Galtier01", "AlwaysSwitch", "MetropolisSwitching"],
     "extract": "all"
 }
