@@ -45,3 +45,4 @@ True
 ("modulation classifications",[True,True,True,True])
 ("modulation rates",[True,True,True,True,True,True,True,True])
 ("modulation roots and zeros",[True,True,True,True,True,True,True,True,True,True])
+("Wang07 mixture",[True,True,True,True,True,True,True,True,True])

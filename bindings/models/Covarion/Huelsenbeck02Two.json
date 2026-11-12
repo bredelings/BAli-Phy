@@ -3,7 +3,7 @@
     "deprecated-synonyms": ["Covarion.hb02_two"],
     "title":"The Huelsenbeck Covarion Model",
     "result_type": "DiscreteDist<CTMC<a>>",
-    "call": "huelsenbeck_02_two(@s01a,@s10a,@s01b,@s10b,@fraction1,@submodel)",
+    "call": "huelsenbeck02Two(@s01a,@s10a,@s01b,@s10b,@fraction1,@submodel)",
     "import": ["SModel"],
     "args": [
         {
@@ -69,7 +69,7 @@
 	},
 	{
 	    "name": "switchingDist",
-	    "value": "sortDist(Discrete([(@rate1,1 - @fraction1),(@rate2,@fraction1)]))"
+	    "value": "sortDist(Discrete([(@rate1,@fraction1),(@rate2,1 - @fraction1)]))"
 	}
     ],
     "description": "This model allows estimating the fraction of sites that follow the Huelsenbeck covarion model.",

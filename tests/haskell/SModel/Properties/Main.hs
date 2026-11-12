@@ -429,3 +429,22 @@ main = do
     , near (qValues zeroMetropolis !! 13) 0
     , near (qValues zeroMetropolis !! 31) 0.75
     ])
+
+  -- Protect Wang07's nonswitching fraction and relative rates: the general modulation checks
+  -- above do not exercise this mixture. Retain while Wang07 combines ON/OFF and class switching.
+  let baseRates = Discrete [(scaleBy 0.5 $ scaleTo 1 componentA, 0.5),
+                            (scaleBy 1.5 $ scaleTo 1 componentA, 0.5)]
+      wang p = wssr07 AlwaysSwitch 1 3 2 p baseRates
+      Discrete [(noCov,_),(cov,_)] = wang 0.4
+      noCovQ = qValues noCov
+      noCovStart = toList $ CoreMarkov.getStartFreqs noCov
+  putStrLn $ show ("Wang07 mixture",
+    [ near (rate $ wang 0) 1, near (rate $ wang 1) 0.25
+    , near (rate $ wang 0.4) 0.7
+    , all (near 0) (take 8 noCovStart)
+    , near (noCovQ !! (8*16+12)) 0
+    , near (noCovQ !! (8*16)) 0
+    , near (noCovQ !! (8*16+9)) (0.5 * (qValues (scaleTo 1 componentA) !! 1))
+    , sameMatrix cov (wssr07Ssrv AlwaysSwitch 1 3 2 baseRates)
+    , stateNames noCov == stateNames cov
+    ])

@@ -129,7 +129,11 @@ galtier01 method nu pi model = (\nu' -> galtier01Ssrv method nu' model) <$> (Dis
 
 wssr07Ssrv method s01 s10 nu model = tuffleySteel98 s01 s10 $ galtier01Ssrv method nu model
 
-wssr07 method s01 s10 nu pi model = (\nu' -> wssr07Ssrv method s01 s10 nu' model) <$> (Discrete [(0, 1-pi), (nu, pi)]) 
+-- Wang et al. (2007), Fig. 1C: noncovarion sites never switch rates, including ON/OFF.
+-- Their mean rate is 1; the covarion component's mean is s01/(s01+s10) before overall scaling.
+wssr07 method s01 s10 nu pi model = Discrete [(noCov, 1-pi), (cov, pi)]
+    where noCov = wssr07Ssrv method 1 0 0 model
+          cov = wssr07Ssrv method s01 s10 nu model
 
 -- a -> HB02
 -- b -> GT01 if no HB02
