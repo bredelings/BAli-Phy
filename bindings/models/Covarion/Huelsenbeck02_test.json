@@ -1,7 +1,7 @@
 {
     "name": "Covarion.Huelsenbeck02_test",
     "deprecated-synonyms": ["Covarion.hb02_test"],
-    "title":"The Huelsenbeck Covarion Model",
+    "title":"Huelsenbeck covarion model with a nonswitching fraction",
     "result_type": "DiscreteDist<CTMC<a>>",
     "call": "huelsenbeck02Test(@s01,@s10,@fraction1,@submodel)",
     "import": ["SModel"],
@@ -27,7 +27,7 @@
 	    "name": "fraction1",
 	    "type": "Double",
 	    "default_value": "~Beta(0.5,0.5)",
-	    "description": "Fraction of sites with rate-switching"
+	    "description": "The fraction of sites undergoing ON/OFF switching"
 	}
     ],
     "computed": [
@@ -44,7 +44,7 @@
 	    "value": "@r * (1 - @pi1)"
 	}
     ],
-    "description": "This model allows estimating the fraction of sites that follow the Huelsenbeck covarion model.",
+    "description": "Estimates the fraction of sites that follow the Huelsenbeck ON/OFF covarion model. The remaining sites follow the base model without ON/OFF switching, retaining any across-site rate variation in that model.",
     "examples": ["GTR +> ASRV.Gamma +> Covarion.Huelsenbeck02_test","GTR +> ASRV.Free(n=5) +> Covarion.Huelsenbeck02_test"],
     "see": ["Covarion.TuffleySteel98","Covarion.Huelsenbeck02"],
     "extract": "all"

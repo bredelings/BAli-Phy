@@ -8,25 +8,25 @@
         {
             "name": "submodel",
             "type": "Map<String,Double> -> CTMC<a>",
-            "description": "The model to use on each branch",
+            "description": "Constructs a branch model from its frequency vector",
             "default_value": "|pi:GTR(pi=pi)|"
         },
         {
             "name": "tree",
             "type": "Tree<t>",
-            "description": "The base model",
+            "description": "The rooted tree",
             "default_value": "get_state(tree)"
         },
         {
             "name": "freqs",
             "type": "DiscreteDist<Map<String,Double>>",
-            "description": "The rate distribution",
+            "description": "The weighted distribution of frequency vectors available to nodes",
             "default_value": "~DirichletMixture(SymmetricDirichletOn(letters(@a),2),2,@n)"
         },
         {
             "name": "nodeFreqs",
             "type": "IntMap<Map<String,Double>>",
-            "description": "The frequencies for each node",
+            "description": "The frequency vector assigned to each node",
             "default_value": "~IIDMap(nodes(@tree),@freqs)"
         },
         {
@@ -74,6 +74,6 @@
 	    "value": "@r * (1 - @pi1)"
 	}
     ],
-    "description": "A non-equilibrium model where each node selects from a weighted collection of n frequences.",
+    "description": "Allows composition to vary among branches of a rooted tree. Each node selects a frequency vector from a weighted collection of n vectors. A branch uses the vector assigned to its child node to construct its substitution model; the root assignment determines the starting frequencies. These branch-specific equilibrium frequencies need not equal the actual frequencies reached along the tree.\n\nAlso allows ON/OFF switching and rate variation among sites. Each site retains its rate category throughout the tree; its rate is zero while OFF. The ON/OFF switching rates are shared across branches and rate categories.",
     "examples": ["|pi:TN93(pi=pi)| +> Covarion.MultiFreq(n=3)"]
 }

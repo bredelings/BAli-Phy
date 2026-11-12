@@ -9,7 +9,7 @@
 		"title": "Testing for Covarion-like Evolution in Protein Sequences",
 		"year": "2007",
 		"author": [{"name": "Wang, Huai-Chun"},
-                           {"name": "Spenser, Matthew"},
+                           {"name": "Spencer, Matthew"},
                            {"name": "Susko, Edward"},
                            {"name": "Roger, Andrew J"}
                           ],
@@ -44,7 +44,7 @@
             "name": "pi",
             "type": "Double",
             "default_value": "~Uniform(0,1)",
-            "description": "Fraction of sites undergoing class-switching"
+            "description": "The fraction of sites undergoing ON/OFF and rate-class switching"
         },
         {
             "name": "method",
@@ -67,7 +67,7 @@
 	    "value": "@r * (1 - @pi1)"
 	}
     ],
-    "description": "The WSSR covarion model implements both switching between ON/OFF states, and switching between classes. The `method` argument controls switching between mixture components, not ON/OFF switching. The switching methods coincide when component equilibrium frequencies are equal. With different frequencies, `AlwaysSwitch` can require a rooted tree even when the input models are reversible.",
+    "description": "Combines ON/OFF switching with switching between rate categories while ON. A fraction pi of sites follows this covarion process; the remaining sites stay ON and retain their rate category throughout the tree. Both fractions use the supplied rate mixture, which is discrete Gamma in the published model.\n\nBefore overall substitution-rate normalization, nonswitching sites have mean rate 1 and covarion sites have mean rate pi1. Thus the mixture has mean rate (1-pi) + pi*pi1. The method argument controls switching between rate categories, not ON/OFF switching. The switching methods coincide when component equilibrium frequencies are equal. With different frequencies, AlwaysSwitch can require a rooted tree even when the input models are reversible.",
     "examples": ["GTR +> ASRV.Gamma +> Covarion.Wang07","GTR +> ASRV.Free +> Covarion.Wang07"],
     "extract": "all",
     "see": ["AlwaysSwitch", "MetropolisSwitching"]

@@ -37,7 +37,7 @@
             "description": "`AlwaysSwitch` keeps the supplied switching rates; `MetropolisSwitching` can preserve component and character frequencies by reducing switching rates."
         }
     ],
-    "description": "The Galtier covarion model implements switching between classes at rates controlled by `nu`. The switching methods coincide when component equilibrium frequencies are equal. With different frequencies, `AlwaysSwitch` can require a rooted tree even when the input models are reversible.",
+    "description": "Allows a fraction pi of sites to switch between rate categories along the tree. The remaining sites retain a single rate category throughout the tree. Both fractions use the supplied mixture; the historical model uses discrete Gamma rate categories.\n\nWith AlwaysSwitch, the rate from category i to category j is nu times the weight of category j. The switching methods coincide when component equilibrium frequencies are equal. With different frequencies, `AlwaysSwitch` can require a rooted tree even when the input models are reversible.",
     "examples": ["GTR +> ASRV.Gamma +> Covarion.Galtier01","GTR +> ASRV.Free +> Covarion.Galtier01"],
     "see": ["MarkovModulate", "AlwaysSwitch", "MetropolisSwitching"],
     "extract": "all"

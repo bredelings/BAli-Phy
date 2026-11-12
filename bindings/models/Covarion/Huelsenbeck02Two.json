@@ -1,7 +1,7 @@
 {
     "name": "Covarion.Huelsenbeck02Two",
     "deprecated-synonyms": ["Covarion.hb02_two"],
-    "title":"The Huelsenbeck Covarion Model",
+    "title":"Two-regime Huelsenbeck covarion model",
     "result_type": "DiscreteDist<CTMC<a>>",
     "call": "huelsenbeck02Two(@s01a,@s10a,@s01b,@s10b,@fraction1,@submodel)",
     "import": ["SModel"],
@@ -15,31 +15,31 @@
             "name": "r1",
             "type": "Double",
 	    "default_value":"~Gamma(0.5,1)",
-	    "description":"s01 + s10"
+	    "description":"The sum of the OFF-to-ON and ON-to-OFF rates in regime 1"
         },
         {
             "name": "r2",
             "type": "Double",
 	    "default_value":"~Gamma(2,1/4)",
-	    "description":"s01 + s10"
+	    "description":"The sum of the OFF-to-ON and ON-to-OFF rates in regime 2"
         },
         {
             "name": "pi1",
             "type": "Double",
 	    "default_value":"~Beta(1,1)",
-	    "description":"Fraction of time spent in the ON state"
+	    "description":"The equilibrium fraction of time spent ON in regime 1"
         },
         {
             "name": "pi2",
             "type": "Double",
 	    "default_value":"~Beta(2,2)",
-	    "description":"Fraction of time spent in the ON state"
+	    "description":"The equilibrium fraction of time spent ON in regime 2"
         },
 	{
 	    "name": "fraction1",
 	    "type": "Double",
 	    "default_value": "~Beta(0.5,0.5)",
-	    "description": "Fraction of sites with rate-switching"
+	    "description": "The fraction of sites in regime 1"
 	}
     ],
     "computed": [
@@ -72,8 +72,8 @@
 	    "value": "sortDist(Discrete([(@rate1,@fraction1),(@rate2,1 - @fraction1)]))"
 	}
     ],
-    "description": "This model allows estimating the fraction of sites that follow the Huelsenbeck covarion model.",
-    "examples": ["GTR +> ASRV.Gamma +> Covarion.Huelsenbeck02_test","GTR +> ASRV.Free(n=5) +> Covarion.Huelsenbeck02_test"],
+    "description": "Mixes two Huelsenbeck ON/OFF covarion regimes. A fraction fraction1 of sites uses r1 and pi1; the remaining sites use r2 and pi2. Both regimes use the same base substitution model or rate mixture. Sites retain their regime throughout the tree, but switch between ON and OFF within that regime.\n\nThe computed switchingDist reports the equilibrium ON/OFF switching rates of the two regimes, weighted by their fractions of sites, before overall substitution-rate normalization.",
+    "examples": ["GTR +> ASRV.Gamma +> Covarion.Huelsenbeck02Two", "GTR +> ASRV.Free(n=5) +> Covarion.Huelsenbeck02Two"],
     "see": ["Covarion.TuffleySteel98","Covarion.Huelsenbeck02"],
     "extract": "all"
 }

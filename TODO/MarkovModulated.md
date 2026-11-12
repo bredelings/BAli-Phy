@@ -226,25 +226,20 @@ The model can start from a chosen distribution, including the product-form `mu`,
 stationary.  This permits directional changes in composition, but requires a rooted likelihood calculation and cannot
 use reversible-model algorithms.
 
-## Current direction
+## Implemented choice and alternatives
 
-The equilibrium-preserving bridges have the most attractive combination of properties considered so far:
+The implementation offers both direct switching (`AlwaysSwitch`) and the unnormalized pairwise
+Metropolis bridge (`MetropolisSwitching`). Direct switching retains the supplied switching rates;
+the Metropolis bridge treats them as proposal rates and lets frequency mismatch reduce realized
+switching. No normalization restores the supplied mean switching rates.
 
-* they preserve the advertised component frequencies;
-* they guarantee reversibility when `M` and all component matrices are reversible;
-* they permit nonreversible component matrices while retaining a known stationary distribution;
-* they reduce to the classical generator when component frequencies agree.
+With reversible switching and stationary components, the Metropolis bridge preserves the component
+weights and the equilibrium frequencies within each component. With nonreversible switching, the
+same pairwise formula is used, but preservation of those frequencies is not guaranteed. Root
+frequencies remain the product of the inputs' starting distributions in both constructions.
 
-The normalized geometric and Metropolis bridges keep `M[i,j]` as the mean switching rate.  The unnormalized
-Metropolis construction instead gives `M[i,j]` the concrete meaning of a proposal rate and allows frequency mismatch
-to reduce realized switching.
-
-Before implementation, the bridge and its normalization must be chosen and justified.  The API should also
-distinguish this model from autonomous switching with a numerically computed equilibrium, because the constructions
-give `M` different meanings.
-
-Tests should include unequal-frequency components and check `mu Q = 0`, detailed balance when appropriate, the
-matrix exponential, mean regime-switching rates, and exact reduction to the classical common-frequency generator.
+The normalized bridges, simultaneous character resets, and other equilibrium-preserving
+constructions described above remain alternatives for future investigation.
 
 ## References
 
@@ -266,7 +261,10 @@ diagonalization of the expanded generator.
 
 [Testing for Covarion-like Evolution in Protein Sequences](https://doi.org/10.1093/molbev/msl155).  The general
 covarion model combines on/off switching with switches among multiple active rate classes.  Class switches retain the
-character and change its rate, so the model continues to use a common character equilibrium.
+character and change its rate, so the model continues to use a common character equilibrium. A
+fraction of sites never switches, either between ON/OFF or between rate classes. Both fractions use
+the same rate distribution for active sites: before overall scaling, the nonswitching mean rate is 1
+and the covarion mean rate is the probability of being ON.
 
 ### Whelan (2008)
 
