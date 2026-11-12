@@ -730,8 +730,10 @@ void inc_modulated_states_vec(int& r, int& level, int& state, const R::RVector& 
     }
 }
 
-// We switch between these different "levels" with KxK rate matrix `rates_between`.
-// The equilibrium frequencies for each level in `R` are given by `level_frequencies`.
+// Build a component-major generator, preserving the local state index when switching levels.
+// Empty frequencies select direct switching; otherwise they supply component equilibria for
+// pairwise Metropolis acceptance. With reversible regime switching, the product equilibrium is
+// preserved because the two switching flows share min(pi_i[x], pi_j[x]).
 extern "C" closure builtin_function_modulated_markov_rates(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
@@ -740,15 +742,24 @@ extern "C" closure builtin_function_modulated_markov_rates(OperationArgs& Args)
 
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto& rates_between = arg1.as_<Box<DenseMatrix<double>>>();
-    assert(rates_between.rows() == n_levels);
-    assert(rates_between.cols() == n_levels);
+    if (n_levels == 0 or rates_between.rows() != n_levels or rates_between.cols() != n_levels)
+        throw myexception() << "modulatedMarkov: switching matrix must have one state per component";
+
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto& frequencies = arg2.as_<R::RVector>();
+    if (not frequencies.empty() and frequencies.size() != n_levels)
+        throw myexception() << "modulatedMarkov: wrong number of component frequency vectors";
+    int n_states = Qs[0].as_<Box<DenseMatrix<double>>>().rows();
 
     int total_states = 0;
     for(int l = 0; l < n_levels; l++)
     {
         auto& Q = Qs[l].as_<Box<DenseMatrix<double>>>();
         int n_states_for_level = Q.rows();
-        assert(Q.cols() == n_states_for_level);
+        if (Q.cols() != n_states or n_states_for_level != n_states)
+            throw myexception() << "modulatedMarkov: components must have matching square matrices";
+        if (not frequencies.empty() and frequencies[l].as_<Box<DenseVector<double>>>().size() != n_states)
+            throw myexception() << "modulatedMarkov: frequency vector does not match component matrix";
 
         total_states += n_states_for_level;
     }
@@ -765,7 +776,18 @@ extern "C" closure builtin_function_modulated_markov_rates(OperationArgs& Args)
             if (l1 != l2 and s1 != s2)
                 ;
             else if (l1 != l2)
+            {
                 rate = rates_between(l1,l2);
+                if (not frequencies.empty())
+                {
+                    double source = frequencies[l1].as_<Box<DenseVector<double>>>()[s1];
+                    double destination = frequencies[l2].as_<Box<DenseVector<double>>>()[s2];
+                    // Equal frequencies (including two zeros) accept every switch. A positive
+                    // source and zero destination reject it; a zero source never divides by zero.
+                    if (destination < source)
+                        rate *= destination / source;
+                }
+            }
             else
             {
                 assert(l1 == l2);

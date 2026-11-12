@@ -42,3 +42,6 @@ True
 ("state names",[True,True,True,True,True,True,True,True,True,True,True])
 ("named MutSel fitnesses",[True,True,True])
 ("matrix report labels",[True,True])
+("modulation classifications",[True,True,True,True])
+("modulation rates",[True,True,True,True,True,True,True,True])
+("modulation roots and zeros",[True,True,True,True,True,True,True,True,True,True])

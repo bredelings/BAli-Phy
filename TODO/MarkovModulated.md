@@ -1,7 +1,7 @@
 # Markov-modulated models
 
-This note records the problem with the current Markov-modulated model and the alternatives considered for
-supporting component rate matrices with different equilibrium frequencies.
+This note describes Markov-modulated constructions and alternatives for supporting component rate matrices
+with different equilibrium frequencies.
 
 ## Definitions
 
@@ -20,15 +20,30 @@ The natural product-form target is
 It says both that the regime frequencies are `alpha` and that the conditional character frequencies within regime
 `i` are `pi_i`.
 
-## Current construction
+## Implemented constructions
 
-The usual state-retaining, autonomous-switching construction has rates
+`modulatedMarkov` takes a `SwitchingMethod`: `AlwaysSwitch` or `MetropolisSwitching`. Both retain the product
+of the inputs' starting distributions at the root. The model-language constructors default to `AlwaysSwitch`.
+
+`MetropolisSwitching` multiplies each proposed switching rate by `min(1, pi_j[x]/pi_i[x])`, using component
+**equilibrium** frequencies even for non-equilibrium components. Two zero frequencies accept the switch;
+a zero destination with a positive source rejects it. With stationary components and reversible switching,
+this preserves the product equilibrium. Nonreversible switching uses the same formula without an additional
+Metropolis–Hastings correction, so the product distribution need not be stationary.
+
+For either method, a non-equilibrium input gives a `NonEq` result. With stationary inputs, `AlwaysSwitch`
+takes the minimum input classification when component frequencies agree and otherwise returns `NonEq`.
+`MetropolisSwitching` takes the component classification for reversible switching; for nonreversible
+stationary switching it returns `EqNonRev` only when component frequencies agree. For `NonEq` results,
+the equilibrium is computed separately from the combined generator; it does not replace the root distribution.
+
+The `AlwaysSwitch` state-retaining, autonomous-switching construction has rates
 
     (i,x) -> (i,y) at Q_i[x,y]
     (i,x) -> (j,x) at M[i,j].
 
-This is the construction in `src/builtins/SModel.cc`.  The code also reports `mu(i,x)` as the equilibrium and may
-mark the expanded model reversible.
+Both constructions are implemented in `src/builtins/SModel.cc`. The product root distribution must not be
+assumed to be the equilibrium for `AlwaysSwitch` with different component frequencies.
 
 When the `pi_i` differ, however, the switching part generally does not preserve `mu`.  At `(i,x)`, stationarity
 would require
@@ -38,7 +53,7 @@ would require
 
 Stationarity of `alpha` under `M` cannot cancel the different `pi_j[x]` factors.  For an irreducible autonomous
 switching process, product form normally requires all component matrices to have the same stationary distribution.
-Using the incorrect equilibrium in a reversible eigensystem then also produces the wrong matrix exponential.
+The classification therefore must not claim reversibility with respect to that product distribution.
 
 ## Options
 

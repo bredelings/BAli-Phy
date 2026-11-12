@@ -129,7 +129,7 @@ main = do
   let model1 = setConstantStateProperty (pack "dNdS") 0.5 (jukes_cantor dna)
       model2 = setConstantStateProperty (pack "dNdS") 2.0 (jukes_cantor dna)
       between = CoreMarkov.gtr (CoreMarkov.equ 2 1) [0.5, 0.5]
-      modulated = modulatedMarkov [model1, model2] between
+      modulated = modulatedMarkov AlwaysSwitch [model1, model2] between
       modulatedValues = singleComponentValues $ lookupProperty "dNdS" $ getProperties (SModelOnTree () modulated)
 
   putStrLn $ show $ toList $ CoreMarkov.getStartFreqs between
@@ -156,13 +156,13 @@ main = do
   putStrLn $ show $ take 4 modulatedValues
   putStrLn $ show $ take 4 $ drop 4 modulatedValues
 
-  let modulatedSelection = modulatedMarkov [neutralCodonModel, codonModel] between
+  let modulatedSelection = modulatedMarkov AlwaysSwitch [neutralCodonModel, codonModel] between
   putStrLn $ show $ lookupCondition "positiveSelectionInModel" $
     getConditions (SModelOnTree () modulatedSelection)
 
   let scaled1 = setStateProperty (pack "scaled") (\scale -> constantStateProperties 4 (scale * 3.0)) (jukes_cantor dna)
       scaled2 = setStateProperty (pack "scaled") (\scale -> constantStateProperties 4 (scale * 5.0)) (jukes_cantor dna)
-      scaledModulated = scaleBy 2.0 $ modulatedMarkov [scaled1, scaled2] between
+      scaledModulated = scaleBy 2.0 $ modulatedMarkov AlwaysSwitch [scaled1, scaled2] between
       scaledValues = singleComponentValues $ lookupProperty "scaled" $ getProperties (SModelOnTree () scaledModulated)
 
   putStrLn $ show [near (scaledValues!!0) 6.0, near (scaledValues!!4) 10.0]
@@ -327,7 +327,7 @@ main = do
   let hidden = tuffleySteel98 0.2 0.3 model1
       namedRoots = Map.fromList [(name, 0.125) | name <- stateNames hidden]
       rootedHidden = nonEq' namedRoots (setComponentCondition (pack "flag") True hidden)
-      nested = modulatedMarkov [hidden, hidden] between
+      nested = modulatedMarkov AlwaysSwitch [hidden, hidden] between
   putStrLn $ show ("state names",
     [ stateNames (jukes_cantor dna) == getLetters dna
     , stateNames hidden == ["OFF:A","OFF:C","OFF:G","OFF:T","ON:A","ON:C","ON:G","ON:T"]
@@ -370,4 +370,62 @@ main = do
     , labelledOffDiagonal reportNames "|" reportMatrix ==
         Map.fromList [("ON:A|OFF:A",1), ("ON:A|C",2), ("OFF:A|ON:A",3),
                       ("OFF:A|C",4), ("C|ON:A",5), ("C|OFF:A",6)]
+    ])
+
+  -- Check both switching constructions together: property propagation above cannot detect wrong
+  -- equilibrium claims or acceptance factors. Retain while the methods share a native builder.
+  let componentA = unscaled_f81 [0.4,0.3,0.2,0.1] dna
+      componentB = unscaled_f81 [0.1,0.2,0.3,0.4] dna
+      switching = CoreMarkov.gtr (CoreMarkov.equ 2 1) [0.25,0.75]
+      direct = modulatedMarkov AlwaysSwitch [componentA,componentB] switching
+      metropolis = modulatedMarkov MetropolisSwitching [componentA,componentB] switching
+      qValues model = toList $ flatten $ CoreMarkov.getQ model
+      sameMatrix a b = and $ zipWith near (qValues a) (qValues b)
+      stationary model = CoreMarkov.checkStationary (CoreMarkov.getQ model) (CoreMarkov.getStartFreqs model)
+      classify method equal r s = getReversibility $ modulatedMarkov method
+          [setReversibility r componentA, setReversibility r (if equal then componentA else componentB)]
+          (setReversibility s switching)
+      classifications = [EqRev,EqNonRev,NonEq]
+  putStrLn $ show ("modulation classifications",
+    [ and [classify AlwaysSwitch True r s == min r s | r <- classifications, s <- classifications]
+    , and [classify AlwaysSwitch False r s == NonEq | r <- classifications, s <- classifications]
+    , and [classify MetropolisSwitching True r s == min r s | r <- classifications, s <- classifications]
+    , and [classify MetropolisSwitching False r s == (if s == EqRev then r else NonEq)
+          | r <- classifications, s <- classifications]
+    ])
+  putStrLn $ show ("modulation rates",
+    [ not (stationary direct), stationary metropolis
+    , CoreMarkov.checkReversible (CoreMarkov.getQ metropolis) (CoreMarkov.getStartFreqs metropolis)
+    , near (qValues direct !! 4) 0.75
+    , near (qValues metropolis !! 4) 0.1875
+    , near (qValues metropolis !! 32) 0.25
+    , and $ zipWith near (toList $ CoreMarkov.getStartFreqs metropolis)
+                        [0.1,0.075,0.05,0.025,0.075,0.15,0.225,0.3]
+    , CoreMarkov.checkStationary (CoreMarkov.getQ direct) (CoreMarkov.getEqFreqs direct)
+    ])
+
+  -- NonEq roots must not become acceptance targets. A directed switching cycle also checks the
+  -- actual nonreversible case, rather than only conservative classification of reversible inputs.
+  let replaceStart model start = markov dna (simpleSMap dna) (getLettersVector dna) (CoreMarkov.getQ model) (fromList start)
+      changedRoot = replaceStart componentA [0.1,0.2,0.3,0.4]
+      nonEqModulated = modulatedMarkov MetropolisSwitching [changedRoot,componentB] switching
+      cycleQ = fromLists [[-1,1,0],[0,-1,1],[1,0,-1]]
+      cycleSwitch = setReversibility EqNonRev $ CoreMarkov.markov cycleQ (fromList [1/3,1/3,1/3])
+      cycleEqual = modulatedMarkov MetropolisSwitching [componentA,componentA,componentA] cycleSwitch
+      cycleDifferent = modulatedMarkov MetropolisSwitching [componentA,componentB,componentA] cycleSwitch
+      zeroA = unscaled_f81 [0,0.5,0.5,0] dna
+      zeroB = unscaled_f81 [0.5,0,0.5,0] dna
+      zeroMetropolis = modulatedMarkov MetropolisSwitching [zeroA,zeroB] switching
+  putStrLn $ show ("modulation roots and zeros",
+    [ sameMatrix nonEqModulated metropolis
+    , getReversibility nonEqModulated == NonEq
+    , and $ zipWith near (toList $ CoreMarkov.getStartFreqs nonEqModulated)
+                        [0.025,0.05,0.075,0.1,0.075,0.15,0.225,0.3]
+    , stationary cycleEqual, not (stationary cycleDifferent)
+    , sameMatrix (modulatedMarkov AlwaysSwitch [zeroA,zeroA] switching)
+                 (modulatedMarkov MetropolisSwitching [zeroA,zeroA] switching)
+    , stationary zeroMetropolis
+    , near (qValues zeroMetropolis !! 4) 0.75
+    , near (qValues zeroMetropolis !! 13) 0
+    , near (qValues zeroMetropolis !! 31) 0.75
     ])

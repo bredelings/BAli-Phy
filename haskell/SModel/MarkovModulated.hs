@@ -17,46 +17,58 @@ import Numeric.LinearAlgebra.Data
 
 -- NOTE: Component matrices stay raw because trcall does not translate EVector
 -- elements; remove this once collection-level translation exists.
-foreign import trcall "SModel:modulated_markov_rates" modulatedRatesNative :: EVector (NativeMatrix Double) -> Matrix Double -> Matrix Double
+foreign import trcall "SModel:modulated_markov_rates" modulatedRatesNative
+    :: EVector (NativeMatrix Double) -> Matrix Double -> EVector (NativeVector Double) -> Matrix Double
 -- NOTE: Component frequencies stay raw because trcall does not translate
 -- EVector elements; remove this once collection-level translation exists.
 foreign import trcall "SModel:modulated_markov_pi" modulatedPiNative :: EVector (NativeVector Double) -> Vector Double -> Vector Double
 
-modulatedMarkovRates qs rates_between = overrideMatrixDims stateCount stateCount
-    (modulatedRatesNative (toVector (map nativeMatrix qs)) rates_between)
-  where stateCount = sum (map rows qs)
+-- AlwaysSwitch leaves proposed switching rates unchanged; MetropolisSwitching adjusts them
+-- using component equilibrium frequencies, independently of their starting distributions.
+data SwitchingMethod = AlwaysSwitch | MetropolisSwitching deriving (Show)
+
+-- An empty native frequency vector selects direct switching without evaluating equilibria.
+-- Otherwise the native builder applies the pairwise Metropolis factor at each switching edge.
+modulatedMarkovRates method qs pis rates_between = overrideMatrixDims stateCount stateCount
+    (modulatedRatesNative (toVector (map nativeMatrix qs)) rates_between frequencies)
+  where
+    stateCount = sum (map rows qs)
+    frequencies = toVector $ case method of
+        AlwaysSwitch -> []
+        MetropolisSwitching -> map nativeVector pis
 
 modulatedMarkovPi pis levelProbs = overrideVectorSize stateCount
     (modulatedPiNative (toVector (map nativeVector pis)) levelProbs)
   where stateCount = sum (map vectorSize pis)
 
-{- NOTE: Does ratesBetween + levelProbs = GTR ?
-
-   If so, I could pass:
-   - Qs = a list of n rate matrices
-   - S  = a rate matrix on n states
-   Having the matrix S=GTR(ratesBetween,levelProbs) would be a special case.
-
-   If all the Qs and the S are reversible then the whole thing should be reversible.
-   QUESTION: How would we record this?
- -}
-
-modulatedMarkov models between = modulatedMarkovNamed (map show [1..length models]) models between
+modulatedMarkov method models between = modulatedMarkovNamed method (map show [1..length models]) models between
 
 -- Match the native component-major order, retaining each component's state names under a unique prefix.
 -- The prefixes supplied here are regime indices, or OFF/ON for the Tuffley-Steel construction.
-modulatedMarkovNamed prefixes models between =
-    setModulatedConditions conditions $ setModulatedProperties properties baseModel
+modulatedMarkovNamed method prefixes models between
+    | null models = error "modulatedMarkov: no component models"
+    | not (all (== head smaps) (tail smaps)) =
+        error "modulatedMarkov: components must have the same state-to-letter mapping"
+    | otherwise = setModulatedConditions conditions $ setModulatedProperties properties baseModel
   where
     a = getAlphabet $ head models
     qs = map getQ models
     pis = map getStartFreqs models
     smaps = map getSMap models
-    q = modulatedMarkovRates qs (getQ between)
+    q = modulatedMarkovRates method qs (map getEqFreqs models) (getQ between)
     pi = modulatedMarkovPi pis (getStartFreqs between)
     smap = U.concat smaps
     names = V.fromList [prefix ++ ":" ++ name | (prefix, model) <- zip prefixes models, name <- stateNames model]
-    rev = (minimum $ fmap getReversibility models) `min` (getReversibility between)
+    -- Equal component equilibria preserve the product for direct switching. Metropolis also
+    -- preserves it for unequal equilibria when switching is EqRev. NonEq roots remain NonEq.
+    rev | componentRev == NonEq || switchingRev == NonEq = NonEq
+        | otherwise = case method of
+            MetropolisSwitching | switchingRev == EqRev -> componentRev
+            _ | sameFrequencies -> min componentRev switchingRev
+              | otherwise -> NonEq
+    componentRev = minimum $ map getReversibility models
+    switchingRev = getReversibility between
+    sameFrequencies = all (vectorEqual (head pis)) (tail pis)
     baseModel = setReversibility rev $ markov a smap names q pi
     properties = modulateCommonProperties $ fmap getStatePropertyFunctions models
     conditions = commonOrConditionMap $ fmap getComponentConditions models
@@ -81,7 +93,7 @@ modulateCommonProperties (properties:rest) = Map.fromList
 
 modulateProperties properties scale = markovModulateProperty $ ComponentStateProperties [property scale | property <- properties]
 
-markovModulateMixture nu dist = modulatedMarkov models (Markov.gtr ratesBetween levelProbs) where
+markovModulateMixture method nu dist = modulatedMarkov method models (Markov.gtr ratesBetween levelProbs) where
     (models, levelProbs) = unzip $ unpackDiscrete dist
     ratesBetween = Markov.equ (length models) nu
 
@@ -89,7 +101,7 @@ markovModulateMixture nu dist = modulatedMarkov models (Markov.gtr ratesBetween 
 -- Otherwise class-switching rates are not relative to the substitution rate.
 
 tuffleySteel98Unscaled s01 s10 q =
-    modulatedMarkovNamed ["OFF", "ON"] [scaleBy 0 q, q]
+    modulatedMarkovNamed AlwaysSwitch ["OFF", "ON"] [scaleBy 0 q, q]
         (setReversibility EqRev $ Markov.markov ratesBetween (fromList levelProbs))
   where
     levelProbs = [s10/total, s01/total] where total = s10 + s01
@@ -108,16 +120,16 @@ huelsenbeck02Test s01 s10 fraction model = mix [1-fraction, fraction] [model & h
 huelsenbeck02Two s01a s10a s01b s10b fraction model = mix [1-fraction, fraction] [model & huelsenbeck02 s01b s10b,
                                                                                   model & huelsenbeck02 s01a s10a]
 
-galtier01Ssrv nu model = modulatedMarkov models (Markov.gtr (Markov.equ nLevels nu) levelProbs) where
+galtier01Ssrv method nu model = modulatedMarkov method models (Markov.gtr (Markov.equ nLevels nu) levelProbs) where
     dist = scaleTo 1 model
     (models, levelProbs) = unzip $ unpackDiscrete dist
     nLevels = length models
 
-galtier01 nu pi model = (\nu' -> galtier01Ssrv nu' model) <$> (Discrete [(0, 1-pi), (nu, pi)])
+galtier01 method nu pi model = (\nu' -> galtier01Ssrv method nu' model) <$> (Discrete [(0, 1-pi), (nu, pi)])
 
-wssr07Ssrv s01 s10 nu model = tuffleySteel98 s01 s10 $ galtier01Ssrv nu model
+wssr07Ssrv method s01 s10 nu model = tuffleySteel98 s01 s10 $ galtier01Ssrv method nu model
 
-wssr07 s01 s10 nu pi model = (\nu' -> wssr07Ssrv s01 s10 nu' model) <$> (Discrete [(0, 1-pi), (nu, pi)]) 
+wssr07 method s01 s10 nu pi model = (\nu' -> wssr07Ssrv method s01 s10 nu' model) <$> (Discrete [(0, 1-pi), (nu, pi)]) 
 
 -- a -> HB02
 -- b -> GT01 if no HB02
@@ -128,25 +140,29 @@ wssr07 s01 s10 nu pi model = (\nu' -> wssr07Ssrv s01 s10 nu' model) <$> (Discret
 -- X + GT01 = (1-a)b
 -- X + HB02+GT01 = a * c
 
-wssr07Ext s01 s10 nu a b c model = Discrete [(noCov,   (1-a)*(1-b)),
+wssr07Ext method s01 s10 nu a b c model = Discrete [(noCov,   (1-a)*(1-b)),
                                              (gt01,    (1-a)*b),
                                              (hb02,        a*(1-c)),
                                              (hb02gt01,    a*c)]
-    where noCov = wssr07Ssrv 1 0 0  model
-          gt01  = wssr07Ssrv 1 0 nu model
-          hb02  = wssr07Ssrv s01 s10 0 model
-          hb02gt01 = wssr07Ssrv s01 s10 nu model
+    where noCov = wssr07Ssrv method 1 0 0  model
+          gt01  = wssr07Ssrv method 1 0 nu model
+          hb02  = wssr07Ssrv method s01 s10 0 model
+          hb02gt01 = wssr07Ssrv method s01 s10 nu model
 
 -- Instead of passing ratesBetween+levelProbs, could we just pass a q matrix?
-covarionGtrSsrv nu exchange model = modulatedMarkov models (Markov.markov ratesBetween (fromList levelProbs)) where
+covarionGtrSsrv method nu exchange model =
+    modulatedMarkov method models (setReversibility EqRev $ Markov.markov ratesBetween (fromList levelProbs))
+  where
     Discrete dist = scaleTo 1 model
     (models, levelProbs) = unzip dist
     -- This is really a gtr rate matrix, just without the alphabet / smap!
     ratesBetween = (scale nu exchange) * (plus_f_matrix $ fromList levelProbs)
 
-covarionGtr nu exchange pi model = (\nu' -> covarionGtrSsrv nu' exchange model) <$> (Discrete [(0,1-pi), (nu, pi)])
+covarionGtr method nu exchange pi model = (\nu' -> covarionGtrSsrv method nu' exchange model) <$> (Discrete [(0,1-pi), (nu, pi)])
 
-covarionGtrSym sym model = modulatedMarkov models (Markov.markov ratesBetween (fromList levelProbs)) where
+covarionGtrSym method sym model =
+    modulatedMarkov method models (setReversibility EqRev $ Markov.markov ratesBetween (fromList levelProbs))
+  where
     dist = scaleTo 1 model
     (models, levelProbs) = unzip $ unpackDiscrete dist
     ratesBetween = sym * (plus_f_matrix $ fromList levelProbs)
