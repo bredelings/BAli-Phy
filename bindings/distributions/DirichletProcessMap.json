@@ -13,7 +13,7 @@
         {
             "name": "alpha",
             "type": "Double",
-            "description": "The concentration parameter controlling how often new values are drawn"
+            "description": "The concentration parameter: larger values favor more clusters; smaller values favor sharing"
         },
         {
             "name": "dist",
@@ -22,6 +22,7 @@
         }
     ],
     "title": "The integer-map Dirichlet process distribution",
-    "description": "Draw one exchangeable Dirichlet process value for each supplied integer key. The result has exactly the supplied key set, and entries assigned to the same cluster share one value drawn from `dist`.",
-    "examples": ["~DirichletProcessMap(branches(tree), 1, LogNormal(0,1))"]
+    "description": "Draw one exchangeable Dirichlet process value for each supplied integer key. The result has exactly the supplied key set, and entries assigned to the same cluster share one value drawn from `dist`.\n\nSupports sampling and use as latent variables in MCMC, but not direct density evaluation or observation of the returned collection.",
+    "examples": ["# For --indel-rates\n~DirichletProcessMap(branches(tree), 1, LogNormal(0,1))"],
+    "see": ["DirichletProcess", "DirichletProcessOn", "DirichletProcessMixture"]
 }

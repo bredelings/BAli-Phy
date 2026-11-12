@@ -14,7 +14,7 @@
         {
             "name": "alpha",
             "type": "Double",
-            "description": "The concentration parameter controlling how often new values are drawn"
+            "description": "The concentration parameter: larger values favor more clusters; smaller values favor sharing"
         },
         {
             "name": "dist",
@@ -23,6 +23,7 @@
         }
     ],
     "title": "The keyed Dirichlet process distribution",
-    "description": "Draw one exchangeable Dirichlet process value for each supplied key. Entries assigned to the same cluster share one value drawn from `dist`.",
-    "examples": ["~DirichletProcessOn({3,1,4}, 1, Normal(0,1))"]
+    "description": "Draw one exchangeable Dirichlet process value for each supplied key. Entries assigned to the same cluster share one value drawn from `dist`.\n\nSupports sampling and use as latent variables in MCMC, but not direct density evaluation or observation of the returned collection.",
+    "examples": ["~DirichletProcessOn({3,1,4}, 1, Normal(0,1))"],
+    "see": ["DirichletProcess", "DirichletProcessMap", "DirichletProcessMixture"]
 }
