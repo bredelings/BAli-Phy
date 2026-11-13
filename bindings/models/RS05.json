@@ -16,23 +16,30 @@
         {
             "name": "logProb",
             "type": "Double",
-            "default_value": "~Laplace(-4, 0.707)"
+            "default_value": "~Laplace(-4, 0.707)",
+            "description": "The log insertion rate, also used as the deletion rate"
         },
         {
             "name": "meanLength",
             "type": "Double",
-            "default_value": "~ShiftedExponential(10,1)"
+            "default_value": "~ShiftedExponential(10,1)",
+            "description": "The mean indel length in alignment symbols; must be at least 1"
         },
         {
             "name": "tau",
             "type": "Double",
-            "default_value": "0.001"
+            "default_value": "0.001",
+            "description": "The probability of terminating after an alignment column"
         },
         {
             "name": "topology",
             "type": "Topology",
-            "default_value": "get_state(topology)"
+            "default_value": "get_state(topology)",
+            "description": "The tree topology, normally supplied automatically"
         }
     ],
+    "description": "Allows insertions and deletions of geometrically distributed lengths. Unlike RS07, the alignment model is the same on every branch and does not depend on branch lengths or branch-specific indel-rate multipliers.\n\nThe parameter logProb is the log insertion rate, also used as the deletion rate, rather than a log probability. Their combined event probability is x = 1-exp(-2*exp(logProb)); the gap-opening parameter is x/(1+x). The termination probability tau controls the sequence-length distribution.",
+    "examples": ["-I RS05"],
+    "see": ["RS07", "MultiRS07", "RelaxedRS07"],
     "extract": "all"
 }

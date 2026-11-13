@@ -3,7 +3,7 @@
     "deprecated-synonyms": ["relaxed_rs07"],
     "perform": true,
     "result_type": "IndelModel",
-    "title": "Redelings & Suchard (2007) model of insertions and deletions.",
+    "title": "RS07 indel model with lognormal branch-rate variation",
     "citation":{"type": "article",
 		"title": "Incorporating indel information into phylogeny estimation for rapidly emerging pathogens.",
 		"year": "2007",
@@ -18,26 +18,29 @@
             "name": "rate",
             "type": "Double",
             "default_value": "~LogLaplace(-4,0.707)",
-            "description": "The insertion-deletion rate"
+            "description": "The common insertion-deletion rate scale, relative to substitutions"
         },
         {
             "name": "sigma",
             "type": "Double",
             "default_value": "~LogLaplace(-3,1)",
-            "description": "The insertion-deletion rate"
+            "description": "The standard deviation of log branch-rate multipliers"
         },
         {
             "name": "meanLength",
             "type": "Double",
             "default_value": "~ShiftedExponential(10,1)",
-	    "description": "The mean indel length"
+	    "description": "The mean indel length in alignment symbols; must be at least 1"
         },
         {
             "name": "topology",
             "type": "Topology",
-            "default_value": "get_state(topology)"
+            "default_value": "get_state(topology)",
+            "description": "The tree topology, normally supplied automatically"
         }
     ],
-    "description": "This model allows insertion and deletions (indels) of multiple residues.  Indel lengths are geometrically distributed. Insertions and deletions are symmetric in this model.\nNote that the insertion-deletion rate is normalized to the substitution rate, so that if rate=1.0, then the insertion-deletion rate is the same as the substitution rate.\nNote that the mean indel length must be at least 1.",
+    "description": "Allows the insertion-deletion rate to vary among branches. Each branch receives an independent multiplier whose logarithm has mean zero and standard deviation sigma. The multipliers have median 1; rate sets the common rate scale. Indel lengths are geometrically distributed with a shared mean, measured in alignment symbols. Insertions and deletions are symmetric.\n\nBranch rates also include any multipliers supplied through `--indel-rates`. The default `--indel-rates` already introduces lognormal branch variation; use `--indel-rates=constant` to use only the variation supplied by this model.",
+    "examples": ["-I RelaxedRS07 --indel-rates=constant"],
+    "see": ["RS07", "RS05", "MultiRS07"],
     "extract": "all"
 }

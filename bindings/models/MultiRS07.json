@@ -2,7 +2,7 @@
     "name": "MultiRS07",
     "deprecated-synonyms": ["multi_rs07"],
     "result_type": "IndelModel",
-    "title": "Redelings & Suchard (2007) model of insertions and deletions.",
+    "title": "RS07 indel model with two rate components",
     "citation":{"type": "article",
 		"title": "Incorporating indel information into phylogeny estimation for rapidly emerging pathogens.",
 		"year": "2007",
@@ -17,30 +17,31 @@
 	    "name": "f1",
 	    "type": "Double",
 	    "default_value": "~Beta(1,2)",
-	    "description": "The fraction of sites with the lower rate"
+	    "description": "The weight of the lower-rate component"
 	},
         {
             "name": "rate",
             "type": "Double",
             "default_value": "~LogLaplace(-4,0.707)",
-            "description": "The insertion-deletion rate"
+            "description": "The weighted mean insertion-deletion rate"
         },
 	{
 	    "name": "logRatio",
 	    "type": "Double",
 	    "default_value": "~Exponential(0.1)",
-	    "description": "The log-ratio between the two rates"
+	    "description": "The log of rate2/rate1"
 	},
         {
             "name": "meanLength",
             "type": "Double",
             "default_value": "~ShiftedExponential(10,1)",
-	    "description": "The mean indel length"
+	    "description": "The mean indel length in alignment symbols; must be at least 1"
         },
         {
             "name": "topology",
             "type": "Topology",
-            "default_value": "get_state(topology)"
+            "default_value": "get_state(topology)",
+            "description": "The tree topology, normally supplied automatically"
         }
     ],
     "computed": [
@@ -57,6 +58,8 @@
 	    "value": "exp(@logRatio)"
 	}
     ],
-    "description": "This model allows insertion and deletions (indels) of multiple residues.  Indel lengths are geometrically distributed. Insertions and deletions are symmetric in this model.\nNote that the insertion-deletion rate is normalized to the substitution rate, so that if rate=1.0, then the insertion-deletion rate is the same as the substitution rate.\nNote that the mean indel length must be at least 1.",
+    "description": "Combines two insertion-deletion rates when calculating branch gap-opening probabilities. The parameter rate is their weighted mean: f1*rate1 + (1-f1)*rate2 = rate, with rate2/rate1 = exp(logRatio).\n\nThe two event probabilities are averaged before constructing a single pairwise alignment model for each branch; sites do not retain separate rate-category assignments along the tree. Indel lengths are geometrically distributed with the same mean for both components, measured in alignment symbols. Insertions and deletions are symmetric. Rates are relative to the substitution rate, as in RS07.",
+    "examples": ["-I MultiRS07"],
+    "see": ["RS07", "RS05", "RelaxedRS07"],
     "extract": "all"
 }
