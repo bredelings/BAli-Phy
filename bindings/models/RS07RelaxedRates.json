@@ -1,9 +1,16 @@
 {
     "name": "RS07RelaxedRates",
     "deprecated-synonyms": ["rs07_relaxed_rates"],
+    "perform": true,
     "result_type": "IndelModel",
-    "call": "IModel.rs07_relaxed_rates_model",
+    "call": "IModel.rs07_relaxed_rates_model(@topology)",
     "import": ["IModel"],
-    "args": [],
+    "args": [
+        {
+            "name": "topology",
+            "type": "Topology",
+            "default_value": "get_state(topology)"
+        }
+    ],
     "extract": "all"
 }
