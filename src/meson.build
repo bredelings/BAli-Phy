@@ -147,8 +147,8 @@ subdir('bali-phy')
 builtins_path = builtins
 subdir('builtins')
 
-test('bali-phy version', baliphy, args:['--version'], is_parallel: false)
-test('bali-phy help', baliphy, args:['--help'], is_parallel: false)
+test('bali-phy version', baliphy, args:['--version'], is_parallel: false, suite: 'minimal')
+test('bali-phy help', baliphy, args:['--help'], is_parallel: false, suite: 'minimal')
 
 python_test_wrapper_args = []
 if host_machine.system() == 'windows' and meson.is_cross_build()
@@ -268,6 +268,20 @@ declarative_tool_tests += ['alignment-smc']
 declarative_tool_tests += ['draw-tree', 'trees-pair-distances', 'tree-tool', 'tree-reroot']
 tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
 
+# Sample core tool behavior without paying for every process startup on slow builders.
+# Keep the full tools suite available independently of this small selection.
+minimal_tool_tests = {
+  'statreport': ['condition', 'burnin-unequal-chains'],
+  'trees-consensus': ['support-cutoffs'],
+  'tree-mean-lengths': ['batch-means'],
+  'alignment-cat': ['taxa-concatenation'],
+  'alignment-info': ['state-groups'],
+  'alignment-draw': ['dna-coordinates'],
+  'character-properties': ['basic'],
+  'mcon-tool': ['logical-table'],
+  'trees-distances': ['branch-lengths'],
+}
+
 foreach tool: tools + prefixed_tools
   sources = ['tools/' + tool + '.cc']
   if tool in extra_sources
@@ -303,12 +317,16 @@ foreach tool: tools + prefixed_tools
       python, tool_test_script, 'list', tool_test_root, check: true
     ).stdout().strip().split('\n')
     foreach tool_test_name: tool_test_names
+      tool_test_suites = ['tools']
+      if tool_test_name in minimal_tool_tests.get(tool, [])
+        tool_test_suites += ['minimal']
+      endif
       test(tool + ' ' + tool_test_name,
            python,
            args: [tool_test_script, 'run'] + python_tool_wrapper_args
                  + [tool_test_root/tool_test_name, tool_exe],
            depends: tool_exe,
-           suite: 'tools')
+           suite: tool_test_suites)
     endforeach
   endif
 

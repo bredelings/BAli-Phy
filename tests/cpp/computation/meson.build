@@ -32,11 +32,13 @@ if host_machine.system() == 'windows'
     args: [computation_test_runner] + computation_test_args,
     depends: computation_tests,
     timeout: 120,
+    suite: 'minimal',
   )
 else
   test(
     'computation',
     computation_tests,
     args: [builtins_path, meson.project_source_root()],
+    suite: 'minimal',
   )
 endif

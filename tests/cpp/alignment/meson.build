@@ -7,7 +7,7 @@ alignment_sample_file_tests = executable(
   link_with: [libcommon, libmcon, libutil],
 )
 
-test('character property sample file snapshots', alignment_sample_file_tests)
+test('character property sample file snapshots', alignment_sample_file_tests, suite: 'minimal')
 
 ambiguity_tests = executable(
   'ambiguity-tests',
@@ -18,4 +18,4 @@ ambiguity_tests = executable(
   link_with: [libcommon, libmcon, libutil],
 )
 
-test('observed ambiguity storage', ambiguity_tests)
+test('observed ambiguity storage', ambiguity_tests, suite: 'minimal')

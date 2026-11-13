@@ -7,4 +7,4 @@ slice_sampling_tests = executable(
   link_with: [libbaliphy, libcomputation, libcommon, libmcon, libutil],
 )
 
-test('slice sampling boundaries', slice_sampling_tests)
+test('slice sampling boundaries', slice_sampling_tests, suite: 'minimal')

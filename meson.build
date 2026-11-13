@@ -227,8 +227,11 @@ test_dir = meson.project_source_root()/'tests'
 
 test_list = run_command(python, run_tests, 'listdir', test_dir, baliphy.full_path(), check: true).stdout().split()
 foreach test: test_list
+  # Keep the small probabilistic-program selection available on slow and instrumented builds.
+  minimal = test.startswith('prob_prog/demos/') or test == 'prob_prog/coal_mining' or test.startswith('prob_prog/cluster/')
   test('bali-phy testsuite ' + test,
        python,
+       suite: minimal ? ['minimal'] : [],
        timeout: 300,
        workdir: test_dir,
        args:[run_tests, 'run', test, '--', windows_test_wrapper, baliphy.full_path(), packagepath, '--seed', randomseed])
@@ -282,14 +285,17 @@ install_subdir('examples', install_dir: get_option('datadir')/'doc/bali-phy')
 
 test('bpy-summarize character properties',
      python,
+     suite: 'minimal',
      args: [files('tests/scripts/test_bpy_summarize_properties.py')])
 
 test('bpy-summarize scalar report',
      python,
+     suite: 'minimal',
      args: [files('tests/scripts/test_bpy_summarize_scalars.py')])
 
 test('bali-phy-pkg',
      python,
+     suite: 'minimal',
      args: [files('tests/scripts/test_bali_phy_pkg.py')])
 
 if host_machine.system() == 'windows'

@@ -7,4 +7,4 @@ util_tests = executable(
   link_with: libutil,
 )
 
-test('util', util_tests)
+test('util', util_tests, suite: 'minimal')

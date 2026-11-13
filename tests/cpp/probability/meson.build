@@ -7,4 +7,4 @@ probability_tests = executable(
   link_with: [libbaliphy, libutil],
 )
 
-test('probability choices', probability_tests)
+test('probability choices', probability_tests, suite: 'minimal')

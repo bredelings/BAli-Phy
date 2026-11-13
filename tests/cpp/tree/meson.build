@@ -7,4 +7,4 @@ tree_tests = executable(
   link_with: [libcommon, libmcon, libutil],
 )
 
-test('tree operations', tree_tests)
+test('tree operations', tree_tests, suite: 'minimal')
