@@ -1,6 +1,9 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include <map>
 #include <vector>
+#include <numeric>
+#include "util/dense-matrix.hh"
+#include "util/rng.hh"
 #include "computation/machine/args.hh"
 #include "computation/machine/gcobject.hh"
 #include "computation/runtime/ast.hh"
@@ -163,4 +166,34 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
     assert(n == 1);
 
     return { Pr };
+}
+
+// Uniform pairwise mergers sample ranked labelled histories. Swap-and-pop keeps each merger
+// constant-time. Rows contain parent/left/right; -1 denotes an absent relative. Internal nodes
+// are numbered in merger order, so their times can later be assigned in increasing order.
+extern "C" closure builtin_function_sampleOrderedTree(OperationArgs& Args)
+{
+    int n = Args.evaluate_slot_to_value_(0).as_int();
+    if (n < 1) throw myexception()<<"Ordered tree requires at least one tip";
+    vector<int> active(n);
+    std::iota(active.begin(), active.end(), 0);
+    object_ptr<Box<DenseVector<int>>> relatives(new Box<DenseVector<int>>(3*(2*n-1)));
+    for (int i=0; i<3*(2*n-1); ++i) (*relatives)[i] = -1;
+    // Remove a uniformly selected active lineage without shifting the other entries.
+    auto pop = [&]() {
+        int i = uniform_int(0, active.size()-1);
+        int child = active[i];
+        active[i] = active.back();
+        active.pop_back();
+        return child;
+    };
+    for (int parent=n; parent<2*n-1; ++parent)
+    {
+        int left = pop(), right = pop();
+        (*relatives)[3*left] = (*relatives)[3*right] = parent;
+        (*relatives)[3*parent+1] = left;
+        (*relatives)[3*parent+2] = right;
+        active.push_back(parent);
+    }
+    return {relatives};
 }

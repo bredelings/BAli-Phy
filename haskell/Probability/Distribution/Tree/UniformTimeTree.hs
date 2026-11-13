@@ -8,31 +8,33 @@ import Probability.Distribution.Tree.Util
 import Probability.Distribution.Uniform
 import qualified Data.IntMap as IntMap
 import MCMC
+import Control.Monad.IO.Class (liftIO)
+import Foreign.NativeVector (NativeVector)
+import Data.Vector.Unboxed.Internal (intVectorFromNativeWithLength)
+import qualified Data.Vector.Unboxed as U
+import qualified Data.IntSet as IntSet
 
-----
--- choose 2 leaves, connect them to an internal node, and put that internal node on the list of leaves
--- This is I think gives more weight to more balanced trees?
+-- Uniform pairwise mergers give the ranked labelled topology used by Yule, birth-death,
+-- and coalescent trees. Store each non-root child's upward edge as child+1 and its reverse
+-- as -(child+1), so adjacency and direction need no repeated search through an edge list.
+foreign import bpcall "TreeDist:sampleOrderedTree" sampleOrderedTreeNative :: Int -> IO (NativeVector Int)
 
--- * actually I'm not sure the likelihood handles degree-2 nodes.
--- * imodels might not handle degree-2 nodes.
--- * we also assume that each node has a constant degree.
---   + can we ensure that the root index is constant, and also the highest?
--- * can we map the rooted tree onto an unrooted tree with the root removed?  not sure..
---   + this makes reconstructing the ancestral sequence at the root more challenging.
-
-uniformOrderedTreeEdges [l1]     _        = return []
-uniformOrderedTreeEdges leaves   (i : is) = do
-    tmp <- remove 2 leaves
-    let Just ([l1, l2], leaves') = tmp
-    otherEdges         <- uniformOrderedTreeEdges (i : leaves') is
-    return $ [(l1, i), (l2, i)] ++ otherEdges
-
+-- Build each node and directed edge once from the native parent/child indices.
 sampleUniformOrderedTree n = do
-  let numNodes = 2 * n - 1
-  edges <- uniformOrderedTreeEdges [0..n-1] [n..]
-  -- The number of edges should be 2*n-1, unchangably.
-  let utree = treeFromEdges [0..numNodes-1] edges
-  return $ addRoot (numNodes - 1) utree
+    native <- liftIO $ sampleOrderedTreeNative n
+    let count = 2*n-1
+        relatives = intVectorFromNativeWithLength (3*count) native
+        parent v = relatives U.! (3*v)
+        children v = if v < n then [] else [relatives U.! (3*v+1), relatives U.! (3*v+2)]
+        nodes = IntSet.fromList [0..count-1]
+        edges = IntSet.fromList ([1..count-1] ++ [1-count.. -1])
+        outgoing v = (if v == count-1 then [] else [v+1]) ++ map (\c -> -(c+1)) (children v)
+        nodeMap = IntMap.fromSet (\v -> Node v (IntSet.fromList (outgoing v))) nodes
+        edgeMap = IntMap.fromSet (\b -> if b > 0 then Edge (b-1) (parent (b-1)) b
+                                                else Edge (parent (-b-1)) (-b-1) b) edges
+        labels = IntMap.fromSet (\_ -> Nothing) nodes
+        graph = Graph nodeMap edgeMap labels (noAttributesOn nodes) (noAttributesOn edges) noAttributes
+    return $ WithRoots (Tree (Forest graph)) [count-1] (IntMap.fromSet (<0) edges)
 
 sampleUniformTimeTree age n = do
   topology <- sampleUniformOrderedTree n
