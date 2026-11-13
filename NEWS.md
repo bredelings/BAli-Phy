@@ -5,6 +5,7 @@
  - The M1a–M8a families, BranchModel, and BranchSite now default to GTR, multi-nucleotide
    mutations, and amino-acid fitnesses instead of GY94. Explicit submodels are unchanged.
  - Use 10 instead of 4 Beta categories by default in M7, M8, M8a, and M8a_test.
+ - Split BranchSite into BranchSiteA and BranchSiteA_test
  - Remove `alignment-convert` in favor of `alignment-cat -o <format>`.
 
 ## Features
@@ -12,20 +13,25 @@
  - Depict length of branches inside consensus polytomies by default.
  - Report mean pairwise differences and per-site parsimony scores in alignment summaries.
  - Allow running Python tools from Git Bash and MSYS2 Bash on Windows.
+ - Extend Yule tree priors with explicit origin/crown ages and conditioning on the number of tips.
+ - Extend covarion models to handle components with different equilibrium frequencies.
+ - Allow specifying root frequencies for nonEq when there are more states than letters.
+ - Speed up model compilation and startup.
+ - Avoid unnecessary recomputation during MCMC.
+ - Add distribution densities, CDFs, and quantiles.
 
 ## Fixes
 
  - Fix crash in windows executables.
  - Fix character attributes for fixed alignments.
  - Don't crash summarizing MCMC runs if the tree has foreground attributes.
- - Clear error messages when different data partitions have different sequence names.
- - Improve tree layouts and keep labels clear of branches, nodes, and other labels.
+ - Give clear error messages when different data partitions have different sequence names.
+ - Improve tree drawing and keep labels clear of branches, nodes, and other labels.
  - Make estimation of branch lengths and "node lengths" faster and more robust.
- - Fix tree consensus, support, and convergence summaries, including sample and taxon matching.
- - Fix sequence handling, alignment comparison and thinning, ancestral summaries, and indel reports.
- - Fix coordinates and missing-data handling in population-genetic reports from `alignment-smc`.
+ - Fix minor errors in consensus trees and tree-support summaries.
+ - Fix minor errors in alignment processing, ancestral sequence summaries, and indel reports.
  - Fix marginal-likelihood estimation and uncertainty reporting in `model_P`.
- - Fix and extend distribution densities, CDFs, and quantiles, including numerical edge cases.
+ - Restore the relative component rates in the UL2 and UL3 protein mixture models.
 
 ## Documentation
  
