@@ -3,14 +3,19 @@
     "deprecated-synonyms": ["rs07_relaxed_rates"],
     "perform": true,
     "result_type": "IndelModel",
+    "title": "RS07 indel model with clustered branch rates",
     "call": "IModel.rs07_relaxed_rates_model(@topology)",
     "import": ["IModel"],
     "args": [
         {
             "name": "topology",
             "type": "Topology",
-            "default_value": "get_state(topology)"
+            "default_value": "get_state(topology)",
+            "description": "The tree topology, normally supplied automatically"
         }
     ],
+    "description": "Allows branches to form clusters with different distributions of insertion-deletion rates. Within each cluster, log rates share a mean and standard deviation, but each branch has its own independently drawn rate. Cluster assignments follow a Chinese restaurant process, so the number of occupied clusters is inferred. Unlike RelaxedRS07, this model can represent several groups of branches with different typical rates and amounts of rate variation.\n\nCluster means of log rates have a Laplace(-4, 1/sqrt(2)) prior, standard deviations of log rates have a Gamma(1.05, 0.05) prior, and the clustering concentration has a Gamma(2, 1/6) prior. Indel lengths are geometrically distributed with a shared mean drawn from ShiftedExponential(10, 1), measured in alignment symbols. Insertions and deletions are symmetric.\n\nBranch rates also include any multipliers supplied through `--indel-rates`. Use `--indel-rates=constant` to use only the clustered rate variation supplied by this model.",
+    "examples": ["-I RS07RelaxedRates --indel-rates=constant"],
+    "see": ["RS07", "RelaxedRS07", "MultiRS07"],
     "extract": "all"
 }
