@@ -5,10 +5,13 @@ import qualified Data.Text.IO as Text
 import System.IO (IO, putStrLn, print)
 import Compiler.Num
 import Data.Function (($))
+import Data.Eq
+import Data.Bool
+import Data.List (sort)
 import qualified Data.Text as T
 import qualified Data.IntMap as IntMap
 import Tree
-import Tree.Newick (newickToTree, parse_newick, print_newick, writeNewick)
+import Tree.Newick (newickToTree, parse_newick, print_newick, writeNewick, readTimeTree)
 
 -- Parse and rewrite labels to check literal underscores and quoted spaces.
 main :: IO ()
@@ -33,3 +36,12 @@ main = do
   print lengths
   print times
   print (rate_time_tree times rates)
+
+  -- Reading a time tree must retain ages, including older tips on shorter root-to-tip paths.
+  -- Writer checks above cannot catch a reader returning only topology; keep this with that API.
+  contemporary <- readTimeTree "contemporary.tree"
+  serial <- readTimeTree "serial.tree"
+  print $ nodeTime contemporary (root contemporary) == 2
+       && sort [nodeTime contemporary n | n <- leafNodes contemporary] == [0,0]
+  print $ nodeTime serial (root serial) == 2
+       && sort [nodeTime serial n | n <- leafNodes serial] == [0,1]

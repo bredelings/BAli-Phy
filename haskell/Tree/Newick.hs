@@ -223,6 +223,7 @@ readBranchLengthTree filename = do
 
 -- Perhaps we should try and strip off the WithBranchLengths from a general tree...
 -- We would need a type family like Unrooted to walk all the modifiers.
+-- Measure node ages backwards from the deepest tip; shorter paths retain older tip ages.
 readTimeTree filename = do
   text <- readFile filename
   (tree, lengths) <- newickToTree (parse_newick_from_file filename text)
@@ -235,4 +236,4 @@ readTimeTree filename = do
       present = maximum nodeTimes
       nodeAges = fmap (\t -> present - t) nodeTimes
 
-  return tree
+  return $ time_tree tree nodeAges
