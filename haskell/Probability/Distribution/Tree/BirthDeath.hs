@@ -6,7 +6,7 @@ import Probability.Distribution.Uniform
 import Probability.Distribution.Exponential
 import Probability.Distribution.Tree.Conditioning
 import Probability.Distribution.Tree.Modifiable
-import Probability.Distribution.Tree.Moves (fixedSizeTimeTreeEffect)
+import Probability.Distribution.Tree.Moves (addTimeTreeMoves)
 import Probability.Distribution.Tree.UniformTimeTree (sampleUniformOrderedTree)
 import qualified Data.IntMap as IntMap
 
@@ -122,7 +122,7 @@ instance Sampleable (BirthDeath l) where
     -- Creating/deleting the tree during MCMC needs a separate proposal density and correction.
     sample dist@(BirthDeath taxa lambda mu rho start age condition) =
         validateTreeConditioning "BirthDeath" (length taxa) start age condition `seq`
-        RanDistribution3 dist fixedSizeTimeTreeEffect (conditionedTimeTreeStructure start age)
+        RanDistribution3 dist (addTimeTreeMoves 1) (conditionedTimeTreeStructure start age)
                          (sampleBirthDeath taxa lambda mu rho start age)
 
 birthDeath :: [l] -> Double -> Double -> Double -> Start -> AgeTreatment -> Condition -> BirthDeath l

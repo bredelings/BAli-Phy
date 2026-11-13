@@ -9,7 +9,7 @@ import Probability.Distribution.Tree.Modifiable
 import Probability.Distribution.Tree.UniformTimeTree (sampleUniformOrderedTree)
 import Probability.Distribution.Tree.Util (Rate)
 import qualified Data.IntMap as IntMap
-import Probability.Distribution.Tree.Moves (fixedSizeTimeTreeEffect)
+import Probability.Distribution.Tree.Moves (addTimeTreeMoves)
 
 -- Invalid numerical proposals have zero density; only initialization rejects them with an error.
 validYuleParameters :: Rate -> AgeTreatment -> Bool
@@ -103,7 +103,7 @@ instance Sampleable (Yule l) where
     sample dist@(Yule taxa lambda start age condition) =
         let n = length taxa
         in validateTreeConditioning "Yule" n start age condition `seq`
-           RanDistribution3 dist fixedSizeTimeTreeEffect (conditionedTimeTreeStructure start age)
+           RanDistribution3 dist (addTimeTreeMoves 1) (conditionedTimeTreeStructure start age)
                             (sampleYule taxa lambda start age)
 
 yule :: [l] -> Rate -> Start -> AgeTreatment -> Condition -> Yule l
