@@ -9,6 +9,7 @@
     "title": "Start at the observed crown",
     "description": "Starts with two lineages at the root of the observed tree. Both must leave observed descendants.",
     "see": [
-        "Yule"
+        "Yule",
+        "BirthDeath"
     ]
 }

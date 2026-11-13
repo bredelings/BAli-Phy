@@ -4,6 +4,7 @@ module Probability.Distribution.Tree (module Probability.Distribution.Tree,
                                       module Probability.Distribution.Tree.UniformTimeTree,
                                       module Probability.Distribution.Tree.Coalescent,
                                       module Probability.Distribution.Tree.Yule,
+                                      module Probability.Distribution.Tree.BirthDeath,
                                       module Probability.Distribution.Tree.Conditioning,
                                       module Probability.Random
                                      )
@@ -16,5 +17,6 @@ import           Probability.Distribution.Tree.Moves
 import           Probability.Distribution.Tree.Modifiable
 import           Probability.Distribution.Tree.UniformTopology
 import           Probability.Distribution.Tree.UniformTimeTree
+import           Probability.Distribution.Tree.BirthDeath
 import           Probability.Distribution.Tree.Yule
 import           Probability.Distribution.Tree.Conditioning

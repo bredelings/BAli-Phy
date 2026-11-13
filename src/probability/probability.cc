@@ -796,3 +796,53 @@ log_double_t poisson_pdf(double mu, int k)
 
     return Pr;
 }
+
+// Let d=|lambda-mu|, m=min(lambda,mu), A=(1-exp(-d*t))/d, D=1+m*A.
+// Then p1=exp(-d*t)/D^2, and F=max(lambda,mu)*A/D is a proper branching-age CDF.
+// Its tail is exp(-d*t)/D. These forms avoid growing exponentials in subcritical models;
+// the exact critical limit is A=t. Inputs are finite nonnegative ages and valid rates.
+static double birth_death_log_d(double lambda, double mu, double t)
+{
+    double d = std::abs(lambda-mu), m = std::min(lambda,mu);
+    double a = d == 0 ? t : -std::expm1(-d*t)/d;
+    double ma = m*a;
+    if (std::isfinite(ma)) return std::log1p(ma);
+    return std::log(m) + std::log(a);
+}
+
+double birth_death_log_p1(double lambda, double mu, double t)
+{
+    return -std::abs(lambda-mu)*t - 2*birth_death_log_d(lambda,mu,t);
+}
+
+double birth_death_log_survival(double lambda, double mu, double t)
+{
+    return -std::max(mu-lambda,0.0)*t - birth_death_log_d(lambda,mu,t);
+}
+
+double birth_death_hazard(double lambda, double mu, double t)
+{
+    return std::abs(lambda-mu)*t + birth_death_log_d(lambda,mu,t);
+}
+
+// q = (lambda/max(lambda,mu))*F. Computing log F from the log tail also handles
+// large ages without subtracting nearly equal probabilities.
+double birth_death_log_q(double lambda, double mu, double t)
+{
+    double h = birth_death_hazard(lambda,mu,t);
+    return std::log(lambda/std::max(lambda,mu)) + std::log(-std::expm1(-h));
+}
+
+// Invert h=-log(1-F(t)): t=log1p((d/M)*expm1(h))/d, with limit expm1(h)/M.
+// For large h, evaluate the numerator as a log sum to avoid overflowing expm1(h).
+double birth_death_inverse_hazard(double lambda, double mu, double h)
+{
+    double d = std::abs(lambda-mu), M = std::max(lambda,mu);
+    if (h == 0) return 0;
+    if (d == 0) return std::expm1(h)/M;
+    if (h < 500) return std::log1p((d/M)*std::expm1(h))/d;
+    double a = h + std::log(d) - std::log(M);
+    double b = std::log(std::min(lambda,mu)/M);
+    double top = std::max(a,b);
+    return (top + std::log1p(std::exp(std::min(a,b)-top)))/d;
+}

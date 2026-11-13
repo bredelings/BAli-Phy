@@ -9,6 +9,7 @@
     "title": "Start from one lineage",
     "description": "Starts the process at its origin, before or at the common ancestor of the observed taxa.",
     "see": [
-        "Yule"
+        "Yule",
+        "BirthDeath"
     ]
 }

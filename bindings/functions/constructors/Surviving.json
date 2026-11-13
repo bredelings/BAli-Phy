@@ -9,6 +9,7 @@
     "title": "Condition on survival",
     "description": "Conditions an origin start on leaving surviving descendants. Redundant for Crown, and for the Yule process without extinction.",
     "see": [
-        "Yule"
+        "Yule",
+        "BirthDeath"
     ]
 }

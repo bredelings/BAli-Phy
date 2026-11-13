@@ -1,5 +1,6 @@
 module Probability.Distribution.Tree.Moves where
 
+import Tree (numLeaves)
 import MCMC
 import Probability.Random    
 
@@ -37,3 +38,10 @@ addTimeTreeMoves rate tree = do
   addMove (rate*2) $ walkTimeTreeSampleNNIandNodeTimes tree
 
   addMove (rate*2) $ sampleSPRAll tree
+
+-- Tree dimension is fixed. Existing moves skip non-modifiable node ages.
+fixedSizeTimeTreeEffect tree
+    | numLeaves tree == 1 = return ()
+    | otherwise = do
+        addMove 1 $ walkTimeTreeSampleNNIandNodeTimes tree
+        return ()

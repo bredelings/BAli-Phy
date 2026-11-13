@@ -2,6 +2,7 @@
 #include <map>
 #include <vector>
 #include <numeric>
+#include "probability/probability.hh"
 #include "util/dense-matrix.hh"
 #include "util/rng.hh"
 #include "computation/machine/args.hh"
@@ -196,4 +197,49 @@ extern "C" closure builtin_function_sampleOrderedTree(OperationArgs& Args)
         active.push_back(parent);
     }
     return {relatives};
+}
+
+// Log probability of exactly one surviving lineage at the supplied age.
+extern "C" closure builtin_function_birth_death_log_p1(OperationArgs& Args)
+{
+    double lambda = Args.evaluate_slot_to_value(0).as_double();
+    double mu = Args.evaluate_slot_to_value(1).as_double();
+    double t = Args.evaluate_slot_to_value(2).as_double();
+    return {birth_death_log_p1(lambda,mu,t)};
+}
+
+// Log probability that the initial lineage has surviving descendants.
+extern "C" closure builtin_function_birth_death_log_survival(OperationArgs& Args)
+{
+    double lambda = Args.evaluate_slot_to_value(0).as_double();
+    double mu = Args.evaluate_slot_to_value(1).as_double();
+    double t = Args.evaluate_slot_to_value(2).as_double();
+    return {birth_death_log_survival(lambda,mu,t)};
+}
+
+// Log geometric count parameter for conditioning on a positive tip count.
+extern "C" closure builtin_function_birth_death_log_q(OperationArgs& Args)
+{
+    double lambda = Args.evaluate_slot_to_value(0).as_double();
+    double mu = Args.evaluate_slot_to_value(1).as_double();
+    double t = Args.evaluate_slot_to_value(2).as_double();
+    return {birth_death_log_q(lambda,mu,t)};
+}
+
+// Cumulative hazard of the proper branching-age distribution.
+extern "C" closure builtin_function_birth_death_hazard(OperationArgs& Args)
+{
+    double lambda = Args.evaluate_slot_to_value(0).as_double();
+    double mu = Args.evaluate_slot_to_value(1).as_double();
+    double t = Args.evaluate_slot_to_value(2).as_double();
+    return {birth_death_hazard(lambda,mu,t)};
+}
+
+// Convert an exponential order statistic back to a branching age.
+extern "C" closure builtin_function_birth_death_inverse_hazard(OperationArgs& Args)
+{
+    double lambda = Args.evaluate_slot_to_value(0).as_double();
+    double mu = Args.evaluate_slot_to_value(1).as_double();
+    double t = Args.evaluate_slot_to_value(2).as_double();
+    return {birth_death_inverse_hazard(lambda,mu,t)};
 }

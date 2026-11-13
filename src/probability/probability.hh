@@ -114,4 +114,11 @@ log_double_t num_branches(int n);
 log_double_t num_topologies(int n);
 log_double_t num_topologies_in_partition(int n1, int n2);
 
+// Reconstructed birth-death probabilities and the proper branching-age hazard.
+double birth_death_log_p1(double lambda, double mu, double t);
+double birth_death_log_survival(double lambda, double mu, double t);
+double birth_death_log_q(double lambda, double mu, double t);
+double birth_death_hazard(double lambda, double mu, double t);
+double birth_death_inverse_hazard(double lambda, double mu, double h);
+
 #endif

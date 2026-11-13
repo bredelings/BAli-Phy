@@ -15,6 +15,7 @@
     "title": "Specify the starting age",
     "description": "Supplies the origin or crown age, according to the starting condition.",
     "see": [
-        "Yule"
+        "Yule",
+        "BirthDeath"
     ]
 }

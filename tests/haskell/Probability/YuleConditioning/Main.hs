@@ -17,6 +17,8 @@ import Probability.Random (sample, runRandomStrict, makeMCMCState, observe)
 import Probability.Distribution.Normal (normal)
 import MCMC (runContextAction, logPrior)
 import Control.Monad (return)
+import Probability.Distribution.Tree.Modifiable (conditionedModifiableTimeTree)
+import Probability.Distribution.Tree.BirthDeath
 import Probability.Distribution.Tree.Yule
 import Probability.Distribution.Tree.Conditioning
 import Numeric.Pow (ln)
@@ -53,7 +55,7 @@ main = do
         , pdf (yule [(),()] 2 Origin (AtAge 0.25) (Tips 2)) two == 0
         , pdf (yule [(),()] 2 Crown (AtAge 1) (Tips 2)) two == 0
         ]
-    let changed = yuleModifiableTimeTree Crown (AtAge 1) id three
+    let changed = conditionedModifiableTimeTree Crown (AtAge 1) id three
     print $ nodeTime changed (root changed) == 1
     a <- runRandomStrict $ sample $ yule [(),(),()] 2 Origin (AtAge 1) (Tips 3)
     b <- runRandomStrict $ sample $ yule [(),(),()] 2 Crown (AtAge 1) Unconditioned
@@ -66,12 +68,47 @@ main = do
     state <- makeMCMCState $ do
         tree <- sample $ yule [(),()] 2 Crown (AtAge 1) Unconditioned
         observe 0 $ normal (nodeTime tree (root tree)) 1
+        bdTree <- sample $ birthDeath [(),()] 2 2 Crown (AtAge 1) Unconditioned
+        observe 0 $ normal (nodeTime bdTree (root bdTree)) 1
         return []
     prior <- runContextAction logPrior state
-    print $ close prior (-4)
+    print $ close prior (-4 + log (1/9))
 
     -- Tree-rate wrappers must not affect a density on node ages. Concrete pdf tests above
     -- cannot catch representation restrictions or accidental use of substitution lengths.
     let rated = rate_time_tree three (IntMap.fromSet (\_ -> 7) (getUEdgesSet three))
     print $ yulePrFactors 3 2 Origin Flat (Tips 3) rated
          == yulePrFactors 3 2 Origin Flat (Tips 3) three
+
+    -- Extinction changes normalization and survival even on fixed-size trees. Compare the Yule
+    -- limit and independent critical/subcritical values; smoke tests cannot detect these errors.
+    -- Retain while both distributions implement the same conditioning choices.
+    let choices = [(Origin,AtAge 1,Unconditioned), (Origin,AtAge 1,Surviving),
+                   (Origin,AtAge 1,Tips 3), (Crown,AtAge 0.5,Unconditioned),
+                   (Crown,AtAge 0.5,Tips 3), (Origin,Flat,Tips 3)]
+        bd l m start age cond = pdf (birthDeath [(),(),()] l m start age cond) three
+    print $ all id [close (ln $ bd 2 0 start age cond) (p3 start age cond)
+                   | (start,age,cond) <- choices]
+    print $ all id [close (ln $ bd 2 2 start age cond) (log expected)
+                   | ((start,age,cond),expected) <- zip choices [8/243,8/81,2/3,4/27,16/27,4/9]]
+    print $ all id [close (ln $ bd 1 2 start age cond) (log expected)
+                   | ((start,age,cond),expected) <- zip choices
+                       [0.015018309751093653,0.06662968723004067,0.7249777031752218,
+                        0.17929461704044652,0.6164794596308396,0.568010805389819]]
+    print $ all id
+        [ pdf (birthDeath [()] 1 2 Origin Flat (Tips 1)) singleton == 1
+        , pdf (birthDeath [()] 1 2 Origin (AtAge 1) (Tips 1)) singleton == 1
+        , pdf (birthDeath [(),()] 1 2 Crown (AtAge 0.5) (Tips 2)) two == 1
+        , bd 1 (-1) Origin Flat (Tips 3) == 0
+        , bd 0 1 Origin Flat (Tips 3) == 0
+        , bd 1 2 Origin (AtAge 0.1) (Tips 3) == 0
+        , bd 1 2 Crown (AtAge 1) (Tips 3) == 0
+        ]
+    print $ all id [close (birthDeathHazard l m (birthDeathInverseHazard l m h)) h
+                   | (l,m) <- [(2,0),(2,2),(1,1+1e-12),(1,2)], h <- [0,1e-10,0.5,30]]
+    d <- runRandomStrict $ sample $ birthDeath [(),(),()] 1 2 Origin Flat (Tips 3)
+    e <- runRandomStrict $ sample $ birthDeath [(),(),()] 2 2 Crown (AtAge 1) (Tips 3)
+    f <- runRandomStrict $ sample $ birthDeath [(),(),()] 2 1 Origin (AtAge 1) (Tips 3)
+    print $ numLeaves d == 3 && pdf (birthDeath [(),(),()] 1 2 Origin Flat (Tips 3)) d > 0
+         && nodeTime e (root e) == 1 && pdf (birthDeath [(),(),()] 2 2 Crown (AtAge 1) (Tips 3)) e > 0
+         && nodeTime f (root f) <= 1 && pdf (birthDeath [(),(),()] 2 1 Origin (AtAge 1) (Tips 3)) f > 0

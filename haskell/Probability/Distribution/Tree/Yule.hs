@@ -9,27 +9,7 @@ import Probability.Distribution.Tree.Modifiable
 import Probability.Distribution.Tree.UniformTimeTree (sampleUniformOrderedTree)
 import Probability.Distribution.Tree.Util (Rate)
 import qualified Data.IntMap as IntMap
-import MCMC
-
--- Validate configuration separately from tree support. The count is observed through the taxa,
--- even when its probability is retained in the density rather than conditioned away.
-validateYule :: Int -> Start -> AgeTreatment -> Condition -> ()
-validateYule n start age condition
-    | n < 1 = error "Yule: Origin requires at least one taxon"
-    | otherwise = checkStart `seq` checkAge `seq` checkCount
-    where
-      checkStart = case start of
-          Crown | n < 2 -> error "Yule: Crown requires at least two taxa"
-          _ -> ()
-      checkAge = case (start, age, condition) of
-          (Crown, Flat, _) -> error "Flat age treatment with Crown is not implemented yet."
-          (Origin, Flat, Tips _) -> ()
-          (Origin, Flat, _) -> error $ "Flat age treatment requires tip-count conditioning. "
-                                    ++ "Use Tips n, or specify an age with AtAge."
-          _ -> ()
-      checkCount = case condition of
-          Tips k | k /= n -> error "Yule: Tips n must match the number of taxa"
-          _ -> ()
+import Probability.Distribution.Tree.Moves (fixedSizeTimeTreeEffect)
 
 -- Invalid numerical proposals have zero density; only initialization rejects them with an error.
 validYuleParameters :: Rate -> AgeTreatment -> Bool
@@ -46,7 +26,7 @@ validYuleParameters lambda age = lambda > 0 && not (isInfinite lambda) && case a
 yulePrFactors :: (HasRoot t, HasNodeTimes t)
               => Int -> Rate -> Start -> AgeTreatment -> Condition -> t -> [Log Double]
 yulePrFactors n lambda start age condition tree =
-    validateYule n start age condition `seq`
+    validateTreeConditioning "Yule" n start age condition `seq`
     if validTree then [expTo logDensity] else [0]
     where
       r = root tree
@@ -104,27 +84,6 @@ sampleYule taxa lambda start age = do
     let times = IntMap.fromList $ zip [0..] (replicate n 0 ++ ages)
     return $ time_tree (addLabels (zip [0..] taxa) topology) times
 
--- A crown age is an input expression, possibly a parameter elsewhere in the model, not a new
--- independently modifiable node age. Replace the root entry after modifying the other ages.
-yuleModifiableTimeTree :: Start -> AgeTreatment -> (forall a. a -> a)
-                      -> WithNodeTimes (WithRoots (Tree l)) -> WithNodeTimes (WithRoots (Tree l))
-yuleModifiableTimeTree start age modf tree = case (start, age) of
-    (Crown, AtAge t) -> case modifiableTimeTree modf tree of
-        WithNodeTimes rooted times -> WithNodeTimes rooted (IntMap.insert (root tree) t times)
-    _ -> modifiableTimeTree modf tree
-
--- Register the density when the tree is used, even if only a deterministic field is accessed.
--- Singleton and two-tip crown trees still carry count probabilities despite having no free ages.
-yuleStructure start age value effect = withEffect (unsafePerformIO $ effect raw) raw
-    where raw = yuleModifiableTimeTree start age modifiable value
-
--- Tree dimension is fixed. Existing moves skip non-modifiable node ages.
-yuleEffect tree
-    | numLeaves tree == 1 = return ()
-    | otherwise = do
-        addMove 1 $ walkTimeTreeSampleNNIandNodeTimes tree
-        return ()
-
 data Yule l = Yule [l] Rate Start AgeTreatment Condition
 
 instance Dist (Yule l) where
@@ -143,9 +102,10 @@ instance Sampleable (Yule l) where
     -- that requires a separate proposal density and creation/deletion acceptance correction.
     sample dist@(Yule taxa lambda start age condition) =
         let n = length taxa
-        in validateYule n start age condition `seq`
-           RanDistribution3 dist yuleEffect (yuleStructure start age) (sampleYule taxa lambda start age)
+        in validateTreeConditioning "Yule" n start age condition `seq`
+           RanDistribution3 dist fixedSizeTimeTreeEffect (conditionedTimeTreeStructure start age)
+                            (sampleYule taxa lambda start age)
 
 yule :: [l] -> Rate -> Start -> AgeTreatment -> Condition -> Yule l
 yule taxa lambda start age condition =
-    validateYule (length taxa) start age condition `seq` Yule taxa lambda start age condition
+    validateTreeConditioning "Yule" (length taxa) start age condition `seq` Yule taxa lambda start age condition

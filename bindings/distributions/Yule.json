@@ -43,6 +43,7 @@
         "~Yule([\"A\",\"B\",\"C\"],1,Crown,AtAge(2),Tips(3))"
     ],
     "see": [
+        "BirthDeath",
         "Origin",
         "Crown",
         "AtAge",

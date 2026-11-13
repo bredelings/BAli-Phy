@@ -13,8 +13,9 @@
         }
     ],
     "title": "Condition on the tip count",
-    "description": "Conditions the process on having n tips. For Yule, n must match the supplied taxa.",
+    "description": "Conditions the process on having n tips. The count must match the supplied taxa.",
     "see": [
-        "Yule"
+        "Yule",
+        "BirthDeath"
     ]
 }

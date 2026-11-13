@@ -1,7 +1,8 @@
 module Probability.Distribution.Tree.Modifiable where
 
 import           Tree
-import           Probability.Random (triggeredModifiableStructure)
+import           Probability.Random (triggeredModifiableStructure, modifiable, withEffect)
+import           Probability.Distribution.Tree.Conditioning
 
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
@@ -73,3 +74,17 @@ modifiableTimeTree modf (WithNodeTimes rootedTree' times') = WithNodeTimes roote
     times     = (IntMap.keysSet times') & IntMap.fromSet (\node -> maybeModf node (times' IntMap.! node))
 
 triggeredModifiableTimeTree = triggeredModifiableStructure modifiableTimeTree
+
+-- A crown age is an input expression, possibly a parameter elsewhere in the model, not a new
+-- independently modifiable node age. Replace the root entry after modifying the other ages.
+conditionedModifiableTimeTree :: Start -> AgeTreatment -> (forall a. a -> a)
+                             -> WithNodeTimes (WithRoots (Tree l)) -> WithNodeTimes (WithRoots (Tree l))
+conditionedModifiableTimeTree start age modf tree = case (start, age) of
+    (Crown, AtAge t) -> case modifiableTimeTree modf tree of
+        WithNodeTimes rooted times -> WithNodeTimes rooted (IntMap.insert (root tree) t times)
+    _ -> modifiableTimeTree modf tree
+
+-- Register the density when the tree is used, even if only a deterministic field is accessed.
+-- Singleton and two-tip crown trees still carry count probabilities despite having no free ages.
+conditionedTimeTreeStructure start age value effect = withEffect (unsafePerformIO $ effect raw) raw
+    where raw = conditionedModifiableTimeTree start age modifiable value

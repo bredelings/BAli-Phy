@@ -9,6 +9,7 @@
     "title": "Integrate over a flat origin-age measure",
     "description": "With Origin and Tips(n), integrates over the origin age before conditioning on the tip count. Crown with Flat is not implemented.",
     "see": [
-        "Yule"
+        "Yule",
+        "BirthDeath"
     ]
 }
