@@ -185,3 +185,183 @@ instance COutput (Vector Double) where
 
 -- Filter the missing-character sentinel in native code, retaining all other integer values.
 foreign import trcall "NativeVector:" removeMinusOnes :: Vector Int -> Vector Int
+
+-- Larger tuples share the pair representation: one logical length and one child
+-- vector per field. Slicing and concatenation preserve field order and shared shape.
+data instance Vector (a,b,c) = V_3 !Int !(Vector a) !(Vector b) !(Vector c)
+
+instance (Unbox a,Unbox b,Unbox c) => Unbox (a,b,c) where
+    basicLength (V_3 count _ _ _) = count
+    basicUnsafeIndex (V_3 _ v1 v2 v3) index =
+        (basicUnsafeIndex v1 index,
+         basicUnsafeIndex v2 index,
+         basicUnsafeIndex v3 index)
+    -- Slice all children without copying their primitive owners.
+    basicUnsafeSlice start count (V_3 _ v1 v2 v3) =
+        V_3 count
+            (basicUnsafeSlice start count v1)
+            (basicUnsafeSlice start count v2)
+            (basicUnsafeSlice start count v3)
+
+    -- NOTE: Like the pair fallback, this builds one projected list spine per field.
+    -- A direct builder could fill all components without those intermediate lists.
+    basicFromListN count values =
+        V_3 count
+            (basicFromListN count (List.map (\(x,_,_) -> x) values))
+            (basicFromListN count (List.map (\(_,x,_) -> x) values))
+            (basicFromListN count (List.map (\(_,_,x) -> x) values))
+
+    -- Defer projections until a primitive owner is demanded, preserving shape-only use.
+    basicReplicate count value =
+        V_3 count
+            (basicReplicate count ((\(x,_,_) -> x) value))
+            (basicReplicate count ((\(_,x,_) -> x) value))
+            (basicReplicate count ((\(_,_,x) -> x) value))
+
+    -- Project and concatenate corresponding children in the same order.
+    basicConcatN count values =
+        V_3 count
+            (basicConcatN count (List.map (\(V_3 _ child _ _) -> child) values))
+            (basicConcatN count (List.map (\(V_3 _ _ child _) -> child) values))
+            (basicConcatN count (List.map (\(V_3 _ _ _ child) -> child) values))
+
+data instance Vector (a,b,c,d) = V_4 !Int !(Vector a) !(Vector b) !(Vector c) !(Vector d)
+
+instance (Unbox a,Unbox b,Unbox c,Unbox d) => Unbox (a,b,c,d) where
+    basicLength (V_4 count _ _ _ _) = count
+    basicUnsafeIndex (V_4 _ v1 v2 v3 v4) index =
+        (basicUnsafeIndex v1 index,
+         basicUnsafeIndex v2 index,
+         basicUnsafeIndex v3 index,
+         basicUnsafeIndex v4 index)
+    -- Slice all children without copying their primitive owners.
+    basicUnsafeSlice start count (V_4 _ v1 v2 v3 v4) =
+        V_4 count
+            (basicUnsafeSlice start count v1)
+            (basicUnsafeSlice start count v2)
+            (basicUnsafeSlice start count v3)
+            (basicUnsafeSlice start count v4)
+
+    -- NOTE: Like the pair fallback, this builds one projected list spine per field.
+    -- A direct builder could fill all components without those intermediate lists.
+    basicFromListN count values =
+        V_4 count
+            (basicFromListN count (List.map (\(x,_,_,_) -> x) values))
+            (basicFromListN count (List.map (\(_,x,_,_) -> x) values))
+            (basicFromListN count (List.map (\(_,_,x,_) -> x) values))
+            (basicFromListN count (List.map (\(_,_,_,x) -> x) values))
+
+    -- Defer projections until a primitive owner is demanded, preserving shape-only use.
+    basicReplicate count value =
+        V_4 count
+            (basicReplicate count ((\(x,_,_,_) -> x) value))
+            (basicReplicate count ((\(_,x,_,_) -> x) value))
+            (basicReplicate count ((\(_,_,x,_) -> x) value))
+            (basicReplicate count ((\(_,_,_,x) -> x) value))
+
+    -- Project and concatenate corresponding children in the same order.
+    basicConcatN count values =
+        V_4 count
+            (basicConcatN count (List.map (\(V_4 _ child _ _ _) -> child) values))
+            (basicConcatN count (List.map (\(V_4 _ _ child _ _) -> child) values))
+            (basicConcatN count (List.map (\(V_4 _ _ _ child _) -> child) values))
+            (basicConcatN count (List.map (\(V_4 _ _ _ _ child) -> child) values))
+
+data instance Vector (a,b,c,d,e) = V_5 !Int !(Vector a) !(Vector b) !(Vector c) !(Vector d) !(Vector e)
+
+instance (Unbox a,Unbox b,Unbox c,Unbox d,Unbox e) => Unbox (a,b,c,d,e) where
+    basicLength (V_5 count _ _ _ _ _) = count
+    basicUnsafeIndex (V_5 _ v1 v2 v3 v4 v5) index =
+        (basicUnsafeIndex v1 index,
+         basicUnsafeIndex v2 index,
+         basicUnsafeIndex v3 index,
+         basicUnsafeIndex v4 index,
+         basicUnsafeIndex v5 index)
+    -- Slice all children without copying their primitive owners.
+    basicUnsafeSlice start count (V_5 _ v1 v2 v3 v4 v5) =
+        V_5 count
+            (basicUnsafeSlice start count v1)
+            (basicUnsafeSlice start count v2)
+            (basicUnsafeSlice start count v3)
+            (basicUnsafeSlice start count v4)
+            (basicUnsafeSlice start count v5)
+
+    -- NOTE: Like the pair fallback, this builds one projected list spine per field.
+    -- A direct builder could fill all components without those intermediate lists.
+    basicFromListN count values =
+        V_5 count
+            (basicFromListN count (List.map (\(x,_,_,_,_) -> x) values))
+            (basicFromListN count (List.map (\(_,x,_,_,_) -> x) values))
+            (basicFromListN count (List.map (\(_,_,x,_,_) -> x) values))
+            (basicFromListN count (List.map (\(_,_,_,x,_) -> x) values))
+            (basicFromListN count (List.map (\(_,_,_,_,x) -> x) values))
+
+    -- Defer projections until a primitive owner is demanded, preserving shape-only use.
+    basicReplicate count value =
+        V_5 count
+            (basicReplicate count ((\(x,_,_,_,_) -> x) value))
+            (basicReplicate count ((\(_,x,_,_,_) -> x) value))
+            (basicReplicate count ((\(_,_,x,_,_) -> x) value))
+            (basicReplicate count ((\(_,_,_,x,_) -> x) value))
+            (basicReplicate count ((\(_,_,_,_,x) -> x) value))
+
+    -- Project and concatenate corresponding children in the same order.
+    basicConcatN count values =
+        V_5 count
+            (basicConcatN count (List.map (\(V_5 _ child _ _ _ _) -> child) values))
+            (basicConcatN count (List.map (\(V_5 _ _ child _ _ _) -> child) values))
+            (basicConcatN count (List.map (\(V_5 _ _ _ child _ _) -> child) values))
+            (basicConcatN count (List.map (\(V_5 _ _ _ _ child _) -> child) values))
+            (basicConcatN count (List.map (\(V_5 _ _ _ _ _ child) -> child) values))
+
+data instance Vector (a,b,c,d,e,f) = V_6 !Int !(Vector a) !(Vector b) !(Vector c) !(Vector d) !(Vector e) !(Vector f)
+
+instance (Unbox a,Unbox b,Unbox c,Unbox d,Unbox e,Unbox f) => Unbox (a,b,c,d,e,f) where
+    basicLength (V_6 count _ _ _ _ _ _) = count
+    basicUnsafeIndex (V_6 _ v1 v2 v3 v4 v5 v6) index =
+        (basicUnsafeIndex v1 index,
+         basicUnsafeIndex v2 index,
+         basicUnsafeIndex v3 index,
+         basicUnsafeIndex v4 index,
+         basicUnsafeIndex v5 index,
+         basicUnsafeIndex v6 index)
+    -- Slice all children without copying their primitive owners.
+    basicUnsafeSlice start count (V_6 _ v1 v2 v3 v4 v5 v6) =
+        V_6 count
+            (basicUnsafeSlice start count v1)
+            (basicUnsafeSlice start count v2)
+            (basicUnsafeSlice start count v3)
+            (basicUnsafeSlice start count v4)
+            (basicUnsafeSlice start count v5)
+            (basicUnsafeSlice start count v6)
+
+    -- NOTE: Like the pair fallback, this builds one projected list spine per field.
+    -- A direct builder could fill all components without those intermediate lists.
+    basicFromListN count values =
+        V_6 count
+            (basicFromListN count (List.map (\(x,_,_,_,_,_) -> x) values))
+            (basicFromListN count (List.map (\(_,x,_,_,_,_) -> x) values))
+            (basicFromListN count (List.map (\(_,_,x,_,_,_) -> x) values))
+            (basicFromListN count (List.map (\(_,_,_,x,_,_) -> x) values))
+            (basicFromListN count (List.map (\(_,_,_,_,x,_) -> x) values))
+            (basicFromListN count (List.map (\(_,_,_,_,_,x) -> x) values))
+
+    -- Defer projections until a primitive owner is demanded, preserving shape-only use.
+    basicReplicate count value =
+        V_6 count
+            (basicReplicate count ((\(x,_,_,_,_,_) -> x) value))
+            (basicReplicate count ((\(_,x,_,_,_,_) -> x) value))
+            (basicReplicate count ((\(_,_,x,_,_,_) -> x) value))
+            (basicReplicate count ((\(_,_,_,x,_,_) -> x) value))
+            (basicReplicate count ((\(_,_,_,_,x,_) -> x) value))
+            (basicReplicate count ((\(_,_,_,_,_,x) -> x) value))
+
+    -- Project and concatenate corresponding children in the same order.
+    basicConcatN count values =
+        V_6 count
+            (basicConcatN count (List.map (\(V_6 _ child _ _ _ _ _) -> child) values))
+            (basicConcatN count (List.map (\(V_6 _ _ child _ _ _ _) -> child) values))
+            (basicConcatN count (List.map (\(V_6 _ _ _ child _ _ _) -> child) values))
+            (basicConcatN count (List.map (\(V_6 _ _ _ _ child _ _) -> child) values))
+            (basicConcatN count (List.map (\(V_6 _ _ _ _ _ child _) -> child) values))
+            (basicConcatN count (List.map (\(V_6 _ _ _ _ _ _ child) -> child) values))
