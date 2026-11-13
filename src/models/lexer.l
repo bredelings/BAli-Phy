@@ -88,7 +88,14 @@ consym       :{symbol}*
 numspc       _*
 decimal      {decdigit}({numspc}{decdigit})*
 exponent     {numspc}[eE][\-\+]?{decimal}
-escape	     \\[abfnrtv\"\']
+ /* Match Unicode scalar values, excluding overlong UTF-8, surrogates, and values above U+10FFFF. */
+utf8cont     [\x80-\xbf]
+utf8two      [\xc2-\xdf]{utf8cont}
+utf8three    (\xe0[\xa0-\xbf]|[\xe1-\xec\xee-\xef]{utf8cont}|\xed[\x80-\x9f]){utf8cont}
+utf8four     (\xf0[\x90-\xbf]|[\xf1-\xf3]{utf8cont}|\xf4[\x80-\x8f]){utf8cont}{utf8cont}
+stringchar   [\x20-\x21\x23-\x5b\x5d-\x7e]|{utf8two}|{utf8three}|{utf8four}
+ /* Admit unsupported escapes into the token so the decoder can report a parse error. */
+escape       \\[^\n\r\f]
 
 qual         ({conid}\.)+
 qvarid       {qual}{varid}
@@ -182,7 +189,7 @@ signed       {negative}?
 {decimal}                              return zz_make_integer10(std::string_view(yytext, yyleng), loc);
 
 {floating_point}                       return zz_make_float(std::string_view(yytext, yyleng), loc);
-[\"]({graphicnonqq}|" "|{escape})*[\"]   return zz_make_string(std::string_view(yytext, yyleng), loc);
+[\"]({stringchar}|{escape})*[\"]   return zz_make_string(std::string_view(yytext, yyleng), loc);
 
 <*>.          {
              throw zz::parser::syntax_error
@@ -257,7 +264,8 @@ zz::parser::symbol_type zz_make_float(std::string_view text, const zz::parser::l
     return zz::parser::make_FLOAT(d,loc);
 }
 
-char zz_get_char(std::string_view s, int& i)
+// Decode ASCII escapes while copying ordinary UTF-8 bytes unchanged.
+char zz_get_char(std::string_view s, int& i, const zz::parser::location_type& loc)
 {
     char c = s[i];
     if (c == '\\')
@@ -282,8 +290,10 @@ char zz_get_char(std::string_view s, int& i)
 	    ;
 	else if (c == '\'')
 	    ;
+	else if (c == '\\')
+	    ;
 	else
-	    std::abort();
+	    throw zz::parser::syntax_error(loc, "invalid string escape");
     }
     return c;
 }
@@ -294,7 +304,7 @@ zz::parser::symbol_type zz_make_string(std::string_view text, const zz::parser::
     s.resize(text.size());
     int j=0;
     for(int i=1;i<text.size()-1;i++)
-	s[j++] = zz_get_char(text,i);
+	s[j++] = zz_get_char(text,i,loc);
     s.resize(j);
     return zz::parser::make_STRING(s,loc);
 }

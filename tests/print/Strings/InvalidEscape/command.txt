@@ -1,0 +1,3 @@
+print '# Unsupported model-string escapes must be parse errors, not process aborts.
+# Haskell lexer tests cannot exercise this path; retain while the lexers are separate.
+"a\qb"'

@@ -1,0 +1,3 @@
+print '# Model strings have a separate lexer from Haskell: protect Unicode and escape decoding
+# through generated Haskell and Text.pack. Retain while the two lexers are separate.
+("éα🧬", stringToText("éα🧬"), "é\n\t\\\"α")'
