@@ -797,52 +797,70 @@ log_double_t poisson_pdf(double mu, int k)
     return Pr;
 }
 
-// Let d=|lambda-mu|, m=min(lambda,mu), A=(1-exp(-d*t))/d, D=1+m*A.
-// Then p1=exp(-d*t)/D^2, and F=max(lambda,mu)*A/D is a proper branching-age CDF.
-// Its tail is exp(-d*t)/D. These forms avoid growing exponentials in subcritical models;
-// the exact critical limit is A=t. Inputs are finite nonnegative ages and valid rates.
-static double birth_death_log_d(double lambda, double mu, double t)
+// With d=|lambda-mu|, K=rho*lambda and A=(1-exp(-d*t))/d (A=t at d=0),
+// B=exp(-d*t)+K*A for a supercritical process, and B=1+K*A otherwise.
+// Then p1=rho*exp(-d*t)/B^2 and q=K*A/B describe the sampled descendant count.
+// Sum nonnegative terms when K<d: writing B=1+(K-d)*A would lose its small tail.
+static double birth_death_log_d(double lambda, double mu, double rho, double t)
 {
-    double d = std::abs(lambda-mu), m = std::min(lambda,mu);
+    double d = std::abs(lambda-mu);
     double a = d == 0 ? t : -std::expm1(-d*t)/d;
-    double ma = m*a;
-    if (std::isfinite(ma)) return std::log1p(ma);
-    return std::log(m) + std::log(a);
+    double k = rho*lambda;
+    if (rho != 1 and lambda > mu and k < d)
+        return logsum(-d*t, std::log(k) + std::log(a));
+    // Preserve the original complete-sampling calculation, including very small mu.
+    double coefficient = rho == 1 ? std::min(lambda,mu) : (lambda > mu ? k-d : k);
+    double product = coefficient*a;
+    if (std::isfinite(product)) return std::log1p(product);
+    return std::log(coefficient) + std::log(a);
 }
 
-double birth_death_log_p1(double lambda, double mu, double t)
+double birth_death_log_p1(double lambda, double mu, double rho, double t)
 {
-    return -std::abs(lambda-mu)*t - 2*birth_death_log_d(lambda,mu,t);
+    return std::log(rho) - std::abs(lambda-mu)*t - 2*birth_death_log_d(lambda,mu,rho,t);
 }
 
-double birth_death_log_survival(double lambda, double mu, double t)
+double birth_death_log_survival(double lambda, double mu, double rho, double t)
 {
-    return -std::max(mu-lambda,0.0)*t - birth_death_log_d(lambda,mu,t);
+    return std::log(rho) - std::max(mu-lambda,0.0)*t - birth_death_log_d(lambda,mu,rho,t);
 }
 
-double birth_death_hazard(double lambda, double mu, double t)
+// H=-log(1-F) for the proper branching-age CDF F=q/qInfinity. For small rho in
+// a supercritical process, use H=log(1+K*A*exp(d*t)) to avoid cancellation.
+double birth_death_hazard(double lambda, double mu, double rho, double t)
 {
-    return std::abs(lambda-mu)*t + birth_death_log_d(lambda,mu,t);
+    double d = std::abs(lambda-mu);
+    if (rho != 1 and lambda > mu)
+    {
+        double a = -std::expm1(-d*t)/d;
+        return log1pexp(std::log(rho*lambda) + std::log(a) + d*t);
+    }
+    return d*t + birth_death_log_d(lambda,mu,rho,t);
 }
 
-// q = (lambda/max(lambda,mu))*F. Computing log F from the log tail also handles
-// large ages without subtracting nearly equal probabilities.
-double birth_death_log_q(double lambda, double mu, double t)
+// qInfinity=K/(K+max(mu-lambda,0)); compute log F from its log tail rather than
+// subtracting probabilities near one. This also supplies the sampled-count normalizer.
+double birth_death_log_q(double lambda, double mu, double rho, double t)
 {
-    double h = birth_death_hazard(lambda,mu,t);
-    return std::log(lambda/std::max(lambda,mu)) + std::log(-std::expm1(-h));
+    double h = birth_death_hazard(lambda,mu,rho,t);
+    double log_q_infinity = rho == 1 ? std::log(lambda/std::max(lambda,mu))
+                                    : -std::log1p(std::max(mu-lambda,0.0)/(rho*lambda));
+    return log_q_infinity + std::log(-std::expm1(-h));
 }
 
-// Invert h=-log(1-F(t)): t=log1p((d/M)*expm1(h))/d, with limit expm1(h)/M.
-// For large h, evaluate the numerator as a log sum to avoid overflowing expm1(h).
-double birth_death_inverse_hazard(double lambda, double mu, double h)
+// Invert h=-log(1-F(t)): t=log1p((d/M)*expm1(h))/d, M=K+max(mu-lambda,0).
+// The critical limit is expm1(h)/M. Evaluate large arguments in log space;
+// M can be less than d, so the old complete-sampling log-sum rearrangement does not apply.
+double birth_death_inverse_hazard(double lambda, double mu, double rho, double h)
 {
-    double d = std::abs(lambda-mu), M = std::max(lambda,mu);
+    double d = std::abs(lambda-mu);
+    double M = rho == 1 ? std::max(lambda,mu) : rho*lambda + std::max(mu-lambda,0.0);
     if (h == 0) return 0;
-    if (d == 0) return std::expm1(h)/M;
-    if (h < 500) return std::log1p((d/M)*std::expm1(h))/d;
-    double a = h + std::log(d) - std::log(M);
-    double b = std::log(std::min(lambda,mu)/M);
-    double top = std::max(a,b);
-    return (top + std::log1p(std::exp(std::min(a,b)-top)))/d;
+    if (d == 0) return h < 500 ? std::expm1(h)/M : std::exp(h-std::log(M));
+    if (h < 500)
+    {
+        double z = (d/M)*std::expm1(h);
+        if (std::isfinite(z)) return std::log1p(z)/d;
+    }
+    return log1pexp(std::log(d)-std::log(M) + h + std::log(-std::expm1(-h)))/d;
 }

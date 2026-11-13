@@ -1,7 +1,7 @@
 {
     "name": "BirthDeath",
     "result_type": "Distribution<Tree<Times>>",
-    "call": "birthDeath(@taxa,@lambda,@mu,@start,@age,@condition)",
+    "call": "birthDeath(@taxa,@lambda,@mu,@rho,@start,@age,@condition)",
     "import": [
         "Probability"
     ],
@@ -24,25 +24,34 @@
             "description": "The extinction rate per lineage, in the same units as lambda"
         },
         {
+            "name": "rho",
+            "type": "Double",
+            "default_value": "1",
+            "description": "The probability that a present-day lineage is sampled"
+        },
+        {
             "name": "start",
             "type": "Start",
-            "description": "Origin or Crown"
+            "description": "Origin or Crown",
+            "default_value": "Origin"
         },
         {
             "name": "age",
             "type": "AgeTreatment",
-            "description": "AtAge(t), or Flat with Origin and Tips(n)"
+            "description": "AtAge(t), or Flat with Origin and Tips(n)",
+            "default_value": "Flat"
         },
         {
             "name": "condition",
             "type": "Condition",
-            "description": "Unconditioned, Surviving, or Tips(n)"
+            "description": "Unconditioned, Surviving, or Tips(n)",
+            "default_value": "Tips(length(@taxa))"
         }
     ],
-    "description": "A tree model with constant speciation and extinction rates. Returns the reconstructed tree on the supplied taxa, with tips at age zero and extinct lineages integrated out. All present-day taxa are assumed to be sampled. Setting mu to zero gives Yule.\n\nOrigin starts with one lineage; Crown fixes the root at the supplied starting age and requires surviving descendants from both initial lineages. Tips(n) conditions on the number of taxa; Unconditioned retains its probability as evidence about the rates and starting age. Surviving conditions an Origin start on survival and adds no condition to Crown.\n\nOrigin with Flat and Tips(n) integrates over a flat origin-age measure before conditioning on n. Other Flat combinations are not supported. Origin permits one taxon; Crown requires at least two.\n\nTemporarily, sampling always generates a tree conditional on the supplied taxon count. Without Tips(n), this is an MCMC initializer rather than direct simulation of the declared law, and the tree variable must not be created or destroyed during MCMC.",
+    "description": "A tree model with constant speciation and extinction rates. Returns the reconstructed tree on the supplied taxa, with tips at age zero and extinct lineages integrated out. Each present-day lineage is independently sampled with probability rho. Setting mu to zero and rho to one gives Yule.\n\nOrigin starts with one lineage; Crown fixes the root at the supplied starting age and requires sampled descendants from both initial lineages. Tips(n) conditions on the number of sampled taxa; Unconditioned retains its probability as evidence about the rates and starting age. Surviving conditions an Origin start on leaving sampled descendants and adds no condition to Crown.\n\nOrigin with Flat and Tips(n) integrates over a flat origin-age measure before conditioning on n. Other Flat combinations are not supported. Origin permits one taxon; Crown requires at least two.\n\nTemporarily, sampling always generates a tree conditional on the supplied taxon count. Without Tips(n), this is an MCMC initializer rather than direct simulation of the declared law, and the tree variable must not be created or destroyed during MCMC.",
     "examples": [
-        "~BirthDeath([\"A\",\"B\",\"C\"],1,0.5,Origin,Flat,Tips(3))",
-        "~BirthDeath([\"A\",\"B\",\"C\"],1,0.5,Crown,AtAge(2),Tips(3))"
+        "~BirthDeath([\"A\",\"B\",\"C\"],1,0.5)",
+        "~BirthDeath([\"A\",\"B\",\"C\"],1,0.5,0.1,Crown,AtAge(2),Tips(3))"
     ],
     "see": [
         "Yule",

@@ -199,22 +199,24 @@ extern "C" closure builtin_function_sampleOrderedTree(OperationArgs& Args)
     return {relatives};
 }
 
-// Log probability of exactly one surviving lineage at the supplied age.
+// Log probability of exactly one sampled descendant at the supplied age.
 extern "C" closure builtin_function_birth_death_log_p1(OperationArgs& Args)
 {
     double lambda = Args.evaluate_slot_to_value(0).as_double();
     double mu = Args.evaluate_slot_to_value(1).as_double();
-    double t = Args.evaluate_slot_to_value(2).as_double();
-    return {birth_death_log_p1(lambda,mu,t)};
+    double rho = Args.evaluate_slot_to_value(2).as_double();
+    double t = Args.evaluate_slot_to_value(3).as_double();
+    return {birth_death_log_p1(lambda,mu,rho,t)};
 }
 
-// Log probability that the initial lineage has surviving descendants.
+// Log probability that the initial lineage has sampled descendants.
 extern "C" closure builtin_function_birth_death_log_survival(OperationArgs& Args)
 {
     double lambda = Args.evaluate_slot_to_value(0).as_double();
     double mu = Args.evaluate_slot_to_value(1).as_double();
-    double t = Args.evaluate_slot_to_value(2).as_double();
-    return {birth_death_log_survival(lambda,mu,t)};
+    double rho = Args.evaluate_slot_to_value(2).as_double();
+    double t = Args.evaluate_slot_to_value(3).as_double();
+    return {birth_death_log_survival(lambda,mu,rho,t)};
 }
 
 // Log geometric count parameter for conditioning on a positive tip count.
@@ -222,8 +224,9 @@ extern "C" closure builtin_function_birth_death_log_q(OperationArgs& Args)
 {
     double lambda = Args.evaluate_slot_to_value(0).as_double();
     double mu = Args.evaluate_slot_to_value(1).as_double();
-    double t = Args.evaluate_slot_to_value(2).as_double();
-    return {birth_death_log_q(lambda,mu,t)};
+    double rho = Args.evaluate_slot_to_value(2).as_double();
+    double t = Args.evaluate_slot_to_value(3).as_double();
+    return {birth_death_log_q(lambda,mu,rho,t)};
 }
 
 // Cumulative hazard of the proper branching-age distribution.
@@ -231,8 +234,9 @@ extern "C" closure builtin_function_birth_death_hazard(OperationArgs& Args)
 {
     double lambda = Args.evaluate_slot_to_value(0).as_double();
     double mu = Args.evaluate_slot_to_value(1).as_double();
-    double t = Args.evaluate_slot_to_value(2).as_double();
-    return {birth_death_hazard(lambda,mu,t)};
+    double rho = Args.evaluate_slot_to_value(2).as_double();
+    double t = Args.evaluate_slot_to_value(3).as_double();
+    return {birth_death_hazard(lambda,mu,rho,t)};
 }
 
 // Convert an exponential order statistic back to a branching age.
@@ -240,6 +244,7 @@ extern "C" closure builtin_function_birth_death_inverse_hazard(OperationArgs& Ar
 {
     double lambda = Args.evaluate_slot_to_value(0).as_double();
     double mu = Args.evaluate_slot_to_value(1).as_double();
-    double t = Args.evaluate_slot_to_value(2).as_double();
-    return {birth_death_inverse_hazard(lambda,mu,t)};
+    double rho = Args.evaluate_slot_to_value(2).as_double();
+    double t = Args.evaluate_slot_to_value(3).as_double();
+    return {birth_death_inverse_hazard(lambda,mu,rho,t)};
 }
