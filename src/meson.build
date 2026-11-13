@@ -189,7 +189,7 @@ endforeach
 # Populate the compiled-module cache before other tests start to avoid duplicate cold compilation.
 test('bali-phy 5d test', baliphy,
      args:['--seed', randomseed, packagepath, small_fasta, '--test'], timeout: 300,
-     priority: 100, is_parallel: false)
+     priority: 100, is_parallel: false, suite: 'minimal')
 test('bali-phy 5d +A 50', baliphy,
      args:['--seed', randomseed, '-V', packagepath, small_fasta, '--iterations=50'], timeout: 300)
 test('bali-phy 48 +A 3', baliphy,
