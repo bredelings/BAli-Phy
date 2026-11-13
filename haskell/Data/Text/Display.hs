@@ -36,13 +36,13 @@ instance Display () where
     display _ = pack "()"
 
 instance (Display a, Display b) => Display (a,b) where
-    display (x,y) = pack "(" <> intercalate (pack ",") [display x, display y] <> pack "]"
+    display (x,y) = pack "(" <> intercalate (pack ",") [display x, display y] <> pack ")"
 
 instance (Display a, Display b, Display c) => Display (a,b,c) where
-    display (x,y,z) = pack "(" <> intercalate (pack ",") [display x, display y, display z] <> pack "]"
+    display (x,y,z) = pack "(" <> intercalate (pack ",") [display x, display y, display z] <> pack ")"
 
 instance (Display a, Display b, Display c, Display d) => Display (a,b,c,d) where
-    display (x,y,z,w) = pack "(" <> intercalate (pack ",") [display x, display y, display z, display w] <> pack "]"
+    display (x,y,z,w) = pack "(" <> intercalate (pack ",") [display x, display y, display z, display w] <> pack ")"
 
 instance Display a => Display [a] where
     display s = displayList s
