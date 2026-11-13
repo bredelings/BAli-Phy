@@ -140,7 +140,7 @@ libbaliphy_sources = [
 
 libbaliphy = static_library('baliphy', libbaliphy_sources, 
 			    include_directories: [root_inc, libutil_inc],
-			    dependencies: [boost, eigen, libdl, math_dep, immer, cereal])
+			    dependencies: [boost, eigen, libdl, math_dep, immer, cereal, reflex_dep])
 			    
 subdir('bali-phy')
 

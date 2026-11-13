@@ -4,18 +4,21 @@
 # include <string_view>
 # include <map>
 # include <set>
+# include <memory>
 # include "parser.hh"
 # include "computation/message.hh"
 # include "models/model-expr.hh"
 # include "models/model-type.hh"
 
-// Tell Flex the lexer's prototype ...
-# define YY_DECL \
-  zz::parser::symbol_type zzlex (zz_driver& drv)
-// ... and declare it for the parser's sake.
-YY_DECL;
+class zz_driver;
+class ModelLexer;
+struct ModelLexerDeleter
+{
+    void operator()(ModelLexer*) const;
+};
+zz::parser::symbol_type zzlex(zz_driver& drv);
 
-// Conducting the whole scanning and parsing of Calc++.
+// Parse model expressions, types, and declarations with a parse-local scanner.
 class zz_driver
 {
     typedef zz::parser::location_type location_type;
@@ -27,6 +30,8 @@ class zz_driver
     std::map<std::string,std::pair<zz::parser::token_type,int>> reserved_words;
 
     int start_token = 0;
+    std::unique_ptr<ModelLexer, ModelLexerDeleter> scanner;
+    friend zz::parser::symbol_type zzlex(zz_driver& drv);
 
 public:
 

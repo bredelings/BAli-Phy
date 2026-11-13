@@ -1,3 +1,7 @@
+%top{
+# include "driver.hh"
+}
+
 %{ /* -*- C++ -*- */
 # include <cerrno>
 # include <climits>
@@ -7,19 +11,6 @@
 # include "driver.hh"
 # include "parser.hh"
 # include "util/string/convert.hh"
-
-// Work around an incompatibility in flex (at least versions
-// 2.5.31 through 2.5.33): it generates code that does
-// not conform to C89.  See Debian bug 333231
-// <http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=333231>.
-# undef yywrap
-# define yywrap() 1
-
-// Pacify warnings in yy_init_buffer (observed with Flex 2.6.4)
-// and GCC 7.3.0.
-#if defined __GNUC__ && 7 <= __GNUC__
-# pragma GCC diagnostic ignored "-Wnull-dereference"
-#endif
 
 // Forward declarations
 zz::parser::symbol_type zz_make_integer(std::string_view text, int radix, bool positive, int shift,
@@ -33,8 +24,8 @@ zz::parser::symbol_type zz_make_string(std::string_view text, const zz::parser::
 
 %}
 
-%option noyywrap nounput batch debug noinput never-interactive nounistd
-%option prefix="zz"
+%option flex noyywrap batch debug never-interactive prefix="zz"
+%option lexer=ModelLexer lex=lex token-type="zz::parser::symbol_type" token-eof="zz::parser::make_END(yy::location())" params="zz_driver& drv"
 %s EXPRESSION TYPE
 
 unispace     \x05
@@ -110,111 +101,106 @@ signed       {negative}?
 
 
 %{
-  // Audit note: this flex hook is the remaining implicit text-length dependency.
-  // Token helpers receive matched text explicitly from rule actions.
-  # define YY_USER_ACTION  loc.columns (yyleng);
+  // Preserve the model parser's byte-based columns.
+  # undef YY_USER_ACTION
+  # define YY_USER_ACTION drv.location.columns(yyleng);
 %}
 
 %%
 
-  /* Code run each time yylex is called. */
-%{
-    // A handy shortcut to the location held by the driver.
-    auto& loc = drv.location;
-
-    if (int t = drv.get_start_token())
-    {
-	if (t == 1)
-	{
-	    BEGIN(EXPRESSION);
-	    return zz::parser::make_START_EXP (loc);
-	}
-	else if (t == 2)
-	{
-	    BEGIN(TYPE);
-	    return zz::parser::make_START_TYPE (loc);
-	}
-	else if (t == 3)
-	{
-	    BEGIN(EXPRESSION);
-	    return zz::parser::make_START_DEFS (loc);
-	}
-	else
-	    std::abort();
-    }
-
-    loc.step ();
-%}
-
-{white_no_nl}+   loc.step ();
-{tab}	         loc.step ();
+{white_no_nl}+   drv.location.step ();
+{tab}	         drv.location.step ();
 
  /* Comment */
-"#"#*[^!#$%&*+./<=>?@\\^|\-~:\n].*           loc.step();
+"#"#*[^!#$%&*+./<=>?@\\^|\-~:\n].*           drv.location.step();
 
   /* EOL */
-[\n]              loc.lines(1); loc.step ();
+[\n]              drv.location.lines(1); drv.location.step ();
 
-"("      return zz::parser::make_OPAREN (loc);
-")"      return zz::parser::make_CPAREN (loc);
-"|"      return zz::parser::make_BAR    (loc);
-"["      return zz::parser::make_OBRACK (loc);
-"]"      return zz::parser::make_CBRACK (loc);
-"{"      return zz::parser::make_OCURLY (loc);
-"}"      return zz::parser::make_CCURLY (loc);
-","      return zz::parser::make_COMMA  (loc);
-"="      return zz::parser::make_EQUAL  (loc);
-";"      return zz::parser::make_SEMI   (loc);
-":"      return zz::parser::make_COLON  (loc);
-"+>"     return zz::parser::make_STACK  (loc);
-"->"     return zz::parser::make_ARROW  (loc);
-"@"      return zz::parser::make_AT     (loc);
-<EXPRESSION>"`" return zz::parser::make_BACKQUOTE (loc);
-"~"      return zz::parser::make_TILDE  (loc);
-"-"      return zz::parser::make_MINUS  (loc);
+"("      return zz::parser::make_OPAREN (drv.location);
+")"      return zz::parser::make_CPAREN (drv.location);
+"|"      return zz::parser::make_BAR    (drv.location);
+"["      return zz::parser::make_OBRACK (drv.location);
+"]"      return zz::parser::make_CBRACK (drv.location);
+"{"      return zz::parser::make_OCURLY (drv.location);
+"}"      return zz::parser::make_CCURLY (drv.location);
+","      return zz::parser::make_COMMA  (drv.location);
+"="      return zz::parser::make_EQUAL  (drv.location);
+";"      return zz::parser::make_SEMI   (drv.location);
+":"      return zz::parser::make_COLON  (drv.location);
+"+>"     return zz::parser::make_STACK  (drv.location);
+"->"     return zz::parser::make_ARROW  (drv.location);
+"@"      return zz::parser::make_AT     (drv.location);
+<EXPRESSION>"`" return zz::parser::make_BACKQUOTE (drv.location);
+"~"      return zz::parser::make_TILDE  (drv.location);
+"-"      return zz::parser::make_MINUS  (drv.location);
 
  /* Keep angle brackets separate in types so List<List<a>> closes twice. */
-<TYPE>"<"      return zz::parser::make_LT (loc);
-<TYPE>">"      return zz::parser::make_GT (loc);
+<TYPE>"<"      return zz::parser::make_LT (drv.location);
+<TYPE>">"      return zz::parser::make_GT (drv.location);
 
 
-{qvarid}      return zz::parser::make_QVARID (std::string(yytext, yyleng), loc);
-{qconid}      return zz::parser::make_QVARID (std::string(yytext, yyleng), loc);
-{varid}       return drv.varid(std::string_view(yytext, yyleng), loc);
-{conid}       return drv.varid(std::string_view(yytext, yyleng), loc);
+{qvarid}      return zz::parser::make_QVARID (std::string(yytext, yyleng), drv.location);
+{qconid}      return zz::parser::make_QVARID (std::string(yytext, yyleng), drv.location);
+{varid}       return drv.varid(std::string_view(yytext, yyleng), drv.location);
+{conid}       return drv.varid(std::string_view(yytext, yyleng), drv.location);
 
-<EXPRESSION>{qvarsym} return zz::parser::make_QVARSYM(std::string(yytext, yyleng), loc);
-<EXPRESSION>{varsym}  return zz::parser::make_VARSYM(std::string(yytext, yyleng), loc);
+<EXPRESSION>{qvarsym} return zz::parser::make_QVARSYM(std::string(yytext, yyleng), drv.location);
+<EXPRESSION>{varsym}  return zz::parser::make_VARSYM(std::string(yytext, yyleng), drv.location);
 
-{decimal}                              return zz_make_integer10(std::string_view(yytext, yyleng), loc);
+{decimal}                              return zz_make_integer10(std::string_view(yytext, yyleng), drv.location);
 
-{floating_point}                       return zz_make_float(std::string_view(yytext, yyleng), loc);
-[\"]({stringchar}|{escape})*[\"]   return zz_make_string(std::string_view(yytext, yyleng), loc);
+{floating_point}                       return zz_make_float(std::string_view(yytext, yyleng), drv.location);
+[\"]({stringchar}|{escape})*[\"]   return zz_make_string(std::string_view(yytext, yyleng), drv.location);
 
 <*>.          {
              throw zz::parser::syntax_error
-               (loc, "invalid character: " + std::string(yytext, yyleng));
+               (drv.location, "invalid character: " + std::string(yytext, yyleng));
 }
 
-<<EOF>>    return zz::parser::make_END (loc);
+<<EOF>>    return zz::parser::make_END (drv.location);
 %%
 
 
 
-void
-zz_driver::scan_begin (const std::string& content)
+// Destroy the scanner where its generated class is complete.
+void ModelLexerDeleter::operator()(ModelLexer* scanner) const
 {
-  // Audit note: buffer ownership still uses flex globals until scanner state is explicit.
-  yy_flex_debug = trace_scanning;
-  yy_scan_string(content.c_str());
+    delete scanner;
 }
 
-
-void
-zz_driver::scan_end ()
+// Select the grammar entry point before requesting real tokens from the scanner.
+zz::parser::symbol_type zzlex(zz_driver& drv)
 {
-  // Audit note: buffer ownership still uses flex globals until scanner state is explicit.
-  yy_delete_buffer(YY_CURRENT_BUFFER);
+    auto& scanner = *drv.scanner;
+    auto& loc = drv.location;
+    switch (drv.get_start_token())
+    {
+        case 1:
+            scanner.start(EXPRESSION);
+            return zz::parser::make_START_EXP(loc);
+        case 2:
+            scanner.start(TYPE);
+            return zz::parser::make_START_TYPE(loc);
+        case 3:
+            scanner.start(EXPRESSION);
+            return zz::parser::make_START_DEFS(loc);
+    }
+    loc.step();
+    return scanner.lex(drv);
+}
+
+// Input borrows parse_string's content, which remains alive throughout the parse.
+// A fresh scanner keeps input and start conditions separate between driver instances.
+void zz_driver::scan_begin(const std::string& content)
+{
+    scanner.reset(new ModelLexer(reflex::Input(content)));
+    scanner->set_debug(trace_scanning);
+}
+
+void zz_driver::scan_end()
+{
+    scanner.reset();
 }
 
 using namespace yy;
