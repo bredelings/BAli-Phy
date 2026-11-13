@@ -1,6 +1,6 @@
 module Probability.Distribution.Tree.Moves where
 
-import Tree (numLeaves)
+import Tree (numNodes)
 import MCMC
 import Probability.Random    
 
@@ -24,8 +24,10 @@ addTreeMoves rate tree = do
 
 -- Traverse the tree for NNI and node-age updates, and search SPR attachment locations.
 -- A single-tip tree has no moves; node-age updates skip non-modifiable ages.
+-- Use the fixed node set: counting leaves depends on branch connections that SPR temporarily
+-- changes, which would invalidate move registration and force the prior on a pruned tree.
 addTimeTreeMoves rate tree
-    | numLeaves tree == 1 = return ()
+    | numNodes tree == 1 = return ()
     | otherwise = do
         addMove (rate*2) $ walkTimeTreeSampleNNIandNodeTimes tree
         addMove (rate*2) $ sampleSPRAll tree
