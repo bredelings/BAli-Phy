@@ -118,3 +118,191 @@ instance (key ~ Key, value ~ Value) => KeyValue Value (key, value) where
 instance ToJSON (U.Vector Int) where
     toJSON values = Array (map toJSON (U.toList values))
     toEncoding = E.intVector
+
+instance (ToJSON a,ToJSON b,ToJSON c,ToJSON d) => ToJSON (a,b,c,d) where
+    toJSON (x1,x2,x3,x4) =
+        Array [toJSON x1, toJSON x2, toJSON x3, toJSON x4]
+    toEncoding (x1,x2,x3,x4) = E.wrapArray
+        (toEncoding x1 >*<
+         toEncoding x2 >*<
+         toEncoding x3 >*<
+         toEncoding x4)
+
+instance (ToJSON a,ToJSON b,ToJSON c,ToJSON d,ToJSON e) => ToJSON (a,b,c,d,e) where
+    toJSON (x1,x2,x3,x4,x5) =
+        Array [toJSON x1, toJSON x2, toJSON x3, toJSON x4, toJSON x5]
+    toEncoding (x1,x2,x3,x4,x5) = E.wrapArray
+        (toEncoding x1 >*<
+         toEncoding x2 >*<
+         toEncoding x3 >*<
+         toEncoding x4 >*<
+         toEncoding x5)
+
+instance (ToJSON a,ToJSON b,ToJSON c,ToJSON d,ToJSON e,ToJSON f) => ToJSON (a,b,c,d,e,f) where
+    toJSON (x1,x2,x3,x4,x5,x6) =
+        Array [toJSON x1, toJSON x2, toJSON x3, toJSON x4, toJSON x5, toJSON x6]
+    toEncoding (x1,x2,x3,x4,x5,x6) = E.wrapArray
+        (toEncoding x1 >*<
+         toEncoding x2 >*<
+         toEncoding x3 >*<
+         toEncoding x4 >*<
+         toEncoding x5 >*<
+         toEncoding x6)
+
+instance (ToJSON a,ToJSON b,ToJSON c,ToJSON d,ToJSON e,ToJSON f,ToJSON g) => ToJSON (a,b,c,d,e,f,g) where
+    toJSON (x1,x2,x3,x4,x5,x6,x7) =
+        Array [toJSON x1, toJSON x2, toJSON x3, toJSON x4, toJSON x5, toJSON x6, toJSON x7]
+    toEncoding (x1,x2,x3,x4,x5,x6,x7) = E.wrapArray
+        (toEncoding x1 >*<
+         toEncoding x2 >*<
+         toEncoding x3 >*<
+         toEncoding x4 >*<
+         toEncoding x5 >*<
+         toEncoding x6 >*<
+         toEncoding x7)
+
+instance (ToJSON a,ToJSON b,ToJSON c,ToJSON d,ToJSON e,ToJSON f,ToJSON g,ToJSON h) => ToJSON (a,b,c,d,e,f,g,h)
+    where
+    toJSON (x1,x2,x3,x4,x5,x6,x7,x8) =
+        Array [toJSON x1, toJSON x2, toJSON x3, toJSON x4, toJSON x5, toJSON x6, toJSON x7, toJSON x8]
+    toEncoding (x1,x2,x3,x4,x5,x6,x7,x8) = E.wrapArray
+        (toEncoding x1 >*<
+         toEncoding x2 >*<
+         toEncoding x3 >*<
+         toEncoding x4 >*<
+         toEncoding x5 >*<
+         toEncoding x6 >*<
+         toEncoding x7 >*<
+         toEncoding x8)
+
+instance (ToJSON a,ToJSON b,ToJSON c,ToJSON d,ToJSON e,ToJSON f,ToJSON g,ToJSON h,ToJSON i) => ToJSON
+    (a,b,c,d,e,f,g,h,i) where
+    toJSON (x1,x2,x3,x4,x5,x6,x7,x8,x9) =
+        Array [toJSON x1, toJSON x2, toJSON x3, toJSON x4, toJSON x5, toJSON x6, toJSON x7, toJSON x8, toJSON x9]
+    toEncoding (x1,x2,x3,x4,x5,x6,x7,x8,x9) = E.wrapArray
+        (toEncoding x1 >*<
+         toEncoding x2 >*<
+         toEncoding x3 >*<
+         toEncoding x4 >*<
+         toEncoding x5 >*<
+         toEncoding x6 >*<
+         toEncoding x7 >*<
+         toEncoding x8 >*<
+         toEncoding x9)
+
+instance (ToJSON a,ToJSON b,ToJSON c,ToJSON d,ToJSON e,ToJSON f,ToJSON g,ToJSON h,ToJSON i,ToJSON j) => ToJSON
+    (a,b,c,d,e,f,g,h,i,j) where
+    toJSON (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10) =
+        Array [toJSON x1, toJSON x2, toJSON x3, toJSON x4, toJSON x5, toJSON x6, toJSON x7, toJSON x8, toJSON x9,
+        toJSON x10]
+    toEncoding (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10) = E.wrapArray
+        (toEncoding x1 >*<
+         toEncoding x2 >*<
+         toEncoding x3 >*<
+         toEncoding x4 >*<
+         toEncoding x5 >*<
+         toEncoding x6 >*<
+         toEncoding x7 >*<
+         toEncoding x8 >*<
+         toEncoding x9 >*<
+         toEncoding x10)
+
+instance (ToJSON a,ToJSON b,ToJSON c,ToJSON d,ToJSON e,ToJSON f,ToJSON g,ToJSON h,ToJSON i,ToJSON j,ToJSON k) =>
+    ToJSON (a,b,c,d,e,f,g,h,i,j,k) where
+    toJSON (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11) =
+        Array [toJSON x1, toJSON x2, toJSON x3, toJSON x4, toJSON x5, toJSON x6, toJSON x7, toJSON x8, toJSON x9,
+        toJSON x10, toJSON x11]
+    toEncoding (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11) = E.wrapArray
+        (toEncoding x1 >*<
+         toEncoding x2 >*<
+         toEncoding x3 >*<
+         toEncoding x4 >*<
+         toEncoding x5 >*<
+         toEncoding x6 >*<
+         toEncoding x7 >*<
+         toEncoding x8 >*<
+         toEncoding x9 >*<
+         toEncoding x10 >*<
+         toEncoding x11)
+
+instance (ToJSON a,ToJSON b,ToJSON c,ToJSON d,ToJSON e,ToJSON f,ToJSON g,ToJSON h,ToJSON i,ToJSON j,ToJSON k,ToJSON
+    l) => ToJSON (a,b,c,d,e,f,g,h,i,j,k,l) where
+    toJSON (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12) =
+        Array [toJSON x1, toJSON x2, toJSON x3, toJSON x4, toJSON x5, toJSON x6, toJSON x7, toJSON x8, toJSON x9,
+        toJSON x10, toJSON x11, toJSON x12]
+    toEncoding (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12) = E.wrapArray
+        (toEncoding x1 >*<
+         toEncoding x2 >*<
+         toEncoding x3 >*<
+         toEncoding x4 >*<
+         toEncoding x5 >*<
+         toEncoding x6 >*<
+         toEncoding x7 >*<
+         toEncoding x8 >*<
+         toEncoding x9 >*<
+         toEncoding x10 >*<
+         toEncoding x11 >*<
+         toEncoding x12)
+
+instance (ToJSON a,ToJSON b,ToJSON c,ToJSON d,ToJSON e,ToJSON f,ToJSON g,ToJSON h,ToJSON i,ToJSON j,ToJSON k,ToJSON
+    l,ToJSON m) => ToJSON (a,b,c,d,e,f,g,h,i,j,k,l,m) where
+    toJSON (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13) =
+        Array [toJSON x1, toJSON x2, toJSON x3, toJSON x4, toJSON x5, toJSON x6, toJSON x7, toJSON x8, toJSON x9,
+        toJSON x10, toJSON x11, toJSON x12, toJSON x13]
+    toEncoding (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13) = E.wrapArray
+        (toEncoding x1 >*<
+         toEncoding x2 >*<
+         toEncoding x3 >*<
+         toEncoding x4 >*<
+         toEncoding x5 >*<
+         toEncoding x6 >*<
+         toEncoding x7 >*<
+         toEncoding x8 >*<
+         toEncoding x9 >*<
+         toEncoding x10 >*<
+         toEncoding x11 >*<
+         toEncoding x12 >*<
+         toEncoding x13)
+
+instance (ToJSON a,ToJSON b,ToJSON c,ToJSON d,ToJSON e,ToJSON f,ToJSON g,ToJSON h,ToJSON i,ToJSON j,ToJSON k,ToJSON
+    l,ToJSON m,ToJSON n) => ToJSON (a,b,c,d,e,f,g,h,i,j,k,l,m,n) where
+    toJSON (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14) =
+        Array [toJSON x1, toJSON x2, toJSON x3, toJSON x4, toJSON x5, toJSON x6, toJSON x7, toJSON x8, toJSON x9,
+        toJSON x10, toJSON x11, toJSON x12, toJSON x13, toJSON x14]
+    toEncoding (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14) = E.wrapArray
+        (toEncoding x1 >*<
+         toEncoding x2 >*<
+         toEncoding x3 >*<
+         toEncoding x4 >*<
+         toEncoding x5 >*<
+         toEncoding x6 >*<
+         toEncoding x7 >*<
+         toEncoding x8 >*<
+         toEncoding x9 >*<
+         toEncoding x10 >*<
+         toEncoding x11 >*<
+         toEncoding x12 >*<
+         toEncoding x13 >*<
+         toEncoding x14)
+
+instance (ToJSON a,ToJSON b,ToJSON c,ToJSON d,ToJSON e,ToJSON f,ToJSON g,ToJSON h,ToJSON i,ToJSON j,ToJSON k,ToJSON
+    l,ToJSON m,ToJSON n,ToJSON o) => ToJSON (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o) where
+    toJSON (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15) =
+        Array [toJSON x1, toJSON x2, toJSON x3, toJSON x4, toJSON x5, toJSON x6, toJSON x7, toJSON x8, toJSON x9,
+        toJSON x10, toJSON x11, toJSON x12, toJSON x13, toJSON x14, toJSON x15]
+    toEncoding (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15) = E.wrapArray
+        (toEncoding x1 >*<
+         toEncoding x2 >*<
+         toEncoding x3 >*<
+         toEncoding x4 >*<
+         toEncoding x5 >*<
+         toEncoding x6 >*<
+         toEncoding x7 >*<
+         toEncoding x8 >*<
+         toEncoding x9 >*<
+         toEncoding x10 >*<
+         toEncoding x11 >*<
+         toEncoding x12 >*<
+         toEncoding x13 >*<
+         toEncoding x14 >*<
+         toEncoding x15)
