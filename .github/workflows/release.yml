@@ -455,7 +455,7 @@ jobs:
         ${BALIPHY} --seed=$seed -V4 run tests/prob_prog/demos/airline/Model.hs --test
         test -s token0.dot
 
-        # Use a reduced suite for DEBUG_MACHINE and sanitizer builds.
+        # Use the minimal suite for DEBUG_MACHINE and sanitizer builds.
         skip=none
         case "${{ matrix.name }}" in
           *-DEBUG_MACHINE) skip=some ;;
@@ -467,11 +467,9 @@ jobs:
             meson test -C build --no-rebuild --print-errorlogs --num-processes 2
             echo ::endgroup::
         else
-            echo ::group::Reduced test suite
+            echo ::group::Minimal test suite
             meson test -C build --no-rebuild --print-errorlogs --num-processes 2 \
-              'bali-phy testsuite prob_prog/demos/*' \
-              'bali-phy testsuite prob_prog/coal_mining' \
-              'bali-phy testsuite prob_prog/cluster/*'
+              --suite minimal
             echo ::endgroup::
         fi
 
