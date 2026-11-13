@@ -271,15 +271,22 @@ tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
 # Sample core tool behavior without paying for every process startup on slow builders.
 # Keep the full tools suite available independently of this small selection.
 minimal_tool_tests = {
-  'statreport': ['condition', 'burnin-unequal-chains'],
+  'statreport': [
+    'condition', 'burnin-unequal-chains', 'ess-chain-order-abc', 'ess-chain-order-bca',
+    'hpd-interior', 'psrf-rcf-reversed', 'interval-unavailable-individual',
+  ],
   'trees-consensus': ['support-cutoffs'],
   'tree-mean-lengths': ['batch-means'],
   'alignment-cat': ['taxa-concatenation'],
   'alignment-info': ['state-groups'],
   'alignment-draw': ['dna-coordinates'],
-  'character-properties': ['basic'],
+  'alignment-gild': ['mixed-files'],
+  'character-properties': ['basic', 'filter-and-pool', 'report-conditioned'],
   'mcon-tool': ['logical-table'],
   'trees-distances': ['branch-lengths'],
+  'trees-bootstrap': ['pooled-pseudocounts'],
+  'trees-to-SRQ': ['common-burnin'],
+  'summarize-ancestors': ['ambiguities'],
 }
 
 foreach tool: tools + prefixed_tools

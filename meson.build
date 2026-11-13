@@ -225,10 +225,28 @@ subdir('doc')
 run_tests = meson.project_source_root()/'tests/run-tests.py'
 test_dir = meson.project_source_root()/'tests'
 
+# Check runtime results and rejected programs that successful analysis runs do not verify.
+# Keep this selection small enough for slow and instrumented builds.
+minimal_internal_tests = [
+  'haskell/MCMC/DependentReplay',
+  'haskell/MCMC/BoxedLogProbabilityDependencies',
+  'haskell/MCMC/ZeroProposalRatio',
+  'haskell/Foreign/ImportBoundary',
+  'haskell/Data/Array/Runtime',
+  'haskell/Data/Vector/Runtime',
+  'haskell/Probability/ProbabilityParameterTails',
+  'haskell/Exceptions/RepeatedCatch',
+  'haskell/PatternFailures/1',
+  'haskell/Layout/DestructiveCloseRecovery',
+  'haskell/Coerce/NominalFamily',
+  'parse/error/1',
+]
+
 test_list = run_command(python, run_tests, 'listdir', test_dir, baliphy.full_path(), check: true).stdout().split()
 foreach test: test_list
   # Keep the small probabilistic-program selection available on slow and instrumented builds.
   minimal = test.startswith('prob_prog/demos/') or test == 'prob_prog/coal_mining' or test.startswith('prob_prog/cluster/')
+  minimal = minimal or test in minimal_internal_tests
   test('bali-phy testsuite ' + test,
        python,
        suite: minimal ? ['minimal'] : [],
