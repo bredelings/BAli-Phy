@@ -126,10 +126,10 @@ def result_reports_test(command, work_directory):
         "--name=reports",
     ], work_directory)
     directory = work_directory / "reports-1"
-    source = (directory / "BAliPhy.Main.hs").read_text()
+    source = (directory / "BAliPhy.Main.hs").read_text(encoding="utf-8")
     if source.count("nonRev'") != 1:
         raise AssertionError("computed reports duplicated the nonRev constructor")
-    records = (directory / "C1.log.json").read_text().splitlines()
+    records = (directory / "C1.log.json").read_text(encoding="utf-8").splitlines()
     model_log = json.loads(records[1])["parameters//"]["S1/"]
     for name in ("nonRev:eqFrequencies", "nonEq:initialFreq"):
         if set(model_log[name]) != {"A", "C", "G", "T"}:
@@ -139,7 +139,7 @@ def result_reports_test(command, work_directory):
                   "{result=~Exponential(1); result_2=2; loggers=~Exponential(1)}")
     for attempt in range(2):
         run_command("allocate readable final names", command + ["print", expression], work_directory)
-        source = (work_directory / "Print.Main.hs").read_text()
+        source = (work_directory / "Print.Main.hs").read_text(encoding="utf-8")
         if "result_3" not in source or "loggers_2" not in source:
             raise AssertionError("final packaging reused occupied local names")
         if attempt == 0:
@@ -161,17 +161,17 @@ def result_reports_test(command, work_directory):
         {"name": "functions", "value":
          "map(|x: (x(@x),map(|x: @x|,[True]),(x(@x),map(|x_2: x(@x)|,[True])))|,[not])"},
     ]}
-    (bindings / "capture.json").write_text(json.dumps(binding))
+    (bindings / "capture.json").write_text(json.dumps(binding), encoding="utf-8")
     separator = ";" if os.name == "nt" or any(";" in arg for arg in command) else ":"
     capture_command = [arg + separator + "capture-package" if arg.startswith("--package-path=")
                        else arg for arg in command]
     run_command("generate capture-free reports", capture_command + [
         "print", "captureTest(x) where {x=1<0}"], work_directory)
-    source = (work_directory / "Print.Main.hs").read_text()
+    source = (work_directory / "Print.Main.hs").read_text(encoding="utf-8")
     source = "import qualified Data.JSON as J\nimport qualified Data.Text as Text\n" + source
     source = source.replace("show $ fst result",
                             "Text.unpack $ J.encode $ J.Object $ parameterLogValues $ snd result")
-    (work_directory / "Capture.hs").write_text(source)
+    (work_directory / "Capture.hs").write_text(source, encoding="utf-8")
     result = run_command("evaluate capture-free reports", command + ["run", "Capture.hs"], work_directory)
     if json.loads(result.stdout) != {
         "captureTest:direct": [True], "captureTest:nested": [[True]], "captureTest:adjacent": [[True]],
@@ -192,7 +192,7 @@ def result_reports_test(command, work_directory):
         "print", "Δ.δοκιμή(κ=2)"], work_directory)
     if result.stdout.strip() != "5":
         raise AssertionError("Unicode argument/default lookup failed: " + result.stdout)
-    source = (work_directory / "Print.Main.hs").read_text()
+    source = (work_directory / "Print.Main.hs").read_text(encoding="utf-8")
     source = source.replace("import Bio.Alphabet",
                             "import qualified Data.JSON as J\nimport qualified Data.Text as Text\nimport Bio.Alphabet", 1)
     source = source.replace("show $ fst result",
