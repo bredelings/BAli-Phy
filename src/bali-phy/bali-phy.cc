@@ -45,6 +45,7 @@ namespace mpi = boost::mpi;
 #include <filesystem>
 #include <fmt/chrono.h>
 #include <chrono>
+#include <CLI/CLI.hpp>
 
 #include "substitution/likelihood.hh"
 #include "util/myexception.hh"
@@ -677,6 +678,11 @@ static inline void enable_nan_trapping(void)
 
 int main(int argc,char* argv[])
 { 
+    // Recover UTF-8 arguments from the Windows Unicode command line before any argument processing.
+    // Keep their owner alive for later command logging; on other platforms argv is unchanged.
+    CLI::App argument_storage;
+    argv = argument_storage.ensure_utf8(argv);
+
     int n_procs = 1;
     int proc_id = 0;
 
