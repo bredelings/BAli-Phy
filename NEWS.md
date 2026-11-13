@@ -14,6 +14,7 @@
  - Report mean pairwise differences and per-site parsimony scores in alignment summaries.
  - Allow running Python tools from Git Bash and MSYS2 Bash on Windows.
  - Extend Yule tree priors with explicit origin/crown ages and conditioning on the number of tips.
+ - Add Birth-Death prior with the same conditioning.
  - Extend covarion models to handle components with different equilibrium frequencies.
  - Allow specifying root frequencies for nonEq when there are more states than letters.
  - Speed up model compilation and startup.
