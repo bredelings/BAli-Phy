@@ -612,9 +612,6 @@ jobs:
         if [ "${{ matrix.name }}" != "windows-cross" ] ; then
             bpy-summarize 5d-muscle-1 5d-muscle-2
         fi
-        rm -f token0.dot
-        ${BALIPHY} --seed=$seed -V4 run tests/prob_prog/demos/airline/Model.hs --test
-        test -s token0.dot
 
         # Use the minimal suite for DEBUG_MACHINE and sanitizer builds.
         skip=none

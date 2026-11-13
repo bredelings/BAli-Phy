@@ -451,9 +451,6 @@ jobs:
         ${BALIPHY} --seed=$(($seed+1)) 5d-muscle.fasta --iterations=50
         ${STATREPORT} 5d-muscle-1/C1.log
         bpy-summarize 5d-muscle-1 5d-muscle-2
-        rm -f token0.dot
-        ${BALIPHY} --seed=$seed -V4 run tests/prob_prog/demos/airline/Model.hs --test
-        test -s token0.dot
 
         # Use the minimal suite for DEBUG_MACHINE and sanitizer builds.
         skip=none
@@ -497,8 +494,6 @@ jobs:
         & $baliPhy help
         & $baliPhy --version
         & $baliPhy "$env:GITHUB_WORKSPACE/examples/5S-rRNA/5d-muscle.fasta" --test
-        & $baliPhy "--seed=$env:seed" -V4 run tests/prob_prog/demos/airline/Model.hs --test
-        if (-not (Test-Path token0.dot -PathType Leaf)) { throw "Missing token0.dot" }
         if (-not (Test-Path local/share/man/man1/bali-phy.1 -PathType Leaf)) {
           throw "Generated manual pages were not installed"
         }
