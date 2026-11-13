@@ -21,8 +21,29 @@ STATE_DEFAULTS = {
     'branch_categories': 'The branch categories in the current context',
     'branch_category_vectors': 'The branch category vectors in the current context',
 }
-# Match quoted strings first, so an @ inside a string is never treated as a reference.
-DEFAULT_TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|@([A-Za-z_][A-Za-z_0-9]*)')
+# Quoted text must not be interpreted as argument references.
+QUOTED_OR_AT = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|@')
+
+
+# Follow the model/Haskell identifier categories, including combining marks after the first letter.
+# Yield source spans so reference rendering leaves the rest of the expression untouched.
+def default_tokens(value):
+    end = 0
+    while match := QUOTED_OR_AT.search(value, end):
+        start, end = match.span()
+        name = None
+        if match[0] == '@' and end < len(value):
+            c = value[end]
+            if c == '_' or unicodedata.category(c) in {'Ll', 'Lu', 'Lt', 'Lo'}:
+                end += 1
+                while end < len(value):
+                    c = value[end]
+                    if c not in "_'" and unicodedata.category(c) not in {
+                            'Ll', 'Lu', 'Lt', 'Lo', 'Lm', 'Mn', 'Nd', 'Nl', 'No'}:
+                        break
+                    end += 1
+                name = value[start + 1:end]
+        yield start, end, name
 
 
 def code(text):
@@ -90,17 +111,16 @@ def default_text(value, names, warnings):
         rendered = html.escape(STATE_DEFAULTS[state[1]])
     else:
         parts, end = [], 0
-        for match in DEFAULT_TOKEN.finditer(value):
-            parts.append(html.escape(value[end:match.start()]))
-            name = match[1]
+        for start, stop, name in default_tokens(value):
+            parts.append(html.escape(value[end:start]))
             if name in names:
                 parts.append(f'<a class="argument-reference" href="#arg-{quote(name)}" '
                              f'title="Value of argument {html.escape(name)}">{html.escape(name)}</a>')
             else:
                 if name:
                     warnings.append(f'Unknown argument reference @{name}')
-                parts.append(html.escape(match[0]))
-            end = match.end()
+                parts.append(html.escape(value[start:stop]))
+            end = stop
         parts.append(html.escape(value[end:]))
         rendered = '<code>' + ''.join(parts) + '</code>'
     return rendered
@@ -204,8 +224,8 @@ def binding_page(slug, entry, lookup, warnings):
     if detailed_args:
         parts += ['## Arguments', '<div class="reference-section">']
         notes = []
-        if any(match[1] in names for arg in detailed_args
-               for match in DEFAULT_TOKEN.finditer(arg.get('default_value', ''))):
+        if any(name in names for arg in detailed_args
+               for _, _, name in default_tokens(arg.get('default_value', ''))):
             notes.append('Underlined names in default expressions refer to other arguments.')
         if any(arg.get('default_value', '').startswith('~') for arg in detailed_args):
             notes.append('A default beginning with `~` specifies a prior distribution.')

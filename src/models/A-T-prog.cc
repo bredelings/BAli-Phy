@@ -14,6 +14,7 @@
 #include "computation/loader.hh"
 #include "computation/haskell/generated.hh"
 #include "computation/haskell/var.hh"
+#include "computation/haskell/ids.hh"
 #include "computation/module.hh"
 
 #include "sequence/genetic_code.hh"
@@ -202,7 +203,7 @@ Hs::Var bind_and_log(bool do_log,
                      bool is_referenced = true)
 {
     string var_name = name;
-    if (var_name.empty() or not std::islower(var_name[0]))
+    if (not is_haskell_varid(var_name))
         var_name = "_"+var_name;
     Hs::Var x(var_name);
     Hs::Var log_x("log_"+name);

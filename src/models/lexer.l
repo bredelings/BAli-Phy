@@ -24,7 +24,7 @@ zz::parser::symbol_type zz_make_string(std::string_view text, const zz::parser::
 
 %}
 
-%option flex noyywrap batch debug never-interactive prefix="zz"
+%option unicode flex noyywrap batch debug never-interactive prefix="zz"
 %option lexer=ModelLexer lex=lex token-type="zz::parser::symbol_type" token-eof="zz::parser::make_END(yy::location())" params="zz_driver& drv"
 %s EXPRESSION TYPE
 
@@ -35,7 +35,7 @@ whitechar    {white_no_nl}|{nl}
 tab          \t
 
 ascdigit     [0-9]
-unidigit     \x03
+unidigit     \p{Nd}
 decdigit     {ascdigit}
 digit        {ascdigit}|{unidigit}
 
@@ -50,11 +50,11 @@ symbol       {ascsymbol}
 model_symbol_except_colon [!#$%&\*+./<=>?\\^|\-]
 model_symbol {model_symbol_except_colon}|:
 
-unilarge     \x01
+unilarge     \p{Lu}|\p{Lt}
 asclarge     [A-Z]
 large        {asclarge}|{unilarge}
 
-unismall     \x02
+unismall     \p{Ll}|\p{Lo}
 ascsmall     [a-z]
 small        {ascsmall}|{unismall}|_
 
@@ -63,7 +63,7 @@ graphic      {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\"\'
 graphicnonq  {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\"
 graphicnonqq {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\'
 
-uniidchar    \x07
+uniidchar    \p{Lm}|\p{Mn}|\p{Nl}|\p{No}
 idchar       {small}|{large}|{digit}|{uniidchar}|\'
 
 pragmachar   {small}|{large}|{digit}
@@ -79,12 +79,8 @@ consym       :{symbol}*
 numspc       _*
 decimal      {decdigit}({numspc}{decdigit})*
 exponent     {numspc}[eE][\-\+]?{decimal}
- /* Match Unicode scalar values, excluding overlong UTF-8, surrogates, and values above U+10FFFF. */
-utf8cont     [\x80-\xbf]
-utf8two      [\xc2-\xdf]{utf8cont}
-utf8three    (\xe0[\xa0-\xbf]|[\xe1-\xec\xee-\xef]{utf8cont}|\xed[\x80-\x9f]){utf8cont}
-utf8four     (\xf0[\x90-\xbf]|[\xf1-\xf3]{utf8cont}|\xf4[\x80-\x8f]){utf8cont}{utf8cont}
-stringchar   [\x20-\x21\x23-\x5b\x5d-\x7e]|{utf8two}|{utf8three}|{utf8four}
+ /* Unicode mode matches complete UTF-8 characters; keep raw ASCII controls excluded. */
+stringchar   [\x20-\x21\x23-\x5b\x5d-\x7e]|\p{Non_ASCII_Unicode}
  /* Admit unsupported escapes into the token so the decoder can report a parse error. */
 escape       \\[^\n\r\f]
 

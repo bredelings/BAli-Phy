@@ -8,6 +8,7 @@ import argparse
 import json
 import os
 import pathlib
+import runpy
 import shlex
 import subprocess
 import sys
@@ -177,6 +178,40 @@ def result_reports_test(command, work_directory):
         "captureTest:functions": [[True, [False], [True, [True]]]],
     }:
         raise AssertionError("template lambdas captured substituted variables: " + result.stdout)
+
+
+    # A temporary binding exercises Unicode named arguments/defaults and generated report labels.
+    # Declarative print tests cover locals, but cannot inspect/reuse generated reports or add bindings.
+    # Retain while model bindings generate Haskell and documentation from separate parsers.
+    binding = {"name": "Δ.δοκιμή", "result_type": "Double", "call": "(@κ + @θ)",
+               "args": [{"name": "κ", "type": "Double"},
+                        {"name": "θ", "type": "Double", "default_value": "@κ + 1"}],
+               "computed": [{"name": "τιμή", "value": "@result"}]}
+    (bindings / "unicode.json").write_text(json.dumps(binding, ensure_ascii=False), encoding="utf-8")
+    result = run_command("Unicode binding arguments", capture_command + [
+        "print", "Δ.δοκιμή(κ=2)"], work_directory)
+    if result.stdout.strip() != "5":
+        raise AssertionError("Unicode argument/default lookup failed: " + result.stdout)
+    source = (work_directory / "Print.Main.hs").read_text()
+    source = source.replace("import Bio.Alphabet",
+                            "import qualified Data.JSON as J\nimport qualified Data.Text as Text\nimport Bio.Alphabet", 1)
+    source = source.replace("show $ fst result",
+                            "Text.unpack $ J.encode $ J.Object $ parameterLogValues $ snd result")
+    (work_directory / "UnicodeReport.hs").write_text(source, encoding="utf-8")
+    result = run_command("Unicode report labels", command + ["run", "UnicodeReport.hs"], work_directory)
+    if json.loads(result.stdout) != {"Δ.δοκιμή:τιμή": 5}:
+        raise AssertionError("Unicode report label/value changed: " + result.stdout)
+
+    reference = runpy.run_path(str(pathlib.Path(__file__).resolve().parents[2] / "doc/generate-reference.py"))
+    warnings = []
+    rendered = reference["default_text"]('@κ + "@κ" + @é', ["κ", "é"], warnings)
+    if (warnings or rendered.count('class="argument-reference"') != 2
+            or '#arg-%CE%BA' not in rendered or '#arg-e%CC%81' not in rendered
+            or '&quot;@κ&quot;' not in rendered):
+        raise AssertionError("Unicode/quoted default references rendered incorrectly: " + rendered)
+    rendered = reference["default_text"]("@κ' + @θ'", ["κ'", "θ'"], warnings)
+    if warnings or rendered.count('class="argument-reference"') != 2:
+        raise AssertionError("Apostrophes in identifiers were treated as quotes: " + rendered)
 
 
 # Each Meson case owns its work directory; only commands that reuse generated source run together.
