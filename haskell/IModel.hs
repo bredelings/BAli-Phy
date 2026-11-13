@@ -18,7 +18,8 @@ rs05 logRate meanIndelLength tau tree = (\d b -> m, rs05_lengthp m) where
       heat = 1.0
       training = False
       rate = exp logRate
-      x = exp (-2.0*rate)
+      -- Insertions and deletions each have rate 'rate'; x is their combined event probability.
+      x = -expm1 (-2.0*rate)
       delta = x/(1.0+x)
       epsilon = (meanIndelLength-1.0)/meanIndelLength
       m = rs05_branch_HMM epsilon delta tau heat training

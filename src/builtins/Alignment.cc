@@ -424,27 +424,25 @@ extern "C" closure builtin_function_rs05_lengthp(OperationArgs& Args)
     double C = 1;
     double B = -(GG + MM);
     double A = MM*GG - MG*GM;
-    if (A == 0) return {0.0};
+    if (l == 0) return {ME};
+    // With A=0 the generating-function denominator is 1-(MM+GG)*s.
+    // Its length-one coefficient is MM*ME+MG*GE; each later coefficient gains MM+GG.
+    if (A == 0) return {(MM*ME + MG*GE) * pow(MM + GG, l-1)};
     
     double sqr_det = sqrt(B*B-4.0*A*C);
     double r1 = (-B - sqr_det)/(2*A);
     double r2 = (-B + sqr_det)/(2*A);
 
     //------------ Calculate the coefficients f_M[l] ------------//
-    double P;
-    if (l==0)
-	P = ME;
-    else {
-	double P1 = pow(r1,-l-1);
-	double P2 = pow(r2,-l-1);
+    double P1 = pow(r1,-l-1);
+    double P2 = pow(r2,-l-1);
 
-	// Calculate q[l] and q[l-i] (I've proved that all q[i]>=0)
-	double q_l   = 1.0/ (A*(r2-r1)) * (P1 - P2);
-	double q_lm1 = 1.0/ (A*(r2-r1)) * (P1*r1 - P2*r2);
+    // Calculate q[l] and q[l-i] (I've proved that all q[i]>=0)
+    double q_l   = 1.0/ (A*(r2-r1)) * (P1 - P2);
+    double q_lm1 = 1.0/ (A*(r2-r1)) * (P1*r1 - P2*r2);
 
-	// Calculate f_M[l] from the q[i] (*IS* this always positive?)
-	P = ME*q_l + (MG*GE - ME*GG)*q_lm1;
-    }
+    // Calculate f_M[l] from the q[i] (*IS* this always positive?)
+    double P = ME*q_l + (MG*GE - ME*GG)*q_lm1;
     return {P};
 }
 
