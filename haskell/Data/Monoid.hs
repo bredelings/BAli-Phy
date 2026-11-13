@@ -19,3 +19,12 @@ instance Monoid () where
 
 instance (Monoid a, Monoid b) => Monoid (a,b) where
     mempty = (mempty, mempty)
+
+instance (Monoid a,Monoid b,Monoid c) => Monoid (a,b,c) where
+    mempty = (mempty,mempty,mempty)
+
+instance (Monoid a,Monoid b,Monoid c,Monoid d) => Monoid (a,b,c,d) where
+    mempty = (mempty,mempty,mempty,mempty)
+
+instance (Monoid a,Monoid b,Monoid c,Monoid d,Monoid e) => Monoid (a,b,c,d,e) where
+    mempty = (mempty,mempty,mempty,mempty,mempty)

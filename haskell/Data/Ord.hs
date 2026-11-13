@@ -64,3 +64,29 @@ deriving instance (Ord a, Ord b, Ord c) => Ord (a, b, c)
 
 deriving instance (Ord a, Ord b, Ord c, Ord d) => Ord (a, b, c, d)
 
+deriving instance (Ord a,Ord b,Ord c,Ord d,Ord e) => Ord (a,b,c,d,e)
+
+deriving instance (Ord a,Ord b,Ord c,Ord d,Ord e,Ord f) => Ord (a,b,c,d,e,f)
+
+deriving instance (Ord a,Ord b,Ord c,Ord d,Ord e,Ord f,Ord g) => Ord (a,b,c,d,e,f,g)
+
+deriving instance (Ord a,Ord b,Ord c,Ord d,Ord e,Ord f,Ord g,Ord h) => Ord (a,b,c,d,e,f,g,h)
+
+deriving instance (Ord a,Ord b,Ord c,Ord d,Ord e,Ord f,Ord g,Ord h,Ord i) => Ord (a,b,c,d,e,f,g,h,i)
+
+deriving instance (Ord a,Ord b,Ord c,Ord d,Ord e,Ord f,Ord g,Ord h,Ord i,Ord j) => Ord (a,b,c,d,e,f,g,h,i,j)
+
+deriving instance (Ord a,Ord b,Ord c,Ord d,Ord e,Ord f,Ord g,Ord h,Ord i,Ord j,Ord k) => Ord
+    (a,b,c,d,e,f,g,h,i,j,k)
+
+deriving instance (Ord a,Ord b,Ord c,Ord d,Ord e,Ord f,Ord g,Ord h,Ord i,Ord j,Ord k,Ord l) => Ord
+    (a,b,c,d,e,f,g,h,i,j,k,l)
+
+deriving instance (Ord a,Ord b,Ord c,Ord d,Ord e,Ord f,Ord g,Ord h,Ord i,Ord j,Ord k,Ord l,Ord m) => Ord
+    (a,b,c,d,e,f,g,h,i,j,k,l,m)
+
+deriving instance (Ord a,Ord b,Ord c,Ord d,Ord e,Ord f,Ord g,Ord h,Ord i,Ord j,Ord k,Ord l,Ord m,Ord n) => Ord
+    (a,b,c,d,e,f,g,h,i,j,k,l,m,n)
+
+deriving instance (Ord a,Ord b,Ord c,Ord d,Ord e,Ord f,Ord g,Ord h,Ord i,Ord j,Ord k,Ord l,Ord m,Ord n,Ord o) =>
+    Ord (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o)

@@ -109,3 +109,66 @@ instance (Show a, Show b, Show c, Show d) => Show (a,b,c,d) where
 instance Show a => Show [a] where
     showsPrec _ = showList
 
+instance (Show a,Show b,Show c,Show d,Show e) => Show (a,b,c,d,e) where
+    show (x1,x2,x3,x4,x5) =
+        "(" ++ show x1 ++ "," ++ show x2 ++ "," ++ show x3 ++ "," ++ show x4 ++ "," ++ show x5 ++ ")"
+
+instance (Show a,Show b,Show c,Show d,Show e,Show f) => Show (a,b,c,d,e,f) where
+    show (x1,x2,x3,x4,x5,x6) =
+        "(" ++ show x1 ++ "," ++ show x2 ++ "," ++ show x3 ++ "," ++ show x4 ++ "," ++ show x5 ++ "," ++ show x6 ++
+        ")"
+
+instance (Show a,Show b,Show c,Show d,Show e,Show f,Show g) => Show (a,b,c,d,e,f,g) where
+    show (x1,x2,x3,x4,x5,x6,x7) =
+        "(" ++ show x1 ++ "," ++ show x2 ++ "," ++ show x3 ++ "," ++ show x4 ++ "," ++ show x5 ++ "," ++ show x6 ++
+        "," ++ show x7 ++ ")"
+
+instance (Show a,Show b,Show c,Show d,Show e,Show f,Show g,Show h) => Show (a,b,c,d,e,f,g,h) where
+    show (x1,x2,x3,x4,x5,x6,x7,x8) =
+        "(" ++ show x1 ++ "," ++ show x2 ++ "," ++ show x3 ++ "," ++ show x4 ++ "," ++ show x5 ++ "," ++ show x6 ++
+        "," ++ show x7 ++ "," ++ show x8 ++ ")"
+
+instance (Show a,Show b,Show c,Show d,Show e,Show f,Show g,Show h,Show i) => Show (a,b,c,d,e,f,g,h,i) where
+    show (x1,x2,x3,x4,x5,x6,x7,x8,x9) =
+        "(" ++ show x1 ++ "," ++ show x2 ++ "," ++ show x3 ++ "," ++ show x4 ++ "," ++ show x5 ++ "," ++ show x6 ++
+        "," ++ show x7 ++ "," ++ show x8 ++ "," ++ show x9 ++ ")"
+
+instance (Show a,Show b,Show c,Show d,Show e,Show f,Show g,Show h,Show i,Show j) => Show (a,b,c,d,e,f,g,h,i,j) where
+    show (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10) =
+        "(" ++ show x1 ++ "," ++ show x2 ++ "," ++ show x3 ++ "," ++ show x4 ++ "," ++ show x5 ++ "," ++ show x6 ++
+        "," ++ show x7 ++ "," ++ show x8 ++ "," ++ show x9 ++ "," ++ show x10 ++ ")"
+
+instance (Show a,Show b,Show c,Show d,Show e,Show f,Show g,Show h,Show i,Show j,Show k) => Show
+    (a,b,c,d,e,f,g,h,i,j,k) where
+    show (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11) =
+        "(" ++ show x1 ++ "," ++ show x2 ++ "," ++ show x3 ++ "," ++ show x4 ++ "," ++ show x5 ++ "," ++ show x6 ++
+        "," ++ show x7 ++ "," ++ show x8 ++ "," ++ show x9 ++ "," ++ show x10 ++ "," ++ show x11 ++ ")"
+
+instance (Show a,Show b,Show c,Show d,Show e,Show f,Show g,Show h,Show i,Show j,Show k,Show l) => Show
+    (a,b,c,d,e,f,g,h,i,j,k,l) where
+    show (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12) =
+        "(" ++ show x1 ++ "," ++ show x2 ++ "," ++ show x3 ++ "," ++ show x4 ++ "," ++ show x5 ++ "," ++ show x6 ++
+        "," ++ show x7 ++ "," ++ show x8 ++ "," ++ show x9 ++ "," ++ show x10 ++ "," ++ show x11 ++ "," ++ show x12
+        ++ ")"
+
+instance (Show a,Show b,Show c,Show d,Show e,Show f,Show g,Show h,Show i,Show j,Show k,Show l,Show m) => Show
+    (a,b,c,d,e,f,g,h,i,j,k,l,m) where
+    show (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13) =
+        "(" ++ show x1 ++ "," ++ show x2 ++ "," ++ show x3 ++ "," ++ show x4 ++ "," ++ show x5 ++ "," ++ show x6 ++
+        "," ++ show x7 ++ "," ++ show x8 ++ "," ++ show x9 ++ "," ++ show x10 ++ "," ++ show x11 ++ "," ++ show x12
+        ++ "," ++ show x13 ++ ")"
+
+instance (Show a,Show b,Show c,Show d,Show e,Show f,Show g,Show h,Show i,Show j,Show k,Show l,Show m,Show n) =>
+    Show (a,b,c,d,e,f,g,h,i,j,k,l,m,n) where
+    show (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14) =
+        "(" ++ show x1 ++ "," ++ show x2 ++ "," ++ show x3 ++ "," ++ show x4 ++ "," ++ show x5 ++ "," ++ show x6 ++
+        "," ++ show x7 ++ "," ++ show x8 ++ "," ++ show x9 ++ "," ++ show x10 ++ "," ++ show x11 ++ "," ++ show x12
+        ++ "," ++ show x13 ++ "," ++ show x14 ++ ")"
+
+instance (Show a,Show b,Show c,Show d,Show e,Show f,Show g,Show h,Show i,Show j,Show k,Show l,Show m,Show n,Show o)
+    => Show (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o) where
+    show (x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15) =
+        "(" ++ show x1 ++ "," ++ show x2 ++ "," ++ show x3 ++ "," ++ show x4 ++ "," ++ show x5 ++ "," ++ show x6 ++
+        "," ++ show x7 ++ "," ++ show x8 ++ "," ++ show x9 ++ "," ++ show x10 ++ "," ++ show x11 ++ "," ++ show x12
+        ++ "," ++ show x13 ++ "," ++ show x14 ++ "," ++ show x15 ++ ")"
+

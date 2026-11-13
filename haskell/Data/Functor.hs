@@ -39,3 +39,18 @@ instance Functor ((->) r) where
 
 instance Functor ((,) a) where
     fmap f (x,y) = (x, f y)
+
+instance Functor ((,,) a b) where
+    fmap f (x1,x2,x3) = (x1,x2,f x3)
+
+instance Functor ((,,,) a b c) where
+    fmap f (x1,x2,x3,x4) = (x1,x2,x3,f x4)
+
+instance Functor ((,,,,) a b c d) where
+    fmap f (x1,x2,x3,x4,x5) = (x1,x2,x3,x4,f x5)
+
+instance Functor ((,,,,,) a b c d e) where
+    fmap f (x1,x2,x3,x4,x5,x6) = (x1,x2,x3,x4,x5,f x6)
+
+instance Functor ((,,,,,,) a b c d e f) where
+    fmap f (x1,x2,x3,x4,x5,x6,x7) = (x1,x2,x3,x4,x5,x6,f x7)

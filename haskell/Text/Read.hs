@@ -232,3 +232,283 @@ foreign import ecall "Prelude:" read_double :: CPPString -> Double
 foreign import ecall "Prelude:" read_int_at :: CPPString -> Int -> EPair Int Int
 foreign import ecall "Prelude:" read_integer_at :: CPPString -> Int -> EPair Integer Int
 foreign import ecall "Prelude:" read_double_at :: CPPString -> Int -> EPair Double Int
+
+instance (Read a,Read b,Read c,Read d,Read e) => Read (a,b,c,d,e) where
+    -- Read each field between the tuple delimiters, threading the unconsumed input.
+    readsPrec _ s =
+        [((x1,x2,x3,x4,x5), s11) | (_, s1) <- readChar '(' s,
+            (x1, s2) <- readsPrec 0 s1,
+            (_, s3) <- readChar ',' s2,
+            (x2, s4) <- readsPrec 0 s3,
+            (_, s5) <- readChar ',' s4,
+            (x3, s6) <- readsPrec 0 s5,
+            (_, s7) <- readChar ',' s6,
+            (x4, s8) <- readsPrec 0 s7,
+            (_, s9) <- readChar ',' s8,
+            (x5, s10) <- readsPrec 0 s9,
+            (_, s11) <- readChar ')' s10]
+
+instance (Read a,Read b,Read c,Read d,Read e,Read f) => Read (a,b,c,d,e,f) where
+    -- Read each field between the tuple delimiters, threading the unconsumed input.
+    readsPrec _ s =
+        [((x1,x2,x3,x4,x5,x6), s13) | (_, s1) <- readChar '(' s,
+            (x1, s2) <- readsPrec 0 s1,
+            (_, s3) <- readChar ',' s2,
+            (x2, s4) <- readsPrec 0 s3,
+            (_, s5) <- readChar ',' s4,
+            (x3, s6) <- readsPrec 0 s5,
+            (_, s7) <- readChar ',' s6,
+            (x4, s8) <- readsPrec 0 s7,
+            (_, s9) <- readChar ',' s8,
+            (x5, s10) <- readsPrec 0 s9,
+            (_, s11) <- readChar ',' s10,
+            (x6, s12) <- readsPrec 0 s11,
+            (_, s13) <- readChar ')' s12]
+
+instance (Read a,Read b,Read c,Read d,Read e,Read f,Read g) => Read (a,b,c,d,e,f,g) where
+    -- Read each field between the tuple delimiters, threading the unconsumed input.
+    readsPrec _ s =
+        [((x1,x2,x3,x4,x5,x6,x7), s15) | (_, s1) <- readChar '(' s,
+            (x1, s2) <- readsPrec 0 s1,
+            (_, s3) <- readChar ',' s2,
+            (x2, s4) <- readsPrec 0 s3,
+            (_, s5) <- readChar ',' s4,
+            (x3, s6) <- readsPrec 0 s5,
+            (_, s7) <- readChar ',' s6,
+            (x4, s8) <- readsPrec 0 s7,
+            (_, s9) <- readChar ',' s8,
+            (x5, s10) <- readsPrec 0 s9,
+            (_, s11) <- readChar ',' s10,
+            (x6, s12) <- readsPrec 0 s11,
+            (_, s13) <- readChar ',' s12,
+            (x7, s14) <- readsPrec 0 s13,
+            (_, s15) <- readChar ')' s14]
+
+instance (Read a,Read b,Read c,Read d,Read e,Read f,Read g,Read h) => Read (a,b,c,d,e,f,g,h) where
+    -- Read each field between the tuple delimiters, threading the unconsumed input.
+    readsPrec _ s =
+        [((x1,x2,x3,x4,x5,x6,x7,x8), s17) | (_, s1) <- readChar '(' s,
+            (x1, s2) <- readsPrec 0 s1,
+            (_, s3) <- readChar ',' s2,
+            (x2, s4) <- readsPrec 0 s3,
+            (_, s5) <- readChar ',' s4,
+            (x3, s6) <- readsPrec 0 s5,
+            (_, s7) <- readChar ',' s6,
+            (x4, s8) <- readsPrec 0 s7,
+            (_, s9) <- readChar ',' s8,
+            (x5, s10) <- readsPrec 0 s9,
+            (_, s11) <- readChar ',' s10,
+            (x6, s12) <- readsPrec 0 s11,
+            (_, s13) <- readChar ',' s12,
+            (x7, s14) <- readsPrec 0 s13,
+            (_, s15) <- readChar ',' s14,
+            (x8, s16) <- readsPrec 0 s15,
+            (_, s17) <- readChar ')' s16]
+
+instance (Read a,Read b,Read c,Read d,Read e,Read f,Read g,Read h,Read i) => Read (a,b,c,d,e,f,g,h,i) where
+    -- Read each field between the tuple delimiters, threading the unconsumed input.
+    readsPrec _ s =
+        [((x1,x2,x3,x4,x5,x6,x7,x8,x9), s19) | (_, s1) <- readChar '(' s,
+            (x1, s2) <- readsPrec 0 s1,
+            (_, s3) <- readChar ',' s2,
+            (x2, s4) <- readsPrec 0 s3,
+            (_, s5) <- readChar ',' s4,
+            (x3, s6) <- readsPrec 0 s5,
+            (_, s7) <- readChar ',' s6,
+            (x4, s8) <- readsPrec 0 s7,
+            (_, s9) <- readChar ',' s8,
+            (x5, s10) <- readsPrec 0 s9,
+            (_, s11) <- readChar ',' s10,
+            (x6, s12) <- readsPrec 0 s11,
+            (_, s13) <- readChar ',' s12,
+            (x7, s14) <- readsPrec 0 s13,
+            (_, s15) <- readChar ',' s14,
+            (x8, s16) <- readsPrec 0 s15,
+            (_, s17) <- readChar ',' s16,
+            (x9, s18) <- readsPrec 0 s17,
+            (_, s19) <- readChar ')' s18]
+
+instance (Read a,Read b,Read c,Read d,Read e,Read f,Read g,Read h,Read i,Read j) => Read (a,b,c,d,e,f,g,h,i,j) where
+    -- Read each field between the tuple delimiters, threading the unconsumed input.
+    readsPrec _ s =
+        [((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10), s21) | (_, s1) <- readChar '(' s,
+            (x1, s2) <- readsPrec 0 s1,
+            (_, s3) <- readChar ',' s2,
+            (x2, s4) <- readsPrec 0 s3,
+            (_, s5) <- readChar ',' s4,
+            (x3, s6) <- readsPrec 0 s5,
+            (_, s7) <- readChar ',' s6,
+            (x4, s8) <- readsPrec 0 s7,
+            (_, s9) <- readChar ',' s8,
+            (x5, s10) <- readsPrec 0 s9,
+            (_, s11) <- readChar ',' s10,
+            (x6, s12) <- readsPrec 0 s11,
+            (_, s13) <- readChar ',' s12,
+            (x7, s14) <- readsPrec 0 s13,
+            (_, s15) <- readChar ',' s14,
+            (x8, s16) <- readsPrec 0 s15,
+            (_, s17) <- readChar ',' s16,
+            (x9, s18) <- readsPrec 0 s17,
+            (_, s19) <- readChar ',' s18,
+            (x10, s20) <- readsPrec 0 s19,
+            (_, s21) <- readChar ')' s20]
+
+instance (Read a,Read b,Read c,Read d,Read e,Read f,Read g,Read h,Read i,Read j,Read k) => Read
+    (a,b,c,d,e,f,g,h,i,j,k) where
+    -- Read each field between the tuple delimiters, threading the unconsumed input.
+    readsPrec _ s =
+        [((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11), s23) | (_, s1) <- readChar '(' s,
+            (x1, s2) <- readsPrec 0 s1,
+            (_, s3) <- readChar ',' s2,
+            (x2, s4) <- readsPrec 0 s3,
+            (_, s5) <- readChar ',' s4,
+            (x3, s6) <- readsPrec 0 s5,
+            (_, s7) <- readChar ',' s6,
+            (x4, s8) <- readsPrec 0 s7,
+            (_, s9) <- readChar ',' s8,
+            (x5, s10) <- readsPrec 0 s9,
+            (_, s11) <- readChar ',' s10,
+            (x6, s12) <- readsPrec 0 s11,
+            (_, s13) <- readChar ',' s12,
+            (x7, s14) <- readsPrec 0 s13,
+            (_, s15) <- readChar ',' s14,
+            (x8, s16) <- readsPrec 0 s15,
+            (_, s17) <- readChar ',' s16,
+            (x9, s18) <- readsPrec 0 s17,
+            (_, s19) <- readChar ',' s18,
+            (x10, s20) <- readsPrec 0 s19,
+            (_, s21) <- readChar ',' s20,
+            (x11, s22) <- readsPrec 0 s21,
+            (_, s23) <- readChar ')' s22]
+
+instance (Read a,Read b,Read c,Read d,Read e,Read f,Read g,Read h,Read i,Read j,Read k,Read l) => Read
+    (a,b,c,d,e,f,g,h,i,j,k,l) where
+    -- Read each field between the tuple delimiters, threading the unconsumed input.
+    readsPrec _ s =
+        [((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12), s25) | (_, s1) <- readChar '(' s,
+            (x1, s2) <- readsPrec 0 s1,
+            (_, s3) <- readChar ',' s2,
+            (x2, s4) <- readsPrec 0 s3,
+            (_, s5) <- readChar ',' s4,
+            (x3, s6) <- readsPrec 0 s5,
+            (_, s7) <- readChar ',' s6,
+            (x4, s8) <- readsPrec 0 s7,
+            (_, s9) <- readChar ',' s8,
+            (x5, s10) <- readsPrec 0 s9,
+            (_, s11) <- readChar ',' s10,
+            (x6, s12) <- readsPrec 0 s11,
+            (_, s13) <- readChar ',' s12,
+            (x7, s14) <- readsPrec 0 s13,
+            (_, s15) <- readChar ',' s14,
+            (x8, s16) <- readsPrec 0 s15,
+            (_, s17) <- readChar ',' s16,
+            (x9, s18) <- readsPrec 0 s17,
+            (_, s19) <- readChar ',' s18,
+            (x10, s20) <- readsPrec 0 s19,
+            (_, s21) <- readChar ',' s20,
+            (x11, s22) <- readsPrec 0 s21,
+            (_, s23) <- readChar ',' s22,
+            (x12, s24) <- readsPrec 0 s23,
+            (_, s25) <- readChar ')' s24]
+
+instance (Read a,Read b,Read c,Read d,Read e,Read f,Read g,Read h,Read i,Read j,Read k,Read l,Read m) => Read
+    (a,b,c,d,e,f,g,h,i,j,k,l,m) where
+    -- Read each field between the tuple delimiters, threading the unconsumed input.
+    readsPrec _ s =
+        [((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13), s27) | (_, s1) <- readChar '(' s,
+            (x1, s2) <- readsPrec 0 s1,
+            (_, s3) <- readChar ',' s2,
+            (x2, s4) <- readsPrec 0 s3,
+            (_, s5) <- readChar ',' s4,
+            (x3, s6) <- readsPrec 0 s5,
+            (_, s7) <- readChar ',' s6,
+            (x4, s8) <- readsPrec 0 s7,
+            (_, s9) <- readChar ',' s8,
+            (x5, s10) <- readsPrec 0 s9,
+            (_, s11) <- readChar ',' s10,
+            (x6, s12) <- readsPrec 0 s11,
+            (_, s13) <- readChar ',' s12,
+            (x7, s14) <- readsPrec 0 s13,
+            (_, s15) <- readChar ',' s14,
+            (x8, s16) <- readsPrec 0 s15,
+            (_, s17) <- readChar ',' s16,
+            (x9, s18) <- readsPrec 0 s17,
+            (_, s19) <- readChar ',' s18,
+            (x10, s20) <- readsPrec 0 s19,
+            (_, s21) <- readChar ',' s20,
+            (x11, s22) <- readsPrec 0 s21,
+            (_, s23) <- readChar ',' s22,
+            (x12, s24) <- readsPrec 0 s23,
+            (_, s25) <- readChar ',' s24,
+            (x13, s26) <- readsPrec 0 s25,
+            (_, s27) <- readChar ')' s26]
+
+instance (Read a,Read b,Read c,Read d,Read e,Read f,Read g,Read h,Read i,Read j,Read k,Read l,Read m,Read n) =>
+    Read (a,b,c,d,e,f,g,h,i,j,k,l,m,n) where
+    -- Read each field between the tuple delimiters, threading the unconsumed input.
+    readsPrec _ s =
+        [((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14), s29) | (_, s1) <- readChar '(' s,
+            (x1, s2) <- readsPrec 0 s1,
+            (_, s3) <- readChar ',' s2,
+            (x2, s4) <- readsPrec 0 s3,
+            (_, s5) <- readChar ',' s4,
+            (x3, s6) <- readsPrec 0 s5,
+            (_, s7) <- readChar ',' s6,
+            (x4, s8) <- readsPrec 0 s7,
+            (_, s9) <- readChar ',' s8,
+            (x5, s10) <- readsPrec 0 s9,
+            (_, s11) <- readChar ',' s10,
+            (x6, s12) <- readsPrec 0 s11,
+            (_, s13) <- readChar ',' s12,
+            (x7, s14) <- readsPrec 0 s13,
+            (_, s15) <- readChar ',' s14,
+            (x8, s16) <- readsPrec 0 s15,
+            (_, s17) <- readChar ',' s16,
+            (x9, s18) <- readsPrec 0 s17,
+            (_, s19) <- readChar ',' s18,
+            (x10, s20) <- readsPrec 0 s19,
+            (_, s21) <- readChar ',' s20,
+            (x11, s22) <- readsPrec 0 s21,
+            (_, s23) <- readChar ',' s22,
+            (x12, s24) <- readsPrec 0 s23,
+            (_, s25) <- readChar ',' s24,
+            (x13, s26) <- readsPrec 0 s25,
+            (_, s27) <- readChar ',' s26,
+            (x14, s28) <- readsPrec 0 s27,
+            (_, s29) <- readChar ')' s28]
+
+instance (Read a,Read b,Read c,Read d,Read e,Read f,Read g,Read h,Read i,Read j,Read k,Read l,Read m,Read n,Read o)
+    => Read (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o) where
+    -- Read each field between the tuple delimiters, threading the unconsumed input.
+    readsPrec _ s =
+        [((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15), s31) | (_, s1) <- readChar '(' s,
+            (x1, s2) <- readsPrec 0 s1,
+            (_, s3) <- readChar ',' s2,
+            (x2, s4) <- readsPrec 0 s3,
+            (_, s5) <- readChar ',' s4,
+            (x3, s6) <- readsPrec 0 s5,
+            (_, s7) <- readChar ',' s6,
+            (x4, s8) <- readsPrec 0 s7,
+            (_, s9) <- readChar ',' s8,
+            (x5, s10) <- readsPrec 0 s9,
+            (_, s11) <- readChar ',' s10,
+            (x6, s12) <- readsPrec 0 s11,
+            (_, s13) <- readChar ',' s12,
+            (x7, s14) <- readsPrec 0 s13,
+            (_, s15) <- readChar ',' s14,
+            (x8, s16) <- readsPrec 0 s15,
+            (_, s17) <- readChar ',' s16,
+            (x9, s18) <- readsPrec 0 s17,
+            (_, s19) <- readChar ',' s18,
+            (x10, s20) <- readsPrec 0 s19,
+            (_, s21) <- readChar ',' s20,
+            (x11, s22) <- readsPrec 0 s21,
+            (_, s23) <- readChar ',' s22,
+            (x12, s24) <- readsPrec 0 s23,
+            (_, s25) <- readChar ',' s24,
+            (x13, s26) <- readsPrec 0 s25,
+            (_, s27) <- readChar ',' s26,
+            (x14, s28) <- readsPrec 0 s27,
+            (_, s29) <- readChar ',' s28,
+            (x15, s30) <- readsPrec 0 s29,
+            (_, s31) <- readChar ')' s30]

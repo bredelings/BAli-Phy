@@ -93,3 +93,15 @@ instance Ord a => Ord (Arg a b) where
                                 | otherwise = y
     max x@(Arg a _) y@(Arg b _) | a >= b    = x
                                 | otherwise = y
+
+instance (Semigroup a,Semigroup b,Semigroup c) => Semigroup (a,b,c) where
+    (x1,x2,x3) <> (y1,y2,y3) =
+        (x1 <> y1,x2 <> y2,x3 <> y3)
+
+instance (Semigroup a,Semigroup b,Semigroup c,Semigroup d) => Semigroup (a,b,c,d) where
+    (x1,x2,x3,x4) <> (y1,y2,y3,y4) =
+        (x1 <> y1,x2 <> y2,x3 <> y3,x4 <> y4)
+
+instance (Semigroup a,Semigroup b,Semigroup c,Semigroup d,Semigroup e) => Semigroup (a,b,c,d,e) where
+    (x1,x2,x3,x4,x5) <> (y1,y2,y3,y4,y5) =
+        (x1 <> y1,x2 <> y2,x3 <> y3,x4 <> y4,x5 <> y5)
