@@ -631,23 +631,14 @@ CallCtxt interesting_call_context(const inline_context& context)
 optional<Occ::Exp> SimplifierState::call_site_inline(const Unfolding& unfolding, const occurrence_info& occur,
                                                      const in_scope_set& bound_vars, const inline_context& context)
 {
-    auto [lone_variable, arg_infos, call_context] = continuation_args(context);
-
-    auto interesting_continuation = interesting_call_context(context);
-
     auto cu = to<CoreUnfolding>(unfolding);
     if (not cu) return {};
-
-    auto& rhs = cu->expression();
-    const id_info_lookup lookup = [this, &bound_vars](const Occ::Var& variable) {
-        return get_id_info(variable, bound_vars);
-    };
 
     // If always_unfold
     if (cu->always_unfold)
     {
         assert(not occur.is_loop_breaker);
-        return rhs;
+        return cu->expression();
     }
 
     // LoopBreaker
@@ -664,12 +655,19 @@ optional<Occ::Exp> SimplifierState::call_site_inline(const Unfolding& unfolding,
     if (to<UnfoldNever>(guidance))
         return {};
 
-    else if (auto uw = to<UnfoldWhen>(guidance))
+    // Argument classification can inspect other unfoldings. Defer it, and decoding this RHS,
+    // until the cheap guidance checks permit inlining; always_unfold retains precedence.
+    auto [lone_variable, arg_infos, call_context] = continuation_args(context);
+    const id_info_lookup lookup = [this, &bound_vars](const Occ::Var& variable) {
+        return get_id_info(variable, bound_vars);
+    };
+
+    if (auto uw = to<UnfoldWhen>(guidance))
     {
         // QUESTION: when is uw->boring_ok=true?
 
         // UnfoldWhen should only happen for lambdas and trivial expressions.
-        assert(is_work_free(rhs, lookup));
+        assert(is_work_free(cu->expression(), lookup));
 
         int n_args = arg_infos.size();
 
@@ -677,11 +675,11 @@ optional<Occ::Exp> SimplifierState::call_site_inline(const Unfolding& unfolding,
 
         bool some_benefit = calc_some_benefit(arg_infos, uw->arity, true);
 
-//        std::cerr<<"ALWAYS: rhs = "<<rhs.print()<<"\n";
+//        std::cerr<<"ALWAYS: rhs = "<<cu->expression().print()<<"\n";
 //        std::cerr<<"   n_args = "<<n_args<<"   enough_args = "<<enough_args<<"  some_benefit = "<<some_benefit<<"  boring_ok = "<<uw->boring_ok<<"\n";
 
         if (enough_args and (uw->boring_ok or some_benefit))
-            return rhs;
+            return cu->expression();
         else
             return {};
     }
@@ -689,21 +687,20 @@ optional<Occ::Exp> SimplifierState::call_site_inline(const Unfolding& unfolding,
     {
         // QUESTION: If the var is NotInLambda, and n_br < (say) 100, then should we still require work_free?
 
-        bool is_wf = is_work_free(rhs, lookup);
-
         bool some_benefit = calc_some_benefit(arg_infos, ui->arg_discounts.size(), false);
 
         int depth_penalty = 0;
-        int discount = compute_discount(ui->arg_discounts, ui->scrut_discount, arg_infos, interesting_continuation);
+        int discount = compute_discount(ui->arg_discounts, ui->scrut_discount, arg_infos,
+                                        interesting_call_context(context));
         int adjusted_size = ui->size + depth_penalty - discount;
         bool is_small_enough = adjusted_size <= options.inline_threshhold;
 
-//        std::cerr<<"MAYBE: rhs = "<<rhs.print()<<"\n";
+//        std::cerr<<"MAYBE: rhs = "<<cu->expression().print()<<"\n";
 //        std::cerr<<"   some_benefit = "<<some_benefit<<"  small_enough1 = "<<is_small_enough1<<"   small_enough2 = "<<is_small_enough2<<"\n";
 //        std::cerr<<"   func_args = "<<ui->arg_discounts.size()<<"  n_args = "<<arg_infos.size()<<"  size = "<<ui->size<<"   discount = "<<discount<<"   threshhold = "<<options.inline_threshhold<<"\n";
 
-        if (is_wf and some_benefit and is_small_enough)
-            return rhs;
+        if (some_benefit and is_small_enough and is_work_free(cu->expression(), lookup))
+            return cu->expression();
         else
             return {};
     }
