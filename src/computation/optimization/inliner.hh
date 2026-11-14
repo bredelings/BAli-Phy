@@ -109,9 +109,9 @@ struct case_context
     std::vector<Occ::Alt> alts;
     simplifier::substitution subst;
     inline_context next;
-    case_context(bool siv, const std::vector<Occ::Alt>& as,
+    case_context(bool siv, std::vector<Occ::Alt> as,
                  const simplifier::substitution& s, const inline_context& i)
-        :scrutinee_is_variable(siv), alts(as), subst(s), next(i) {}
+        :scrutinee_is_variable(siv), alts(std::move(as)), subst(s), next(i) {}
 };
 
 // It is allowed to inline here.

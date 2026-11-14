@@ -328,14 +328,6 @@ ExprSize size_of_alt(const Module& m, const inliner_options& opts, int max_size,
     return size_of_expr(m, opts, max_size, top_args, alt.body) + 1;
 }
 
-ExprSize size_max(const ExprSize& s1, const ExprSize& s2)
-{
-    if (s1.size > s2.size)
-        return s1;
-    else
-        return s2;
-}
-
 ExprSize size_sum(const Module& m, const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const vector<Occ::Exp>& Es)
 {
     ExprSize esize;
@@ -406,18 +398,18 @@ ExprSize size_of_expr(const Module& m, const inliner_options& opts, int max_size
         else if (auto x = C->object.to_var(); x and includes(top_args, *x))
         {
             ExprSize sizeSum;
-            ExprSize sizeMax;
+            int sizeMax = 0;
             
             for(auto& alt: C->alts)
             {
                 auto size = size_of_expr(m, opts, max_size, top_args, alt.body);
                 sizeSum = add_alts_size(sizeSum, size);
-                sizeMax = size_max(sizeMax, size);
+                sizeMax = std::max(sizeMax, size.size);
             }
 
             // Use sizeSum, but add var-discount that takes it from the sum down to the max
             var_discounts object_discount;
-            object_discount = object_discount.insert({*x, discounts(0, 2 + sizeSum.size - sizeMax.size)});
+            object_discount = object_discount.insert({*x, discounts(0, 2 + sizeSum.size - sizeMax)});
             sizeSum.arg_discounts = union_var_discounts(sizeSum.arg_discounts, object_discount);
 
             return sizeSum;

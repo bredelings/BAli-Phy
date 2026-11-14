@@ -1011,7 +1011,7 @@ make_dupable_alt(Occ::Alt alt, FreshVarSource& fresh_vars)
         alt_name = "_";
 
     if (is_dupable(used_vars.size()+1, body))
-        return {{},{alt}};
+        return {Occ::Binds{}, std::move(alt)};
     else
     {
         auto f = fresh_vars.get_fresh_occ_var("$j$"+alt_name);
@@ -1051,7 +1051,7 @@ SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bo
 
         auto ac2 = std::make_shared<apply_context>(k, substitution(), floats1.bound_vars, cont1);
         ac2->dup_status = DupStatus::OkToDup;
-        return {floats1, ac2};
+        return {std::move(floats1), std::move(ac2)};
     }
     else if (auto cc = cont.is_case_context())
     {
@@ -1061,19 +1061,19 @@ SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bo
         auto alts = cc->alts;
         for(auto& alt: alts)
             alt = simplify_alt({}, cc->scrutinee_is_variable, {}, cc->subst,
-                               alts_bound_vars, alt, alt_cont);
+                               alts_bound_vars, std::move(alt), alt_cont);
 
         for(auto& alt: alts)
         {
-            auto [joins,alt2] = make_dupable_alt(alt, *this);
+            auto [joins,alt2] = make_dupable_alt(std::move(alt), *this);
             alt = std::move(alt2);
             floats.append(this_mod, options, joins);
         }
 
-        auto cc2 = std::make_shared<case_context>(cc->scrutinee_is_variable, alts,
+        auto cc2 = std::make_shared<case_context>(cc->scrutinee_is_variable, std::move(alts),
                                                   substitution(), make_stop_context(CallCtxt::BoringCtxt));
         cc2->dup_status = DupStatus::OkToDup;
-        return {floats, cc2};
+        return {std::move(floats), std::move(cc2)};
     }
     else
         std::abort();
@@ -1109,7 +1109,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
 
         F.append(F2);
 
-        return { F, E2 };
+        return {std::move(F), std::move(E2)};
     }
     else if (object.to_constant())
     {
@@ -1136,7 +1136,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
 
         F.append(F2);
 
-        return {F, E2};
+        return {std::move(F), std::move(E2)};
     }
     else
     {
