@@ -1,0 +1,16 @@
+((3,3),(2,4))
+((3,6),(4,6))
+(7,7)
+[Left 3,Right 6]
+[3,6]
+7
+8
+(Just 8,Just (4,4))
+(Just (Right 6),Just (Left 4))
+Just 4
+Just 4
+(Just 6,Just 10)
+Just 9
+5
+4
+Just 4
