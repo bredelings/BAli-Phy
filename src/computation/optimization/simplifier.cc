@@ -1488,14 +1488,35 @@ SimplifierState::rebuild(const Occ::Exp& input, const in_scope_set& bound_vars, 
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
 // Q2. Where do we handle case-of-constant (case constant of alts)?
 // Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
-// Follow tail transitions in-place; calls that must combine or rebuild results remain recursive.
+// Follow tail transitions and let bodies in-place, saving completed let bindings in order.
 std::tuple<SimplFloats,Occ::Exp>
 SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
-                          const in_scope_set& bound_vars, const inline_context& cont)
+                          const in_scope_set& initial_bound_vars, const inline_context& cont)
 {
     auto E = input;
     auto S = subst;
+    auto bound_vars = initial_bound_vars;
     auto context = cont;
+    vector<SimplFloats> pending;
+
+    // Append each pending group once, outermost first, instead of rebuilding every suffix.
+    // Only emitted binders cross each append, so the outermost scope plus these bindings
+    // gives the same final scope as recursive unwinding, including when a group is empty.
+    auto finish = [&pending](tuple<SimplFloats,Occ::Exp> result)
+    {
+        if (pending.empty()) return result;
+        auto& [F, E2] = result;
+        auto size = F.binds.size();
+        for(const auto& floats: pending)
+            size += floats.binds.size();
+
+        auto floats = std::move(pending.front());
+        floats.binds.reserve(size);
+        for(size_t i = 1; i < pending.size(); i++)
+            floats.append(pending[i]);
+        floats.append(F);
+        return tuple{std::move(floats), std::move(E2)};
+    };
 
     // Each iteration represents simplify(E, S, bound_vars, context), in the original order.
     // Own the next state before replacing any expression, map, or context that contains it.
@@ -1554,7 +1575,7 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
                 S = {};
                 continue;
             }
-            return rebuildCall(*x, bound_vars, context);
+            return finish(rebuildCall(*x, bound_vars, context));
         }
 
         // 2. Lambda (E = \x -> body)
@@ -1590,7 +1611,7 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
                     auto [F2,E2] = simplify(lam->body, S2, F.bound_vars, ac->next);
 
                     F.append(F2);
-                    return { F, E2 };
+                    return finish({std::move(F), std::move(E2)});
                 }
             }
 
@@ -1603,7 +1624,7 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
 
             // 2.4 Return the lambda after any id-arity-justified eta reduction.
             auto result = maybe_eta_reduce(Occ::Lambda{x2, new_body}, bound_vars);
-            return rebuild(result, bound_vars, context);
+            return finish(rebuild(result, bound_vars, context));
         }
 
         // 6. Case
@@ -1636,18 +1657,21 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
         {
             auto [F, S2] = simplify_bind(let->bind, S, bound_vars, false);
 
-            auto [F2, E2] = simplify(let->body, S2, F.bound_vars, context);
-            F.append(F2);
-
             // 5.2 Simplify the let-body
-            return {F, E2};
+            // Continue in its extended scope, retaining even empty groups.
+            auto next_E = let->body;
+            bound_vars = F.bound_vars;
+            pending.push_back(std::move(F));
+            E = std::move(next_E);
+            S = std::move(S2);
+            continue;
         }
 
          // Do we need something to handle WHNF variables?
 
         // 5. Literal constant.  Treat as 0-arg constructor.
         else if (E.to_constant())
-            return rebuild(E, bound_vars, context);
+            return finish(rebuild(E, bound_vars, context));
 
         // 4. Constructor
         else if (auto con = E.to_conApp())
@@ -1666,7 +1690,7 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
 
             F.append(F2);
 
-            return {F, E2};
+            return finish({std::move(F), std::move(E2)});
         }
 
         // 4. Builtin
@@ -1735,7 +1759,7 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
 
             F.append(F2);
 
-            return {F, E2};
+            return finish({std::move(F), std::move(E2)});
         }
 
         std::abort();
