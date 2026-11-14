@@ -62,7 +62,7 @@ struct SimplFloats
 
     void append(const Module& m, const inliner_options& opts, const Occ::Bind& bind);
     void append(const Module& m, const inliner_options& opts, const Occ::Binds& binds);
-    void append(const Module& m, const inliner_options& opts, const SimplFloats& F);
+    void append(const SimplFloats& F);
 
     SimplFloats() {}
     SimplFloats(const in_scope_set& bv):bound_vars(bv) {}

@@ -285,9 +285,23 @@ void SimplFloats::append(const Module& m, const inliner_options& opts, const Occ
         append(m, opts, bind);
 }
 
-void SimplFloats::append(const Module& m, const inliner_options& opts, const SimplFloats& F)
+// Reuse completed unfoldings: within the same module and options, their guidance
+// depends on the RHS and binder, not the scope.
+// Import only emitted binders, since F.bound_vars can also contain eliminated bindings.
+void SimplFloats::append(const SimplFloats& F)
 {
-    append(m, opts, F.binds);
+    for(const auto& bind: F.binds)
+    {
+        if (auto nonrec = std::get_if<Occ::NonRec>(&bind))
+        {
+            const auto& x = nonrec->decl.x;
+            bound_vars = bind_var(bound_vars, x, F.bound_vars.at(x).unfolding);
+        }
+        else
+            for(const auto& decl: std::get<Occ::Rec>(bind).decls)
+                bound_vars = bind_var(bound_vars, decl.x, F.bound_vars.at(decl.x).unfolding);
+        binds.push_back(bind);
+    }
 }
 
 Occ::Exp wrap(const SimplFloats& F, Occ::Exp E)
@@ -1093,7 +1107,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
 
         auto [F2, E2] = simplify(apply_floats(floats,body), S2, F.bound_vars, context);
 
-        F.append(this_mod, options, F2);
+        F.append(F2);
 
         return { F, E2 };
     }
@@ -1120,7 +1134,7 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
 
         auto [F2, E2] = rebuild(E, F.bound_vars, make_stop_context(CallCtxt::BoringCtxt));
 
-        F.append(this_mod, options, F2);
+        F.append(F2);
 
         return {F, E2};
     }
@@ -1260,16 +1274,14 @@ SimplifierState::simplify_rec_decls(const Occ::Decls& orig_decls, const substitu
                     if (auto nonrec = std::get_if<Occ::NonRec>(&bind))
                     {
                         const auto& decl = nonrec->decl;
-                        bound_vars = bind_var(bound_vars, decl.x,
-                                              make_core_unfolding(this_mod, options, decl.x.id, decl.body));
+                        bound_vars = bind_var(bound_vars, decl.x, F2.bound_vars.at(decl.x).unfolding);
                         new_decls.push_back(decl);
                     }
                     else
                     {
                         for(const auto& decl: std::get<Occ::Rec>(bind).decls)
                         {
-                            bound_vars = bind_var(bound_vars, decl.x,
-                                                  make_core_unfolding(this_mod, options, decl.x.id, decl.body));
+                            bound_vars = bind_var(bound_vars, decl.x, F2.bound_vars.at(decl.x).unfolding);
                             new_decls.push_back(decl);
                         }
                     }
@@ -1577,7 +1589,7 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
                     F.append(this_mod, options, Occ::NonRec{{x2,std::move(arg)}});
                     auto [F2,E2] = simplify(lam->body, S2, F.bound_vars, ac->next);
 
-                    F.append(this_mod, options, F2);
+                    F.append(F2);
                     return { F, E2 };
                 }
             }
@@ -1625,7 +1637,7 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
             auto [F, S2] = simplify_bind(let->bind, S, bound_vars, false);
 
             auto [F2, E2] = simplify(let->body, S2, F.bound_vars, context);
-            F.append(this_mod, options, F2);
+            F.append(F2);
 
             // 5.2 Simplify the let-body
             return {F, E2};
@@ -1647,12 +1659,12 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
             {
                 auto [arg_floats, arg2] = simplify(arg, S, F.bound_vars, make_stop_context(CallCtxt::BoringCtxt));
                 arg = arg2;
-                F.append(this_mod, options, arg_floats);
+                F.append(arg_floats);
             }
 
             auto [F2,E2] = rebuild(C, F.bound_vars, context);
 
-            F.append(this_mod, options, F2);
+            F.append(F2);
 
             return {F, E2};
         }
@@ -1667,7 +1679,7 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
             for(auto& arg: builtin->args)
             {
                 auto [argF, arg2] = simplify(arg, S, F.bound_vars, make_stop_context(CallCtxt::BoringCtxt));
-                F.append(this_mod, options, argF);
+                F.append(argF);
                 args.push_back(arg2);
 
                 if (not arg2.to_constant())
@@ -1721,7 +1733,7 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
 
             auto [F2, E2] = rebuild(BB, F.bound_vars, context);
 
-            F.append(this_mod, options, F2);
+            F.append(F2);
 
             return {F, E2};
         }
