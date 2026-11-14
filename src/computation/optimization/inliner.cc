@@ -332,12 +332,20 @@ ExprSize size_sum(const Module& m, const inliner_options& opts, int max_size, co
 {
     ExprSize esize;
     for(auto& E: Es)
-        esize = esize + size_of_expr(m, opts, max_size, top_args, E);
+    {
+        esize = esize + size_of_expr(m, opts, max_size - esize.size, top_args, E);
+        if (esize.size > max_size) break;
+    }
     return esize;
 }
 
+// Raw size contributions are nonnegative; discounts are accounted for separately. Pass the remaining
+// budget to children and stop once it is exceeded. Size and discounts are exact whenever size <= budget;
+// an oversized result is only a lower bound, whose discounts must not be used for unfolding guidance.
 ExprSize size_of_expr(const Module& m, const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Exp& E)
 {
+    if (max_size < 0) return zero_size;
+
     // NOTE: operator+ is asymmetric!
     //       It keeps the inspection discount for the right argument.
 
@@ -365,16 +373,18 @@ ExprSize size_of_expr(const Module& m, const inliner_options& opts, int max_size
         auto head = A->head;
 
         auto args_size = size_sum(m, opts, max_size, top_args, args);
+        if (args_size.size > max_size) return args_size;
 
         if (auto V = A->head.to_var())
             return args_size + size_of_call(m, opts, max_size, top_args, *V, args);
         else
-            return args_size + (size_of_expr(m, opts, max_size, top_args, head) + call_size(args.size()));
+            return args_size + (size_of_expr(m, opts, max_size - args_size.size - call_size(args.size()),
+                                             top_args, head) + call_size(args.size()));
     }
     else if (auto L = E.to_lambda())
     {
         // Lam b e -> size_up e +N 10
-        auto body_size = size_of_expr(m, opts, max_size, top_args, L->body);
+        auto body_size = size_of_expr(m, opts, max_size - 1, top_args, L->body);
         body_size.inspect_discount = opts.fun_app_discount;
 
         return body_size + 1;
@@ -383,13 +393,21 @@ ExprSize size_of_expr(const Module& m, const inliner_options& opts, int max_size
     {
         //size_up rhs1 `addSizeNDS` size_up rhs2 `addSizeNDS` (size_up_body body `addSizeN` number of heap bindings)
         if (auto nonrec = L->to_nonrec())
-            return size_of_expr(m, opts, max_size, top_args, nonrec->decl.body) +
-                   (size_of_expr(m, opts, max_size, top_args, L->body) + 1);
+        {
+            auto rhs_size = size_of_expr(m, opts, max_size - 1, top_args, nonrec->decl.body);
+            if (rhs_size.size + 1 > max_size) return rhs_size + 1;
+            return rhs_size + (size_of_expr(m, opts, max_size - 1 - rhs_size.size, top_args, L->body) + 1);
+        }
 
+        int n_binds = L->to_rec()->decls.size();
+        if (n_binds > max_size) return sizeN(n_binds);
         ExprSize rhs_sizes;
         for(auto& [x,e]: L->to_rec()->decls)
-            rhs_sizes = rhs_sizes + size_of_expr(m, opts, max_size, top_args, e);
-        return rhs_sizes + (size_of_expr(m, opts, max_size, top_args, L->body) + L->to_rec()->decls.size());
+        {
+            rhs_sizes = rhs_sizes + size_of_expr(m, opts, max_size - n_binds - rhs_sizes.size, top_args, e);
+            if (rhs_sizes.size + n_binds > max_size) return rhs_sizes + n_binds;
+        }
+        return rhs_sizes + (size_of_expr(m, opts, max_size - n_binds - rhs_sizes.size, top_args, L->body) + n_binds);
     }
     else if (auto C = E.to_case())
     {
@@ -402,8 +420,9 @@ ExprSize size_of_expr(const Module& m, const inliner_options& opts, int max_size
             
             for(auto& alt: C->alts)
             {
-                auto size = size_of_expr(m, opts, max_size, top_args, alt.body);
+                auto size = size_of_expr(m, opts, max_size - sizeSum.size, top_args, alt.body);
                 sizeSum = add_alts_size(sizeSum, size);
+                if (sizeSum.size > max_size) return sizeSum;
                 sizeMax = std::max(sizeMax, size.size);
             }
 
@@ -418,8 +437,12 @@ ExprSize size_of_expr(const Module& m, const inliner_options& opts, int max_size
         {
             ExprSize alts_size;
             for(auto& alt: C->alts)
-                alts_size = add_alts_size(alts_size, size_of_expr(m, opts, max_size, top_args, alt.body));
-            return size_of_expr(m, opts, max_size, top_args, C->object) + alts_size;
+            {
+                alts_size = add_alts_size(alts_size,
+                                         size_of_expr(m, opts, max_size - alts_size.size, top_args, alt.body));
+                if (alts_size.size > max_size) return alts_size;
+            }
+            return size_of_expr(m, opts, max_size - alts_size.size, top_args, C->object) + alts_size;
         }
     }
     else if (auto C = E.to_constant())
@@ -430,12 +453,14 @@ ExprSize size_of_expr(const Module& m, const inliner_options& opts, int max_size
     else if (auto B = E.to_builtinOp())
     {
         // Like fun_size, but no discount for applying top_args.
-        return size_sum(m, opts, max_size, top_args, B->args) + B->args.size();
+        int n_args = B->args.size();
+        return size_sum(m, opts, max_size - n_args, top_args, B->args) + n_args;
     }
     else if (auto CA = E.to_conApp())
     {
         // Like size_of_call(...);
-        return size_sum(m, opts, max_size, top_args, CA->args) + con_size(CA->head, CA->args.size());
+        auto constructor_size = con_size(CA->head, CA->args.size());
+        return size_sum(m, opts, max_size - constructor_size.size, top_args, CA->args) + constructor_size;
     }
     else
         std::abort();
@@ -881,7 +906,7 @@ UnfoldingGuidance make_unfolding_guidance(const Module& m, const inliner_options
     int max_size = opts.creation_threshold;
     auto size = size_of_expr(m, opts, max_size, top_binders, body);
 
-    // We should actually be looking for an empty optional<ExprSize> here.
+    // Oversized results can be partial; only use their guidance when they fit the budget.
     if (size.size > max_size) return UnfoldNever();
     
     // This unconditionally inlines when either

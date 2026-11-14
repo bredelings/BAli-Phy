@@ -134,6 +134,7 @@ int simple_size(const Core::Exp<>& E);
 
 class Module;
 
+// Exact size and discounts when size <= max_size; otherwise a lower bound with unusable discounts.
 ExprSize size_of_expr(const Module& m, const inliner_options& opts, int max_size, const std::vector<Occ::Var>& top_args, const Occ::Exp& E);
 
 bool is_WHNF(const Occ::Exp& E);
