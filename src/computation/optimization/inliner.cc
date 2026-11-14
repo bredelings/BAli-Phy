@@ -773,101 +773,117 @@ Core::id_info SimplifierState::get_id_info(const Occ::Var& x, const in_scope_set
     return info;
 }
 
-arg_info SimplifierState::interesting_arg(const Occ::Exp& E, const simplifier::substitution& S, const in_scope_set& bound_vars, int n)
+// Follow substitutions, applications, and let bodies without retaining a frame for each step.
+arg_info SimplifierState::interesting_arg(const Occ::Exp& input, const simplifier::substitution& subst,
+                                         const in_scope_set& initial_bound_vars, int n)
 {
-    if (auto x = E.to_var())
+    auto E = input;
+    auto S = subst;
+    auto bound_vars = initial_bound_vars;
+    while (true)
     {
-        // Interesting, GHC ALWAYS replaces variables during the substitution.  Is that how it sets unfoldings everywhere?
-        if (auto it = S.find(*x))
+        if (auto x = E.to_var())
         {
-            if (it->S) // ContEx
-                return interesting_arg(it->E, *(it->S), bound_vars, n);
-            else // DoneEx
-                return interesting_arg(it->E, {}, bound_vars, n);
-        }
-        else // DoneId
-        {
-            if (is_haskell_con_name(x->name))
-                return arg_info::value;
-            // This is (?) for primops, which I can't really use?
-            // else if (x->arity > n)
-            //    return arg_info::value;
-            else if (n > 0)
-                return arg_info::non_trivial;
-            else
+            // Interesting, GHC ALWAYS replaces variables during the substitution.  Is that how it sets unfoldings everywhere?
+            if (auto it = S.find(*x))
             {
-                auto [unfolding,_] = get_unfolding(*x, bound_vars);
-                // OtherCon [] -> arg_info::non_trivial;
-                // OtherCon _  -> arg_info::value;
-                if (to<DFunUnfolding>(unfolding))
+                // Save both values before replacing the substitution that owns them.
+                auto next_E = it->E;
+                auto next_S = it->S ? *(it->S)                   // ContEx: use the saved substitution.
+                                   : simplifier::substitution{}; // DoneEx: already substituted.
+                E = std::move(next_E);
+                S = std::move(next_S);
+                continue;
+            }
+            else // DoneId
+            {
+                if (is_haskell_con_name(x->name))
                     return arg_info::value;
-                else if (auto cu = to<CoreUnfolding>(unfolding))
+                // This is (?) for primops, which I can't really use?
+                // else if (x->arity > n)
+                //    return arg_info::value;
+                else if (n > 0)
+                    return arg_info::non_trivial;
+                else
                 {
-                    if (cu->expression().to_conApp()) // uf_is_conlike
+                    auto [unfolding,_] = get_unfolding(*x, bound_vars);
+                    // OtherCon [] -> arg_info::non_trivial;
+                    // OtherCon _  -> arg_info::value;
+                    if (to<DFunUnfolding>(unfolding))
                         return arg_info::value;
-                    else if (cu->expression().to_lambda()) // uf_is_value
-                        return arg_info::non_trivial;
+                    else if (auto cu = to<CoreUnfolding>(unfolding))
+                    {
+                        if (cu->expression().to_conApp()) // uf_is_conlike
+                            return arg_info::value;
+                        else if (cu->expression().to_lambda()) // uf_is_value
+                            return arg_info::non_trivial;
+                        else
+                            return arg_info::trivial;
+                    }
                     else
                         return arg_info::trivial;
-                }
-                else
-                    return arg_info::trivial;
-            } 
-        }
-    }
-    else if (E.to_constant())
-    {
-        // We don't actually know how to use literals in the simplifier!
-        // So there is no benefit (I think) to knowing a literal value for a function.
-        return arg_info::trivial;
-        // ?? return arg_info::non_trivial;
-
-        // If we could actually simplify literals, then we could use this...
-        // return arg_info::value; 
-    }
-    else if (auto app = E.to_apply())
-    {
-        return interesting_arg(app->head, S, bound_vars, n+1);
-    }
-    else if (E.to_lambda())
-    {
-        if (n > 0)
-            return arg_info::non_trivial;
-        else
-            return arg_info::value;
-    }
-    else if (E.to_case())
-        return arg_info::non_trivial;
-    else if (E.to_builtinOp())
-    {
-        // I don't think we can use this to simplify things.. but maybe there is still some value to including them?
-        return arg_info::non_trivial;
-    }
-    else if (auto let = E.to_let())
-    {
-        auto bound_vars2 = bound_vars;
-        if (auto nonrec = let->to_nonrec())
-        {
-            bound_vars2 = bound_vars2.erase(nonrec->decl.x);
-            bound_vars2 = bind_var(bound_vars2, nonrec->decl.x, {});
-        }
-        else
-        {
-            for(auto& [x,e]: let->to_rec()->decls)
-            {
-                bound_vars2 = bound_vars2.erase(x);
-                bound_vars2 = bind_var(bound_vars2, x, {});
+                } 
             }
         }
+        else if (E.to_constant())
+        {
+            // We don't actually know how to use literals in the simplifier!
+            // So there is no benefit (I think) to knowing a literal value for a function.
+            return arg_info::trivial;
+            // ?? return arg_info::non_trivial;
 
-        // GHC adds the let-binders to the "env" .... to the substitution?
-        return interesting_arg(let->body, S, bound_vars2, n);
+            // If we could actually simplify literals, then we could use this...
+            // return arg_info::value; 
+        }
+        else if (auto app = E.to_apply())
+        {
+            E = app->head;
+            ++n;
+            continue;
+        }
+        else if (E.to_lambda())
+        {
+            if (n > 0)
+                return arg_info::non_trivial;
+            else
+                return arg_info::value;
+        }
+        else if (E.to_case())
+            return arg_info::non_trivial;
+        else if (E.to_builtinOp())
+        {
+            // I don't think we can use this to simplify things.. but maybe there is still some value to including them?
+            return arg_info::non_trivial;
+        }
+        else if (auto let = E.to_let())
+        {
+            auto bound_vars2 = bound_vars;
+            if (auto nonrec = let->to_nonrec())
+            {
+                bound_vars2 = bound_vars2.erase(nonrec->decl.x);
+                bound_vars2 = bind_var(bound_vars2, nonrec->decl.x, {});
+            }
+            else
+            {
+                for(auto& [x,e]: let->to_rec()->decls)
+                {
+                    bound_vars2 = bound_vars2.erase(x);
+                    bound_vars2 = bind_var(bound_vars2, x, {});
+                }
+            }
+
+            // GHC adds the let-binders to the "env" .... to the substitution?
+            E = let->body;
+            bound_vars = std::move(bound_vars2);
+            continue;
+        }
+        else if (E.to_conApp())
+            return arg_info::non_trivial;
+        else
+            std::abort();
     }
-    else if (E.to_conApp())
-        return arg_info::non_trivial;
-    else
-        std::abort();
 }
+
 
 std::tuple<vector<Occ::Var>,Occ::Exp> compute_top_binders(Occ::Exp E)
 {
