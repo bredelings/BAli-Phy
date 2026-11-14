@@ -1488,7 +1488,7 @@ SimplifierState::rebuild(const Occ::Exp& input, const in_scope_set& bound_vars, 
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
 // Q2. Where do we handle case-of-constant (case constant of alts)?
 // Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
-// Follow tail transitions and let bodies in-place, saving completed let bindings in order.
+// Follow tail transitions, let bodies, and applied lambda bodies in-place, saving bindings in order.
 std::tuple<SimplFloats,Occ::Exp>
 SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
                           const in_scope_set& initial_bound_vars, const inline_context& cont)
@@ -1618,10 +1618,14 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
                     auto x2 = rename_var(lam->x, S2, bound_vars);
                     SimplFloats F(bound_vars);
                     F.append(this_mod, options, Occ::NonRec{{x2,std::move(arg)}});
-                    auto [F2,E2] = simplify(lam->body, S2, F.bound_vars, ac->next);
-
-                    F.append(F2);
-                    return finish({std::move(F), std::move(E2)});
+                    auto next_E = lam->body;
+                    auto next_context = ac->next;
+                    bound_vars = F.bound_vars;
+                    pending.push_back(std::move(F));
+                    E = std::move(next_E);
+                    S = std::move(S2);
+                    context = std::move(next_context);
+                    continue;
                 }
             }
 
