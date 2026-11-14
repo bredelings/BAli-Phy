@@ -1439,17 +1439,22 @@ tuple<SimplFloats,Occ::Exp> SimplifierState::rebuildCall(const Occ::Var& f, cons
     return rebuild(make_apply(Occ::Exp(f), args), bound_vars, context);
 }
 
-tuple<SimplFloats,Occ::Exp> SimplifierState::rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context)
+// Consume application contexts in order without retaining a caller for each rebuilt application.
+tuple<SimplFloats,Occ::Exp>
+SimplifierState::rebuild(const Occ::Exp& input, const in_scope_set& bound_vars, const inline_context& cont)
 {
+    auto E = input;
+    auto context = cont;
+    while (auto ac = context.is_apply_context())
+    {
+        auto [_, __, arg2] = simplifyArg(bound_vars, ac->dup_status, ac->subst, ac->bound_vars, ac->arg);
+        E = Occ::Apply{E, arg2};
+        context = ac->next;
+    }
+
     if (auto cc = context.is_case_context())
     {
         return rebuild_case(E, cc->alts, cc->subst, bound_vars, cc->next);
-    }
-    else if (auto ac = context.is_apply_context())
-    {
-        auto [_, __, arg2] = simplifyArg(bound_vars, ac->dup_status, ac->subst, ac->bound_vars, ac->arg);
-
-        return rebuild(Occ::Apply{E, arg2}, bound_vars, ac->next);
     }
     else
         return {SimplFloats(bound_vars), E};
