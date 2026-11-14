@@ -5,7 +5,7 @@ module Data.Bits
     ) where
 
 import Compiler.Error (error)
-import Compiler.Num (negate)
+import Compiler.Num (Num(..))
 import Data.Eq
 import Data.Maybe
 
@@ -52,3 +52,75 @@ class Bits a => FiniteBits a where
     finiteBitSize :: a -> Int
     countLeadingZeros :: a -> Int
     countTrailingZeros :: a -> Int
+
+-- Int uses the width of the runtime's native Int, which need not be the pointer width.
+instance Bits Int where
+    (.&.) = andInt
+    (.|.) = orInt
+    xor = xorInt
+    complement = complementInt
+    shift = shiftInt
+    shiftL = shiftLInt
+    shiftR = shiftRInt
+    rotate = rotateInt
+    rotateR = rotateRInt
+    zeroBits = 0
+    bit = shiftLInt 1
+    setBit x i = x .|. bit i
+    clearBit x i = x .&. complement (bit i)
+    complementBit x i = xor x (bit i)
+    testBit x i = (x .&. bit i) /= 0
+    bitSizeMaybe _ = Just intBitSize
+    isSigned _ = True
+    popCount = popCountInt
+
+instance FiniteBits Int where
+    finiteBitSize _ = intBitSize
+    countLeadingZeros = countLeadingZerosInt
+    countTrailingZeros = countTrailingZerosInt
+
+-- Integer has infinite sign extension; rotation is therefore a shift, without wraparound.
+-- As in GHC, popCount on a negative Integer is minus the population count of its magnitude.
+instance Bits Integer where
+    (.&.) = andInteger
+    (.|.) = orInteger
+    xor = xorInteger
+    complement = complementInteger
+    shift = shiftInteger
+    shiftL = shiftLInteger
+    shiftR = shiftRInteger
+    rotate = shiftInteger
+    rotateR = rotateRInteger
+    zeroBits = 0
+    bit = shiftLInteger 1
+    setBit x i = x .|. bit i
+    clearBit x i = x .&. complement (bit i)
+    complementBit x i = xor x (bit i)
+    testBit = testBitInteger
+    bitSizeMaybe _ = Nothing
+    isSigned _ = True
+    popCount = popCountInteger
+
+foreign import ecall "Bits:" andInt :: Int -> Int -> Int
+foreign import ecall "Bits:" orInt :: Int -> Int -> Int
+foreign import ecall "Bits:" xorInt :: Int -> Int -> Int
+foreign import ecall "Bits:" complementInt :: Int -> Int
+foreign import ecall "Bits:" shiftInt :: Int -> Int -> Int
+foreign import ecall "Bits:" shiftLInt :: Int -> Int -> Int
+foreign import ecall "Bits:" shiftRInt :: Int -> Int -> Int
+foreign import ecall "Bits:" rotateRInt :: Int -> Int -> Int
+foreign import ecall "Bits:" rotateInt :: Int -> Int -> Int
+foreign import ecall "Bits:" popCountInt :: Int -> Int
+foreign import ecall "Bits:" andInteger :: Integer -> Integer -> Integer
+foreign import ecall "Bits:" orInteger :: Integer -> Integer -> Integer
+foreign import ecall "Bits:" xorInteger :: Integer -> Integer -> Integer
+foreign import ecall "Bits:" complementInteger :: Integer -> Integer
+foreign import ecall "Bits:" shiftInteger :: Integer -> Int -> Integer
+foreign import ecall "Bits:" shiftLInteger :: Integer -> Int -> Integer
+foreign import ecall "Bits:" shiftRInteger :: Integer -> Int -> Integer
+foreign import ecall "Bits:" rotateRInteger :: Integer -> Int -> Integer
+foreign import ecall "Bits:" popCountInteger :: Integer -> Int
+foreign import ecall "Bits:" intBitSize :: Int
+foreign import ecall "Bits:" countLeadingZerosInt :: Int -> Int
+foreign import ecall "Bits:" countTrailingZerosInt :: Int -> Int
+foreign import ecall "Bits:" testBitInteger :: Integer -> Int -> Bool

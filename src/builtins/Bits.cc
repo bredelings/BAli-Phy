@@ -8,6 +8,9 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <limits>
+#include <bit>
+#include <cstdint>
+#include "computation/haskell/Integer.hh"
 #include <vector>
 
 using std::vector;
@@ -342,4 +345,215 @@ extern "C" closure builtin_function_pairwise_alignment_from_bits(OperationArgs& 
 	a->push_back(v1.test(i), v2.test(i));
 
     return a;
+}
+
+// Scalar Bits instances. Unsigned arithmetic preserves the native Int bit pattern without
+// signed left-shift overflow. C++20 signed right shift supplies arithmetic sign extension.
+namespace
+{
+constexpr unsigned int_bits = std::numeric_limits<unsigned>::digits;
+
+// Counts at or beyond the word width produce zero (left) or the sign extension (right).
+int shift_int(int x, std::int64_t count)
+{
+    if (count >= int_bits) return 0;
+    if (count <= -std::int64_t(int_bits)) return x < 0 ? -1 : 0;
+    if (count < 0) return x >> -count;
+    return std::bit_cast<int>(static_cast<unsigned>(x) << count);
+}
+
+// Reject negative directional counts; signed shift/rotate handle direction separately.
+int directional_count(vector<R::Exp>& args)
+{
+    int count = get_arg(args).as_int();
+    if (count < 0) throw myexception()<<"Data.Bits: negative directional shift count";
+    return count;
+}
+
+// cpp_int uses sign/magnitude storage but its unchecked bitwise operations implement
+// infinite two's-complement semantics, including arithmetic right shift of negative values.
+integer shift_integer(integer x, std::int64_t count)
+{
+    if (count >= 0) x <<= static_cast<std::uint64_t>(count);
+    else x >>= static_cast<std::uint64_t>(-count);
+    return x;
+}
+}
+
+// Combine the two Int bit patterns.
+extern "C" R::Exp simple_function_andInt(vector<R::Exp>& args)
+{
+    int x = get_arg(args).as_int();
+    int y = get_arg(args).as_int();
+    return std::bit_cast<int>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
+}
+
+// Combine the two Int bit patterns.
+extern "C" R::Exp simple_function_orInt(vector<R::Exp>& args)
+{
+    int x = get_arg(args).as_int();
+    int y = get_arg(args).as_int();
+    return std::bit_cast<int>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
+}
+
+// Combine the two Int bit patterns.
+extern "C" R::Exp simple_function_xorInt(vector<R::Exp>& args)
+{
+    int x = get_arg(args).as_int();
+    int y = get_arg(args).as_int();
+    return std::bit_cast<int>(static_cast<unsigned>(x) ^ static_cast<unsigned>(y));
+}
+
+// Complement every bit, including sign extension for Integer.
+extern "C" R::Exp simple_function_complementInt(vector<R::Exp>& args)
+{
+    int x = get_arg(args).as_int();
+    return std::bit_cast<int>(~static_cast<unsigned>(x));
+}
+
+// Apply a signed shift, widening the count before negating it.
+extern "C" R::Exp simple_function_shiftInt(vector<R::Exp>& args)
+{
+    int x = get_arg(args).as_int();
+    std::int64_t count = get_arg(args).as_int();
+    return shift_int(x, count);
+}
+
+// Apply a directional shift, widening the count before negating it.
+extern "C" R::Exp simple_function_shiftLInt(vector<R::Exp>& args)
+{
+    int x = get_arg(args).as_int();
+    std::int64_t count = directional_count(args);
+    return shift_int(x, count);
+}
+
+// Apply a directional shift, widening the count before negating it.
+extern "C" R::Exp simple_function_shiftRInt(vector<R::Exp>& args)
+{
+    int x = get_arg(args).as_int();
+    std::int64_t count = directional_count(args);
+    return shift_int(x, -count);
+}
+
+// Combine the two Integer bit patterns.
+extern "C" R::Exp simple_function_andInteger(vector<R::Exp>& args)
+{
+    integer x = get_arg(args).as_integer();
+    integer y = get_arg(args).as_integer();
+    return integer(x & y);
+}
+
+// Combine the two Integer bit patterns.
+extern "C" R::Exp simple_function_orInteger(vector<R::Exp>& args)
+{
+    integer x = get_arg(args).as_integer();
+    integer y = get_arg(args).as_integer();
+    return integer(x | y);
+}
+
+// Combine the two Integer bit patterns.
+extern "C" R::Exp simple_function_xorInteger(vector<R::Exp>& args)
+{
+    integer x = get_arg(args).as_integer();
+    integer y = get_arg(args).as_integer();
+    return integer(x ^ y);
+}
+
+// Complement every bit, including sign extension for Integer.
+extern "C" R::Exp simple_function_complementInteger(vector<R::Exp>& args)
+{
+    integer x = get_arg(args).as_integer();
+    return integer(~x);
+}
+
+// Apply a signed shift, widening the count before negating it.
+extern "C" R::Exp simple_function_shiftInteger(vector<R::Exp>& args)
+{
+    integer x = get_arg(args).as_integer();
+    std::int64_t count = get_arg(args).as_int();
+    return shift_integer(x, count);
+}
+
+// Apply a directional shift, widening the count before negating it.
+extern "C" R::Exp simple_function_shiftLInteger(vector<R::Exp>& args)
+{
+    integer x = get_arg(args).as_integer();
+    std::int64_t count = directional_count(args);
+    return shift_integer(x, count);
+}
+
+// Apply a directional shift, widening the count before negating it.
+extern "C" R::Exp simple_function_shiftRInteger(vector<R::Exp>& args)
+{
+    integer x = get_arg(args).as_integer();
+    std::int64_t count = directional_count(args);
+    return shift_integer(x, -count);
+}
+
+// Apply a signed shift, widening the count before negating it.
+extern "C" R::Exp simple_function_rotateRInteger(vector<R::Exp>& args)
+{
+    integer x = get_arg(args).as_integer();
+    std::int64_t count = get_arg(args).as_int();
+    return shift_integer(x, -count);
+}
+
+// Rotate the finite bit pattern; std::rotl also handles negative and oversized counts.
+extern "C" R::Exp simple_function_rotateInt(vector<R::Exp>& args)
+{
+    auto x = static_cast<unsigned>(get_arg(args).as_int());
+    int count = get_arg(args).as_int();
+    return std::bit_cast<int>(std::rotl(x, count));
+}
+
+// Rotate the finite bit pattern; std::rotr also handles negative and oversized counts.
+extern "C" R::Exp simple_function_rotateRInt(vector<R::Exp>& args)
+{
+    auto x = static_cast<unsigned>(get_arg(args).as_int());
+    int count = get_arg(args).as_int();
+    return std::bit_cast<int>(std::rotr(x, count));
+}
+
+extern "C" R::Exp simple_function_popCountInt(vector<R::Exp>& args)
+{
+    return std::popcount(static_cast<unsigned>(get_arg(args).as_int()));
+}
+
+extern "C" R::Exp simple_function_countLeadingZerosInt(vector<R::Exp>& args)
+{
+    return std::countl_zero(static_cast<unsigned>(get_arg(args).as_int()));
+}
+
+extern "C" R::Exp simple_function_countTrailingZerosInt(vector<R::Exp>& args)
+{
+    return std::countr_zero(static_cast<unsigned>(get_arg(args).as_int()));
+}
+
+extern "C" R::Exp simple_function_intBitSize(vector<R::Exp>&)
+{
+    return static_cast<int>(int_bits);
+}
+
+// For negative x, ~x is nonnegative and has the opposite value at every bit position.
+extern "C" R::Exp simple_function_testBitInteger(vector<R::Exp>& args)
+{
+    integer x = get_arg(args).as_integer();
+    int index = get_arg(args).as_int();
+    if (index < 0) throw myexception()<<"Data.Bits.testBit: negative bit index";
+    bool negative = x < 0;
+    if (negative) x = ~x;
+    return boost::multiprecision::bit_test(x, index) != negative;
+}
+
+// Match GHC's signed population count of the magnitude, scanning whole native words.
+extern "C" R::Exp simple_function_popCountInteger(vector<R::Exp>& args)
+{
+    integer x = get_arg(args).as_integer();
+    bool negative = x < 0;
+    if (negative) x = -x;
+    vector<std::uint64_t> words;
+    boost::multiprecision::export_bits(x, std::back_inserter(words), 64);
+    int count = 0;
+    for (auto word : words) count += std::popcount(word);
+    return negative ? -count : count;
 }
