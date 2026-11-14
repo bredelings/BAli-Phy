@@ -869,22 +869,26 @@ std::tuple<SimplFloats, inline_context> SimplifierState::make_dupable_case_cont(
         
 }
 
-bool is_dupable(const inline_context& cont)
+// Check each continuation once without growing the native stack along its spine.
+bool is_dupable(const inline_context& input)
 {
-    if (cont.is_stop_context())
+    auto cont = input;
+    while (not cont.is_stop_context())
     {
-        return true;
+        if (auto ac = cont.is_apply_context())
+        {
+            if (ac->dup_status != DupStatus::OkToDup) return false;
+            cont = ac->next;
+        }
+        else if (auto cc = cont.is_case_context())
+        {
+            if (cc->dup_status != DupStatus::OkToDup) return false;
+            cont = cc->next;
+        }
+        else
+            std::abort();
     }
-    else if (auto ac = cont.is_apply_context())
-    {
-        return ac->dup_status == DupStatus::OkToDup and is_dupable(ac->next);
-    }
-    else if (auto cc = cont.is_case_context())
-    {
-        return cc->dup_status == DupStatus::OkToDup and is_dupable(cc->next);
-    }
-    else
-        std::abort();
+    return true;
 }
 
 std::tuple<DupStatus, in_scope_set, Occ::Exp>
@@ -967,16 +971,21 @@ SimplifierState::simplify_alt(const std::optional<Occ::Exp>& object, bool scruti
 // GHC instead allows arguments to contain literals and simple applications: e.g. f (x 0) (z w)
 bool is_dupable(int n, const Occ::Exp& E)
 {
+    const auto* expression = &E;
+    while (n > 0)
+    {
+        auto a = expression->to_apply();
+        if (not a) break;
+        // f x y is OK if the total number of variables is <= n.
+        if (not a->arg.to_var()) return false;
+        expression = &a->head;
+        --n;
+    }
     if (n <= 0)
         return false;
-    else if (E.to_var())
+    else if (expression->to_var())
         return true;
-    else if (auto a = E.to_apply())
-    {
-        // f x y is OK if the total number of variables is <= n.
-        return ((bool)a->arg.to_var() and is_dupable(n-1, a->head));
-    }
-    else if (auto c = E.to_conApp())
+    else if (auto c = expression->to_conApp())
     {
         // A x y y x z x is OK, no matter how many arguments.
         for(auto & arg: c->args)
@@ -984,7 +993,7 @@ bool is_dupable(int n, const Occ::Exp& E)
                 return false;
         return true;
     }
-    else if (auto b = E.to_builtinOp())
+    else if (auto b = expression->to_builtinOp())
     {
         // lib:op x y y x z x is OK, no matter how many arguments.
         for(auto & arg: b->args)
@@ -1028,6 +1037,8 @@ make_dupable_alt(Occ::Alt alt, FreshVarSource& fresh_vars)
     }
 }
 
+// Save an application prefix, process its tail, then rebuild in reverse to preserve fresh-name and
+// binding order. Leave an already-dupable suffix untouched, just as the recursive traversal did.
 std::tuple<SimplFloats, inline_context>
 SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bound_vars, const inline_context& cont)
 {
@@ -1036,22 +1047,42 @@ SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bo
 
     // stop_context handled above
 
-    else if (auto ac = cont.is_apply_context())
+    else if (cont.is_apply_context())
     {
-        auto [floats1, cont1] = make_dupable_cont(S, bound_vars, ac->next);
+        vector<std::shared_ptr<const apply_context>> applications;
+        auto tail = cont;
+        size_t needed = 0;
+        while (auto ac = tail.is_apply_context())
+        {
+            applications.push_back(ac);
+            if (ac->dup_status != DupStatus::OkToDup) needed = applications.size();
+            tail = ac->next;
+        }
+        if (is_dupable(tail))
+        {
+            // The whole continuation was not dupable, so some application needs rebuilding.
+            assert(needed > 0);
+            applications.resize(needed);
+            tail = applications.back()->next;
+        }
+        auto [floats1, cont1] = make_dupable_cont(S, bound_vars, tail);
+        for (const auto& ac: reverse(applications))
+        {
+            // env' = (S, floats1.bound_vars)
+            auto [dup, bound_vars3, arg2] = simplifyArg(floats1.bound_vars, ac->dup_status, ac->subst,
+                                                       ac->bound_vars, ac->arg);
 
-        // env' = (S, floats1.bound_vars)
-        auto [dup, bound_vars3, arg2] = simplifyArg(floats1.bound_vars, ac->dup_status, ac->subst, ac->bound_vars, ac->arg);
+            // makeTrivial env
+            auto k = get_fresh_occ_var("karg");
+            k.info.work_dup = amount_t::Many;
+            k.info.code_dup = amount_t::Many;
+            floats1.append(this_mod, options, Occ::NonRec{{k,std::move(arg2)}});
 
-        // makeTrivial env 
-        auto k = get_fresh_occ_var("karg");
-        k.info.work_dup = amount_t::Many;
-        k.info.code_dup = amount_t::Many;
-        floats1.append(this_mod, options, Occ::NonRec{{k,std::move(arg2)}});
-
-        auto ac2 = std::make_shared<apply_context>(k, substitution(), floats1.bound_vars, cont1);
-        ac2->dup_status = DupStatus::OkToDup;
-        return {std::move(floats1), std::move(ac2)};
+            auto ac2 = std::make_shared<apply_context>(k, substitution(), floats1.bound_vars, cont1);
+            ac2->dup_status = DupStatus::OkToDup;
+            cont1 = std::move(ac2);
+        }
+        return {std::move(floats1), std::move(cont1)};
     }
     else if (auto cc = cont.is_case_context())
     {
