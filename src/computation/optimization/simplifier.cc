@@ -429,41 +429,6 @@ Occ::Exp apply_floats(const vector<Float>& floats, Occ::Exp E)
 }
 
 
-// Do we have to explicitly skip loop breakers here?
-tuple<SimplFloats,Occ::Exp>
-SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context)
-{
-    // Rewrite rules go here.
-    // How do they match, given that arguments are not yet simplified?
-    
-    
-    auto [unfolding, occ_info] = get_unfolding(x, bound_vars);
-
-    // Try and handling a method applied to a dfun
-    if (auto mu = to<MethodUnfolding>(unfolding); mu)
-    {
-        if (auto app = context.is_apply_context())
-        {
-            // Apply substitution to the argument.
-            auto [_, __, arg] = simplifyArg(bound_vars, app->dup_status, app->subst, app->bound_vars, app->arg);
-
-            if (auto constant = exprIsConApp_maybe(arg, bound_vars))
-            {
-                auto [bound_vars2, floats, con, args] = *constant;
-
-                auto expr = args[mu->index];
-
-                return simplify(apply_floats(floats, expr), {}, bound_vars, app->next);
-            }
-        }
-    }
-
-    if (auto e = call_site_inline(unfolding, occ_info, bound_vars, context))
-        return simplify(*e, {}, bound_vars, context);
-    else
-        return rebuildCall(x, bound_vars, context);
-}
-
 Occ::Var SimplifierState::get_new_name(Occ::Var x, const in_scope_set& bound_vars)
 {
     if (not x.is_exported) //bound_vars.count(x))
@@ -1493,207 +1458,258 @@ tuple<SimplFloats,Occ::Exp> SimplifierState::rebuild(const Occ::Exp& E, const in
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
 // Q2. Where do we handle case-of-constant (case constant of alts)?
 // Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
-std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, const substitution& S, const in_scope_set& bound_vars, const inline_context& context)
+// Follow tail transitions in-place; calls that must combine or rebuild results remain recursive.
+std::tuple<SimplFloats,Occ::Exp>
+SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
+                          const in_scope_set& bound_vars, const inline_context& cont)
 {
-    assert(not E.empty());
+    auto E = input;
+    auto S = subst;
+    auto context = cont;
 
-    // 1. Var (x)
-    if (auto x = E.to_var())
+    // Each iteration represents simplify(E, S, bound_vars, context), in the original order.
+    // Own the next state before replacing any expression, map, or context that contains it.
+    while (true)
     {
-	// 1.1 If there's a substitution x -> E
-	if (S.count(*x))
-	{
-	    auto it = S.find(*x);
-	    // 1.1.1 If x -> SuspEx E S, then call the simplifier on E with its substitution S
-	    if (it->S)
-		return simplify(it->E, *(it->S), bound_vars, context);
-	    // 1.1.2 If x -> DoneEx E, then call the simplifier on E but with no substitution.
-	    else
-		return simplify(it->E, {}, bound_vars, context);
-	}
-	// 1.2 If there's no substitution determine whether to inline at call site.
-	else
-	{
+        assert(not E.empty());
+
+        // 1. Var (x)
+        if (auto x = E.to_var())
+        {
+            if (auto replacement = S.find(*x))
+            {
+                // SuspEx carries its substitution; DoneEx has already been substituted.
+                // Copy both values before replacing the map that owns them.
+                auto next_E = replacement->E;
+                auto next_S = replacement->S ? *replacement->S : substitution{};
+                E = std::move(next_E);
+                S = std::move(next_S);
+                continue;
+            }
+
             if (is_haskell_builtin_con_name(x->name))
                 ; // OK
             else if (is_qualified_symbol(x->name) and get_module_name(x->name) != this_mod.name)
                 ; // OK
-	    else if (not bound_vars.count(*x))
-		throw myexception()<<"Variable '"<<x->print()<<"' not bound!";
+            else if (not bound_vars.count(*x))
+                throw myexception()<<"Variable '"<<x->print()<<"' not bound!";
 
-	    return simplify_out_var(*x, bound_vars, context);
-	}
-    }
+            // Do we have to explicitly skip loop breakers here?
+            // Rewrite rules go here. How do they match before arguments are simplified?
+            auto [unfolding, occ_info] = get_unfolding(*x, bound_vars);
 
-    // 2. Lambda (E = \x -> body)
-    if (auto lam = E.to_lambda())
-    {
-        // NOTE: This was having a problem with "\\#5 -> let {k = #5} in let {a = #4} in SModel.Nucleotides.tn93_sym a k k"
-        //       That was getting changed into  "\\#5 -> SModel.Nucleotides.tn93_sym #4 #5 #5", but keeping the work_dup:Once mark on #5.
-
-        auto S2 = S;
-
-        if (auto ac = context.is_apply_context())
-        {
-            auto x = lam->x;
-            SimplFloats F(bound_vars);
-            auto [_,__, arg] = simplifyArg(bound_vars, ac->dup_status, ac->subst, ac->bound_vars, ac->arg);
-
-            if (pre_inline(x,arg))
+            // Try handling a method applied to a dfun.
+            if (auto mu = to<MethodUnfolding>(unfolding))
             {
-                S2 = S2.erase(x);
-                S2 = S2.insert({x,arg});
-                return simplify(lam->body, S2, bound_vars, ac->next);
+                if (auto app = context.is_apply_context())
+                {
+                    auto [_, __, arg] = simplifyArg(bound_vars, app->dup_status, app->subst,
+                                                    app->bound_vars, app->arg);
+                    if (auto constant = exprIsConApp_maybe(arg, bound_vars))
+                    {
+                        auto [bound_vars2, floats, con, args] = *constant;
+                        auto next_E = apply_floats(floats, args[mu->index]);
+                        auto next_context = app->next;
+                        E = std::move(next_E);
+                        S = {};
+                        context = std::move(next_context);
+                        continue;
+                    }
+                }
             }
-            else
+
+            if (auto e = call_site_inline(unfolding, occ_info, bound_vars, context))
             {
-                auto x2 = rename_var(lam->x, S2, bound_vars);
+                E = std::move(*e);
+                S = {};
+                continue;
+            }
+            return rebuildCall(*x, bound_vars, context);
+        }
+
+        // 2. Lambda (E = \x -> body)
+        if (auto lam = E.to_lambda())
+        {
+            // NOTE: This was having a problem with "\\#5 -> let {k = #5} in let {a = #4} in SModel.Nucleotides.tn93_sym a k k"
+            //       That was getting changed into  "\\#5 -> SModel.Nucleotides.tn93_sym #4 #5 #5", but keeping the work_dup:Once mark on #5.
+
+            auto S2 = S;
+
+            if (auto ac = context.is_apply_context())
+            {
+                auto x = lam->x;
                 SimplFloats F(bound_vars);
-                F.append(this_mod, options, Occ::NonRec{{x2,std::move(arg)}});
-                auto [F2,E2] = simplify(lam->body, S2, F.bound_vars, ac->next);
+                auto [_,__, arg] = simplifyArg(bound_vars, ac->dup_status, ac->subst, ac->bound_vars, ac->arg);
 
-                F.append(this_mod, options, F2);
-                return { F, E2 };
+                if (pre_inline(x,arg))
+                {
+                    S2 = S2.erase(x);
+                    S2 = S2.insert({x,arg});
+                    auto next_E = lam->body;
+                    auto next_context = ac->next;
+                    E = std::move(next_E);
+                    S = std::move(S2);
+                    context = std::move(next_context);
+                    continue;
+                }
+                else
+                {
+                    auto x2 = rename_var(lam->x, S2, bound_vars);
+                    SimplFloats F(bound_vars);
+                    F.append(this_mod, options, Occ::NonRec{{x2,std::move(arg)}});
+                    auto [F2,E2] = simplify(lam->body, S2, F.bound_vars, ac->next);
+
+                    F.append(this_mod, options, F2);
+                    return { F, E2 };
+                }
             }
+
+            // 2.2. Get the new name, possibly adding a substitution
+            auto bound_vars_x = bound_vars;
+            auto x2 = rename_and_bind_var(lam->x, S2, bound_vars_x);
+
+            // 2.3 Simplify the body with x added to the bound set.
+            auto new_body = wrap(simplify(lam->body, S2, bound_vars_x, make_stop_context(CallCtxt::BoringCtxt)));
+
+            // 2.4 Return the lambda after any id-arity-justified eta reduction.
+            auto result = maybe_eta_reduce(Occ::Lambda{x2, new_body}, bound_vars);
+            return rebuild(result, bound_vars, context);
         }
 
-	// 2.2. Get the new name, possibly adding a substitution
-        auto bound_vars_x = bound_vars;
-	auto x2 = rename_and_bind_var(lam->x, S2, bound_vars_x);
-
-	// 2.3 Simplify the body with x added to the bound set.
-	auto new_body = wrap(simplify(lam->body, S2, bound_vars_x, make_stop_context(CallCtxt::BoringCtxt)));
-
-	// 2.4 Return the lambda after any id-arity-justified eta reduction.
-        auto result = maybe_eta_reduce(Occ::Lambda{x2, new_body}, bound_vars);
-        return rebuild(result, bound_vars, context);
-    }
-
-    // 6. Case
-    if (auto C = E.to_case())
-    {
-	// Simplfy the object
-	return simplify(C->object, S, bound_vars, make_case_context(*C, S, context));
-    }
-
-    // ?. Apply
-    else if (auto app = E.to_apply())
-    {
-        // Simplify the function
-	return simplify(app->head, S, bound_vars, make_apply_context(*app, S, bound_vars, context));
-    }
-
-    // 5. Let (let {x[i] = F[i]} in body)
-    //
-    // Here we know that F[i] can only mention x[j<i] unless F[i] is a loop-breaker.
-    // 
-    else if (auto let = E.to_let())
-    {
-        auto [F, S2] = simplify_bind(let->bind, S, bound_vars, false);
-
-        auto [F2, E2] = simplify(let->body, S2, F.bound_vars, context);
-        F.append(this_mod, options, F2);
-
-        // 5.2 Simplify the let-body
-        return {F, E2};
-    }
-
-     // Do we need something to handle WHNF variables?
-
-    // 5. Literal constant.  Treat as 0-arg constructor.
-    else if (E.to_constant())
-        return rebuild(E, bound_vars, context);
-
-    // 4. Constructor
-    else if (auto con = E.to_conApp())
-    {
-        SimplFloats F(bound_vars);
-
-	Occ::ConApp C = *con;
-	for(auto& arg: C.args)
+        // 6. Case
+        if (auto C = E.to_case())
         {
-            auto [arg_floats, arg2] = simplify(arg, S, F.bound_vars, make_stop_context(CallCtxt::BoringCtxt));
-            arg = arg2;
-            F.append(this_mod, options, arg_floats);
+            // Save the original scrutinee classification and substitution in the context.
+            auto next_E = C->object;
+            auto next_context = make_case_context(*C, S, context);
+            E = std::move(next_E);
+            context = std::move(next_context);
+            continue;
         }
 
-        auto [F2,E2] = rebuild(C, F.bound_vars, context);
-
-        F.append(this_mod, options, F2);
-
-        return {F, E2};
-    }
-
-    // 4. Builtin
-    else if (auto builtin = E.to_builtinOp())
-    {
-        SimplFloats F(bound_vars);
-
-        vector<Occ::Exp> args;
-        bool all_constant_args = true;
-	for(auto& arg: builtin->args)
- 	{
-	    auto [argF, arg2] = simplify(arg, S, F.bound_vars, make_stop_context(CallCtxt::BoringCtxt));
-            F.append(this_mod, options, argF);
-	    args.push_back(arg2);
-
-            if (not arg2.to_constant())
-                all_constant_args = false;
- 	}
-
-        Occ::BuiltinOp builtin2(builtin->lib_name, builtin->func_name, builtin->call_conv, args, builtin->op);
-
-        Occ::Exp BB = builtin2;
-        if (all_constant_args and builtin->call_conv == "ecall")
+        // ?. Apply
+        else if (auto app = E.to_apply())
         {
-            auto f = e_operation_fn(builtin2.op);
-            int n = builtin->args.size();
-            vector<R::Exp> op_args(n);
-            for(int i=0;i<n;i++)
-                op_args[n-1-i] = runtime_exp_from_core_constant(*builtin2.args[i].to_constant());
-
-            try
-            {
-                if (auto C = core_constant_from_runtime_exp(f(op_args)))
-                {
-                    BB = *C;
-                    // std::cerr<<"    "<<builtin2.print()<<" -> "<<BB.print()<<"\n";
-                }
-            }
-            catch (const std::exception& e)
-            {
-                if (log_verbose >= 2)
-                {
-                    std::cerr<<"Warning: An error was thrown executing operation "<<builtin->lib_name<<":"<<builtin->func_name<<"(";
-                    vector<string> sargs;
-                    for(int i=0;i<n;i++)
-                        sargs.push_back(builtin2.args[i].print());
-                    std::cerr<<join(sargs,",");
-                    std::cerr<<") inside the simplifier!: "<<e.what()<<"\n";
-                }
-            }
-            catch (...)
-            {
-                if (log_verbose >= 2)
-                {
-                    std::cerr<<"Warning: An error was thrown executing operation "<<builtin->lib_name<<":"<<builtin->func_name<<"(";
-                    vector<string> sargs;
-                    for(int i=0;i<n;i++)
-                        sargs.push_back(builtin2.args[i].print());
-                    std::cerr<<join(sargs,",");
-                    std::cerr<<") inside the simplifier!\n";
-                }
-            }
+            // Simplify the function
+            auto next_E = app->head;
+            auto next_context = make_apply_context(*app, S, bound_vars, context);
+            E = std::move(next_E);
+            context = std::move(next_context);
+            continue;
         }
 
-        auto [F2, E2] = rebuild(BB, F.bound_vars, context);
+        // 5. Let (let {x[i] = F[i]} in body)
+        //
+        // Here we know that F[i] can only mention x[j<i] unless F[i] is a loop-breaker.
+        //
+        else if (auto let = E.to_let())
+        {
+            auto [F, S2] = simplify_bind(let->bind, S, bound_vars, false);
 
-        F.append(this_mod, options, F2);
+            auto [F2, E2] = simplify(let->body, S2, F.bound_vars, context);
+            F.append(this_mod, options, F2);
 
-        return {F, E2};
+            // 5.2 Simplify the let-body
+            return {F, E2};
+        }
+
+         // Do we need something to handle WHNF variables?
+
+        // 5. Literal constant.  Treat as 0-arg constructor.
+        else if (E.to_constant())
+            return rebuild(E, bound_vars, context);
+
+        // 4. Constructor
+        else if (auto con = E.to_conApp())
+        {
+            SimplFloats F(bound_vars);
+
+            Occ::ConApp C = *con;
+            for(auto& arg: C.args)
+            {
+                auto [arg_floats, arg2] = simplify(arg, S, F.bound_vars, make_stop_context(CallCtxt::BoringCtxt));
+                arg = arg2;
+                F.append(this_mod, options, arg_floats);
+            }
+
+            auto [F2,E2] = rebuild(C, F.bound_vars, context);
+
+            F.append(this_mod, options, F2);
+
+            return {F, E2};
+        }
+
+        // 4. Builtin
+        else if (auto builtin = E.to_builtinOp())
+        {
+            SimplFloats F(bound_vars);
+
+            vector<Occ::Exp> args;
+            bool all_constant_args = true;
+            for(auto& arg: builtin->args)
+            {
+                auto [argF, arg2] = simplify(arg, S, F.bound_vars, make_stop_context(CallCtxt::BoringCtxt));
+                F.append(this_mod, options, argF);
+                args.push_back(arg2);
+
+                if (not arg2.to_constant())
+                    all_constant_args = false;
+            }
+
+            Occ::BuiltinOp builtin2(builtin->lib_name, builtin->func_name, builtin->call_conv, args, builtin->op);
+
+            Occ::Exp BB = builtin2;
+            if (all_constant_args and builtin->call_conv == "ecall")
+            {
+                auto f = e_operation_fn(builtin2.op);
+                int n = builtin->args.size();
+                vector<R::Exp> op_args(n);
+                for(int i=0;i<n;i++)
+                    op_args[n-1-i] = runtime_exp_from_core_constant(*builtin2.args[i].to_constant());
+
+                try
+                {
+                    if (auto C = core_constant_from_runtime_exp(f(op_args)))
+                    {
+                        BB = *C;
+                        // std::cerr<<"    "<<builtin2.print()<<" -> "<<BB.print()<<"\n";
+                    }
+                }
+                catch (const std::exception& e)
+                {
+                    if (log_verbose >= 2)
+                    {
+                        std::cerr<<"Warning: An error was thrown executing operation "<<builtin->lib_name<<":"<<builtin->func_name<<"(";
+                        vector<string> sargs;
+                        for(int i=0;i<n;i++)
+                            sargs.push_back(builtin2.args[i].print());
+                        std::cerr<<join(sargs,",");
+                        std::cerr<<") inside the simplifier!: "<<e.what()<<"\n";
+                    }
+                }
+                catch (...)
+                {
+                    if (log_verbose >= 2)
+                    {
+                        std::cerr<<"Warning: An error was thrown executing operation "<<builtin->lib_name<<":"<<builtin->func_name<<"(";
+                        vector<string> sargs;
+                        for(int i=0;i<n;i++)
+                            sargs.push_back(builtin2.args[i].print());
+                        std::cerr<<join(sargs,",");
+                        std::cerr<<") inside the simplifier!\n";
+                    }
+                }
+            }
+
+            auto [F2, E2] = rebuild(BB, F.bound_vars, context);
+
+            F.append(this_mod, options, F2);
+
+            return {F, E2};
+        }
+
+        std::abort();
     }
-
-    std::abort();
 }
 
 /*
