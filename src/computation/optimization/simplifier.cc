@@ -255,12 +255,13 @@ bool is_data_con_wrapper(const Occ::Exp& fun)
         return false;
 }
 
+// Count the existing application chain without adding one native frame per argument.
 int count_cont_args(const ConCont& cont)
 {
-    if (not cont)
-        return 0;
-    else
-        return 1 + count_cont_args(cont->next);
+    int n = 0;
+    for (auto current = cont; current; current = current->next)
+        ++n;
+    return n;
 }
 
 // Append one ordered float and extend the in-scope set with its binders.
@@ -306,95 +307,107 @@ Occ::Exp wrap(const std::tuple<SimplFloats,Occ::Exp>& FE)
 
 // GHC has an InScopeEnv -- different from an InScopeSet -- that contains the unfolding?
 
+// Follow application heads and unfoldings iteratively; the scope and float order stay unchanged.
 std::optional<std::tuple<in_scope_set, std::string, std::vector<Occ::Exp>>>
-SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& floats, const Occ::Exp& E, const ConCont& cont)
+SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& floats,
+                                    const Occ::Exp& input, const ConCont& initial_cont)
 {
-    if (auto app = E.to_apply())
+    auto E = input;
+    auto cont = initial_cont;
+    while (true)
     {
-        return exprIsConApp_worker(S, floats, app->head, add_app( app->arg, cont));
-    }
-    else if (auto lam = E.to_lambda(); lam and cont and false)
-    {
-        // TODO: We to rename lam->x to a fresh name.
-        //       But to be efficient, that requires a substitution.
-        //       GHC combines the set of active variables with the substitution --> perhaps that makes it easy to mint new names?
-        // auto [S2, in_scope_set2, x2] = rename_and_bind_var(x, CoreUnfolding(cont->arg));
-        // Float f = FloatLet{{{x2, cont->arg}}};
-        // floats.push_back(f);
-        // return exprIsConApp_worker(in_scope_set2, S2, floats, lam->body, cont->next);
-
-        auto S2 = bind_var(S, lam->x, make_core_unfolding(this_mod, options, lam->x.id, cont->arg));
-        Float f = FloatLet{Occ::NonRec{{lam->x, cont->arg}}};
-        floats.push_back(f);
-        return exprIsConApp_worker(S2, floats, lam->body, cont->next);
-    }
-    else if (auto let = E.to_let(); let and false)
-    {
-        Float f = FloatLet{let->bind};
-        floats.push_back(f);
-        auto S2 = S;
-        if (auto nonrec = let->to_nonrec())
-            S2 = bind_var(S2, nonrec->decl.x,
-                          make_core_unfolding(this_mod, options, nonrec->decl.x.id, nonrec->decl.body));
-        else
-            for(auto& [x,e]: let->to_rec()->decls)
-                S2 = bind_var(S2, x, make_core_unfolding(this_mod, options, x.id, e));
-            
-        return exprIsConApp_worker(S2, floats, let->body, cont);
-    }
-    else if (auto C = E.to_case(); C and C->alts.size() == 1 and false)
-    {
-        auto& [pat,body] = C->alts[0];
-
-        Float f = FloatCase{C->object, pat};
-        floats.push_back(f);
-        auto S2 = S;
-        for(auto& x: pat.args)
-            S2 = bind_var(S, x, {});
-
-        return exprIsConApp_worker(S2, floats, body, cont);
-    }
-    else if (auto C = E.to_conApp())
-    {
-        // There had better not be arguments applied to the con app!
-        assert(not cont);
-        vector<Occ::Exp> args;
-        for(auto& arg: C->args)
-            args.push_back(arg);
-        return {{S, C->head, args}};
-    }
-    else if (auto V = E.to_var())
-    {
-        // should we do something special for string literals?
-
-        auto& x = *V;
-        auto [unfolding, occ_info] = get_unfolding(x, S);
-
-        if (auto cu = to<CoreUnfolding>(unfolding); cu and not x.info.is_loop_breaker)
+        if (auto app = E.to_apply())
         {
-            // Ideally we would only do this if x has arity zero (i.e. its not a function)
-            return exprIsConApp_worker(S, floats, cu->expression(), cont);
+            auto next_E = app->head;
+            auto next_cont = add_app(app->arg, cont);
+            E = std::move(next_E);
+            cont = std::move(next_cont);
+            continue;
         }
-        else if (auto du = to<DFunUnfolding>(unfolding); du and count_cont_args(cont) == du->binders.size())
+        else if (auto lam = E.to_lambda(); lam and cont and false)
         {
-            auto C = cont;
-            Occ::subst_t subst;
-            for(auto& x: du->binders)
-            {
-                subst = subst.insert({x, C->arg});
-                C = C->next;
-            }
-            assert(not C);
+            // TODO: We to rename lam->x to a fresh name.
+            //       But to be efficient, that requires a substitution.
+            //       GHC combines the set of active variables with the substitution --> perhaps that makes it easy to mint new names?
+            // auto [S2, in_scope_set2, x2] = rename_and_bind_var(x, CoreUnfolding(cont->arg));
+            // Float f = FloatLet{{{x2, cont->arg}}};
+            // floats.push_back(f);
+            // return exprIsConApp_worker(in_scope_set2, S2, floats, lam->body, cont->next);
 
+            auto S2 = bind_var(S, lam->x, make_core_unfolding(this_mod, options, lam->x.id, cont->arg));
+            Float f = FloatLet{Occ::NonRec{{lam->x, cont->arg}}};
+            floats.push_back(f);
+            return exprIsConApp_worker(S2, floats, lam->body, cont->next);
+        }
+        else if (auto let = E.to_let(); let and false)
+        {
+            Float f = FloatLet{let->bind};
+            floats.push_back(f);
+            auto S2 = S;
+            if (auto nonrec = let->to_nonrec())
+                S2 = bind_var(S2, nonrec->decl.x,
+                              make_core_unfolding(this_mod, options, nonrec->decl.x.id, nonrec->decl.body));
+            else
+                for(auto& [x,e]: let->to_rec()->decls)
+                    S2 = bind_var(S2, x, make_core_unfolding(this_mod, options, x.id, e));
+
+            return exprIsConApp_worker(S2, floats, let->body, cont);
+        }
+        else if (auto C = E.to_case(); C and C->alts.size() == 1 and false)
+        {
+            auto& [pat,body] = C->alts[0];
+
+            Float f = FloatCase{C->object, pat};
+            floats.push_back(f);
+            auto S2 = S;
+            for(auto& x: pat.args)
+                S2 = bind_var(S, x, {});
+
+            return exprIsConApp_worker(S2, floats, body, cont);
+        }
+        else if (auto C = E.to_conApp())
+        {
+            // There had better not be arguments applied to the con app!
+            assert(not cont);
             vector<Occ::Exp> args;
-            for(auto& arg: du->args)
-                args.push_back(Core::subst(subst, arg));
-
-            return {{S, du->head, args}};
+            for(auto& arg: C->args)
+                args.push_back(arg);
+            return {{S, C->head, args}};
         }
-    }
+        else if (auto V = E.to_var())
+        {
+            // should we do something special for string literals?
 
-    return {};    
+            auto& x = *V;
+            auto [unfolding, occ_info] = get_unfolding(x, S);
+
+            if (auto cu = to<CoreUnfolding>(unfolding); cu and not x.info.is_loop_breaker)
+            {
+                // Ideally we would only do this if x has arity zero (i.e. its not a function)
+                E = cu->expression();
+                continue;
+            }
+            else if (auto du = to<DFunUnfolding>(unfolding); du and count_cont_args(cont) == du->binders.size())
+            {
+                auto C = cont;
+                Occ::subst_t subst;
+                for(auto& x: du->binders)
+                {
+                    subst = subst.insert({x, C->arg});
+                    C = C->next;
+                }
+                assert(not C);
+
+                vector<Occ::Exp> args;
+                for(auto& arg: du->args)
+                    args.push_back(Core::subst(subst, arg));
+
+                return {{S, du->head, args}};
+            }
+        }
+
+        return {};
+    }
 }
 
 std::optional<std::tuple<in_scope_set, std::vector<Float>, std::string, std::vector<Occ::Exp>>>
