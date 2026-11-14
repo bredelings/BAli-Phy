@@ -1554,8 +1554,8 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
             {
                 if (auto app = context.is_apply_context())
                 {
-                    auto [_, __, arg] = simplifyArg(bound_vars, app->dup_status, app->subst,
-                                                    app->bound_vars, app->arg);
+                    auto [dup_status, arg_bound_vars, arg] = simplifyArg(bound_vars, app->dup_status, app->subst,
+                                                                        app->bound_vars, app->arg);
                     if (auto constant = exprIsConApp_maybe(arg, bound_vars))
                     {
                         auto [bound_vars2, floats, con, args] = *constant;
@@ -1565,6 +1565,16 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
                         S = {};
                         context = std::move(next_context);
                         continue;
+                    }
+
+                    // Retain the simplified argument if selection fails, so rebuilding the call does not
+                    // simplify it again. Its scope belongs to the argument, not the surrounding expression.
+                    if (app->dup_status == DupStatus::NoDup)
+                    {
+                        auto next_context = std::make_shared<apply_context>(arg, substitution{},
+                                                                            arg_bound_vars, app->next);
+                        next_context->dup_status = dup_status;
+                        context = std::move(next_context);
                     }
                 }
             }
