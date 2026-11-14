@@ -126,11 +126,11 @@ Occ::Exp peel_n_lambdas1(Occ::Exp E, int n)
 [[nodiscard]] in_scope_set rebind_var(in_scope_set bound_vars, const Occ::Var& x, const Unfolding& U)
 {
     bound_variable_info old_binding = bound_vars.at(x);
-    bound_vars = bound_vars.erase(x);
     Occ::Var x2 = x;
     x2.info = old_binding.occurrence;
     x2.id = old_binding.id;
-    return bind_var(bound_vars,x2,U);
+    // Replace both the canonical key and unfolding while retaining the completed binding's metadata.
+    return bound_vars.insert({x2, {U, old_binding.occurrence, old_binding.id}});
 }
 
 [[nodiscard]] in_scope_set bind_decls(const Module& m, const inliner_options& opts, in_scope_set bound_vars, const Occ::Decls& decls)
@@ -473,15 +473,12 @@ Occ::Var SimplifierState::rename_var(const Occ::Var& x, substitution& S, const i
     assert(x.info.code_dup != amount_t::Unknown);
     auto x2 = get_new_name(x, bound_vars);
 
-    // 1. If x is NOT in the bound set, then erase x from the substitution (if it's there)
+    // 1. If x is unchanged, erase x from the substitution (if it's there).
     if (x == x2)
 	S = S.erase(x);
-    // 2. If x IS in the bound set, add a substitution from x --> x2 then erase x from the substitution (if it's there)
+    // 2. If x is renamed, add a substitution from x --> x2, replacing any old substitution.
     else
-    {
-	S = S.erase(x);
 	S = S.insert({x, {x2}});
-    }
 
     if (x.is_exported) assert(x == x2);
 
@@ -1324,7 +1321,6 @@ SimplifierState::simplify_rec_decls(const Occ::Decls& orig_decls, const substitu
 	    // what are the conditions for post-inlining unconditionally?
 	    if (post_inline(x,rhs))
 	    {
-		S2 = S2.erase(x);
 		S2 = S2.insert({x,rhs});
 	    }
 	    else
@@ -1361,10 +1357,10 @@ SimplifierState::simplify_rec_decls(const Occ::Decls& orig_decls, const substitu
     {
         if (not completed_name) continue;
         auto binding = bound_vars.at(*completed_name);
-        bound_vars = bound_vars.erase(*completed_name);
         auto environment_name = *completed_name;
         environment_name.info = binding.occurrence;
-        bound_vars = bind_var(bound_vars, environment_name, binding.unfolding);
+        bound_vars = bound_vars.insert({environment_name,
+                                       {binding.unfolding, binding.occurrence, environment_name.id}});
     }
 
     if (new_decls.empty())
@@ -1407,8 +1403,7 @@ SimplifierState::simplify_nonrec(const Occ::NonRec& nonrec, const substitution& 
 
     if (post_inline(x, rhs))
     {
-        auto S2 = S.erase(x);
-        S2 = S2.insert({x, rhs});
+        auto S2 = S.insert({x, rhs});
         return {std::move(output), S2};
     }
 
@@ -1635,7 +1630,6 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
 
                 if (pre_inline(x,arg))
                 {
-                    S2 = S2.erase(x);
                     S2 = S2.insert({x,arg});
                     auto next_E = lam->body;
                     auto next_context = ac->next;
