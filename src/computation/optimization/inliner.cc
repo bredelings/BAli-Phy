@@ -187,7 +187,7 @@ var_discounts union_var_discounts(const var_discounts& d1, var_discounts d2)
             else
             {
                 discounts discounts2 = *it;
-                d2 = d2.insert({var, discounts1 + discounts2});
+                d2 = d2.set(var, discounts1 + discounts2);
             }
         }
         return d2;

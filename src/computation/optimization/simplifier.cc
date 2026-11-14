@@ -130,7 +130,7 @@ Occ::Exp peel_n_lambdas1(Occ::Exp E, int n)
     x2.info = old_binding.occurrence;
     x2.id = old_binding.id;
     // Replace both the canonical key and unfolding while retaining the completed binding's metadata.
-    return bound_vars.insert({x2, {U, old_binding.occurrence, old_binding.id}});
+    return bound_vars.set(x2, {U, old_binding.occurrence, old_binding.id});
 }
 
 [[nodiscard]] in_scope_set bind_decls(const Module& m, const inliner_options& opts, in_scope_set bound_vars, const Occ::Decls& decls)
@@ -478,7 +478,7 @@ Occ::Var SimplifierState::rename_var(const Occ::Var& x, substitution& S, const i
 	S = S.erase(x);
     // 2. If x is renamed, add a substitution from x --> x2, replacing any old substitution.
     else
-	S = S.insert({x, {x2}});
+	S = S.set(x, {x2});
 
     if (x.is_exported) assert(x == x2);
 
@@ -1263,8 +1263,9 @@ SimplifierState::simplify_rec_decls(const Occ::Decls& orig_decls, const substitu
 	// C. The lifetime of the substitution is just the duration of this scope, so raw pointers are fine.
 	if (pre_inline(x,rhs))
 	{
+	    // The suspended RHS must capture the substitution with x removed.
 	    S2 = S2.erase(x);
-	    S2 = S2.insert({x,{rhs,S2}});
+	    S2 = S2.set(x, {rhs,S2});
 	}
 	else
 	{
@@ -1321,7 +1322,7 @@ SimplifierState::simplify_rec_decls(const Occ::Decls& orig_decls, const substitu
 	    // what are the conditions for post-inlining unconditionally?
 	    if (post_inline(x,rhs))
 	    {
-		S2 = S2.insert({x,rhs});
+		S2 = S2.set(x, rhs);
 	    }
 	    else
 	    {
@@ -1359,8 +1360,8 @@ SimplifierState::simplify_rec_decls(const Occ::Decls& orig_decls, const substitu
         auto binding = bound_vars.at(*completed_name);
         auto environment_name = *completed_name;
         environment_name.info = binding.occurrence;
-        bound_vars = bound_vars.insert({environment_name,
-                                       {binding.unfolding, binding.occurrence, environment_name.id}});
+        bound_vars = bound_vars.set(environment_name,
+                                    {binding.unfolding, binding.occurrence, environment_name.id});
     }
 
     if (new_decls.empty())
@@ -1378,8 +1379,9 @@ SimplifierState::simplify_nonrec(const Occ::NonRec& nonrec, const substitution& 
 
     if (pre_inline(x, original_rhs))
     {
+        // The suspended RHS must capture the substitution with x removed.
         auto S2 = S.erase(x);
-        S2 = S2.insert({x, {original_rhs, S2}});
+        S2 = S2.set(x, {original_rhs, S2});
         return {SimplFloats({}, bound_vars), S2};
     }
 
@@ -1403,7 +1405,7 @@ SimplifierState::simplify_nonrec(const Occ::NonRec& nonrec, const substitution& 
 
     if (post_inline(x, rhs))
     {
-        auto S2 = S.insert({x, rhs});
+        auto S2 = S.set(x, rhs);
         return {std::move(output), S2};
     }
 
@@ -1630,7 +1632,7 @@ SimplifierState::simplify(const Occ::Exp& input, const substitution& subst,
 
                 if (pre_inline(x,arg))
                 {
-                    S2 = S2.insert({x,arg});
+                    S2 = S2.set(x, arg);
                     auto next_E = lam->body;
                     auto next_context = ac->next;
                     E = std::move(next_E);
