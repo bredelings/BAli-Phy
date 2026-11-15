@@ -373,7 +373,7 @@ public:
 
 void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0);
 
-// Move the subtree behind b1 to branch b2 and create the alignment on the edge fused by pruning.
+// Move the subtree behind b1 to a different attachment edge b2, creating the fused-edge alignment.
 // Return the reverse/forward density ratio for the uniform attachment split.
 double do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
 {
@@ -381,11 +381,8 @@ double do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
   
     auto B2 = P.t().edge(b2);
 
-    if (B1.node2 == B2.node1 or B1.node2 == B2.node2)
-    {
-	// B2 is one of the two branches that get fused when we pull out B1.
-	return 1;
-    }
+    // The sole caller handles either old attachment segment as an alignment-only update.
+    assert(B1.node2 != B2.node1 and B1.node2 != B2.node2);
 
     auto I = spr_info(P.t(), B1, spr_full_range(P.t(), B1));
 
@@ -437,57 +434,57 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2)
     assert(P.t().partition(b1).contains(P.t().target(b2)));
     assert(P.t().partition(b1).contains(P.t().source(b2)));
 
-    // 1. ----- Create objects p[0] and p[1] to store new alignments A1 and A2 for tree T1 and T2 ----//
+    // 1. ----- Create candidates for the original and, if different, proposed attachment. ----//
     int n1 = P.t().target(b1);
     int n2 = P.t().source(b1);
+    const bool attachment_changed = P.t().source(b2) != n1 and P.t().target(b2) != n1;
 
     P.set_root(n1);
     P.cache_likelihood_branches();
-    vector<Parameters> p(2,P);
+    // Either old segment represents the same attachment. Use one conditional alignment update:
+    // this avoids duplicate DP work and a state-dependent choice between different node orders.
+    // The shared sampler still applies the middle-sequence-length correction.
+    vector<Parameters> p(attachment_changed ? 2 : 1, P);
 
     // 2. ----- Generate the node order for 3-way alignment paths P.t().target(b1)) -------- //
 
-    vector< vector<int> > nodes(2);      // Using two random orders can lead to different total
-                                         // probabilities for p[i] and p[j] when p[i].t() == p[j].t().
-
+    vector< vector<int> > nodes(p.size());
+    vector<log_double_t> rho(p.size(), 1);
     nodes[0] = A3::get_nodes_branch_random(p[0].t(), n1, n2);
 
-    // 3. ----- Create the new tree T2 and the pairwise alignment on the (fused) edge that we prune from.
+    // 3. ----- Regraft and choose a node order only for a different attachment. ----- //
+    if (attachment_changed)
+    {
+        rho[1] = do_SPR(p[1], b1, b2, nodes[0]);
+        nodes[1] = A3::get_nodes_branch_random(p[1].t(), n1, n2);
+    }
 
-    double split_proposal_ratio = do_SPR(p[1], b1, b2, nodes[0]);
-
-    // 4. ----- Generate the node order for 3-way alignment paths at p[1].t().target(b1) --- //
-
-    nodes[1] = A3::get_nodes_branch_random(p[1].t(), n1, n2);
-
-    // 5. ----- Check that nodes[i] are connected correctly in p[i].t()
+    // 4. ----- Check that nodes[i] are connected correctly in p[i].t()
     for(int i=0; i < p.size(); i++)
     {
 	assert(p[i].t().is_connected(nodes[i][0],nodes[i][1]));
 	assert(p[i].t().is_connected(nodes[i][0],nodes[i][2]));
 	assert(p[i].t().is_connected(nodes[i][0],nodes[i][3]));
+        assert(p[i].variable_alignment() == p[0].variable_alignment());
     }
-
-    // 6. ----- Check that we are propagating variable_alignment correctly.
-    assert(p.size() == 2);
-    assert(p[0].variable_alignment() == p[1].variable_alignment());
 
     try
     {
-	// 6. ----- Choose * nullopt if no state was selected
+	// 5. ----- Choose * nullopt if no state was selected
 	//                 * 0 for the original tree with a new alignment
 	//                 * 1 for the new tree with a new alignment
 
-	vector<log_double_t> rho = {1, split_proposal_ratio};
 	auto choice = sample_tri_multi(p, nodes, rho);
-	// 7. Move to the new configuration if chosen.
+	// 6. Move to the new configuration if chosen.
 
 	if (choice)
 	    P = p[*choice];
 
-	// 8. Return statistics about how far we did (or didn't) move via SPR.
+	// 7. Return statistics about how far we did (or didn't) move via SPR.
 
-	return SPR_stats(p[0].t(), p[1].t(), choice and *choice > 0, bins, b1);
+        // An accepted alignment refresh at the original attachment is not a topology change.
+	return SPR_stats(p[0].t(), p[attachment_changed ? 1 : 0].t(),
+                         attachment_changed and choice and *choice == 1, bins, b1);
     }
     catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
