@@ -48,15 +48,6 @@ namespace A3 {
 
   std::vector<int> get_nodes_branch_random(const TreeInterface& t,int n0,int n1);
 
-  /// Return the log of the acceptance ration for moving from (A1,P1) -> (A2,P2)
-  log_double_t correction(const data_partition& P,const std::vector<int>& nodes);
-
-  /// Return the log of the acceptance ration for moving from (A1,P1) -> (A2,P2)
-  log_double_t correction(const Parameters& P,const std::vector<int>& nodes);
-
-  log_double_t acceptance_ratio(const Parameters& P1,const std::vector<int>&,
-			    const Parameters& P2,const std::vector<int>&);
-
   std::vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const std::vector<int>& nodes);
 }
 

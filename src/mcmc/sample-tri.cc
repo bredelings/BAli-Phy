@@ -31,7 +31,7 @@
 #include "computation/object.hh"                     // for intrusive_ptr_rel...
 #include "dp/1way.hh"                                // for convert_to_bits
 #include "dp/3way.hh"                                // for get_nodes_branch_...
-#include "dp/alignment-sums.hh"                      // for sample_A3_multi_c...
+#include "dp/alignment-sums.hh"                      // for sample_star_multi_calculation
 #include "dp/dp-engine.hh"                           // for DPengine
 #include "dp/dp-matrix.hh"                           // for DPmatrixConstrained
 #include "dp/hmm.hh"                                 // for HMM::bitmask_t, HMM
@@ -317,21 +317,6 @@ Availability<log_double_t> tri_sample_alignment_ratio(Parameters& P, int node1, 
 }
 
 
-sample_A3_multi_calculation::sample_A3_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
-                                                         optional<int> b)
-    :
-    p(pp),
-#ifndef NDEBUG_DP
-    P0(p[0]),
-#endif
-    nodes(nodes_),
-    Matrices(p.size()),
-    sampled(p.size(), vector<bool>(p[0].n_data_partitions(), false)),
-    Pr(p.size()),
-    bandwidth(b)
-{
-}
-
 Availability<log_double_t> pr_sum_out_A_tri(Parameters& P,
                                             const vector<optional<vector<HMM::bitmask_t>>>& a23,
                                             const vector<int>& nodes)
@@ -352,7 +337,7 @@ Availability<log_double_t> pr_sum_out_A_tri(Parameters& P,
             }
 
 	    Pr *= *sampling_pr;
-            Pr /= A3::correction(P[j], nodes);
+            Pr /= node_length_correction(P[j], nodes[0]);
             // FIXME! These sums still need to be accepted/rejected!
         }
     }
@@ -362,201 +347,6 @@ Availability<log_double_t> pr_sum_out_A_tri(Parameters& P,
     return available(Pr);
 }
 
-void sample_A3_multi_calculation::run_dp()
-{
-    assert(p.size() == nodes.size());
-
-    //------------ Check the alignment branch constraints ------------//
-    /*
-      for(int i=0;i<p.size();i++) {
-      vector<int> branches;
-      branches.push_back(p[i].t().find_branch(nodes[i][0],nodes[i][1]));
-      branches.push_back(p[i].t().find_branch(nodes[i][0],nodes[i][2]));
-      branches.push_back(p[i].t().find_branch(nodes[i][0],nodes[i][3]));
-
-      //    if (any_branches_constrained(branches, p[i].t(), p[i].PC->TC, p[i].PC->AC))
-      //      return;// -1;
-      }
-    */
-
-    //----------- Generate the different states and Matrices ---------//
-    C1 = A3::correction(p[0],nodes[0]);
-
-    for(int i=0;i<p.size();i++) 
-    {
-        auto joint_sampling_pr = available(log_double_t(1.0));
-        log_double_t correction = 1.0;
-
-#ifndef NDEBUG
-	Matrices[i].resize(p[i].n_data_partitions());
-#endif
-	for(int j=0;j<p[i].n_data_partitions();j++) {
-	    if (p[i][j].variable_alignment())
-            {
-		auto [M, sampling_pr] = compute_matrix(i,j);
-#ifndef NDEBUG
-		Matrices[i][j] = M;
-#endif
-		sampled[i][j] = sampling_pr.has_value();
-		joint_sampling_pr *= sampling_pr;
-		if (not sampling_pr)
-		    continue;
-		correction *= A3::correction(p[i][j], nodes[i]);
-            }
-	}
-
-        if (joint_sampling_pr and std::isfinite(joint_sampling_pr->log()))
-        {
-            auto factor = correction / *joint_sampling_pr;
-            Pr[i] = factor * available(ChoiceWeight(p[i].heated_probability()));
-
-#ifndef NDEBUG
-            // A complete sampling probability means that every affected alignment was replaced.
-            // Validate the candidate before a later choice changes the active state.
-            for(int j=0;j<p[i].n_data_partitions();j++)
-                if (p[i][j].has_pairwise_alignments())
-                    for(int b: p[i].t().directed_branches())
-                    {
-                        auto A = p[i][j].get_pairwise_alignment(b);
-                        int n1 = p[i].t().source(b);
-                        int n2 = p[i].t().target(b);
-                        assert(A.length1() == p[i][j].seqlength(n1));
-                        assert(A.length2() == p[i][j].seqlength(n2));
-                    }
-#endif
-        }
-    }
-}
-
-void sample_A3_multi_calculation::set_proposal_probabilities(const vector<log_double_t>& r)
-{
-    rho.resize(Pr.size());
-    for(int i=0;i<Pr.size();i++) 
-    {
-	rho[i] = r[i];
-	Pr[i] = rho[i] * Pr[i];
-    }
-}
-
-optional<int> sample_A3_multi_calculation::choose(bool correct)
-{
-    assert(p.size() == nodes.size());
-
-    int C;
-    try {
-	auto choice = choose_MH(0,Pr);
-	if (not choice)
-	    return {};
-	C = *choice;
-    }
-    catch (choose_exception<Availability<ChoiceWeight>>& c)
-    {
-	c.prepend(std::string(__PRETTY_FUNCTION__)+"\n");
-
-	c<<show_parameters(p[0]);
-	c<<p[0].probability()<<" = "<<p[0].likelihood()<<" + "<<p[0].prior()<<"\n";
-
-	throw c;
-    }
-
-    // \todo What do we do if partition 0 works, but other partitions fail cuz of constraints?
-    assert(Pr[C]);
-
-#ifndef NDEBUG_DP
-    if (log_verbose >= 4) std::cerr<<"choice = "<<C<<endl;
-
-    // FIXME: check that alignment of unaffected sequences w/in 2 blocks is unchanged!
-    
-    // Add another entry for the incoming configuration
-    p.push_back( P0 );
-    nodes.push_back(nodes[0]);
-    rho.push_back( rho[0] );
-    Matrices.push_back( Matrices[0] );
-    sampled.push_back(sampled[0]);
-
-    vector< vector< vector<int> > > paths(p.size());
-
-    // For the choices that violate a constraint, why don't we just ignore them?
-    // Well, this shifts the indices of each choice.  So, we don't do it yet.
-
-    //------------------- Check offsets from path_Q -> P -----------------//
-    for(int i=0;i<p.size();i++) 
-    {
-	bool ok = i >= Pr.size() or Pr[i].has_value();
-
-	if (not ok)
-	    assert(i != 0 and i != p.size()-1);
-
-	for(int j=0;j<p[i].n_data_partitions();j++) 
-	    if (p[i][j].variable_alignment() and ok and sampled[i][j])
-	    {
-		paths[i].push_back( get_path_unique(A3::get_bitpath(p[i][j],nodes[i]),*Matrices[i][j]) );
-	  
-		auto OS = other_subst(p[i][j],nodes[i]);
-		auto OP = other_prior(p[i][j],nodes[i]) / A3::correction(p[i][j],nodes[i]);
-	
-		check_match_P(p[i][j], OS, OP, paths[i][j], *Matrices[i][j]);
-	    }
-	    else
-		paths[i].push_back( vector<int>() );
-    }
-
-    //--------- Compute path probabilities and sampling probabilities ---------//
-    vector< vector<log_double_t> > PR(p.size(), vector<log_double_t>(4,1));
-
-    for(int i=0;i<p.size();i++)
-    {
-	bool ok = i >= Pr.size() or Pr[i].has_value();
-
-	if (not ok) {
-	    PR[i][0] = 0;
-	    assert(i != 0 and i != p.size()-1);
-	    continue;
-	}
-
-	log_double_t choice_ratio = 1;
-	if (i > 0 and i<Pr.size())
-	{
-	    auto forward = choose_MH_P(0, i, Pr);
-	    auto reverse = choose_MH_P(i, 0, Pr);
-	    if (not forward or not reverse or *reverse == 0.0)
-	    {
-		PR[i][0] = 0;
-		continue;
-	    }
-	    choice_ratio = *forward / *reverse;
-	}
-	else
-	    choice_ratio = 1;
-
-	//    sample_P(p[i], choice_ratio, rho[i], paths[i], Matrices[i]) );
-	PR[i][0] = p[i].heated_probability();
-	PR[i][2] = rho[i];
-	PR[i][3] = choice_ratio;
-	for(int j=0;j<p[i].n_data_partitions();j++)
-	    if (p[i][j].variable_alignment() and sampled[i][j])
-	    {
-		vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
-		PR[i][0] *= A3::correction(p[i][j],nodes[i]);
-		PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);
-	    }
-    }
-
-    //--------- Check that each choice is sampled w/ the correct Probability ---------//
-    check_sampling_probabilities(PR);
-#endif
-
-    //---------------- Adjust for length of n4 and n5 changing --------------------//
-    // See Appendix A of Redelings & Suchard (2007) for an explanation.
-
-    log_double_t C2 = A3::correction(p[C],nodes[C]);
-    // If we reject the proposed move, then don't do anything.
-    if (correct and uniform() > double(C1/C2))
-	return {};
-
-    return C;
-}
-
 pair<shared_ptr<DPengine>,Availability<log_double_t>> sample_tri_multi_calculation::compute_matrix(int i, int j)
 {
     return tri_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth);
@@ -564,7 +354,7 @@ pair<shared_ptr<DPengine>,Availability<log_double_t>> sample_tri_multi_calculati
 
 sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
 							   optional<int> b)
-    :sample_A3_multi_calculation(pp, nodes_, b)
+    :sample_star_multi_calculation(pp, nodes_, b)
 { }
 
 // Consider making into object! That would make it easier to mix
@@ -578,11 +368,11 @@ optional<int> sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >
         bandwidth  = get_setting("simple_bandwidth").as_int64();
 
     try {
-	shared_ptr<sample_A3_multi_calculation> tri;
+	shared_ptr<sample_star_multi_calculation> tri;
 	if (uniform() < get_setting_or("cube_fraction",0.0))
-	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes, bandwidth));
+	    tri = shared_ptr<sample_star_multi_calculation>(new sample_cube_multi_calculation(p, nodes, bandwidth));
 	else
-	    tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, bandwidth));
+	    tri = shared_ptr<sample_star_multi_calculation>(new sample_tri_multi_calculation(p, nodes, bandwidth));
 	tri->run_dp();
 
 	// The DP matrix construction didn't work.

@@ -183,7 +183,7 @@ pair<shared_ptr<DPengine>,Availability<log_double_t>> sample_cube_multi_calculat
 
 sample_cube_multi_calculation::sample_cube_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
     optional<int> bw)
-    :sample_A3_multi_calculation(pp, nodes_, bw)
+    :sample_star_multi_calculation(pp, nodes_, bw)
 { }
 
 // Consider making into object! That would make it easier to mix

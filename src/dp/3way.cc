@@ -97,32 +97,6 @@ namespace A3 {
     return nodes;
   }
   
-    log_double_t correction(const data_partition& P,const vector<int>& nodes) 
-    {
-        if (P.variable_alignment())
-        {
-            auto T = P.t();
-            int n = nodes[0];
-            return pow(P.sequence_length_pr(n), P.t().degree(n)-1);
-        }
-        else
-            return 1;
-    }
-
-  log_double_t correction(const Parameters& P,const vector<int>& nodes) 
-  {
-    log_double_t C = 1.0;
-    for(int i=0;i<P.n_data_partitions();i++)
-      C *= correction(P[i],nodes);
-    return C;
-  }
-    
-  log_double_t acceptance_ratio(const Parameters& P1,const vector<int>& nodes1,
-			      const Parameters& P2,const vector<int>& nodes2) 
-  {
-    return correction(P1,nodes1)/correction(P2,nodes2);
-  }
-
   vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const vector<int>& nodes)
   {
     auto t = P.t();

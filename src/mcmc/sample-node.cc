@@ -164,7 +164,7 @@ optional<int> sample_node_multi(vector<Parameters>& p,const vector< vector<int> 
     */
   
     //----------- Generate the different states and Matrices ---------//
-    log_double_t C1 = A3::correction(p[0],nodes[0]);
+    log_double_t C1 = node_length_correction(p[0], nodes[0][0]);
 #if !defined(NDEBUG_DP) || !defined(NDEBUG)
     const Parameters P0 = p[0];
 #endif
@@ -190,7 +190,7 @@ optional<int> sample_node_multi(vector<Parameters>& p,const vector< vector<int> 
                 joint_sampling_pr *= sampling_pr;
                 if (not sampling_pr)
                     continue;
-                correction *= A3::correction(p[i][j], nodes[i]);
+                correction *= node_length_correction(p[i][j], nodes[i][0]);
 #ifndef NDEBUG_DP
 		Matrices[i][j] = M;
 #endif
@@ -245,7 +245,7 @@ optional<int> sample_node_multi(vector<Parameters>& p,const vector< vector<int> 
 		paths[i].push_back( get_path_unique(A3::get_bitpath(p[i][j], nodes[i]), *Matrices[i][j] ) );
 	
 		auto OS = p[i][j].likelihood();
-		auto OP = other_prior(p[i][j],nodes[i]) / A3::correction(p[i][j],nodes[i]);
+		auto OP = other_prior(p[i][j],nodes[i]) / node_length_correction(p[i][j], nodes[i][0]);
 	
 		check_match_P(p[i][j], OS, OP, paths[i][j], *Matrices[i][j]);
 	    }
@@ -275,7 +275,7 @@ optional<int> sample_node_multi(vector<Parameters>& p,const vector< vector<int> 
     
     
 	//    sample_P(p[i], choice_ratio, rho[i], paths[i], Matrices[i]) );
-	//    PR[i][j][0] *= A3::correction(p[i][j],nodes[i]);
+	//    PR[i][j][0] *= node_length_correction(p[i][j], nodes[i][0]);
 	PR[i] = vector<log_double_t>(4,1);
 	PR[i][0] = p[i].heated_probability();
 	PR[i][2] = rho[i];
@@ -284,7 +284,7 @@ optional<int> sample_node_multi(vector<Parameters>& p,const vector< vector<int> 
 	    if (p[i][j].variable_alignment() and (i >= Pr.size() or Pr[i]) and sampled[i][j])
 	    {
 		vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
-		PR[i][0] *= A3::correction(p[i][j],nodes[i]);
+		PR[i][0] *= node_length_correction(p[i][j], nodes[i][0]);
 		PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);
 	    }
     }
@@ -298,7 +298,7 @@ optional<int> sample_node_multi(vector<Parameters>& p,const vector< vector<int> 
     // if we reject the move, then don't do anything
     //FIXME - PARTITION - compute and cache P0 part before changing p[0], then we can
     //                     throw P0 away if we want to.
-    log_double_t C2 = A3::correction(p[C],nodes[C]);
+    log_double_t C2 = node_length_correction(p[C], nodes[C][0]);
     if (uniform() > double(C1/C2))
 	return {};
 

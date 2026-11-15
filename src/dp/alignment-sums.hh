@@ -51,6 +51,10 @@ ProbDensity other_subst(const data_partition& P, const std::vector<int>& nodes);
 log_double_t other_prior(const data_partition& P, const std::vector<int>& nodes);
 
 
+// Product of the middle-node length factors omitted from a star DP proposal.
+log_double_t node_length_correction(const data_partition& P, int node);
+log_double_t node_length_correction(const Parameters& P, int node);
+
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 std::optional<int> sample_A4_multi(std::vector<Parameters>& p,const std::vector< A4::hmm_order >& orders,
                                    const std::vector<log_double_t>& rho);
@@ -89,7 +93,7 @@ std::optional<int> sample_A5_2D_multi(std::vector<Parameters>& p, const std::vec
 Availability<log_double_t> tri_sample_alignment_ratio(Parameters& P, int node1, int node2,
                                                       std::optional<int> bandwidth = {});
 
-struct sample_A3_multi_calculation
+struct sample_star_multi_calculation
 {
     std::vector<Parameters>& p;
 #ifndef NDEBUG_DP
@@ -107,16 +111,16 @@ struct sample_A3_multi_calculation
 
     void run_dp();
 
-    sample_A3_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
+    sample_star_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
                                 std::optional<int> b);
 
     void set_proposal_probabilities(const std::vector<log_double_t>&);
 
     std::optional<int> choose(bool=true);
-    virtual ~sample_A3_multi_calculation() {};
+    virtual ~sample_star_multi_calculation() {};
 };
 
-struct sample_tri_multi_calculation: public sample_A3_multi_calculation
+struct sample_tri_multi_calculation: public sample_star_multi_calculation
 {
     virtual std::pair<std::shared_ptr<DPengine>,Availability<log_double_t>> compute_matrix(int,int);
 
@@ -124,7 +128,7 @@ struct sample_tri_multi_calculation: public sample_A3_multi_calculation
 				 std::optional<int> b);
 };
 
-struct sample_cube_multi_calculation: public sample_A3_multi_calculation
+struct sample_cube_multi_calculation: public sample_star_multi_calculation
 {
     virtual std::pair<std::shared_ptr<DPengine>,Availability<log_double_t>> compute_matrix(int,int);
 
