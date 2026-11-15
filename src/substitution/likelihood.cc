@@ -2202,7 +2202,8 @@ namespace substitution {
                 branch_list.push_back(which.value());
         }
         assert(branch_list.size() == 2 or branch_list.size() == 3 or branch_list.size() == 4);
-        assert(nodes.size() == 2 or nodes.size() == 4 or nodes.size() == 6);
+        // A2 adds a three-node path with two boundary branches to the existing neighborhoods.
+        assert(nodes.size() == 2 or nodes.size() == 3 or nodes.size() == 4 or nodes.size() == 6);
 
         return branch_list;
     }

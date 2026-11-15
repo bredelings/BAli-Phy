@@ -78,6 +78,7 @@ libbaliphy_sources = [
   'dp/dp-matrix.cc',
   'dp/dp-cube.cc',
   'dp/1way.cc',
+  'dp/2way.cc',
   'dp/3way.cc',
   'dp/4way.cc',
   'dp/5way.cc',
@@ -96,6 +97,7 @@ libbaliphy_sources = [
   'mcmc/sample-node.cc',
   'mcmc/sample-cube.cc',
   'mcmc/sample-tri.cc',
+  'mcmc/sample-A2.cc',
 
   'substitution/ops.cc',
   'substitution/cache.cc',

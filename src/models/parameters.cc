@@ -733,6 +733,19 @@ void Parameters::select_root(int b) const
     set_root_(t().target(b));
 }
 
+// Changing the computational root is allowed only where each partition's root is modifiable
+// or already at the requested node; fixed roots encode part of the substitution model.
+bool Parameters::can_set_root(int node) const
+{
+    for(int j=0;j<n_data_partitions();j++)
+    {
+        auto root = get_data_partition(j).property(0);
+        if (root.value().as_int() != node and not root.modifiable())
+            return false;
+    }
+    return true;
+}
+
 void Parameters::set_root_(int node) const
 {
     assert(not t().is_leaf_node(node));

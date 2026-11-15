@@ -32,6 +32,12 @@ void slice_sample_node_time(owned_ptr<context>&, MCMC::MoveStats&, int);
 void alignment_slice_sample_branch_length_or_duration(owned_ptr<context>&, MCMC::MoveStats&, int);
 void change_branch_length_or_duration_multi(owned_ptr<context>&, MCMC::MoveStats&, int);
 
+// Whether an unobserved degree-two node supports joint resampling with the current roots.
+bool can_sample_A2(const Parameters& P, int middle);
+
+// Resample both incident alignments and the middle length, holding neighboring sequences fixed.
+void sample_A2(Parameters& P, int middle, int left);
+
 /// Resample the 3-star alignment, holding the n2/n3 order constant.
 void tri_sample_alignment(Parameters& P,int node1,int node2);
 
@@ -90,9 +96,7 @@ void walk_tree_sample_NNI_and_A(owned_ptr<context>&, MCMC::MoveStats&);
 void realign_from_tips(owned_ptr<context>&, MCMC::MoveStats&);
 
 void sample_alignments_one(owned_ptr<context>&, MCMC::MoveStats&, int);
-void sample_tri_one(owned_ptr<context>&, MCMC::MoveStats&, int);
 void sample_tri_branch_one(owned_ptr<context>&, MCMC::MoveStats&, int);
-void sample_cube_one(owned_ptr<context>&, MCMC::MoveStats&, int);
 void sample_cube_branch_one(owned_ptr<context>&, MCMC::MoveStats&, int);
 void sample_parameter_and_alignment_on_branch(owned_ptr<context>&, MCMC::MoveStats&, int, const Proposal&);
 void sample_tri_branch_type_one(owned_ptr<context>&, MCMC::MoveStats&, int);

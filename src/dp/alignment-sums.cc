@@ -24,6 +24,7 @@
 ///
 
 #include "alignment-sums.hh"
+#include "2way.hh"
 #include "3way.hh"
 #include "probability/choose.hh"
 #include "util/rng.hh"
@@ -444,7 +445,10 @@ optional<int> sample_star_multi_calculation::choose(bool correct)
 	for(int j=0;j<p[i].n_data_partitions();j++) 
 	    if (p[i][j].variable_alignment() and ok and sampled[i][j])
 	    {
-		paths[i].push_back( get_path_unique(A3::get_bitpath(p[i][j],nodes[i]),*Matrices[i][j]) );
+		assert(nodes[i].size() == 3 or nodes[i].size() == 4);
+                auto bitpath = nodes[i].size() == 3 ? A2::get_bitpath(p[i][j], nodes[i])
+                                                   : A3::get_bitpath(p[i][j], nodes[i]);
+                paths[i].push_back(get_path_unique(bitpath, *Matrices[i][j]));
 	  
 		auto OS = other_subst(p[i][j],nodes[i]);
 		auto OP = other_prior(p[i][j],nodes[i]) / node_length_correction(p[i][j], nodes[i][0]);

@@ -51,22 +51,28 @@ void change_branch_length_or_duration_multi_move(owned_ptr<context>& P, MoveStat
     change_branch_length_or_duration_multi(P,Stats,b);
 }
 
-void sample_tri_one(owned_ptr<context>& P, MoveStats&,int b) 
+// Choose an eligible endpoint using only quantities unchanged by the alignment proposal.
+// A degree-two center uses A2; a degree-three center retains the tri/cube mixture.
+static bool sample_star_one(owned_ptr<context>& P, int b, double cube_fraction)
 {
-    Parameters* PP = P.as<Parameters>();
-    auto t = PP->t();
-    assert(is_degree3_edge(t,b));
-
+    Parameters& PP = *P.as<Parameters>();
+    auto t = PP.t();
     int node1 = t.target(t.undirected(b));
     int node2 = t.source(t.undirected(b));
-  
-    if (uniform() < 0.5)
-        std::swap(node1,node2);
+    bool eligible1 = t.degree(node1) == 3 or can_sample_A2(PP, node1);
+    bool eligible2 = t.degree(node2) == 3 or can_sample_A2(PP, node2);
+    if (not eligible1 and not eligible2)
+        return false;
+    if (not eligible1 or (eligible2 and uniform() < 0.5))
+        std::swap(node1, node2);
 
-    if (t.degree(node1) != 3)
-        std::swap(node1,node2);
-    
-    tri_sample_alignment(*PP,node1,node2);
+    if (t.degree(node1) == 2)
+        sample_A2(PP, node1, node2);
+    else if (uniform() < cube_fraction)
+        cube_sample_alignment(PP, node1, node2);
+    else
+        tri_sample_alignment(PP, node1, node2);
+    return true;
 }
 
 void sample_tri_branch_one(owned_ptr<context>& P, MoveStats& Stats,int b) 
@@ -102,24 +108,6 @@ void sample_tri_branch_one(owned_ptr<context>& P, MoveStats& Stats,int b)
     }
 
     Stats.inc("sample_tri_branch",result);
-}
-
-void sample_cube_one(owned_ptr<context>& P, MoveStats&,int b) 
-{
-    Parameters* PP = P.as<Parameters>();
-    auto t = PP->t();
-    assert(is_degree3_edge(t,b));
-
-    int node1 = t.target(t.undirected(b));
-    int node2 = t.source(t.undirected(b));
-  
-    if (uniform() < 0.5)
-        std::swap(node1,node2);
-
-    if (t.degree(node1) != 3)
-        std::swap(node1,node2);
-    
-    cube_sample_alignment(*PP,node1,node2);
 }
 
 void sample_cube_branch_one(owned_ptr<context>& P, MoveStats& Stats,int b) 
@@ -643,22 +631,7 @@ void walk_tree_sample_alignments(owned_ptr<context>& P, MoveStats& Stats)
             std::cerr<<" <walk_tree_sample_alignments: branch "<<b<<"> start: Pr = "<<P->probability()<<"\n";
         //    std::clog<<"Processing branch "<<b<<" with root "<<P.subst_root()<<endl;
 
-        if ((uniform() < 0.15) and is_degree3_edge(PP.t(),b))
-        {
-            // FIXME: don't call sample_parameter_and_alignment_on_branch( ): something is wrong.
-            if (uniform() < 0.5 or true)
-            {
-                if (uniform() < cube_fraction)
-                    sample_cube_one(P,Stats,b);
-                else
-                    sample_tri_one(P,Stats,b);
-            }
-            else
-            {
-                // sample_parameter_and_alignment_on_branch(P,Stats,b);
-            }
-        }
-        else
+        if (not (uniform() < 0.15 and sample_star_one(P, b, cube_fraction)))
             sample_alignments_one(P,Stats,b);
 
         if (log_verbose >= 3)
@@ -694,17 +667,19 @@ void realign_from_tips(owned_ptr<context>& P, MoveStats& Stats)
             std::cerr<<"realign_from_tips:   orig branch lengths = "<<t.branch_length(b);
             if (children.size())
             {
-                assert(children.size() == 2);
-                std::cerr<<" -> ("<<t.branch_length(children[0])<<","<<t.branch_length(children[1])<<")";
+                std::cerr<<" -> (";
+                for(int i=0;i<children.size();i++)
+                    std::cerr<<(i ? "," : "")<<t.branch_length(children[i]);
+                std::cerr<<")";
             }
             std::cerr<<"\n";
             std::cerr<<"realign_from_tips:   orig seq lengths = "<<length(node1)<<" -> "<<length(node2);
             if (children.size())
             {
-                assert(children.size() == 2);
-                int node3 = t.target(children[0]);
-                int node4 = t.target(children[1]);
-                std::cerr<<" -> ("<<length(node3)<<","<<length(node4)<<")";
+                std::cerr<<" -> (";
+                for(int i=0;i<children.size();i++)
+                    std::cerr<<(i ? "," : "")<<length(t.target(children[i]));
+                std::cerr<<")";
             }
             std::cerr<<"\n";
         }
@@ -713,9 +688,14 @@ void realign_from_tips(owned_ptr<context>& P, MoveStats& Stats)
             if (log_verbose >=3) std::cerr<<"     Performing 3-way alignment\n";
             tri_sample_alignment(*P.as<Parameters>(), node2, node1);
         }
+        else if (can_sample_A2(*P.as<Parameters>(), node2))
+        {
+            if (log_verbose >=3) std::cerr<<"     Performing A2 alignment\n";
+            sample_A2(*P.as<Parameters>(), node2, node1);
+        }
         else
         {
-            if (log_verbose >=3) std::cerr<<"     Performing 2-way alignment\n";
+            if (log_verbose >=3) std::cerr<<"     Performing pairwise alignment\n";
             sample_alignment(*P.as<Parameters>(), b);
         }
         if (t.has_branch_lengths() and t.can_set_branch_length_or_duration(b)) sample_branch_length_(P,Stats,b);
@@ -731,10 +711,10 @@ void realign_from_tips(owned_ptr<context>& P, MoveStats& Stats)
             vector<int> children = t.branches_after(b);
             if (children.size())
             {
-                assert(children.size() == 2);
-                int node3 = t.target(children[0]);
-                int node4 = t.target(children[1]);
-                std::cerr<<" -> ("<<length(node3)<<","<<length(node4)<<")";
+                std::cerr<<" -> (";
+                for(int i=0;i<children.size();i++)
+                    std::cerr<<(i ? "," : "")<<length(t.target(children[i]));
+                std::cerr<<")";
             }
             std::cerr<<"\n\n";
         }

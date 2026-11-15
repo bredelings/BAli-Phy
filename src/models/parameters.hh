@@ -207,6 +207,7 @@ public:
 
     // int
     void select_root(int b) const;
+    bool can_set_root(int n) const;
     void set_root_(int n) const;
     void set_root(int n) const;
     int subst_root(int i) const;
