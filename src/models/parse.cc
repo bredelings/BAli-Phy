@@ -126,9 +126,12 @@ UntypedExpr add_stacked_arg(UntypedExpr arg, UntypedExpr callee)
     }
 
     if (placeholder)
+    {
         call->args[*placeholder].value = std::move(arg);
+        call->args[*placeholder].from_stacking = true;
+    }
     else
-        call->args.insert(call->args.begin(), {"", std::move(arg), false, false, std::nullopt});
+        call->args.insert(call->args.begin(), {"", std::move(arg), false, false, std::nullopt, true});
 
     return callee;
 }
@@ -627,8 +630,9 @@ string unparse(const UntypedPattern& pattern)
     });
 }
 
-// Renders an untyped model AST expression using the legacy command-line syntax.
-string unparse(const UntypedExpr& expr)
+// The surrounding context can require parentheses around a where expression (precedence 0)
+// or reconstructed stack (precedence 5). Other operator forms already include parentheses.
+static string unparse(const UntypedExpr& expr, int precedence)
 {
     using namespace std::string_literals;
 
@@ -658,7 +662,7 @@ string unparse(const UntypedExpr& expr)
                 result += " " + unparse_operator_name(op.obj) + " " + unparse(operand);
             return "(" + result + ")";
         },
-        [](const CM::PrefixNeg<NoAnn>& x) {return "(" + x.minus.obj + unparse(x.operand) + ")";},
+        [](const CM::PrefixNeg<NoAnn>& x) {return "(" + x.minus.obj + unparse(x.operand, 6) + ")";},
         // Renders list elements in command-line bracket syntax.
         [](const List<NoAnn>& x)
         {
@@ -696,9 +700,11 @@ string unparse(const UntypedExpr& expr)
                 items.push_back(unparse(item));
             return "(" + join(items, ", ") + ")";
         },
-        [](const Let<NoAnn>& x)
+        // Keep declarations scoped to this expression when it is an operand of a stack or operator.
+        [precedence](const Let<NoAnn>& x)
         {
-            return unparse(x.body) + " where {" + unparse(x.decls) + "}";
+            auto s = unparse(x.body) + " where {" + unparse(x.decls) + "}";
+            return precedence > 0 ? "(" + s + ")" : s;
         },
         [](const Lambda<NoAnn>& x)
         {
@@ -708,30 +714,33 @@ string unparse(const UntypedExpr& expr)
         },
         [](const Sample<NoAnn>& x)
         {
-            return "~" + unparse(x.dist);
+            return "~" + unparse(x.dist, 6);
         },
         // Renders calls using legacy shorthand for operators, conversions,
         // submodels, samples, and named arguments.
-        [](const Call<NoAnn>& x)
+        [precedence](const Call<NoAnn>& x)
         {
             auto s = x.function;
+            bool stacked = not x.args.empty() and x.args[0].value and x.args[0].name.empty()
+                         and x.args[0].from_stacking;
 
-            if (s == "negate" and x.args.size() == 1 and x.args[0].value)
-                return "(-" + unparse(*x.args[0].value) + ")";
-            else if (is_model_infix_name(s) and x.args.size() == 2 and x.args[0].value and x.args[1].value
+            if (not stacked and s == "negate" and x.args.size() == 1 and x.args[0].value)
+                return "(-" + unparse(*x.args[0].value, 6) + ")";
+            else if (not stacked and is_model_infix_name(s) and x.args.size() == 2
+                     and x.args[0].value and x.args[1].value
                      and x.args[0].name.empty() and x.args[1].name.empty())
-                return "(" + unparse(*x.args[0].value) + " " + s + " " + unparse(*x.args[1].value) + ")";
-            else if (s == "intToDouble" or s == "stringToText")
+                return "(" + unparse(*x.args[0].value, 6) + " " + s + " " + unparse(*x.args[1].value, 6) + ")";
+            else if (not stacked and (s == "intToDouble" or s == "stringToText"))
             {
                 for(auto& arg: x.args)
                     if (arg.name == "x")
-                        return unparse(require_arg_value(arg));
+                        return unparse(require_arg_value(arg), precedence);
             }
-            else if (s == "unit_mixture")
+            else if (not stacked and s == "unit_mixture")
             {
                 for(auto& arg: x.args)
                     if (arg.name == "submodel")
-                        return unparse(require_arg_value(arg));
+                        return unparse(require_arg_value(arg), precedence);
             }
 
             vector<string> args;
@@ -745,10 +754,12 @@ string unparse(const UntypedExpr& expr)
                     continue;
                 }
 
-                if (arg.name == "submodel" and pos == 0)
+                // Only a leading positional insertion can be printed without a placeholder.
+                // Named substitutions must retain their names, even when they come first.
+                if (pos == 0 and (stacked or (arg.name == "submodel" and not arg.from_stacking)))
                 {
                     assert(not submodel);
-                    submodel = unparse(*arg.value);
+                    submodel = unparse(*arg.value, 5);
                 }
                 else if (arg.name.empty())
                     args.push_back(unparse(*arg.value));
@@ -769,10 +780,20 @@ string unparse(const UntypedExpr& expr)
             if (not args.empty())
                 s = s + "(" + join(args, ", ") + ")";
             if (submodel)
+            {
                 s = *submodel + " +> " + s;
+                if (precedence > 5)
+                    s = "(" + s + ")";
+            }
             return s;
         }
     });
+}
+
+// Renders a complete untyped expression without imposing an enclosing operator context.
+string unparse(const UntypedExpr& expr)
+{
+    return unparse(expr, 0);
 }
 
 // Removes leading sample sugar from a typed AST expression, preserving a

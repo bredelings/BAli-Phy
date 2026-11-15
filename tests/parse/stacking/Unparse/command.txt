@@ -1,0 +1,3 @@
+--test data/dna.fasta --scale='# Check untyped formatting before typechecking fills in argument names.
+# Typed output tests cannot protect source stacking, including calls to local functions.
+[|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)|, |MNM:1 +> MNM|]'

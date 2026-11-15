@@ -276,6 +276,9 @@ struct Arg
     bool suppress_default = false;
 
     std::optional<Expr<A>> alphabet;
+
+    // Remembers source stacking for untyped formatting; it does not affect argument application.
+    bool from_stacking = false;
 };
 
 // Returns the expression stored on an argument edge, and fails clearly if the
