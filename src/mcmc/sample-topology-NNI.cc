@@ -113,7 +113,7 @@ optional<int> two_way_topology_sample(vector<Parameters>& p,const vector<log_dou
 void two_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b) 
 {
     Parameters& PP = *P.as<Parameters>();
-    if (PP.t().is_leaf_branch(b)) return;
+    if (PP.t().degree(PP.t().source(b)) != 3 or PP.t().degree(PP.t().target(b)) != 3) return;
 
     if (log_verbose >= 3) std::cerr<<"[two_way_topology_sample]\n";
 
@@ -212,7 +212,7 @@ void two_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
 void two_way_NNI_SPR_sample(owned_ptr<context>& P, MoveStats& Stats, int b) 
 {
     Parameters& PP = *P.as<Parameters>();
-    if (PP.t().is_leaf_branch(b)) return;
+    if (PP.t().degree(PP.t().source(b)) != 3 or PP.t().degree(PP.t().target(b)) != 3) return;
     if (not PP.t().has_branch_lengths()) return;
 
     if (log_verbose >= 3) std::cerr<<"[two_way_NNI_SPR_sample]\n";
@@ -285,7 +285,7 @@ vector<int> NNI_branches(const TreeInterface& t, int b)
 void two_way_NNI_and_branches_sample(owned_ptr<context>& P, MoveStats& Stats, int b) 
 {
     Parameters& PP = *P.as<Parameters>();
-    if (PP.t().is_leaf_branch(b)) return;
+    if (PP.t().degree(PP.t().source(b)) != 3 or PP.t().degree(PP.t().target(b)) != 3) return;
     if (not PP.t().has_branch_lengths()) return;
 
     if (log_verbose >= 3) std::cerr<<"[two_way_NNI_and_branches_sample]\n";
@@ -357,6 +357,13 @@ void two_way_NNI_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
 
+    // The length-changing variants below require two degree-three nodes.
+    if (PP.t().degree(PP.t().source(b)) != 3 or PP.t().degree(PP.t().target(b)) != 3)
+    {
+        three_way_topology_sample(P, Stats, b);
+        return;
+    }
+
     if (log_verbose >= 3) std::cerr<<"[two_way_NNI_sample]\n";
 
     double U = uniform();
@@ -408,7 +415,7 @@ Availability<log_double_t> optimize(Parameters& P, const vector<int>& nodes)
 void two_way_topology_5A_sample(owned_ptr<context>& P, MoveStats& /*Stats*/, int b)
 {
     Parameters& PP = *P.as<Parameters>();
-    if (PP.t().is_leaf_branch(b)) return;
+    if (PP.t().degree(PP.t().source(b)) != 3 or PP.t().degree(PP.t().target(b)) != 3) return;
 
     if (log_verbose >= 3) std::cerr<<"[two_way_topology_5A_sample]\n";
 
@@ -589,6 +596,21 @@ void three_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
 
+    auto t = PP.t();
+    if (t.degree(t.source(b)) == 3 and t.degree(t.target(b)) == 2)
+        b = t.reverse(b);
+
+    // A4 enumerates the three arrangements of the boundary subtrees, with the degree-two
+    // node first. Swapping subtrees preserves these degrees and all stored branch lengths.
+    if (t.degree(t.source(b)) == 2 and t.degree(t.target(b)) == 3)
+    {
+        int b1 = t.branches_after(t.reverse(b))[0];
+        auto children = t.branches_after(b);
+        three_way_NNI_A4_sample(PP, Stats, b, b1, children[0], children[1]);
+        return;
+    }
+    if (t.degree(t.source(b)) != 3 or t.degree(t.target(b)) != 3) return;
+
     if (log_verbose >= 3) std::cerr<<"[three_way_topology_sample]\n";
 
     A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
@@ -699,7 +721,7 @@ void three_way_topology_and_A5_2D_sample(owned_ptr<context>& P, MoveStats& Stats
 {
     Parameters& PP = *P.as<Parameters>();
     auto t = PP.t();
-    if (t.is_leaf_branch(b)) return;
+    if (t.degree(t.source(b)) != 3 or t.degree(t.target(b)) != 3) return;
 
     if (log_verbose >= 3) std::cerr<<"[three_way_topology_and_A5_2D_sample]\n";
 
@@ -764,7 +786,7 @@ void three_way_topology_and_A5_2D_sample(owned_ptr<context>& P, MoveStats& Stats
 void three_way_topology_and_A3_2D_sample(owned_ptr<context>& P, MoveStats& Stats, int b, std::optional<int> bandwidth) 
 {
     Parameters& PP = *P.as<Parameters>();
-    if (PP.t().is_leaf_branch(b)) return;
+    if (PP.t().degree(PP.t().source(b)) != 3 or PP.t().degree(PP.t().target(b)) != 3) return;
 
     if (log_verbose >= 3) std::cerr<<"[three_way_topology_and_A3_2D_sample]\n";
 
@@ -827,6 +849,14 @@ void three_way_topology_and_A3_2D_sample(owned_ptr<context>& P, MoveStats& Stats
 
 void three_way_topology_and_alignment_sample(owned_ptr<context>& P, MoveStats& Stats, int b, std::optional<int> bandwidth)
 {
+    auto t = P.as<Parameters>()->t();
+    // The specialized 2D proposals below use an A5 neighborhood; use A4 where appropriate.
+    if (t.degree(t.source(b)) != 3 or t.degree(t.target(b)) != 3)
+    {
+        three_way_topology_sample(P, Stats, b);
+        return;
+    }
+
     double NNI_A5_fraction = get_setting_or("A5_fraction",0.0);
     if (uniform() < NNI_A5_fraction)
         three_way_topology_and_A5_2D_sample(P, Stats, b, bandwidth);

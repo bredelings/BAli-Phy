@@ -263,6 +263,9 @@ void change_branch_length_or_duration_multi(owned_ptr<context>& P,MoveStats& Sta
 void change_branch_length_and_T(owned_ptr<context>& P,MoveStats& Stats,int b) 
 {
     Parameters& PP = *P.as<Parameters>();
+    // The topology part of this hybrid proposal requires an A5 neighborhood.
+    if (PP.t().degree(PP.t().source(b)) != 3 or PP.t().degree(PP.t().target(b)) != 3) return;
+
     MCMC::Result result(5,0);
 
     result.counts[0] = 1;

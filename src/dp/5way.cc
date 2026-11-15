@@ -41,10 +41,11 @@ using std::pair;
 /// Namespace for the HMM for pairwise alignments on 5 branches in an NNI configuration.
 namespace A5 {
 
-  /// Which 5 nodes are adjacent to this branch?
+  /// Collect the six nodes of an A5 neighborhood around this branch.
   hmm_order get_nodes(const TreeInterface& t, int b) 
   {
-    assert(t.is_internal_branch(b));
+    assert(t.degree(t.source(b)) == 3);
+    assert(t.degree(t.target(b)) == 3);
 
     vector<int> branches;
     t.append_branches_before(b, branches);
