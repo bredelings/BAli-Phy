@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define FIVEWAY_H
 
 #include <vector>                  // for vector
-#include "A2_states.hh"             // for states
+#include "A1_states.hh"             // for states
 #include "hmm.hh"                   // for HMM, HMM::bitmask_t
 #include "models/TreeInterface.hh"  // for TreeInterface
 #include "util/math/log-double.hh"  // for log_double_t
@@ -37,7 +37,7 @@ class data_partition;
 // Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
 namespace A5 {
 
-  namespace states = A2::states;
+  namespace states = A1::states;
   typedef HMM::bitmask_t bitmask_t;
 
   struct hmm_order

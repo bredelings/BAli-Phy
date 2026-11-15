@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define THREEWAY_H
 
 #include <vector>                  // for vector
-#include "A2_states.hh"             // for states
+#include "A1_states.hh"             // for states
 #include "hmm.hh"                   // for HMM, HMM::bitmask_t
 #include "models/TreeInterface.hh"  // for TreeInterface
 #include "util/math/log-double.hh"  // for log_double_t
@@ -39,7 +39,7 @@ class data_partition;
 /// Namespace for the HMM for three pairwise alignments on adjacent branches of a tree.
 namespace A3 {
 
-  namespace states = A2::states;
+  namespace states = A1::states;
   typedef HMM::bitmask_t bitmask_t;
 
   std::vector<int> get_nodes_random(const TreeInterface& t,int n0);

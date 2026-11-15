@@ -21,7 +21,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/topological_sort.hpp>
 
-#include "2way.hh"
+#include "1way.hh"
 #include "alignment/alignment-util.hh"
 #include "util/assert.hh"
 
@@ -31,7 +31,7 @@ using boost::dynamic_bitset;
 void pairwise_alignment_t::flip()
 {
     for(int i=0;i<size();i++)
-	states_[i] = A2::flip(states_[i]);
+	states_[i] = A1::flip(states_[i]);
 }
 
 pairwise_alignment_t pairwise_alignment_t::flipped() const
@@ -91,14 +91,14 @@ bool operator==(const pairwise_alignment_t& pi1, const pairwise_alignment_t& pi2
 bitmask_8 convert_to_bits(int s, int b1, int b2)
 {
     bitmask_8 bits;
-    if (s == A2::states::M)
+    if (s == A1::states::M)
     {
 	bits.set(b1);
 	bits.set(b2);
     }
-    else if (s == A2::states::G1)
+    else if (s == A1::states::G1)
 	bits.set(b2);
-    else if (s == A2::states::G2)
+    else if (s == A1::states::G2)
 	bits.set(b1);
 
     return bits;
@@ -135,7 +135,7 @@ typedef boost::graph_traits<Graph>::edge_descriptor Edge_t;
 #include <map>
 using std::map;
 
-namespace A2
+namespace A1
 {
 
     pairwise_alignment_t get_pairwise_alignment(const matrix<int>& M, int n1, int n2)
@@ -169,7 +169,7 @@ namespace A2
     pairwise_alignment_t get_pairwise_alignment_from_path(const vector<int>& path)
     {
 	// Path should end in an E state.
-	assert(path.size() > 0 and path.back() == A2::states::E);
+	assert(path.size() > 0 and path.back() == A1::states::E);
 
 	pairwise_alignment_t pi;
 	int L = path.size()-1;
@@ -190,7 +190,7 @@ namespace A2
 	    path.push_back(A.get_state(i));
 
 	// Add the E at the end of the path.
-	path.push_back(A2::states::E);
+	path.push_back(A1::states::E);
 
 	return path;
     }
@@ -265,7 +265,7 @@ void graph_alignment::add_row_character_to_column(int row, int column)
 
 void graph_alignment::add_pairwise_alignment(int node1, int node2, const pairwise_alignment_t& pi)
 {
-    using namespace A2;
+    using namespace A1;
 
     // What is the next character to match in the sequence with index 'node1'?
     int index1 = 0;
@@ -336,7 +336,7 @@ struct Construct
 	 L(t.n_nodes(),0),
 	 children(t.n_nodes())
 	{ 
-	    using namespace A2;
+	    using namespace A1;
 
 	    assert(t.n_nodes() > 1);
 
@@ -387,7 +387,7 @@ struct Construct
 	    // 5. Check that the resulting matrix yields the correct pairwise alignments
 	    for(int b: t.directed_branches())
 	    {
-		pairwise_alignment_t a2 = A2::get_pairwise_alignment(M, t.source(b), t.target(b));
+		pairwise_alignment_t a2 = A1::get_pairwise_alignment(M, t.source(b), t.target(b));
 		assert(a[b] == a2);
 	    }
 #endif
@@ -399,7 +399,7 @@ struct Construct
 // Read a state and optionally pass it down to our children.
 void Construct::write_match(int node0)
 {
-    using namespace A2;
+    using namespace A1;
 
     // Read something,
     int S = states::E;
@@ -426,7 +426,7 @@ void Construct::write_match(int node0)
 // But first write out the columns of all insertions in children that occur before this column.
 int Construct::write_insertions(int node0)
 {
-    using namespace A2;
+    using namespace A1;
 
     while (true)
     {
@@ -452,7 +452,7 @@ int Construct::write_insertions(int node0)
 
 matrix<int> construct(const TreeInterface& t, const vector<pairwise_alignment_t>& A)
 {
-    using namespace A2;
+    using namespace A1;
 
     Construct C(A,t);
 
@@ -545,7 +545,7 @@ void write_match(int& c, BranchAlignment& n0);
 // Read a state and optionally pass it down to our children.
 void write_match(int& c, BranchAlignment& a)
 {
-    using namespace A2;
+    using namespace A1;
 
     auto& pa = a.pairwise_alignment;
     auto& pos = a.pos;
@@ -576,7 +576,7 @@ void write_match(int& c, BranchAlignment& a)
 // But first write out the columns of all insertions in children that occur before this column.
 int write_insertions(int& c, BranchAlignment& a)
 {
-    using namespace A2;
+    using namespace A1;
 
     auto& pa = a.pairwise_alignment;
 
@@ -622,7 +622,7 @@ object_ptr<R::RIntMap> construct2(const R::Exp& a)
     // 4. Create a tree-alignment structure with modifiable state.
     BranchAlignment na(a, A);
 
-    using namespace A2;
+    using namespace A1;
 
     // 5. Fill in the non-gap elements
     int c = 0;
@@ -634,7 +634,7 @@ object_ptr<R::RIntMap> construct2(const R::Exp& a)
     /*
     for(auto [source, target]: getBranches(a))
     {
-        pairwise_alignment_t a2 = A2::get_pairwise_alignment(M.at(source), M.at(target));
+        pairwise_alignment_t a2 = A1::get_pairwise_alignment(M.at(source), M.at(target));
         assert(a[b] == a2);
     }
     */
@@ -705,7 +705,7 @@ pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& pa
 
 int n_indels(const pairwise_alignment_t& a)
 {
-    using namespace A2;
+    using namespace A1;
 
     if (a.size() < 1) return 0;
 
@@ -727,7 +727,7 @@ int total_length_indels(const pairwise_alignment_t& a)
 
 int pairwise_alignment_t::count_indels() const
 {
-    using namespace A2;
+    using namespace A1;
 
     int n_indels = 0;
 

@@ -2,7 +2,7 @@
 #include "builtins/haskell-list-input.hh"
 #include "computation/machine/args.hh"
 #include "computation/haskell/ids.hh"
-#include "dp/2way.hh"
+#include "dp/1way.hh"
 #include "alignment/alignment.hh"
 #include "util/myexception.hh"
 

@@ -17,10 +17,10 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#ifndef A2_states_H
-#define A2_states_H
+#ifndef A1_states_H
+#define A1_states_H
 
-namespace A2
+namespace A1
 {
     namespace states {
 	constexpr int M  = 0;

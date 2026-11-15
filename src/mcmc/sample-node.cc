@@ -29,7 +29,7 @@
 #include "probability/choose.hh"
 #include "util/rng.hh"
 #include "util/log-level.hh"                         // for log_verbose
-#include "dp/2way.hh"
+#include "dp/1way.hh"
 #include "dp/3way.hh"
 #include "dp/alignment-sums.hh"
 #include "alignment/alignment-util.hh"

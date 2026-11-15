@@ -36,7 +36,7 @@
 #include "computation/runtime/ast.hh"
 #include "sequence/ambiguity.hh"
 
-#include "dp/2way.hh" // for pairwise_alignment_t
+#include "dp/1way.hh" // for pairwise_alignment_t
 
 class data_partition;
 

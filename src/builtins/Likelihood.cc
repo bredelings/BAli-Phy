@@ -3,7 +3,7 @@
 #include "builtins/native-vector-input.hh"
 #include "computation/machine/args.hh"
 #include "sequence/alphabet.hh"
-#include "dp/2way.hh"
+#include "dp/1way.hh"
 #include "substitution/ops.hh"
 #include "substitution/likelihood.hh"
 #include "util/myexception.hh"

@@ -23,7 +23,7 @@
 #include <iostream>
 #include <cmath>
 #include "sample.hh"
-#include "dp/2way.hh"
+#include "dp/1way.hh"
 #include "dp/alignment-sums.hh"
 #include "alignment/alignment-constraint.hh"
 #include "alignment/alignment-util.hh"
@@ -42,7 +42,7 @@ using std::vector;
 using std::shared_ptr;
 using std::optional;
 using boost::dynamic_bitset;
-using namespace A2;
+using namespace A1;
 
 /*
  * So we are are doing calc_prob_at_root( ) or calc_prob_not_at_root( ).
@@ -152,7 +152,7 @@ sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b
         return {Matrices, unavailable};
     }
 
-    P.set_pairwise_alignment(b, A2::get_pairwise_alignment_from_path(*path));
+    P.set_pairwise_alignment(b, A1::get_pairwise_alignment_from_path(*path));
 
     return {Matrices, available(sampling_pr)};
 }

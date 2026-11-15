@@ -25,7 +25,7 @@
 
 #include <cmath>
 #include "hmm.hh"
-#include "2way.hh"
+#include "1way.hh"
 #include "imodel/imodel.hh"
 
 using std::vector;
@@ -50,7 +50,7 @@ log_double_t HMM::path_Q_path(const vector<int>& path) const
 }
 
 HMM::HMM(const indel::PairHMM& P)
-    :HMM({3,2,1,0,0}, A2::states::S, A2::states::E, P.start_pi(), P, 1.0)
+    :HMM({3,2,1,0,0}, A1::states::S, A1::states::E, P.start_pi(), P, 1.0)
 { }
 
 HMM::bitmask_t HMM::all_bits() const

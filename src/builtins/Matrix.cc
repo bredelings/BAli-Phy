@@ -9,7 +9,7 @@
 #include "util/io.hh"
 #include "util/dense-matrix.hh"
 #include <valarray>
-#include "dp/2way.hh"
+#include "dp/1way.hh"
 #include "util/range.hh"
 #include "util/math/logsum.hh"
 #include "substitution/parsimony.hh"

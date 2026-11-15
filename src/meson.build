@@ -77,7 +77,7 @@ libbaliphy_sources = [
   'dp/dp-array.cc',
   'dp/dp-matrix.cc',
   'dp/dp-cube.cc',
-  'dp/2way.cc',
+  'dp/1way.cc',
   'dp/3way.cc',
   'dp/4way.cc',
   'dp/5way.cc',

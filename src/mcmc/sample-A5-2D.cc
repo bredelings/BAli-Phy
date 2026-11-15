@@ -32,7 +32,7 @@
 #include "util/mapping.hh"
 #include "util/rng.hh"
 #include "util/log-level.hh"
-#include "dp/2way.hh"
+#include "dp/1way.hh"
 #include "dp/5way.hh"
 #include "dp/hmm.hh"                                 // for HMM::bitmask_t, HMM
 #include "dp/alignment-sums.hh"

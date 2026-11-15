@@ -3,7 +3,7 @@
 #include <limits>
 #include <span>
 #include "dp/hmm.hh"
-#include "dp/2way.hh"
+#include "dp/1way.hh"
 #include "util/range.hh"
 #include "computation/runtime/ast.hh"
 

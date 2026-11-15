@@ -1,7 +1,7 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "builtins/native-vector-input.hh"
 #include "computation/machine/args.hh"
-#include "dp/2way.hh"
+#include "dp/1way.hh"
 #include "imodel/imodel.hh"
 #include "computation/haskell/ids.hh"
 #include "computation/runtime/ast.hh"
@@ -9,7 +9,7 @@
 #include "sequence/doublets.hh"
 #include "alignment/alignment.hh"
 #include "sequence/sequence-format.hh"
-#include "dp/2way.hh"
+#include "dp/1way.hh"
 #include "util/cmdline.hh"
 #include "util/range.hh"
 #include "util/rng.hh"
@@ -71,7 +71,7 @@ extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(O
     auto arg1 = Args.evaluate_slot_to_value(1);
     const indel::PairHMM& Q = arg1.as_<indel::PairHMM>();
 
-    using namespace A2;
+    using namespace A1;
 
     log_double_t P=1;
 
@@ -150,7 +150,7 @@ extern "C" closure builtin_function_transition_counts(OperationArgs& Args)
     Box<DenseMatrix<int>> counts(5,5);
     counts.setZero();
 
-    using namespace A2;
+    using namespace A1;
 
     int prev = states::S;
     for(int column=0;column<A.size();column++)
@@ -189,7 +189,7 @@ extern "C" closure builtin_function_rs07_branch_HMM(OperationArgs& Args)
     double heat = Args.evaluate_slot_to_value(2).as_double();
     bool in_training = is_runtime_bool_true(Args.evaluate_slot_to_value(3));
 
-    using namespace A2::states;
+    using namespace A1::states;
 
     // Here D = rate * t
 
@@ -273,7 +273,7 @@ extern "C" closure builtin_function_multi_rs07_branch_HMM(OperationArgs& Args)
     double heat = Args.evaluate_slot_to_value(5).as_double();
     bool in_training = is_runtime_bool_true(Args.evaluate_slot_to_value(6));
 
-    using namespace A2::states;
+    using namespace A1::states;
 
     // Here D = rate * t
 
@@ -367,7 +367,7 @@ extern "C" closure builtin_function_rs05_branch_HMM(OperationArgs& Args)
     assert(std::isnan(e) or (e >= 0.0 and e < 1.0));
 
     indel::PairHMM Q;
-    using namespace A2::states;
+    using namespace A1::states;
 
     Q(S ,S ) = 0;
     Q(S ,M ) = 1 - 2*delta;
@@ -407,7 +407,7 @@ extern "C" closure builtin_function_rs05_lengthp(OperationArgs& Args)
     indel::PairHMM QE = Args.evaluate_slot_to_value(0).as_<indel::PairHMM>();
     int l = Args.evaluate_slot_to_value(1).as_int();
 
-    using namespace A2::states;
+    using namespace A1::states;
 
     remove_one_state(QE,G2);
 
@@ -976,7 +976,7 @@ extern "C" closure builtin_function_mkNodeAlignment(OperationArgs& Args)
     int root_length = Args.evaluate_slot_to_value(1).as_int();
     auto branch_alignments = runtime_vector_from_value(Args.evaluate_slot_to_value(2));
 
-    object_ptr<Box<pairwise_alignment_t>> pairwise_alignment(new Box<pairwise_alignment_t>(vector<int>(root_length,A2::states::G1)));
+    object_ptr<Box<pairwise_alignment_t>> pairwise_alignment(new Box<pairwise_alignment_t>(vector<int>(root_length,A1::states::G1)));
 
     return closure(R::Exp{R::ConstructorApp("NodeAlignment", 3,
                                             {R::Int(source_node), R::ObjectValue(pairwise_alignment),
@@ -1268,9 +1268,9 @@ extern "C" closure builtin_function_showPairwiseAlignmentRaw(OperationArgs& Args
             c = 'D';
         else if (A.is_insert(i))
             c = 'I';
-        else if (A.get_state(c) == A2::states::E)
+        else if (A.get_state(c) == A1::states::E)
             c = 'E';
-        else if (A.get_state(c) == A2::states::S)
+        else if (A.get_state(c) == A1::states::S)
             c = 'S';
         else
             throw myexception()<<"showPairwiseAlignmentRaw: I don't recognize state "<<int(c)<<" at position "<<i<<"/"<<A.size();

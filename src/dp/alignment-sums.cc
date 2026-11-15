@@ -31,8 +31,8 @@
 #include <iostream>                                 // for operator<<, ostream
 #include <string>                                   // for operator<<
 #include "alignment/alignment.hh"                    // for operator<<
-#include "dp/2way.hh"                                // for pairwise_alignment_t
-#include "dp/A2_states.hh"                           // for E, S
+#include "dp/1way.hh"                                // for pairwise_alignment_t
+#include "dp/A1_states.hh"                           // for E, S
 #include "dp/dp-engine.hh"                           // for DPengine
 #include "imodel/imodel.hh"                          // for PairHMM
 #include "models/TreeInterface.hh"                   // for TreeInterface
@@ -52,17 +52,17 @@ using std::endl;
 
 matrix<int> get_path_counts(const pairwise_alignment_t& a)
 {
-  using namespace A2;
+  using namespace A1;
 
   matrix<int> counts(5,5,0);
 
-  int prev = A2::states::S;
+  int prev = A1::states::S;
   for(int i=0;i<a.size();i++)
   {
       counts(prev, a.get_state(i))++;
       prev = a.get_state(i);
   }
-  counts(prev, A2::states::E)++;
+  counts(prev, A1::states::E)++;
 
   return counts;
 }
@@ -70,7 +70,7 @@ matrix<int> get_path_counts(const pairwise_alignment_t& a)
 /// Probability of a pairwise alignment
 log_double_t prior_branch_from_counts(const matrix<int>& counts,const indel::PairHMM& Q)
 {
-  using namespace A2;
+  using namespace A1;
 
   log_double_t P=1;
 

@@ -18,12 +18,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "n_indels.hh"
-#include "dp/2way.hh"
+#include "dp/1way.hh"
 #include "util/range.hh"
 
 using std::vector;
 
-namespace states = A2::states;
+namespace states = A1::states;
 
 vector<int> get_indel_lengths(const alignment& A,const TreeInterface& T, int b)
 {

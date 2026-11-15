@@ -30,11 +30,11 @@
 #include "probability/probability.hh"
 #include "util/mapping.hh"
 #include "util/range.hh"
-#include "dp/2way.hh"
+#include "dp/1way.hh"
 
 using std::vector;
 using std::string;
-using namespace A2;
+using namespace A1;
 
 void remove_one_state(Matrix& Q,int S) {
     assert(Q.size1() == Q.size2());

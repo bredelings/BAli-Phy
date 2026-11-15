@@ -29,7 +29,7 @@
 #include "util/set.hh"
 #include "math/logprod.hh"
 #include "dp/hmm.hh"
-#include "dp/2way.hh"
+#include "dp/1way.hh"
 #include <boost/dynamic_bitset.hpp>
 
 // #define DEBUG_SUBSTITUTION

@@ -9,7 +9,7 @@
 #include "sequence/codons.hh"
 #include "util/io.hh"
 #include <valarray>
-#include "dp/2way.hh"
+#include "dp/1way.hh"
 #include "util/range.hh"
 #include <unsupported/Eigen/MatrixFunctions>
 #include "substitution/parsimony.hh"

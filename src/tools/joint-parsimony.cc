@@ -32,8 +32,8 @@
 #include "joint-A-T.hh"
 #include "tree-align/n_indels.hh"
 
-#include "dp/A2_states.hh"
-using namespace A2;
+#include "dp/A1_states.hh"
+using namespace A1;
 
 using std::cout;
 using std::vector;

@@ -33,7 +33,7 @@
 #include "sequence/codons.hh"
 #include "models/parameters.hh"
 #include "models/TreeInterface.hh"
-#include "dp/2way.hh"
+#include "dp/1way.hh"
 #include "util/rng.hh"
 #include "util/set.hh"
 #include "util/io.hh"

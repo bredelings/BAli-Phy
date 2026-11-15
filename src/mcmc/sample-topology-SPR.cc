@@ -26,7 +26,7 @@
 // This define causes assertion failures about the length of the root sequence in several tests.
 // #define DEBUG_SPR_ALL
 
-#include "dp/2way.hh"
+#include "dp/1way.hh"
 #include <cmath>
 #include "util/assert.hh"
 #include <iostream>

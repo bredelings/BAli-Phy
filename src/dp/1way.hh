@@ -17,14 +17,14 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#ifndef TWOWAY_H
-#define TWOWAY_H
+#ifndef ONEWAY_H
+#define ONEWAY_H
 
 #include "util/assert.hh"          // for assert
 #include <algorithm>               // for max
 #include "util/bitmask.hh"          // for bitmask
 #include <vector>                  // for vector
-#include "A2_states.hh"             // for G1, G2, M, E
+#include "A1_states.hh"             // for G1, G2, M, E
 #include "alignment/alignment.hh"   // for alignment
 #include "hmm.hh"                   // for HMM, HMM::bitmask_t
 #include "models/TreeInterface.hh"  // for TreeInterface
@@ -45,19 +45,19 @@ public:
     int length2() const;
 
     int count(int s) const;
-    int count_match() const {return count(A2::states::M);};
-    int count_insert() const {return count(A2::states::G1);};
-    int count_delete() const {return count(A2::states::G2);};
+    int count_match() const {return count(A1::states::M);};
+    int count_insert() const {return count(A1::states::G1);};
+    int count_delete() const {return count(A1::states::G2);};
     int count_indels() const;
 
     int size() const {return states_.size();};
     void resize(int s) {states_.resize(s);};
     void reserve(int s) {states_.reserve(s);};
 
-    void push_back(char state) { assert(state != A2::states::E); states_.push_back(state);};
-    void push_back_match() {states_.push_back(A2::states::M);};
-    void push_back_insert() {states_.push_back(A2::states::G1);};
-    void push_back_delete() {states_.push_back(A2::states::G2);};
+    void push_back(char state) { assert(state != A1::states::E); states_.push_back(state);};
+    void push_back_match() {states_.push_back(A1::states::M);};
+    void push_back_insert() {states_.push_back(A1::states::G1);};
+    void push_back_delete() {states_.push_back(A1::states::G2);};
     bool push_back(bool c1, bool c2) {
 	if (not c1 and not c2) return false;
 
@@ -71,18 +71,18 @@ public:
 	return true;
     }
 
-    bool is_match(int i) const {return states_[i] == A2::states::M;};
-    bool is_insert(int i) const {return states_[i] == A2::states::G1;};
-    bool is_delete(int i) const {return states_[i] == A2::states::G2;};
+    bool is_match(int i) const {return states_[i] == A1::states::M;};
+    bool is_insert(int i) const {return states_[i] == A1::states::G1;};
+    bool is_delete(int i) const {return states_[i] == A1::states::G2;};
 
     bool has_character1(int i) const {return not is_insert(i);}
     bool has_character2(int i) const {return not is_delete(i);}
 
     char  get_state(int i) const {return states_[i];};
     void set_state(int i, char S) {states_[i] = S;};
-    void set_match(int i) {states_[i] = A2::states::M;};
-    void set_insert(int i) {states_[i] = A2::states::G1;};
-    void set_delete(int i) {states_[i] = A2::states::G2;};
+    void set_match(int i) {states_[i] = A1::states::M;};
+    void set_insert(int i) {states_[i] = A1::states::G1;};
+    void set_delete(int i) {states_[i] = A1::states::G2;};
 
     pairwise_alignment_t& operator=(const pairwise_alignment_t&) = default;
 
@@ -104,7 +104,7 @@ alignment get_alignment(const alphabet& a, const std::vector<sequence>&, const s
 
 alignment get_alignment(const alignment& A1, const std::vector< std::vector<int>>& sequences, const matrix<int>& M);
 
-namespace A2 {
+namespace A1 {
 
     pairwise_alignment_t get_pairwise_alignment(const alignment& A, int n1, int n2);
 

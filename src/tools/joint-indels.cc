@@ -29,7 +29,7 @@
 #include "distance-methods.hh"
 #include "joint-A-T.hh"
 #include "partition.hh"
-#include "dp/A2_states.hh"
+#include "dp/A1_states.hh"
 #include <optional>
 #include <map>
 #include <CLI/CLI.hpp>
@@ -69,7 +69,7 @@ using std::optional;
 using std::map;
 using boost::dynamic_bitset;
 
-using namespace A2;
+using namespace A1;
 
 // OK, what does a complete conflict analysis look like?
 // For summaries, we want to map branches in the sampled tree
