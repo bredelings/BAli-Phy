@@ -70,6 +70,9 @@ bool cube_sample_alignment_branch_model(Parameters&,
 /// Resample gap/non-gap for internal nodes, where not already determined
 void sample_node(Parameters&,int node);
 
+/// Resample gap/non-gap at adjacent degree-two and degree-three nodes.
+void sample_A4(Parameters& P,int b);
+
 /// Resample gap/non-gap for 2 adjacent internal nodes, where not already determined
 void sample_A5(Parameters& P,int b);
 

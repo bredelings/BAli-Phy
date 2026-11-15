@@ -665,7 +665,20 @@ void three_way_time_tree_NNI_sample(owned_ptr<context>& P, MoveStats& Stats, int
     assert(T.away_from_root(b1));
 
     // 5. Check that node u is YOUNGER THAN node y
-    if (T.node_time(u) > T.node_time(y)) return;
+    if (T.node_time(u) > T.node_time(y))
+    {
+        if (not PP.variable_alignment()) return;
+
+        // The age condition rules out both swaps, but not an alignment-only update.
+        // It depends only on the tree, so the reverse alignment move takes this same path.
+        PP.select_root(b);
+        PP.cache_likelihood_branches();
+        if (T.degree(x) == 2)
+            sample_A4(PP, b);
+        else
+            sample_A5(PP, b);
+        return;
+    }
 
     if (other_branches.size() == 2)
     {
@@ -679,7 +692,6 @@ void three_way_time_tree_NNI_sample(owned_ptr<context>& P, MoveStats& Stats, int
 	// 6b. x is the root.
 	three_way_NNI_A4_sample(PP, Stats, b, b1, b2, b3);
 
-	// We could also create moves to resample the alignment on 2 adjacent branches.
     }
 }
 

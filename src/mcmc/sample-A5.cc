@@ -310,8 +310,15 @@ optional<int> sample_A5_multi(vector<Parameters>& p,const vector<A5::hmm_order>&
     for(int j=0;j<p[0].n_data_partitions();j++)
         if (p[0][j].has_pairwise_alignments())
 	{
-	    if (not p[0][j].alignment_is_random())
-		throw myexception()<<"Partition "<<j+1<<": can't change the tree topology because the tree-alignment is fixed!\n  Consider adding --imodel=none or --fix=tree or removing --fix=alignment.";
+            if (not p[0][j].alignment_is_random())
+            {
+                if (p.size() > 1)
+                    throw myexception()<<"Partition "<<j+1
+                        <<": can't change the tree topology because the tree-alignment is fixed!\n"
+                        <<"  Consider adding --imodel=none or --fix=tree or removing --fix=alignment.";
+                // A single candidate leaves fixed partitions unchanged; they have no sampling properties.
+                continue;
+            }
 
             a123456[j] = A5::get_bitpath(p[0][j], order[0]);
 	}
