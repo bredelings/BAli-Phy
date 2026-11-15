@@ -125,11 +125,10 @@ UntypedExpr add_stacked_arg(UntypedExpr arg, UntypedExpr callee)
         }
     }
 
-    CM::Arg<CM::NoAnn> new_arg{"", std::move(arg), false, false, std::nullopt};
     if (placeholder)
-        call->args[*placeholder] = std::move(new_arg);
+        call->args[*placeholder].value = std::move(arg);
     else
-        call->args.insert(call->args.begin(), std::move(new_arg));
+        call->args.insert(call->args.begin(), {"", std::move(arg), false, false, std::nullopt});
 
     return callee;
 }

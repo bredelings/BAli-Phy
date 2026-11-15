@@ -1,0 +1,3 @@
+print '# Preserve placeholder position and argument names, which ordinary model chains do not exercise.
+# Keep this coverage while +> supports explicit placeholders.
+[2 +> pow(3,_), 2 +> pow(x=3,y=_), 2 +> pow(y=_,x=3), 2 +> pow(3)]'

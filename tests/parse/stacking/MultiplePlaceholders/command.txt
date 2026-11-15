@@ -1,0 +1,3 @@
+print '# Successful substitutions cannot detect accidental acceptance of ambiguous placeholders.
+# Keep this check while +> permits at most one immediate placeholder.
+2 +> pow(_,_)'

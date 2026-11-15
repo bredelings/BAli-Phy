@@ -130,6 +130,7 @@ signed       {negative}?
 <EXPRESSION>"`" return zz::parser::make_BACKQUOTE (drv.location);
 "~"      return zz::parser::make_TILDE  (drv.location);
 "-"      return zz::parser::make_MINUS  (drv.location);
+<EXPRESSION>"_" return zz::parser::make_PLACEHOLDER (drv.location);
 
  /* Keep angle brackets separate in types so List<List<a>> closes twice. */
 <TYPE>"<"      return zz::parser::make_LT (drv.location);
