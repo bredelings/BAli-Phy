@@ -442,6 +442,12 @@ optional<int> sample_star_multi_calculation::choose(bool correct)
 	if (not ok)
 	    assert(i != 0 and i != p.size()-1);
 
+        // Compare at the DP combination node so numerical rerooting error does not
+        // obscure this check. The copy leaves the candidate's computational roots unchanged.
+        auto diagnostic = p[i];
+        if (ok)
+            diagnostic.set_root(nodes[i][0]);
+
 	for(int j=0;j<p[i].n_data_partitions();j++) 
 	    if (p[i][j].variable_alignment() and ok and sampled[i][j])
 	    {
@@ -450,10 +456,10 @@ optional<int> sample_star_multi_calculation::choose(bool correct)
                                                    : A3::get_bitpath(p[i][j], nodes[i]);
                 paths[i].push_back(get_path_unique(bitpath, *Matrices[i][j]));
 	  
-		auto OS = other_subst(p[i][j],nodes[i]);
-		auto OP = other_prior(p[i][j],nodes[i]) / node_length_correction(p[i][j], nodes[i][0]);
+		auto OS = other_subst(diagnostic[j],nodes[i]);
+		auto OP = other_prior(diagnostic[j],nodes[i]) / node_length_correction(diagnostic[j], nodes[i][0]);
 	
-		check_match_P(p[i][j], OS, OP, paths[i][j], *Matrices[i][j]);
+		check_match_P(diagnostic[j], OS, OP, paths[i][j], *Matrices[i][j]);
 	    }
 	    else
 		paths[i].push_back( vector<int>() );

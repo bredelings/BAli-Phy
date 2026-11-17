@@ -461,15 +461,21 @@ optional<int> sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_orde
         if (not ok)
             assert(i != 0 and i != p.size()-1);
 
+        // Compare at the DP combination node so numerical rerooting error does not
+        // obscure this check. The copy leaves the candidate's computational roots unchanged.
+        auto diagnostic = p[i];
+        if (ok)
+            diagnostic.set_root(order[i].nodes[4]);
+
         for(int j=0;j<p[i].n_data_partitions();j++)
             if (p[i][j].variable_alignment() and ok and sampled[i][j])
             {
                 paths[i].push_back( get_path_unique(A5::get_bitpath(p[i][j], order[i]), *Matrices[i][j]) );
 
-                auto OS = other_subst(p[i][j],order[i].nodes);
-                auto OP = other_prior(p[i][j],order[i].nodes) / A5::correction(p[i][j],order[i]);
+                auto OS = other_subst(diagnostic[j],order[i].nodes);
+                auto OP = other_prior(diagnostic[j],order[i].nodes) / A5::correction(diagnostic[j],order[i]);
 
-                check_match_P(p[i][j], OS, OP, paths[i][j], *Matrices[i][j]);
+                check_match_P(diagnostic[j], OS, OP, paths[i][j], *Matrices[i][j]);
             }
             else
                 paths[i].push_back( vector<int>() );

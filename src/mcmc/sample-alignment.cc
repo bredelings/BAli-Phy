@@ -236,22 +236,28 @@ Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool check_init
 
     //------------------- Check offsets from path_Q -> P -----------------//
     for(int i=0;i<p.size();i++) 
+    {
+        // Compare at the DP combination node so numerical rerooting error does not
+        // obscure this check. The copy leaves the candidate's computational roots unchanged.
+        auto diagnostic = p[i];
+        diagnostic.set_root(node2);
 	for(int j=0;j<p[i].n_data_partitions();j++) 
 	    if (p[i][j].variable_alignment() and sampled[i][j])
 	    {
 		auto a = p[i][j].get_pairwise_alignment(p[i].t().find_branch(node1,node2));
 		paths[i].push_back( get_path_from_pairwise_alignment(a) );
     
-		OS[i].push_back( other_subst(p[i][j],nodes) );
-		OP[i].push_back( other_prior(p[i][j],nodes) );
+		OS[i].push_back( other_subst(diagnostic[j],nodes) );
+		OP[i].push_back( other_prior(diagnostic[j],nodes) );
 	
-		check_match_P(p[i][j], OS[i][j], OP[i][j], paths[i][j], *Matrices[i][j]);
+		check_match_P(diagnostic[j], OS[i][j], OP[i][j], paths[i][j], *Matrices[i][j]);
 	    }
 	    else {
 		paths[i].push_back( vector<int>() );
 		OS[i].push_back( 1 );
 		OP[i].push_back( 1 );
 	    }
+    }
 
     //--------- Compute path probabilities and sampling probabilities ---------//
     if (check_initial)
