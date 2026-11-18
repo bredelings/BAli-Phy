@@ -746,9 +746,10 @@ bool Parameters::can_set_root(int node) const
     return true;
 }
 
+// The computational root may be a leaf: the likelihood includes observations at the root.
+// Callers choose the root's placement for efficient updates.
 void Parameters::set_root_(int node) const
 {
-    assert(not t().is_leaf_node(node));
     const context* C = this;
     // What if all the partitions have the SAME subst_root modifiable?
     for(int p=0;p<n_data_partitions();p++)
