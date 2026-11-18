@@ -2,43 +2,44 @@
 
 ## Breaking changes
 
- - The M1a–M8a families, BranchModel, and BranchSite now default to GTR, multi-nucleotide
-   mutations, and amino-acid fitnesses instead of GY94. Explicit submodels are unchanged.
- - Use 10 instead of 4 Beta categories by default in M7, M8, M8a, and M8a_test.
  - Split BranchSite into BranchSiteA and BranchSiteA_test
+ - The M1a–M8a families, BranchModel, and BranchSiteA now default to GTR, multi-nucleotide
+   mutations, and amino-acid fitnesses instead of GY94.
+ - Use 10 instead of 4 Beta categories by default in M7, M8, M8a, and M8a_test.
  - Remove `alignment-convert` in favor of `alignment-cat -o <format>`.
 
 ## Features
 
+ - Improve tree drawing and keep labels clear of branches, nodes, and other labels.
  - Depict length of branches inside consensus polytomies by default.
- - Report mean pairwise differences and per-site parsimony scores in alignment summaries.
- - Allow running Python tools from Git Bash and MSYS2 Bash on Windows.
- - Extend Yule tree priors with explicit origin/crown ages and conditioning on the number of tips.
- - Add Birth-Death prior with the same conditioning.
+ - Birth-Death prior and Yule prior with explicit origin/crown ages and conditioning on the number of tips.
  - Extend covarion models to handle components with different equilibrium frequencies.
  - Allow specifying root frequencies for nonEq when there are more states than letters.
+ - Add distribution densities, CDFs, and quantiles.
+ - Allow running Python tools from Git Bash and MSYS2 Bash on Windows.
+
+## Speed
+
  - Speed up model compilation and startup.
  - Avoid unnecessary recomputation during MCMC.
- - Add distribution densities, CDFs, and quantiles.
 
 ## Fixes
 
+ - Give clear error messages when different data partitions have different sequence names.
  - Fix crash in windows executables.
  - Fix character attributes for fixed alignments.
- - Don't crash summarizing MCMC runs if the tree has foreground attributes.
- - Give clear error messages when different data partitions have different sequence names.
- - Improve tree drawing and keep labels clear of branches, nodes, and other labels.
- - Make estimation of branch lengths and "node lengths" faster and more robust.
+ - Fix crash summarizing MCMC runs if the tree has foreground attributes.
  - Fix minor errors in consensus trees and tree-support summaries.
  - Fix minor errors in alignment processing, ancestral sequence summaries, and indel reports.
  - Fix marginal-likelihood estimation and uncertainty reporting in `model_P`.
+ - Fix alignment resampling with degree-2 nodes.
  - Restore the relative component rates in the UL2 and UL3 protein mixture models.
 
 ## Documentation
  
  - Update and fill out man pages.
+ - Fill out help models, distributions, and model-language functions.
  - Add function help to the website.
- - Expand help for models, distributions, and model-language functions.
  - Expand the user guide and tutorials on selection tests and per-letter evolutionary properties.
  
 ## Internal
