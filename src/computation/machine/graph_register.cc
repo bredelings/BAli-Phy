@@ -576,11 +576,19 @@ const closure& reg_heap::get_effect(int s) const
     return closure_at(r);
 }
 
-std::set<int> reg_heap::find_affected_sampling_events(int c, const std::function<void(void)>& do_changes)
+std::vector<int> reg_heap::find_affected_sampling_events(int c, const std::function<void(void)>& do_changes)
 {
-    std::set<int> downstream_sampling_events;
+    // Return the events in the order in which they are found.  Parameters lists its data partitions in
+    // this order, and the partitions draw random numbers in turn, so the order must not depend on reg
+    // numbers: a std::set<int> is walked in an order that changes with how the heap is laid out.
+    std::vector<int> downstream_sampling_events;
+    std::unordered_set<int> found;
 
-    auto register_sampling_event = [&](const register_prob& r,int) { downstream_sampling_events.insert(r.r_dist);};
+    auto register_sampling_event = [&](const register_prob& r,int)
+    {
+        if (found.insert(r.r_dist).second)
+            downstream_sampling_events.push_back(r.r_dist);
+    };
 
     handler_registration likelihood_handler(unregister_likelihood_handlers, register_sampling_event);
     handler_registration prior_handler(unregister_prior_handlers, register_sampling_event);
@@ -1252,7 +1260,7 @@ void reg_heap::unregister_transition_kernel(int r, int s)
     assert(not transition_kernels_.count(s));
 }
 
-const std::unordered_set<int>& reg_heap::transition_kernels() const
+const insertion_ordered_set<int>& reg_heap::transition_kernels() const
 {
     return transition_kernels_;
 }
@@ -1283,7 +1291,7 @@ void reg_heap::unregister_logger(int r, int s)
     assert(not loggers_.count(s));
 }
 
-const std::unordered_set<int>& reg_heap::loggers() const
+const insertion_ordered_set<int>& reg_heap::loggers() const
 {
     return loggers_;
 }

@@ -7,6 +7,7 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
+#include "util/insertion-ordered-set.hh"
 #include <cstdint>
 #include "computation/object.hh"
 #include <utility>
@@ -369,7 +370,7 @@ public:
     void stack_pop(int r);
     int stack_pop();
 
-    std::set<int> find_affected_sampling_events(int c, const std::function<void()>& do_changes);
+    std::vector<int> find_affected_sampling_events(int c, const std::function<void()>& do_changes);
 
 private:
     void do_pending_effect_registrations();
@@ -448,23 +449,26 @@ public:
     void unregister_prior(const register_prob& e, int s);
 
     int next_interchangeable_id = 0;
-    std::map<int, std::multiset<int>> interchangeables;
+    // The entries of each interchangeable collection, in order of registration.  Moves pick entries
+    // from this list by position, so its order must not depend on reg numbers.
+    std::map<int, insertion_ordered_set<int>> interchangeables;
 
     void   register_interchangeable(const RegisterInterchangeable& I, int s);
     void unregister_interchangeable(const RegisterInterchangeable& I, int s);
 
-    // the list of transition kernels
-    std::unordered_set<int> transition_kernels_;
+    // the list of transition kernels, by the step that registered them.
+    // This is walked to hand out random occurrence times, so its order must not depend on step numbers.
+    insertion_ordered_set<int> transition_kernels_;
 
-    const std::unordered_set<int>& transition_kernels() const;
+    const insertion_ordered_set<int>& transition_kernels() const;
 
     void   register_transition_kernel(int r, int s);
     void unregister_transition_kernel(int r, int s);
 
-    // the list of transition kernels
-    std::unordered_set<int> loggers_;
+    // the list of loggers, by the step that registered them
+    insertion_ordered_set<int> loggers_;
 
-    const std::unordered_set<int>& loggers() const;
+    const insertion_ordered_set<int>& loggers() const;
 
     void   register_logger(int r, int s);
     void unregister_logger(int r, int s);
@@ -614,8 +618,10 @@ private:
     mutable std::vector<bitmask_8> prog_temp;
     mutable std::vector<bitmask_8> prog_unshare;
 
-    std::unordered_set<int> steps_pending_effect_registration;
-    std::unordered_set<int> steps_pending_effect_unregistration;
+    // Effects are registered and unregistered in the order in which their steps became pending,
+    // so that the order of the registered effects does not depend on step numbers.
+    insertion_ordered_set<int> steps_pending_effect_registration;
+    insertion_ordered_set<int> steps_pending_effect_unregistration;
 
 public:
 

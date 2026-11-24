@@ -131,8 +131,8 @@ public:
 
 public:
 
-    std::set<int> tweak_and_find_affected_sampling_events(const std::function<void(context_ref&)>&);
-    std::set<int> find_affected_sampling_events(const std::function<void(context_ref&)>&);
+    std::vector<int> tweak_and_find_affected_sampling_events(const std::function<void(context_ref&)>&);
+    std::vector<int> find_affected_sampling_events(const std::function<void(context_ref&)>&);
 
     /// Add a literal expression that MAY be reduced
     int add_compute_expression_(closure&&);

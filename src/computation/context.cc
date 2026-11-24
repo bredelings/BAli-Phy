@@ -14,6 +14,7 @@
 #include "util/rng.hh"
 #include "util/log-level.hh"
 #include "util/permute.hh"
+#include "util/insertion-ordered-set.hh"
 #include "tools/stats-table.hh" /// for has_children( )
 
 #include <boost/multi_index_container.hpp>
@@ -252,8 +253,10 @@ void context_ref::run_transition_kernels()
         add_transition_kernel(e, s, 0, tk_groups);
     }
 
+    // Each added kernel is given a random occurrence time below, in the order of this set.
+    // Walk it in the order of registration: the order of the step numbers depends on the heap layout.
     std::set<int> tk_steps_removed;
-    std::set<int> tk_steps_added;
+    insertion_ordered_set<int> tk_steps_added;
 
     std::function<void(int, int)> register_tk_handler = [&](int, int s)
     {
@@ -269,9 +272,8 @@ void context_ref::run_transition_kernels()
 
     std::function<void(int, int)> unregister_tk_handler = [&](int, int s)
     {
-        auto it = tk_steps_added.find(s);
-        if (it != tk_steps_added.end())
-            tk_steps_added.erase(it);
+        if (tk_steps_added.count(s))
+            tk_steps_added.erase(s);
         else
         {
             assert(not tk_steps_removed.count(s));
@@ -449,14 +451,14 @@ void context_ref::interchange_regs(int r1, int r2)
 }
 
 
-std::set<int> context_ref::tweak_and_find_affected_sampling_events(const std::function<void(context_ref&)>& tweak)
+std::vector<int> context_ref::tweak_and_find_affected_sampling_events(const std::function<void(context_ref&)>& tweak)
 {
     auto do_changes = [&]() {tweak(*this);};
     evaluate_program();
     return memory()->find_affected_sampling_events(context_index, do_changes);
 }
 
-std::set<int> context_ref::find_affected_sampling_events(const std::function<void(context_ref&)>& tweak)
+std::vector<int> context_ref::find_affected_sampling_events(const std::function<void(context_ref&)>& tweak)
 {
     context C2 = *this;
     return C2.tweak_and_find_affected_sampling_events(tweak);
