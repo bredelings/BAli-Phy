@@ -26,9 +26,26 @@
 #ifndef DP_MATRIX_H
 #define DP_MATRIX_H
 
+#include <climits>
+#include <memory>
+#include <new>
+#include <string>
 #include <vector>
 #include "dp-engine.hh"
 #include "substitution/cache.hh"
+
+/// Thrown instead of allocating a DP matrix of more than UINT_MAX values.
+/// It is a std::bad_alloc, so the moves that already skip a proposal on allocation failure
+/// keep doing so, but it says which matrix was refused and how large it would have been.
+class dp_matrix_too_large: public std::bad_alloc
+{
+    // Shared so that copying the exception cannot throw.
+    std::shared_ptr<const std::string> message;
+public:
+    const char* what() const noexcept override {return message->c_str();}
+
+    dp_matrix_too_large(int size1, int size2, long int cells, int values_per_cell);
+};
 
 struct Cell
 {
@@ -157,7 +174,7 @@ public:
 
         long int mem = offset * s3;
         if (mem > UINT_MAX)
-            throw std::bad_alloc();
+            throw dp_matrix_too_large(s1, s2, offset, s3);
         data = new double[mem];
     }
 

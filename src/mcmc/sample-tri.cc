@@ -371,8 +371,8 @@ optional<int> sample_tri_2D_multi(vector<Parameters>& p, const vector<vector<int
         tri.set_proposal_probabilities(rho);
         return tri.choose();
     }
-    catch (std::bad_alloc&) {
-        std::cerr<<"Allocation failed in sample_tri_2D_multi!  Proceeding."<<std::endl;
+    catch (std::bad_alloc& e) {
+        std::cerr<<"Allocation failed in sample_tri_2D_multi: "<<e.what()<<"!  Proceeding."<<std::endl;
         return {};
     }
 }
@@ -450,8 +450,8 @@ optional<int> sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >
 	else
 	    return {};
     }
-    catch (std::bad_alloc&) {
-	std::cerr<<"Allocation failed in sample_tri_multi!  Proceeding."<<std::endl;
+    catch (std::bad_alloc& e) {
+	std::cerr<<"Allocation failed in sample_tri_multi: "<<e.what()<<"!  Proceeding."<<std::endl;
 	return {};
     }
 }

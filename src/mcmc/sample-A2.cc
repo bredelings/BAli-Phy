@@ -130,9 +130,9 @@ void sample_A2(Parameters& P, int middle, int left)
                 P = p[*choice];
         }
     }
-    catch (const std::bad_alloc&)
+    catch (const std::bad_alloc& e)
     {
-        std::cerr<<"Allocation failed in sample_A2! Proceeding.\n";
+        std::cerr<<"Allocation failed in sample_A2: "<<e.what()<<"!  Proceeding."<<std::endl;
     }
     P.evaluate_program();
 }

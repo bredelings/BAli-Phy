@@ -22,6 +22,7 @@
 #include <valarray>
 #include <iostream>
 #include <cmath>
+#include <new>                                       // for bad_alloc
 #include "sample.hh"
 #include "dp/1way.hh"
 #include "dp/alignment-sums.hh"
@@ -191,24 +192,38 @@ Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool check_init
     vector< vector< shared_ptr<DPmatrixSimple> > > Matrices(1);
     vector<vector<bool>> sampled(1);
     auto total_sampling_pr = available(log_double_t(1.0));
-    for(int i=0;i<p.size();i++) 
+    try
     {
-	for(int j=0;j<p[i].n_data_partitions();j++) 
-	    if (p[i][j].variable_alignment()) 
-	    {
-                auto [M, sampling_pr] = sample_alignment_base(p[i][j], b, bandwidth);
-		total_sampling_pr *= sampling_pr;
-		Matrices[i].push_back(M);
-		sampled[i].push_back(sampling_pr.has_value());
-		// If sampling is unavailable, the alignment for this partition is unchanged.
+        for(int i=0;i<p.size();i++)
+        {
+            for(int j=0;j<p[i].n_data_partitions();j++)
+                if (p[i][j].variable_alignment())
+                {
+                    auto [M, sampling_pr] = sample_alignment_base(p[i][j], b, bandwidth);
+                    total_sampling_pr *= sampling_pr;
+                    Matrices[i].push_back(M);
+                    sampled[i].push_back(sampling_pr.has_value());
+                    // If sampling is unavailable, the alignment for this partition is unchanged.
 #ifndef NDEBUG
-		p[i][j].likelihood();  // check the likelihood calculation
+                    p[i][j].likelihood();  // check the likelihood calculation
 #endif
-	    }
-	    else {
-		Matrices[i].push_back(shared_ptr<DPmatrixSimple>());
-		sampled[i].push_back(false);
-	    }
+                }
+                else {
+                    Matrices[i].push_back(shared_ptr<DPmatrixSimple>());
+                    sampled[i].push_back(false);
+                }
+        }
+    }
+    catch (std::bad_alloc& e)
+    {
+        // The DP matrix for some partition could not be allocated, so skip this proposal as the
+        // three-branch moves do.  Earlier partitions may already have new alignments in p[0]:
+        // discard them before evaluating P, which must not have modified copies when it is executed.
+        std::cerr<<"Allocation failed in sample_alignment: "<<e.what()<<"!  Proceeding."<<std::endl;
+        p.clear();
+        Matrices.clear();
+        P.evaluate_program();
+        return unavailable;
     }
 
     Availability<ProbDensity> total_ratio;

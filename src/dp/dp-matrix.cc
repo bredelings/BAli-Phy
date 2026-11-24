@@ -26,6 +26,8 @@
 #include <cmath>
 
 #include <climits>
+#include <iomanip>
+#include <sstream>
 #include "dp-matrix.hh"
 #include "math/pow2.hh"
 #include "probability/choose.hh"
@@ -45,6 +47,22 @@ using std::optional;
 MatrixShape::MatrixShape(const MatrixSize& ms, YBoundaries&& yb)
     :MatrixSize(ms),
      yboundaries( std::move(yb) )
+{
+}
+
+static std::string dp_matrix_too_large_message(int size1, int size2, long int cells, int values_per_cell)
+{
+    const double GiB = 1024.0*1024.0*1024.0;
+    std::ostringstream o;
+    o<<std::fixed<<std::setprecision(1);
+    o<<"DP matrix too large: "<<size1<<" x "<<size2<<" columns, "<<cells<<" cells of "<<values_per_cell
+     <<" values = "<<double(cells)*values_per_cell*sizeof(double)/GiB<<" GiB, but at most "
+     <<UINT_MAX<<" values ("<<double(UINT_MAX)*sizeof(double)/GiB<<" GiB) are allowed";
+    return o.str();
+}
+
+dp_matrix_too_large::dp_matrix_too_large(int size1, int size2, long int cells, int values_per_cell)
+    :message(std::make_shared<const std::string>(dp_matrix_too_large_message(size1, size2, cells, values_per_cell)))
 {
 }
 
