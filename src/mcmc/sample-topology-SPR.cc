@@ -918,7 +918,7 @@ move_pruned_subtree(mutable_data_partition P, const vector<HMM::bitmask_t>& alig
         A_bcd = Glue_A(A_bc, A_bd);
     }
     else
-        auto A_bcd = std::move(A_bc);
+        A_bcd = std::move(A_bc);
     auto A_abxcd = Glue_A(alignment_prev, A_bcd);
 
     // 2. Recompute presence/absence of character in b after moving x from ab to bc
