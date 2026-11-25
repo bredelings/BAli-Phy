@@ -1594,7 +1594,8 @@ static std::int64_t spr_jump_length()
     return std::llround(2 + gamma(shape, 4));
 }
 
-void choose_subtree_branch_nodes(const TreeInterface& T,int & b1, int& b2) 
+// Choose the subtree on a tip-to-tip path, then the destination on the full reduced path.
+static optional<std::pair<int,int>> choose_subtree_branch_nodes(const TreeInterface& T)
 {
     //------------------- Choose nodes --------------------//
     int n1 = myrandom(T.n_leaves());
@@ -1604,28 +1605,26 @@ void choose_subtree_branch_nodes(const TreeInterface& T,int & b1, int& b2)
     n2 = T.leaf_nodes()[n2];
 
     vector<int> path = path_to(T,n1,n2);
-    assert(path.size() >= 3);
+    const int N = static_cast<int>(path.size()) - 2;
+    // Regrafting moves one degree-three node along this path, preserving the number
+    // of eligible prune sites. Retain the original indices for the destination walk.
+    vector<int> eligible;
+    for (int i = 1; i <= N; ++i)
+        if (T.degree(path[i]) == 3) eligible.push_back(i);
+    if (eligible.empty()) return {};
 
-    //-------------- Choose subtree on path ----------------//
-    int N = path.size() - 2;
-    int A = 1+myrandom(N);
-
-    b1 = -1;
-    for(int n: T.neighbors(path[A])) {
-	if (n == path[A-1]) continue;
-	if (n == path[A+1]) continue;
-
-	b1 = T.find_branch(n,path[A]);
-	break;
-    }
-    assert(b1 != -1);
+    const int A = uniform_element(eligible);
+    auto neighbors = T.neighbors(path[A]);
+    auto off_path = std::ranges::find_if(neighbors, [&](int n) {return n != path[A-1] and n != path[A+1];});
+    assert(off_path != neighbors.end());
+    const int b1 = T.find_branch(*off_path, path[A]);
 
     //-------------- Choose branch on path ----------------//
 
     const auto steps = spr_jump_length();
     const bool forward = uniform() < 0.5;
     const int edge = spr_path_target_edge(N, A, forward, steps);
-    b2 = T.undirected(T.find_branch(path[edge], path[edge+1]));
+    return std::pair{b1, T.undirected(T.find_branch(path[edge], path[edge+1]))};
 }
 
 void sample_SPR_flat(owned_ptr<context>& P,MoveStats& Stats) 
@@ -1652,8 +1651,9 @@ void sample_SPR_nodes(owned_ptr<context>& P,MoveStats& Stats)
 
     for(int i=0;i<n;i++) {
 
-	int b1=-1, b2=-1;
-	choose_subtree_branch_nodes(PP.t(), b1, b2);
+	auto branches = choose_subtree_branch_nodes(PP.t());
+        if (not branches) continue;
+        auto [b1, b2] = *branches;
 
 	double L = PP.t().branch_length(b1);
 
