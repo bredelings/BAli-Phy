@@ -816,15 +816,15 @@ Parameters::Parameters(const context_ref& C, int tree_reg, const std::vector<int
         auto tweak_tree = [&](context_ref& C)
         {
             ModifiablesTreeInterface T(C, tree_reg);
-            optional<int> internal_branch;
-            for(int b: T.internal_branches())
-                internal_branch=b;
-            if (internal_branch)
+            auto internal = T.internal_branches();
+            if (not internal.empty())
             {
-                vector<int> branches;
-                T.append_branches_after(T.reverse(*internal_branch), branches);
-                T.append_branches_after(*internal_branch, branches);
-                tryNNI(T, branches[0], branches[2]);
+                // A trial exchange detects topology dependencies. Each end of an internal
+                // edge has another branch, even when either endpoint has degree two.
+                int b = internal.back();
+                auto left = T.branches_after(T.reverse(b));
+                auto right = T.branches_after(b);
+                tryNNI(T, left.front(), right.front());
             }
 
 	    if (T.n_branches() > 0)
