@@ -199,6 +199,11 @@ test('bali-phy 5d +A 50', baliphy,
 test('bali-phy 5d +A Yule SPR', baliphy,
      args:['--seed', '61417', packagepath, small_fasta, '--iterations=2',
            '-T', '~Yule(taxa,1,Origin,Flat,Tips(length(taxa)))'], timeout: 300)
+# Force the specialized A5 2D move on eight columns. Its NNI candidates start with unset
+# alignments in debug builds; ordinary NNI does not exercise the temporary alignment backup.
+test('bali-phy 5d A5 2D NNI', baliphy,
+     args:['--seed', '61417', packagepath, meson.project_source_root() / 'tests/data/5d-muscle.fasta:1-8',
+           '--iterations=2', '--set', 'A5_fraction=1', '--set', 'NNI+A_fraction=1'], timeout: 300)
 test('bali-phy 48 +A 3', baliphy,
      args:['--seed', randomseed, '-V', packagepath, big_fasta, '--iterations=3'], timeout: 600)
 test('bali-phy 5d -A 200', baliphy,

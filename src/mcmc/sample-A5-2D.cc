@@ -102,8 +102,21 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     // Combining dists3 + dists4 -> dists34 needs to (a) propagate across branch b54 and (b) include root frequencies if the root is behind b54.
     // These temporary alignments construct dists34.  Restore them unless a complete path and
     // finite sampling probability are available to replace all five affected alignments.
-    auto alignment25 = P.get_pairwise_alignment(b25);
-    auto alignment35 = P.get_pairwise_alignment(b35);
+    // NNI can leave the proposed branches unset. An unset entry and an empty alignment
+    // are different states; save each branch independently before installing the projections.
+    optional<pairwise_alignment_t> alignment25, alignment35;
+    if (not P.pairwise_alignment_is_unset(b25)) alignment25 = P.get_pairwise_alignment(b25);
+    if (not P.pairwise_alignment_is_unset(b35)) alignment35 = P.get_pairwise_alignment(b35);
+
+    // Restore the candidate's entry state when the DP cannot supply a replacement path.
+    auto restore_alignments = [&]()
+    {
+        if (alignment25) P.set_pairwise_alignment(b25, *alignment25);
+        else P.unset_pairwise_alignment(b25);
+        if (alignment35) P.set_pairwise_alignment(b35, *alignment35);
+        else P.unset_pairwise_alignment(b35);
+    };
+
     P.set_pairwise_alignment(b25, get_pairwise_alignment_from_bits(a234, 2, 5));
     P.set_pairwise_alignment(b35, get_pairwise_alignment_from_bits(a234, 3, 5));
     auto dists34 = P.cache(b54);
@@ -178,8 +191,7 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     if (not path_g)
     {
 	if (log_verbose > 0) std::cerr<<"sample_A5_2D_base( ): path probabilities sum to "<<Matrices->Pr_sum_all_paths()<<"!"<<std::endl;
-	P.set_pairwise_alignment(b25, alignment25);
-	P.set_pairwise_alignment(b35, alignment35);
+	restore_alignments();
 	return {Matrices, unavailable};
     }
 
@@ -192,8 +204,7 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     {
         if (log_verbose > 0)
             std::cerr<<"sample_A5_2D_base( ): sampling probability is "<<sampling_pr<<"!"<<std::endl;
-        P.set_pairwise_alignment(b25, alignment25);
-        P.set_pairwise_alignment(b35, alignment35);
+        restore_alignments();
         return {Matrices, unavailable};
     }
 
