@@ -2,7 +2,10 @@
 #include "computation/haskell/Integer.hh"
 #include "util/utf8.hh"
 #include "util/math/ProbDensity.hh"
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
+#include <limits>
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 
 using boost::dynamic_pointer_cast;
@@ -295,6 +298,41 @@ extern "C" R::Exp simple_function_signum_double(vector<R::Exp>& args)
     double result = (x > 0.0 ? 1.0 : 0.0) - (x < 0.0 ? 1.0 : 0.0);
 
     return {result};
+}
+
+// Round the exact ratio on the grid of representable doubles in its binade. Subnormals
+// share one grid spacing, down to zero. At a midpoint the even significand wins.
+extern "C" R::Exp simple_function_ratioToDouble(vector<R::Exp>& args)
+{
+    integer n = get_arg(args).as_integer();
+    integer d = get_arg(args).as_integer();
+    const bool negative = (n < 0) != (d < 0);
+    using limits = std::numeric_limits<double>;
+    static_assert(limits::radix == 2);
+    if (d == 0)
+        return {n == 0 ? limits::quiet_NaN() : std::copysign(limits::infinity(), negative ? -1.0 : 1.0)};
+    if (n == 0) return {negative ? -0.0 : 0.0};
+    if (n < 0) n = -n;
+    if (d < 0) d = -d;
+
+    // The bit-length difference is either floor(log2(n/d)) or one greater.
+    // Bound it before shifting so even very large inputs require only double-sized shifts.
+    std::int64_t exponent = std::int64_t(msb(n)) - std::int64_t(msb(d));
+    constexpr int min_spacing = limits::min_exponent - limits::digits;
+    if (exponent > limits::max_exponent)
+        return {negative ? -limits::infinity() : limits::infinity()};
+    if (exponent < min_spacing - 1) return {negative ? -0.0 : 0.0};
+    if (exponent >= 0 ? n < (d << exponent) : (n << -exponent) < d) --exponent;
+    int spacing = std::max(min_spacing, static_cast<int>(exponent) + 1 - limits::digits);
+    if (spacing > 0) d <<= spacing;
+    else n <<= -spacing;
+
+    integer q, remainder;
+    divide_qr(n, d, q, remainder);
+    remainder <<= 1;
+    if (remainder > d or (remainder == d and bit_test(q, 0))) ++q;
+    const double value = std::ldexp(q.convert_to<double>(), spacing);
+    return {negative ? -value : value};
 }
 
 extern "C" R::Exp simple_function_integerToDouble(vector<R::Exp>& args)

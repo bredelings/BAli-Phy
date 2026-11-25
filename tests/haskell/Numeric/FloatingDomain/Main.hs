@@ -4,7 +4,9 @@ module Main where
 import Numeric.Pow
 import Compiler.Floating
 import Compiler.Fractional
+import Compiler.Integral ((^))
 import Compiler.Classes
+import Compiler.Ratio
 import Compiler.Num
 import Compiler.RealFloat
 import Data.Eq
@@ -73,3 +75,14 @@ main = do
   print (checkOrdering (isNaN . ln) (expTo nan :: Log Double) 0 1 (expTo infinity))
   -- Equal signed zeros expose which argument max returns; GHC chooses the second.
   print (1 / max 0 (-0.0) == -infinity && 1 / max (-0.0) 0 == infinity)
+  -- Ordinary decimal tests miss overflow of the separate operands and double rounding at
+  -- subnormal midpoints. Exercise the literal and explicit Ratio entry points together.
+  let ratio n d = fromRational (Ratio n d) :: Double
+      unit = 2 ^ (1074 :: Int) :: Integer
+      hugeInt = unit + 1
+  print ( (1e-309 :: Double) > 0 && ratio hugeInt (hugeInt + 1) == 1
+        , ratio 1 (2 * unit) == 0 && ratio 3 (2 * unit) == ratio 2 unit
+        , ratio (unit + 1) (2 * unit * unit) > 0 && recip (ratio (-1) (2 * unit)) == -infinity
+        , ratio (2^53 + 1) (2^53) == 1 && ratio (2^53 + 3) (2^53) > ratio (2^52 + 1) (2^52)
+        , ratio (-1) 0 == -infinity && isNaN (ratio 0 0)
+        )

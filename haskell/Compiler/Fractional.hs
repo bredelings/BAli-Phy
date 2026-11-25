@@ -18,7 +18,10 @@ class Num a => Fractional a where
 foreign import ecall "Prelude:" divide_double :: Double -> Double -> Double
 foreign import ecall "Prelude:" recip_double :: Double -> Double
 
+foreign import ecall "Num:" ratioToDouble :: Integer -> Integer -> Double
+
 instance Fractional Double where
+    fromRational (Ratio n d) = ratioToDouble n d
     (/) = divide_double
     recip = recip_double
 
