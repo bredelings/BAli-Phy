@@ -1,3 +1,4 @@
+#include "mcmc/spr-path.hh"
 #include "tree/sequencetree.hh"
 #include "tools/read-trees.hh"
 #include "tools/tree-dist.hh"
@@ -6,6 +7,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 
 // Keep checks active in release builds, where tree assertions are disabled.
 void require(bool condition, const char* message)
@@ -15,10 +17,38 @@ void require(bool condition, const char* message)
     std::exit(1);
 }
 
+// Count actual SPR target edges in both directions. A chain run cannot detect the old
+// factor-of-two endpoint bias reliably, or distinguish the two original attachment segments.
+static void check_spr_path_walk()
+{
+    require(spr_path_target_edge(3, 1, false, 1) == 1, "Reverse on the terminal branch");
+    require(spr_path_target_edge(3, 1, true, 1) == 2, "Walk from the end to the middle");
+    require(spr_path_target_edge(3, 2, false, 1) == 0, "Walk from the middle to the end");
+    for (int n = 1; n <= 6; ++n)
+        for (int steps = 0; steps <= 4*n; ++steps)
+        {
+            std::vector counts(n+1, std::vector<int>(n+1));
+            for (int a = 1; a <= n; ++a)
+                for (bool forward: {false, true})
+                {
+                    const int edge = spr_path_target_edge(n, a, forward, steps);
+                    require(0 <= edge and edge <= n and edge != a-1, "Valid original path edge");
+                    const int c = edge < a ? edge+1 : edge;
+                    if (steps % (2*n) == 0) require(edge == a, "Return to the original attachment");
+                    ++counts[a][c];
+                }
+            for (int a = 1; a <= n; ++a)
+                for (int c = 1; c <= n; ++c)
+                    require(counts[a][c] == counts[c][a], "Equal forward and reverse SPR route counts");
+        }
+}
+
 // Exercise public tree operations not covered by the command-line tests. These
 // cases can move to tool tests if those tools expose the same operations and results.
 int main()
 {
+    check_spr_path_walk();
+
     // Protect the shared burn-in parser and its reusable fraction output; tool summaries cannot
     // detect stale parser state. Retire if burn-in parsing moves into a directly tested CLI parser.
     {

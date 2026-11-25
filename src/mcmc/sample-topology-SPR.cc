@@ -31,6 +31,7 @@
 #include "util/assert.hh"
 #include <iostream>
 #include "sample.hh"
+#include "spr-path.hh"
 #include "util/rng.hh"
 #include "probability/choose.hh"
 #include "probability/probability.hh"
@@ -1583,31 +1584,15 @@ vector<int> path_to(const TreeInterface& T,int n1, int n2)
     return path;
 }
 
-int jump() {
-    double delta = 0;
-
-    double U = uniform();
-    if (U < 0.05)
-	delta = 0;
-    else if (U < 0.15)
-	delta = 1;
-    else {
-	double a = 1;
-	double b = 4;
-	if (uniform() < 0.5) {
-	    a = 0.5;
-	    b = 4;
-	}
-    
-	delta = 2+gamma(a,b);// mean = 2.5, shape = 2
-    }
-    if (uniform() < 0.5) delta = -delta;
-
-    // round to the nearest integer
-    return (int)floor(delta+0.5);
+// Draw the number of branches to walk. The caller chooses either direction with equal probability.
+static std::int64_t spr_jump_length()
+{
+    const double u = uniform();
+    if (u < 0.05) return 0;
+    if (u < 0.15) return 1;
+    const double shape = uniform() < 0.5 ? 0.5 : 1.0;
+    return std::llround(2 + gamma(shape, 4));
 }
-
-
 
 void choose_subtree_branch_nodes(const TreeInterface& T,int & b1, int& b2) 
 {
@@ -1637,25 +1622,10 @@ void choose_subtree_branch_nodes(const TreeInterface& T,int & b1, int& b2)
 
     //-------------- Choose branch on path ----------------//
 
-    // The allowed branches are [Nl,Nr]
-    int Nl = -(A-1) , Nr = N-A;
-
-    // Jump and then reflect so that we stay in the interval
-    int delta = wrap(jump(), Nl, Nr);
-    assert(Nl <= delta and delta <= Nr);
-
-    // walk 'delta' way from A
-    int C2 = delta + A;
-
-    assert(1 <= C2 and C2 <= path.size()-2);
-
-    int C3 = C2;
-    if (delta < 0) C3--;
-    else C3++;
-
-    assert(0 <= C3 and C3 <= path.size()-1);
-
-    b2 = T.undirected(T.find_branch(path[C2],path[C3]));
+    const auto steps = spr_jump_length();
+    const bool forward = uniform() < 0.5;
+    const int edge = spr_path_target_edge(N, A, forward, steps);
+    b2 = T.undirected(T.find_branch(path[edge], path[edge+1]));
 }
 
 void sample_SPR_flat(owned_ptr<context>& P,MoveStats& Stats) 
