@@ -585,22 +585,129 @@ void walk_time_tree_sample_NNI_and_node_times(owned_ptr<context>& P, MoveStats& 
 }
 
 
+// At each fork update the first child before visiting either subtree, and the other
+// child after visiting both. An update may exchange the sibling with a grandchild,
+// but must preserve the central branch and incoming stem. Thus each branch ID is
+// updated once. Choosing the last child first on the reverse walk undoes the late
+// update, visits both subtrees in reverse order, and finally undoes the early update.
+// The fair child-order coins pair even when an update changes the topology.
+static void walk_binary_tree(const TreeInterface& t, int root, auto&& update)
+{
+    struct Action
+    {
+        int branch;
+        optional<int> stem;
+        bool update_on_return;
+    };
+    vector<Action> pending;
+    vector<int> children;
+    children.reserve(2);
+    auto read_children = [&](optional<int> stem)
+    {
+        children.clear();
+        if (stem)
+            t.append_branches_after(*stem, children);
+        else
+            children = t.branches_out(root);
+    };
+
+    auto enter = [&](optional<int> stem)
+    {
+        read_children(stem);
+        if (children.empty()) return;
+        if (children.size() == 1)
+        {
+            // The initial tip edge occurs once, equally often first and last.
+            assert(not stem);
+            int b = children[0];
+            if (uniform() < 0.5)
+                update(b, stem);
+            else
+                pending.push_back({b, stem, true});
+            pending.push_back({b, stem, false});
+            return;
+        }
+
+        assert(children.size() == 2);
+        int first = uniform_element(children);
+        update(first, stem);
+        read_children(stem);
+        assert(children[0] == first or children[1] == first);
+        int last = children[0] == first ? children[1] : children[0];
+        pending.push_back({last, stem, true});
+        pending.push_back({last, stem, false});
+        pending.push_back({first, stem, false});
+    };
+
+    enter({});
+    while (not pending.empty())
+    {
+        auto action = pending.back();
+        pending.pop_back();
+        if (action.update_on_return)
+            update(action.branch, action.stem);
+        else
+            enter(action.branch);
+    }
+}
+
 void walk_tree_sample_NNI(owned_ptr<context>& P, MoveStats& Stats)
 {
-    Parameters& PP = *P.as<Parameters>();
-    vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
+    auto& PP = *P.as<Parameters>();
+    auto t = PP.t();
+    if (not t.n_branches()) return;
 
-    for(int b: branches)
+    vector<int> tips;
+    optional<int> binary_root;
+    for (int node: t.nodes())
     {
+        int degree = t.degree(node);
+        if (degree == 1)
+            tips.push_back(node);
+        else if (degree == 2 and not binary_root)
+            binary_root = node;
+        else if (degree != 3)
+        {
+            // Other degree patterns have no binary walk of this form. Stable edge IDs
+            // in uniform random order preserve the existing fixed-edge A4 opportunities.
+            auto branches = t.branches();
+            random_shuffle(branches);
+            for (int b: branches)
+                if (uniform() < 0.95)
+                    three_way_topology_sample(P,Stats,b);
+                else
+                    two_way_NNI_sample(P,Stats,b);
+            return;
+        }
+    }
+
+    int root = binary_root ? *binary_root : uniform_element(tips);
+    walk_binary_tree(t, root, [&](int b, optional<int> stem)
+    {
+        if (t.is_leaf_branch(b)) return;
         if (log_verbose >= 3)
             std::cerr<<" <walk_tree_sample_NNI: branch "<<b<<"> start: Pr = "<<P->probability()<<"\n";
-        if (uniform() < 0.95)
+        if (not stem)
+        {
+            // At the degree-two root, the three A4 resolutions all preserve b.
             three_way_topology_sample(P,Stats,b);
+        }
         else
-            two_way_NNI_sample(P,Stats,b);
+        {
+            auto sides = t.branches_after(t.reverse(b));
+            int incoming = t.reverse(*stem);
+            assert(sides.size() == 2 and (sides[0] == incoming or sides[1] == incoming));
+            int sibling = sides[0] == incoming ? sides[1] : sides[0];
+            auto children = t.branches_after(b);
+            assert(children.size() == 2);
+            if (uniform() < 0.95)
+                three_way_NNI_sample(PP,Stats,b,sibling,children[0],children[1]);
+            else
+                two_way_NNI_sample(PP,Stats,b,sibling,uniform_element(children));
+        }
         if (log_verbose >= 3)
             std::cerr<<" <walk_tree_sample_NNI: branch "<<b<<">  end: Pr = "<<P->probability()<<"\n";
-    }
+    });
 }
 
 
