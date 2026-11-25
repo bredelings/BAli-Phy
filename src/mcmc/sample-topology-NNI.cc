@@ -110,22 +110,30 @@ optional<int> two_way_topology_sample(vector<Parameters>& p,const vector<log_dou
 }
 
 
-void two_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b) 
+// Orient the six nodes so the specified exchange is between slots 1 and 2. Either
+// end can be first: the smart order and the length join/split use this fair orientation.
+static A5::hmm_order exchange_order(const TreeInterface& t, int b, int b1, int b2)
 {
-    Parameters& PP = *P.as<Parameters>();
-    if (PP.t().degree(PP.t().source(b)) != 3 or PP.t().degree(PP.t().target(b)) != 3) return;
+    auto order = A5::get_nodes(t, b);
+    auto& n = order.nodes;
+    if (n[0] == t.target(b1)) std::swap(n[0], n[1]);
+    if (n[3] == t.target(b2)) std::swap(n[2], n[3]);
+    assert(n[1] == t.target(b1) and n[2] == t.target(b2));
+    if (uniform() < 0.5)
+    {
+        std::swap(n[0], n[3]);
+        std::swap(n[1], n[2]);
+        std::swap(n[4], n[5]);
+    }
+    return order;
+}
 
+static void two_way_topology_sample(Parameters& PP, MoveStats& Stats, int b, int b1, int b2)
+{
     if (log_verbose >= 3) std::cerr<<"[two_way_topology_sample]\n";
-
-    A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
-    const auto& nodes = order.nodes;
 
     PP.select_root(b);
     PP.cache_likelihood_branches();
-
-    int b1 = PP.t().find_branch(nodes[4],nodes[1]);
-    int b2 = PP.t().find_branch(nodes[5],nodes[2]);
-
     vector<Parameters> p(2,PP);
 
     // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
@@ -145,32 +153,31 @@ void two_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
     // the internal node state of the proposed new topology/alignment
 
     vector< A5::hmm_order > orders(2);
-    orders[0] = A5::get_nodes_random(p[0].t(), b);
-    orders[1] = A5::get_nodes_random(p[1].t(), b);
-
     bool smart = (uniform() < 0.5);
     if (smart)
     {
-	//    std::cerr<<"order = "<<order.nodes<<"\n";
-	orders[0] = order;
-	orders[0].topology = 0;
-	std::swap(orders[0].nodes[2], orders[0].nodes[3]);
-	vector<int> v1 = {orders[0].nodes[0],
-			  orders[0].nodes[1],
-			  orders[0].nodes[2],
-			  orders[0].nodes[3]};
-    
-	//    std::cerr<<"v1 = "<<v1<<"\n";
-	orders[1] = order;
-	std::swap(orders[1].nodes[1], orders[1].nodes[2]);
-	orders[1].topology = 1;
-	vector<int> v2 = {orders[1].nodes[0],
-			  orders[1].nodes[2],
-			  orders[1].nodes[3],
-			  orders[1].nodes[1]};
+        // Assign the reference role uniformly to the two physical resolutions, so the
+        // reverse draw can attach exactly the same tags and boundary priorities to both.
+        int ref = uniform_int(0, 1);
+        auto order = exchange_order(PP.t(), b, b1, b2);
+        if (ref == 1) std::swap(order.nodes[1], order.nodes[2]);
 
-	//    std::cerr<<"v2 = "<<v2<<"\n";
-	assert(v1 == v2);
+        orders[ref] = order;
+        std::swap(orders[ref].nodes[2], orders[ref].nodes[3]);
+        orders[ref].topology = 0;
+        orders[1-ref] = order;
+        std::swap(orders[1-ref].nodes[1], orders[1-ref].nodes[2]);
+        orders[1-ref].topology = 1;
+#ifndef NDEBUG
+        const auto& a = orders[ref].nodes;
+        const auto& z = orders[1-ref].nodes;
+        assert(a[0] == z[0] and a[1] == z[2] and a[2] == z[3] and a[3] == z[1]);
+#endif
+    }
+    else
+    {
+        orders[0] = A5::get_nodes_random(p[0].t(), b);
+        orders[1] = A5::get_nodes_random(p[1].t(), b);
     }
 
     optional<int> choice;
@@ -209,22 +216,17 @@ void two_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
 	NNI_inc(Stats,"NNI (2-way stupid)", result, L0);
 }
 
-void two_way_NNI_SPR_sample(owned_ptr<context>& P, MoveStats& Stats, int b) 
+static void two_way_NNI_SPR_sample(Parameters& PP, MoveStats& Stats, int b, int b1, int b2)
 {
-    Parameters& PP = *P.as<Parameters>();
-    if (PP.t().degree(PP.t().source(b)) != 3 or PP.t().degree(PP.t().target(b)) != 3) return;
     if (not PP.t().has_branch_lengths()) return;
 
     if (log_verbose >= 3) std::cerr<<"[two_way_NNI_SPR_sample]\n";
 
-    A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
+    // The inverse of a join on one side joins on the other side of the same exchange.
+    auto order = exchange_order(PP.t(), b, b1, b2);
     const auto& nodes = order.nodes;
-
     PP.select_root(b);
     PP.cache_likelihood_branches();
-
-    int b1 = PP.t().find_branch(nodes[4],nodes[1]);
-    int b2 = PP.t().find_branch(nodes[5],nodes[2]);
 
     vector<Parameters> p(2,PP);
 
@@ -282,22 +284,14 @@ vector<int> NNI_branches(const TreeInterface& t, int b)
     return branches;
 }
 
-void two_way_NNI_and_branches_sample(owned_ptr<context>& P, MoveStats& Stats, int b) 
+static void two_way_NNI_and_branches_sample(Parameters& PP, MoveStats& Stats, int b, int b1, int b2)
 {
-    Parameters& PP = *P.as<Parameters>();
-    if (PP.t().degree(PP.t().source(b)) != 3 or PP.t().degree(PP.t().target(b)) != 3) return;
     if (not PP.t().has_branch_lengths()) return;
 
     if (log_verbose >= 3) std::cerr<<"[two_way_NNI_and_branches_sample]\n";
 
-    A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
-    const auto& nodes = order.nodes;
-
     PP.select_root(b);
     PP.cache_likelihood_branches();
-
-    int b1 = PP.t().find_branch(nodes[4],nodes[1]);
-    int b2 = PP.t().find_branch(nodes[5],nodes[2]);
 
     vector<Parameters> p(2,PP);
 
@@ -364,16 +358,25 @@ void two_way_NNI_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
         return;
     }
 
+    auto t = PP.t();
+    int b1 = uniform_element(t.branches_after(t.reverse(b)));
+    int b2 = uniform_element(t.branches_after(b));
+    two_way_NNI_sample(PP, Stats, b, b1, b2);
+}
+
+// b1 and b2 point out of opposite ends of b into the two subtrees to exchange.
+void two_way_NNI_sample(Parameters& PP, MoveStats& Stats, int b, int b1, int b2)
+{
     if (log_verbose >= 3) std::cerr<<"[two_way_NNI_sample]\n";
 
     double U = uniform();
     if (U < 0.33333333) {
-	two_way_topology_sample(P,Stats,b);
+	two_way_topology_sample(PP,Stats,b,b1,b2);
     }
     else if (U < 0.66666666)
-	two_way_NNI_SPR_sample(P,Stats,b);
+	two_way_NNI_SPR_sample(PP,Stats,b,b1,b2);
     else
-	two_way_NNI_and_branches_sample(P,Stats,b);
+	two_way_NNI_and_branches_sample(PP,Stats,b,b1,b2);
 }
 
 Availability<log_double_t> optimize(Parameters& P, const vector<int>& nodes)

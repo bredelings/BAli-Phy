@@ -109,9 +109,9 @@ void sample_A5_move(owned_ptr<context>&, MCMC::MoveStats&, int);
 
 void three_way_topology_sample(owned_ptr<context>&, MCMC::MoveStats&, int);
 void three_way_time_tree_NNI_sample(owned_ptr<context>&, MCMC::MoveStats&, int);
-void two_way_topology_sample(owned_ptr<context>&, MCMC::MoveStats&, int);
+void three_way_NNI_sample(Parameters&, MCMC::MoveStats&, int b, int sibling, int child1, int child2);
 void two_way_NNI_sample(owned_ptr<context>&, MCMC::MoveStats&, int);
-void two_way_NNI_and_branches_sample(owned_ptr<context>&, MCMC::MoveStats&, int);
+void two_way_NNI_sample(Parameters&, MCMC::MoveStats&, int b, int left, int right);
 void three_way_topology_and_alignment_sample(owned_ptr<context>&, MCMC::MoveStats&, int, std::optional<int> bandwidth = {});
 
 void sample_SPR_all(owned_ptr<context>&, MCMC::MoveStats&);
