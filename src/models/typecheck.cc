@@ -1,5 +1,4 @@
 #include "typecheck.hh"
-#include "computation/haskell/literal.hh"
 #include "parse.hh"
 #include <cstdlib>
 #include <vector>
@@ -406,14 +405,7 @@ optional<CM::TypedExpr> typecheck_model_constant(const TypecheckingState& TC, co
         if (abs(literal->value.numerator()) >= double_overflow_midpoint() * literal->value.denominator())
             throw myexception()<<"Floating literal is outside the finite Double range.";
         result_type = "Double";
-        // Where the context already requires Double, an integral decimal can use a bare
-        // integer spelling. Keep scientific notation when that spells the same value more compactly.
-        const integer& n = literal->value.numerator();
-        if (target == "Double" and literal->value.denominator() == 1
-            and n.str() == Haskell::print_decimal_literal(literal->value, false))
-            node = CM::IntLiteral{n};
-        else
-            node = *literal;
+        node = *literal;
     }
     else if (auto literal = expr.to<CM::BoolLiteral>())
     {

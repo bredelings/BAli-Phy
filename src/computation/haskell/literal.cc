@@ -146,9 +146,9 @@ bool Literal::operator==(const Literal& L) const
 
 // A source decimal has denominator 2^a * 5^b in lowest terms. Scale it to a power
 // of ten, then choose the shorter exact fixed or scientific spelling (fixed on ties).
-string print_decimal_literal(const rational& r, bool require_fractional_syntax)
+string print_decimal_literal(const rational& r)
 {
-    if (r == 0) return require_fractional_syntax ? "0.0" : "0";
+    if (r == 0) return "0.0";
     integer coefficient = abs(r.numerator());
     unsigned twos = lsb(r.denominator());
     integer divisor = r.denominator() >> twos;
@@ -171,7 +171,7 @@ string print_decimal_literal(const rational& r, bool require_fractional_syntax)
     scientific += "e" + std::to_string(point - 1);
 
     const auto fixed_size = point <= 0 ? 2 - point + size :
-                            point < size ? size + 1 : point + (require_fractional_syntax ? 2 : 0);
+                            point < size ? size + 1 : point + 2;
     string result;
     if (std::size_t(fixed_size) > scientific.size())
         result = std::move(scientific);
@@ -180,7 +180,7 @@ string print_decimal_literal(const rational& r, bool require_fractional_syntax)
     else if (point < size)
         result = digits.insert(point, ".");
     else
-        result = digits + string(point - size, '0') + (require_fractional_syntax ? ".0" : "");
+        result = digits + string(point - size, '0') + ".0";
     return r < 0 ? "-" + result : result;
 }
 
@@ -289,10 +289,7 @@ string Literal::print() const
     else if (literal.index() == 2)
         return print_string_literal(std::get<2>(literal).value);
     else if (literal.index() == 3)
-    {
-	auto& r = std::get<3>(literal).value;
-        return print_decimal_literal(r, true);
-    }
+        return print_decimal_literal(std::get<3>(literal).value);
     else if (literal.index() == 4)
         return std::get<4>(literal).value.str() + "#";
     else

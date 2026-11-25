@@ -639,7 +639,7 @@ static string unparse(const UntypedExpr& expr, int precedence)
 
     return expr.visit(overloaded{
         [](const IntLiteral& x) {return x.value.str();},
-        [](const DoubleLiteral& x) {return Haskell::print_decimal_literal(x.value, true);},
+        [](const DoubleLiteral& x) {return Haskell::print_decimal_literal(x.value);},
         [](const BoolLiteral& x) {return convertToString(x.value);},
         [](const StringLiteral& x) {return "\"" + x.value + "\"";},
         [](const Var& x) {return unparse_name(x.name);},
@@ -841,7 +841,7 @@ string unparse_annotated(const TypedExpr& expr)
 
     return expr.visit(overloaded{
         [](const IntLiteral& x) {return x.value.str();},
-        [](const DoubleLiteral& x) {return Haskell::print_decimal_literal(x.value, true);},
+        [](const DoubleLiteral& x) {return Haskell::print_decimal_literal(x.value);},
         [](const BoolLiteral& x) {return convertToString(x.value);},
         [](const StringLiteral& x) {return "\"" + x.value + "\"";},
         [](const Var& x) {return unparse_name(x.name);},
