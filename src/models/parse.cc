@@ -7,6 +7,7 @@
 #include "models/parse.hh"
 #include "util/myexception.hh"
 #include "util/string/convert.hh"
+#include "util/string/format-double.hh"
 #include "util/string/join.hh"
 #include "rules.hh"
 #include "unification.hh"
@@ -638,15 +639,7 @@ static string unparse(const UntypedExpr& expr, int precedence)
 
     return expr.visit(overloaded{
         [](const IntLiteral& x) {return convertToString(x.value);},
-        // Renders doubles while trimming insignificant trailing zeroes.
-        [](const DoubleLiteral& x)
-        {
-            auto s = convertToString(x.value);
-            if (s.find('.') != string::npos)
-                while(s.size() > 3 and s.back() == '0')
-                    s.pop_back();
-            return s;
-        },
+        [](const DoubleLiteral& x) {return format_double(x.value);},
         [](const BoolLiteral& x) {return convertToString(x.value);},
         [](const StringLiteral& x) {return "\"" + x.value + "\"";},
         [](const Var& x) {return unparse_name(x.name);},
@@ -848,15 +841,7 @@ string unparse_annotated(const TypedExpr& expr)
 
     return expr.visit(overloaded{
         [](const IntLiteral& x) {return convertToString(x.value);},
-        // Renders doubles while trimming insignificant trailing zeroes.
-        [](const DoubleLiteral& x)
-        {
-            auto s = convertToString(x.value);
-            if (s.find('.') != string::npos)
-                while(s.size() > 3 and s.back() == '0')
-                    s.pop_back();
-            return s;
-        },
+        [](const DoubleLiteral& x) {return format_double(x.value);},
         [](const BoolLiteral& x) {return convertToString(x.value);},
         [](const StringLiteral& x) {return "\"" + x.value + "\"";},
         [](const Var& x) {return unparse_name(x.name);},

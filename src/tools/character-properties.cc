@@ -1,7 +1,4 @@
 #include <algorithm>
-#include <array>
-#include <cassert>
-#include <charconv>
 #include <cmath>
 #include <iostream>
 #include <string>
@@ -18,6 +15,7 @@
 #include "sequence/sequence.hh"
 #include "util/json.hh"
 #include "util/myexception.hh"
+#include "util/string/format-double.hh"
 
 using character_properties::summarize_options;
 using std::string;
@@ -90,16 +88,6 @@ static void add_report_options(CLI::App& command, report_arguments& arguments)
             ->check(CLI::IsMember({"mean", "median"}))->capture_default_str();
 }
 
-/// Use enough significant digits for report values to round-trip through a double.
-/// The general to_chars representation supplies the shortest such decimal without locale dependence.
-static std::string format_number(double value)
-{
-    std::array<char, 64> buffer;
-    auto [end, error] = std::to_chars(buffer.data(), buffer.data() + buffer.size(), value);
-    assert(error == std::errc());
-    return {buffer.data(), end};
-}
-
 /// Write the human-readable report metadata shared by the two concrete table shapes.
 /// TSV output omits this prose so that every emitted line remains a tabular record.
 static void write_text_header(const report_arguments& arguments, std::uint64_t retained_samples,
@@ -113,9 +101,9 @@ static void write_text_header(const report_arguments& arguments, std::uint64_t r
         std::cout<<"Posterior view: model-averaged\nRetained samples: "<<retained_samples<<"\n";
     std::cout<<"Selection: "<<arguments.selection;
     if (arguments.selection == "above" or arguments.selection == "below")
-        std::cout<<" "<<format_number(arguments.selection_value);
+        std::cout<<" "<<format_double(arguments.selection_value);
     else if (arguments.selection == "highest" or arguments.selection == "lowest")
-        std::cout<<" "<<format_number(arguments.selection_value * 100)<<"%";
+        std::cout<<" "<<format_double(arguments.selection_value * 100)<<"%";
     std::cout<<"\n\n";
 }
 
@@ -170,9 +158,9 @@ static void write_column_report(const report_arguments& arguments, std::uint64_t
     {
         const char* separator = arguments.format == "tsv" ? "\t" : "  ";
         std::cout<<row.alignment_column + 1<<separator<<row.letter_count<<separator
-                 <<format_number(row.mean_minimum)<<separator<<format_number(row.mean_middle)<<separator
-                 <<format_number(row.mean_maximum)<<separator<<format_number(row.median_minimum)<<separator
-                 <<format_number(row.median_middle)<<separator<<format_number(row.median_maximum)<<"\n";
+                 <<format_double(row.mean_minimum)<<separator<<format_double(row.mean_middle)<<separator
+                 <<format_double(row.mean_maximum)<<separator<<format_double(row.median_minimum)<<separator
+                 <<format_double(row.median_middle)<<separator<<format_double(row.median_maximum)<<"\n";
     }
 }
 
@@ -209,14 +197,14 @@ static void write_selected_report(const report_arguments& arguments, std::uint64
                          <<" retained samples, so the conditioned and model-averaged estimates use the same samples.\n";
                 std::cout<<column_subject(model_averaged_count)
                          <<(model_averaged_count == 1 ? " has" : " have")<<" Pr(dN/dS>1) above "
-                         <<format_number(arguments.selection_value)<<".\n\n";
+                         <<format_double(arguments.selection_value)<<".\n\n";
             }
             else
             {
                 std::cout<<column_subject(model_averaged_count)
                          <<(model_averaged_count == 1 ? " has" : " have")
                          <<" model-averaged Pr(dN/dS>1) above "
-                         <<format_number(arguments.selection_value)<<".\n";
+                         <<format_double(arguments.selection_value)<<".\n";
                 if (arguments.condition and retained_samples == 0)
                     std::cout<<*arguments.condition<<" was not true in any of the "<<total_retained_samples
                              <<" retained samples; conditioned site estimates are unavailable.\n\n";
@@ -224,7 +212,7 @@ static void write_selected_report(const report_arguments& arguments, std::uint64
                     std::cout<<"When conditioned on "<<*arguments.condition<<" = true ("<<retained_samples<<" of "
                              <<total_retained_samples<<" retained samples), "<<column_subject(conditioned_count)
                              <<(conditioned_count == 1 ? " exceeds " : " exceed ")
-                             <<format_number(arguments.selection_value)<<".\n\n";
+                             <<format_double(arguments.selection_value)<<".\n\n";
                 else
                     std::cout<<"\n";
             }
@@ -239,7 +227,7 @@ static void write_selected_report(const report_arguments& arguments, std::uint64
                          <<total_retained_samples<<" retained samples).\n";
             else
                 std::cout<<"Model-averaged posterior ("<<retained_samples<<" retained samples).\n";
-            std::cout<<"Showing columns containing the highest "<<format_number(arguments.selection_value * 100)
+            std::cout<<"Showing columns containing the highest "<<format_double(arguments.selection_value * 100)
                      <<"% of letters by Pr(dN/dS>1).\n\n";
         }
 
@@ -296,36 +284,36 @@ static void write_selected_report(const report_arguments& arguments, std::uint64
         if (arguments.format == "tsv")
         {
             std::cout<<row.alignment_column + 1<<"\t"<<row.sequence_name<<"\t"<<row.character_index + 1<<"\t"
-                     <<row.symbol<<"\t"<<row.translation.value_or("")<<"\t"<<format_number(row.property_summary.mean);
+                     <<row.symbol<<"\t"<<row.translation.value_or("")<<"\t"<<format_double(row.property_summary.mean);
             if (arguments.positive_selection)
             {
                 std::cout<<"\t";
                 if (row.dnds_summary)
-                    std::cout<<format_number(row.dnds_summary->mean)<<"\t"<<format_number(row.dnds_summary->sd)
-                             <<"\t"<<format_number(row.dnds_summary->median);
+                    std::cout<<format_double(row.dnds_summary->mean)<<"\t"<<format_double(row.dnds_summary->sd)
+                             <<"\t"<<format_double(row.dnds_summary->median);
                 else
                     std::cout<<"\t\t";
                 std::cout<<"\t";
                 if (row.conditioned_property_summary)
-                    std::cout<<format_number(row.conditioned_property_summary->mean);
+                    std::cout<<format_double(row.conditioned_property_summary->mean);
                 std::cout<<"\t";
                 if (row.conditioned_dnds_summary)
-                    std::cout<<format_number(row.conditioned_dnds_summary->mean)<<"\t"
-                             <<format_number(row.conditioned_dnds_summary->sd)<<"\t"
-                             <<format_number(row.conditioned_dnds_summary->median);
+                    std::cout<<format_double(row.conditioned_dnds_summary->mean)<<"\t"
+                             <<format_double(row.conditioned_dnds_summary->sd)<<"\t"
+                             <<format_double(row.conditioned_dnds_summary->median);
                 else
                     std::cout<<"\t\t";
             }
             else
-                std::cout<<"\t"<<format_number(row.property_summary.sd)<<"\t"
-                         <<format_number(row.property_summary.median);
+                std::cout<<"\t"<<format_double(row.property_summary.sd)<<"\t"
+                         <<format_double(row.property_summary.median);
         }
         else
         {
             std::cout<<row.alignment_column + 1<<"  "<<row.sequence_name<<"  "<<row.character_index + 1<<"  "
-                     <<row.symbol<<"  "<<row.translation.value_or("-")<<"  "<<format_number(row.property_summary.mean)
-                     <<" +/- "<<format_number(row.property_summary.sd)<<"  "
-                     <<format_number(row.property_summary.median);
+                     <<row.symbol<<"  "<<row.translation.value_or("-")<<"  "<<format_double(row.property_summary.mean)
+                     <<" +/- "<<format_double(row.property_summary.sd)<<"  "
+                     <<format_double(row.property_summary.median);
         }
         std::cout<<"\n";
     }

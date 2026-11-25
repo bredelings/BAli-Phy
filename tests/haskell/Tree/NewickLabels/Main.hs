@@ -11,7 +11,7 @@ import Data.List (sort)
 import qualified Data.Text as T
 import qualified Data.IntMap as IntMap
 import Tree
-import Tree.Newick (newickToTree, parse_newick, print_newick, writeNewick, readTimeTree)
+import Tree.Newick (newickToTree, newickToBranchLengthTree, parse_newick, print_newick, writeNewick, readTimeTree)
 
 -- Parse and rewrite labels to check literal underscores and quoted spaces.
 main :: IO ()
@@ -36,6 +36,13 @@ main = do
   print lengths
   print times
   print (rate_time_tree times rates)
+
+  -- A short branch must survive writing and reading with its exponent intact. Integral and
+  -- fixed-point lengths above cannot detect a writer dropping a zero from the exponent.
+  let shortLength = 1.25e-10
+      shortTree = WithBranchLengths topology (IntMap.fromSet (\_ -> shortLength) (getEdgesSet topology))
+  reread <- newickToBranchLengthTree (parse_newick (T.unpack (writeNewick shortTree)))
+  print ("short branch round trip", branchLengths reread == [shortLength, shortLength])
 
   -- Reading a time tree must retain ages, including older tips on shorter root-to-tip paths.
   -- Writer checks above cannot catch a reader returning only topology; keep this with that API.
