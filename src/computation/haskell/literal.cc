@@ -134,35 +134,6 @@ rational rationalFromString(const string& s)
     return r;
 }
 
-// Converts a finite double exactly into the rational stored by Hs::Floating.
-// This is for semantic double values, not parser token text.
-rational rationalFromDouble(double x)
-{
-    if (not std::isfinite(x))
-        throw myexception()<<"rationalFromDouble: non-finite value "<<x<<" cannot be represented as a Haskell floating literal.\n";
-
-    if (x == 0.0)
-        return rational(0);
-
-    int exponent = 0;
-    auto significand = std::frexp(x, &exponent);
-    auto mantissa = static_cast<std::int64_t>(std::ldexp(significand, std::numeric_limits<double>::digits));
-
-    rational r{integer(mantissa)};
-    int shift = exponent - std::numeric_limits<double>::digits;
-    if (shift > 0)
-    {
-        integer factor = boost::multiprecision::pow(integer(2), shift);
-        r *= factor;
-    }
-    else if (shift < 0)
-    {
-        integer factor = boost::multiprecision::pow(integer(2), -shift);
-        r /= factor;
-    }
-    return r;
-}
-    
 bool Integer::operator==(const Integer& I) const
 {
     return (value == I.value);

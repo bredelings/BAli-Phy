@@ -459,11 +459,11 @@ namespace zz {
       // infix_operator
       char dummy6[sizeof (Located<std::string>)];
 
-      // "FLOAT"
-      char dummy7[sizeof (double)];
-
       // "INTEGER"
-      char dummy8[sizeof (int)];
+      char dummy7[sizeof (integer)];
+
+      // "FLOAT"
+      char dummy8[sizeof (rational)];
 
       // def
       char dummy9[sizeof (std::pair<std::string,CM::UntypedExpr>)];
@@ -724,12 +724,12 @@ namespace zz {
         value.move< Located<std::string> > (std::move (that.value));
         break;
 
-      case symbol_kind::S_FLOAT: // "FLOAT"
-        value.move< double > (std::move (that.value));
+      case symbol_kind::S_INTEGER: // "INTEGER"
+        value.move< integer > (std::move (that.value));
         break;
 
-      case symbol_kind::S_INTEGER: // "INTEGER"
-        value.move< int > (std::move (that.value));
+      case symbol_kind::S_FLOAT: // "FLOAT"
+        value.move< rational > (std::move (that.value));
         break;
 
       case symbol_kind::S_def: // def
@@ -877,13 +877,13 @@ namespace zz {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, double&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, integer&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const double& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const integer& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -891,13 +891,13 @@ namespace zz {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, int&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, rational&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const int& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const rational& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -1058,12 +1058,12 @@ switch (yykind)
         value.template destroy< Located<std::string> > ();
         break;
 
-      case symbol_kind::S_FLOAT: // "FLOAT"
-        value.template destroy< double > ();
+      case symbol_kind::S_INTEGER: // "INTEGER"
+        value.template destroy< integer > ();
         break;
 
-      case symbol_kind::S_INTEGER: // "INTEGER"
-        value.template destroy< int > ();
+      case symbol_kind::S_FLOAT: // "FLOAT"
+        value.template destroy< rational > ();
         break;
 
       case symbol_kind::S_def: // def
@@ -1207,27 +1207,27 @@ switch (yykind)
 #endif
       }
 #if 201103L <= YY_CPLUSPLUS
-      symbol_type (int tok, double v, location_type l)
+      symbol_type (int tok, integer v, location_type l)
         : super_type (token_kind_type (tok), std::move (v), std::move (l))
 #else
-      symbol_type (int tok, const double& v, const location_type& l)
-        : super_type (token_kind_type (tok), v, l)
-#endif
-      {
-#if !defined _MSC_VER || defined __clang__
-        ZZ_ASSERT (tok == token::TOK_FLOAT);
-#endif
-      }
-#if 201103L <= YY_CPLUSPLUS
-      symbol_type (int tok, int v, location_type l)
-        : super_type (token_kind_type (tok), std::move (v), std::move (l))
-#else
-      symbol_type (int tok, const int& v, const location_type& l)
+      symbol_type (int tok, const integer& v, const location_type& l)
         : super_type (token_kind_type (tok), v, l)
 #endif
       {
 #if !defined _MSC_VER || defined __clang__
         ZZ_ASSERT (tok == token::TOK_INTEGER);
+#endif
+      }
+#if 201103L <= YY_CPLUSPLUS
+      symbol_type (int tok, rational v, location_type l)
+        : super_type (token_kind_type (tok), std::move (v), std::move (l))
+#else
+      symbol_type (int tok, const rational& v, const location_type& l)
+        : super_type (token_kind_type (tok), v, l)
+#endif
+      {
+#if !defined _MSC_VER || defined __clang__
+        ZZ_ASSERT (tok == token::TOK_FLOAT);
 #endif
       }
 #if 201103L <= YY_CPLUSPLUS
@@ -1773,14 +1773,14 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_INTEGER (int v, location_type l)
+      make_INTEGER (integer v, location_type l)
       {
         return symbol_type (token::TOK_INTEGER, std::move (v), std::move (l));
       }
 #else
       static
       symbol_type
-      make_INTEGER (const int& v, const location_type& l)
+      make_INTEGER (const integer& v, const location_type& l)
       {
         return symbol_type (token::TOK_INTEGER, v, l);
       }
@@ -1788,14 +1788,14 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_FLOAT (double v, location_type l)
+      make_FLOAT (rational v, location_type l)
       {
         return symbol_type (token::TOK_FLOAT, std::move (v), std::move (l));
       }
 #else
       static
       symbol_type
-      make_FLOAT (const double& v, const location_type& l)
+      make_FLOAT (const rational& v, const location_type& l)
       {
         return symbol_type (token::TOK_FLOAT, v, l);
       }
@@ -2233,12 +2233,12 @@ switch (yykind)
         value.copy< Located<std::string> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_FLOAT: // "FLOAT"
-        value.copy< double > (YY_MOVE (that.value));
+      case symbol_kind::S_INTEGER: // "INTEGER"
+        value.copy< integer > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_INTEGER: // "INTEGER"
-        value.copy< int > (YY_MOVE (that.value));
+      case symbol_kind::S_FLOAT: // "FLOAT"
+        value.copy< rational > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_def: // def
@@ -2341,12 +2341,12 @@ switch (yykind)
         value.move< Located<std::string> > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_FLOAT: // "FLOAT"
-        value.move< double > (YY_MOVE (s.value));
+      case symbol_kind::S_INTEGER: // "INTEGER"
+        value.move< integer > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_INTEGER: // "INTEGER"
-        value.move< int > (YY_MOVE (s.value));
+      case symbol_kind::S_FLOAT: // "FLOAT"
+        value.move< rational > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_def: // def

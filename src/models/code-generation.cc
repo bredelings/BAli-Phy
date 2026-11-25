@@ -762,8 +762,8 @@ static Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<st
         return it == lambda_vars.end() ? Hs::Var(name) : it->second;
     };
     return expr.visit(CM::overloaded{
-        [](const CM::IntLiteral& x) -> Hs::Exp { return Hs::Literal(Hs::Integer{integer(x.value)}); },
-        [](const CM::DoubleLiteral& x) -> Hs::Exp { return Hs::Literal(Hs::Floating{Hs::rationalFromDouble(x.value)}); },
+        [](const CM::IntLiteral& x) -> Hs::Exp { return Hs::Literal(Hs::Integer{x.value}); },
+        [](const CM::DoubleLiteral& x) -> Hs::Exp { return Hs::Literal(Hs::Floating{x.value}); },
         [](const CM::BoolLiteral& x) -> Hs::Exp { return x.value ? Hs::True() : Hs::False(); },
         [](const CM::StringLiteral& x) -> Hs::Exp { return Hs::Literal(Hs::String{x.value}); },
         [&](const CM::Var& x) -> Hs::Exp { return variable(x.name); },
@@ -964,8 +964,18 @@ translation_result_t get_typed_constant_model(const CM::TypedExpr& expr)
 {
     translation_result_t result;
     expr.visit(CM::overloaded{
-        [&](const CM::IntLiteral& x) { result.code.E = Hs::Literal(Hs::Integer{integer(x.value)}); },
-        [&](const CM::DoubleLiteral& x) { result.code.E = Hs::Literal(Hs::Floating{Hs::rationalFromDouble(x.value)}); },
+        [&](const CM::IntLiteral& x) {
+            if (x.value < 0)
+            {
+                // A negative Int literal is formed here only for minBound. Negate its magnitude
+                // as an Integer before converting, including when generated source is re-read.
+                auto magnitude = Hs::Literal(Hs::Integer{-x.value});
+                result.code.E = HsG::Apply(Hs::Var("fromInteger"), {HsG::Apply(Hs::Var("negate"), {magnitude})});
+            }
+            else
+                result.code.E = Hs::Literal(Hs::Integer{x.value});
+        },
+        [&](const CM::DoubleLiteral& x) { result.code.E = Hs::Literal(Hs::Floating{x.value}); },
         [&](const CM::BoolLiteral& x) { result.code.E = x.value ? Hs::True() : Hs::False(); },
         [&](const CM::StringLiteral& x) { result.code.E = Hs::Literal(Hs::String{x.value}); },
         [](const auto&) { std::abort(); }

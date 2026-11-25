@@ -56,7 +56,6 @@ struct Floating
 };
 
 rational rationalFromString(const std::string& s);
-rational rationalFromDouble(double x);
 std::string print_decimal_literal(const rational&, bool require_fractional_syntax);
 
 struct BoxedInteger

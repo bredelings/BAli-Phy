@@ -13,6 +13,7 @@
 #include <variant>
 #include <vector>
 
+#include "computation/haskell/integer_container.hh"
 #include "computation/parser/located.hh"
 #include "models/model-box.hh"
 #include "models/model-type.hh"
@@ -71,12 +72,12 @@ using UntypedExpr = Expr<NoAnn>;
 
 struct IntLiteral
 {
-    int value;
+    integer value;
 };
 
 struct DoubleLiteral
 {
-    double value;
+    rational value;
 };
 
 struct BoolLiteral

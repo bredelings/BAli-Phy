@@ -7,7 +7,7 @@
 #include "models/parse.hh"
 #include "util/myexception.hh"
 #include "util/string/convert.hh"
-#include "util/string/format-double.hh"
+#include "computation/haskell/literal.hh"
 #include "util/string/join.hh"
 #include "rules.hh"
 #include "unification.hh"
@@ -380,7 +380,7 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>
                         throw myexception()<<"Tuple element must have a value.";
                     tuple.elements.push_back(std::move(*arg.value));
                 }
-                expr.node = Box<Tuple<NoAnn>>(new Tuple<NoAnn>(std::move(tuple)));
+                expr.node = CM::Box<Tuple<NoAnn>>(new Tuple<NoAnn>(std::move(tuple)));
                 return;
             }
 
@@ -638,8 +638,8 @@ static string unparse(const UntypedExpr& expr, int precedence)
     using namespace std::string_literals;
 
     return expr.visit(overloaded{
-        [](const IntLiteral& x) {return convertToString(x.value);},
-        [](const DoubleLiteral& x) {return format_double(x.value);},
+        [](const IntLiteral& x) {return x.value.str();},
+        [](const DoubleLiteral& x) {return Haskell::print_decimal_literal(x.value, true);},
         [](const BoolLiteral& x) {return convertToString(x.value);},
         [](const StringLiteral& x) {return "\"" + x.value + "\"";},
         [](const Var& x) {return unparse_name(x.name);},
@@ -840,8 +840,8 @@ string unparse_annotated(const TypedExpr& expr)
     using namespace std::string_literals;
 
     return expr.visit(overloaded{
-        [](const IntLiteral& x) {return convertToString(x.value);},
-        [](const DoubleLiteral& x) {return format_double(x.value);},
+        [](const IntLiteral& x) {return x.value.str();},
+        [](const DoubleLiteral& x) {return Haskell::print_decimal_literal(x.value, true);},
         [](const BoolLiteral& x) {return convertToString(x.value);},
         [](const StringLiteral& x) {return "\"" + x.value + "\"";},
         [](const Var& x) {return unparse_name(x.name);},

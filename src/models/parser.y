@@ -90,8 +90,8 @@ CM::UntypedExpr make_model_tuple(const std::vector<CM::UntypedExpr>& elements);
 %token <std::string> QVARSYM  "QVARSYM"
 
 %token <std::string>   STRING   "STRING"
-%token <int>           INTEGER  "INTEGER"
-%token <double>        FLOAT    "FLOAT"
+%token <integer>       INTEGER  "INTEGER"
+%token <rational>      FLOAT    "FLOAT"
 
 %type <CM::UntypedExpr> exp
 %type <CM::UntypedExpr> infix_exp

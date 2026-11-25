@@ -249,12 +249,12 @@ namespace zz {
         value.YY_MOVE_OR_COPY< Located<std::string> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_FLOAT: // "FLOAT"
-        value.YY_MOVE_OR_COPY< double > (YY_MOVE (that.value));
+      case symbol_kind::S_INTEGER: // "INTEGER"
+        value.YY_MOVE_OR_COPY< integer > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_INTEGER: // "INTEGER"
-        value.YY_MOVE_OR_COPY< int > (YY_MOVE (that.value));
+      case symbol_kind::S_FLOAT: // "FLOAT"
+        value.YY_MOVE_OR_COPY< rational > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_def: // def
@@ -341,12 +341,12 @@ namespace zz {
         value.move< Located<std::string> > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_FLOAT: // "FLOAT"
-        value.move< double > (YY_MOVE (that.value));
+      case symbol_kind::S_INTEGER: // "INTEGER"
+        value.move< integer > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_INTEGER: // "INTEGER"
-        value.move< int > (YY_MOVE (that.value));
+      case symbol_kind::S_FLOAT: // "FLOAT"
+        value.move< rational > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_def: // def
@@ -433,12 +433,12 @@ namespace zz {
         value.copy< Located<std::string> > (that.value);
         break;
 
-      case symbol_kind::S_FLOAT: // "FLOAT"
-        value.copy< double > (that.value);
+      case symbol_kind::S_INTEGER: // "INTEGER"
+        value.copy< integer > (that.value);
         break;
 
-      case symbol_kind::S_INTEGER: // "INTEGER"
-        value.copy< int > (that.value);
+      case symbol_kind::S_FLOAT: // "FLOAT"
+        value.copy< rational > (that.value);
         break;
 
       case symbol_kind::S_def: // def
@@ -524,12 +524,12 @@ namespace zz {
         value.move< Located<std::string> > (that.value);
         break;
 
-      case symbol_kind::S_FLOAT: // "FLOAT"
-        value.move< double > (that.value);
+      case symbol_kind::S_INTEGER: // "INTEGER"
+        value.move< integer > (that.value);
         break;
 
-      case symbol_kind::S_INTEGER: // "INTEGER"
-        value.move< int > (that.value);
+      case symbol_kind::S_FLOAT: // "FLOAT"
+        value.move< rational > (that.value);
         break;
 
       case symbol_kind::S_def: // def
@@ -860,12 +860,12 @@ namespace zz {
         yylhs.value.emplace< Located<std::string> > ();
         break;
 
-      case symbol_kind::S_FLOAT: // "FLOAT"
-        yylhs.value.emplace< double > ();
+      case symbol_kind::S_INTEGER: // "INTEGER"
+        yylhs.value.emplace< integer > ();
         break;
 
-      case symbol_kind::S_INTEGER: // "INTEGER"
-        yylhs.value.emplace< int > ();
+      case symbol_kind::S_FLOAT: // "FLOAT"
+        yylhs.value.emplace< rational > ();
         break;
 
       case symbol_kind::S_def: // def
@@ -1317,13 +1317,13 @@ namespace zz {
 
   case 67: // literal: "INTEGER"
 #line 226 "parser.y"
-                     {yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::IntLiteral{yystack_[0].value.as < int > ()}};}
+                     {yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::IntLiteral{yystack_[0].value.as < integer > ()}};}
 #line 1322 "parser.cc"
     break;
 
   case 68: // literal: "FLOAT"
 #line 227 "parser.y"
-                     {yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::DoubleLiteral{yystack_[0].value.as < double > ()}};}
+                     {yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::DoubleLiteral{yystack_[0].value.as < rational > ()}};}
 #line 1328 "parser.cc"
     break;
 

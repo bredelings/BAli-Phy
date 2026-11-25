@@ -3,23 +3,13 @@
 }
 
 %{ /* -*- C++ -*- */
-# include <cerrno>
-# include <climits>
-# include <cstdlib>
+# include "computation/haskell/literal.hh"
 # include <string>
 # include <string_view>
 # include "driver.hh"
 # include "parser.hh"
-# include "util/string/convert.hh"
 
 // Forward declarations
-zz::parser::symbol_type zz_make_integer(std::string_view text, int radix, bool positive, int shift,
-				     const zz::parser::location_type& loc);
-
-zz::parser::symbol_type zz_make_integer10(std::string_view text, const zz::parser::location_type& loc);
-
-zz::parser::symbol_type zz_make_float(std::string_view text, const zz::parser::location_type& loc);
-
 zz::parser::symbol_type zz_make_string(std::string_view text, const zz::parser::location_type& loc);
 
 %}
@@ -145,9 +135,9 @@ signed       {negative}?
 <EXPRESSION>{qvarsym} return zz::parser::make_QVARSYM(std::string(yytext, yyleng), drv.location);
 <EXPRESSION>{varsym}  return zz::parser::make_VARSYM(std::string(yytext, yyleng), drv.location);
 
-{decimal}                              return zz_make_integer10(std::string_view(yytext, yyleng), drv.location);
+{decimal}                              return zz::parser::make_INTEGER(Haskell::integerFromString(std::string(yytext, yyleng)), drv.location);
 
-{floating_point}                       return zz_make_float(std::string_view(yytext, yyleng), drv.location);
+{floating_point}                       return zz::parser::make_FLOAT(Haskell::rationalFromString(std::string(yytext, yyleng)), drv.location);
 [\"]({stringchar}|{escape})*[\"]   return zz_make_string(std::string_view(yytext, yyleng), drv.location);
 
 <*>.          {
@@ -213,38 +203,6 @@ zz::parser::symbol_type zz_driver::varid(std::string_view text, const zz::parser
 	auto tok = it->second.first;
 	return zz::parser::symbol_type(tok, loc);
     }
-}
-
-zz::parser::symbol_type zz_make_integer(std::string_view text, int radix, bool positive, int shift,
-				     const zz::parser::location_type& loc)
-{
-    errno = 0;
-    std::string token(text);
-    auto n = std::stoi(token.c_str()+shift, NULL, radix);
-    if ( not (INT_MIN <= n and n <= INT_MAX and errno != ERANGE))
-	throw zz::parser::syntax_error(loc, "integer is out of range: " + token);
-    if (not positive)
-	n = -n;
-    return zz::parser::make_INTEGER(n, loc);
-}
-
-zz::parser::symbol_type zz_make_integer10(std::string_view text, const zz::parser::location_type& loc)
-{
-    int shift = 0;
-    bool positive = true;
-    if (text[0] == '-')
-    {
-        shift++;
-        positive = false;
-    }
-    return zz_make_integer(text, 10, positive, shift, loc);
-}
-
-zz::parser::symbol_type zz_make_float(std::string_view text, const zz::parser::location_type& loc)
-{
-    std::string s(text);
-    double d = convertTo<double>(s);
-    return zz::parser::make_FLOAT(d,loc);
 }
 
 // Decode ASCII escapes while copying ordinary UTF-8 bytes unchanged.

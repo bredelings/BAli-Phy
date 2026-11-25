@@ -1,4 +1,5 @@
 #include "typecheck.hh"
+#include "computation/haskell/literal.hh"
 #include "parse.hh"
 #include <cstdlib>
 #include <vector>
@@ -6,6 +7,7 @@
 #include "rules.hh"
 #include "util/myexception.hh"
 #include <iostream>
+#include <limits>
 #include "compile.hh"
 #include "util/set.hh"
 
@@ -369,22 +371,49 @@ optional<CM::TypedExpr> typecheck_model_invalid_placeholder(const CM::UntypedExp
     return {};
 }
 
+// At this midpoint, rounding to the nearest Double carries out of the largest binade.
+static const integer& double_overflow_midpoint()
+{
+    using limits = std::numeric_limits<double>;
+    static const integer midpoint = (integer(1) << limits::max_exponent)
+        - (integer(1) << (limits::max_exponent - limits::digits - 1));
+    return midpoint;
+}
+
 // Typechecks scalar literal AST nodes directly, falling back through the
 // AST entry point if unification inserts a conversion call.
 optional<CM::TypedExpr> typecheck_model_constant(const TypecheckingState& TC, const type_t& required_type, const CM::UntypedExpr& expr)
 {
     type_t result_type;
     CM::TypedExpr::Node node;
+    auto target = required_type;
+    substitute(TC.eqs, target);
 
     if (auto literal = expr.to<CM::IntLiteral>())
     {
-        result_type = "Int";
+        result_type = target == "Double" ? "Double" : "Int";
+        if (result_type == "Double")
+        {
+            if (abs(literal->value) >= double_overflow_midpoint())
+                throw myexception()<<"Integer literal is outside the finite Double range.";
+        }
+        else if (literal->value < std::numeric_limits<int>::min() or literal->value > std::numeric_limits<int>::max())
+            throw myexception()<<"Integer literal "<<literal->value<<" is out of range for Int.";
         node = *literal;
     }
     else if (auto literal = expr.to<CM::DoubleLiteral>())
     {
+        if (abs(literal->value.numerator()) >= double_overflow_midpoint() * literal->value.denominator())
+            throw myexception()<<"Floating literal is outside the finite Double range.";
         result_type = "Double";
-        node = *literal;
+        // Where the context already requires Double, an integral decimal can use a bare
+        // integer spelling. Keep scientific notation when that spells the same value more compactly.
+        const integer& n = literal->value.numerator();
+        if (target == "Double" and literal->value.denominator() == 1
+            and n.str() == Haskell::print_decimal_literal(literal->value, false))
+            node = CM::IntLiteral{n};
+        else
+            node = *literal;
     }
     else if (auto literal = expr.to<CM::BoolLiteral>())
     {
@@ -771,6 +800,16 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
             throw myexception()<<"Supplied argument '"<<arg_name<<"' more than once in term:\n"<<show_model(expr);
         if (arg.value)
             supplied_args[arg_name] = &arg;
+    }
+
+    // After resolving prefix precedence and the type of negate, the magnitude of minBound
+    // can be checked as part of the signed literal, even though it is too large for Int.
+    if (rule.name == "negate" and supplied_args.size() == 1 and supplied_args.contains("x")
+        and (rule.result_type == "Int" or is_type_variable(rule.result_type)))
+    {
+        auto x = supplied_args.at("x")->value->to<CM::IntLiteral>();
+        if (x and x->value == -integer(std::numeric_limits<int>::min()))
+            return typecheck_model_constant(TC, required_type, {CM::NoAnn{}, CM::IntLiteral{-x->value}});
     }
 
     map<string,type_t> arg_env;

@@ -31,10 +31,14 @@ def run_command(phase, command, work_directory, expected_exit=0):
 # Reuse generated source in both runtime modes; single-command tests cannot check this handoff.
 # This becomes obsolete if infer no longer retains runnable source.
 def standalone_test(command, work_directory):
+    # The last digit puts the exact scale above a rounding midpoint. Re-running generated
+    # source detects a lossy literal printer that an in-memory model run would miss.
+    scale = "1.0000000000000001110223024625156540423631668090820312500001"
     generate = command + [
         "input.fasta",
         "--imodel=none",
         "--smodel=TN93",
+        "--scale=" + scale,
         "--iterations=0",
         "--name=generated",
     ]
@@ -83,6 +87,8 @@ def standalone_test(command, work_directory):
     # successful generated-program execution alone does not establish that the field survived.
     log_records = output_paths[0].read_text(encoding="utf-8").splitlines()
     sample = json.loads(log_records[1])
+    if sample["parameters//"]["scale1"] != 1.0000000000000002:
+        raise AssertionError("the retained scale rounded to the wrong Double")
     frequencies = sample["parameters//"]["S1/"]["TN93:pi"]
     if not isinstance(frequencies, dict) or set(frequencies) != {"A", "C", "G", "T"}:
         raise AssertionError(f"TN93 frequencies were not logged as a JSON object: {frequencies}")
