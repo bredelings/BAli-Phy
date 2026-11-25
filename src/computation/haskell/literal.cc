@@ -3,7 +3,6 @@
 #include "util/string/convert.hh"
 #include "util/unicode.hh"
 #include "util/utf8.hh"
-#include <boost/multiprecision/cpp_dec_float.hpp>
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -174,14 +173,44 @@ bool Literal::operator==(const Literal& L) const
     return literal == L.literal;
 }
 
-static string print_floating_decimal(const rational& r)
+// A source decimal has denominator 2^a * 5^b in lowest terms. Scale it to a power
+// of ten, then choose the shorter exact fixed or scientific spelling (fixed on ties).
+string print_decimal_literal(const rational& r, bool require_fractional_syntax)
 {
-    using boost::multiprecision::cpp_dec_float_50;
+    if (r == 0) return require_fractional_syntax ? "0.0" : "0";
+    integer coefficient = abs(r.numerator());
+    unsigned twos = lsb(r.denominator());
+    integer divisor = r.denominator() >> twos;
+    unsigned fives = 0;
+    while (divisor > 1 and divisor % 5 == 0)
+    {
+        divisor /= 5;
+        ++fives;
+    }
+    if (divisor != 1) throw myexception()<<"Cannot print a recurring fraction as a decimal literal.";
+    if (twos > fives) coefficient *= boost::multiprecision::pow(integer(5), twos - fives);
+    else coefficient <<= fives - twos;
 
-    cpp_dec_float_50 x(r.numerator());
-    x /= cpp_dec_float_50(r.denominator());
+    string digits = coefficient.str();
+    const auto point = std::int64_t(digits.size()) - std::max(twos, fives);
+    digits.erase(digits.find_last_not_of('0') + 1);
+    const auto size = std::int64_t(digits.size());
+    string scientific = digits;
+    if (size > 1) scientific.insert(1, ".");
+    scientific += "e" + std::to_string(point - 1);
 
-    return x.str(17, std::ios_base::fmtflags(0));
+    const auto fixed_size = point <= 0 ? 2 - point + size :
+                            point < size ? size + 1 : point + (require_fractional_syntax ? 2 : 0);
+    string result;
+    if (std::size_t(fixed_size) > scientific.size())
+        result = std::move(scientific);
+    else if (point <= 0)
+        result = "0." + string(-point, '0') + digits;
+    else if (point < size)
+        result = digits.insert(point, ".");
+    else
+        result = digits + string(point - size, '0') + (require_fractional_syntax ? ".0" : "");
+    return r < 0 ? "-" + result : result;
 }
 
 // Recognize decimal digits because numeric escapes must be separated from a
@@ -291,7 +320,7 @@ string Literal::print() const
     else if (literal.index() == 3)
     {
 	auto& r = std::get<3>(literal).value;
-        return print_floating_decimal(r);
+        return print_decimal_literal(r, true);
     }
     else if (literal.index() == 4)
         return std::get<4>(literal).value.str() + "#";
