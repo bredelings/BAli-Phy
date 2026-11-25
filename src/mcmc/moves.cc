@@ -512,6 +512,7 @@ void sample_branch_length_(owned_ptr<context>& P,  MoveStats& Stats, int b)
         {
             const int n = e.node2;
             // A neighboring branch can be fixed even when the visited branch is modifiable.
+            // Both updates assume distinct modifiable lengths. We could check distinctness here too.
             if (std::ranges::all_of(t.branches_out(n), [&](int i) {return t.can_set_branch_length_or_duration(i);}))
             {
                 change_3_branch_lengths(P, Stats, n);
