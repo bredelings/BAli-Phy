@@ -225,6 +225,13 @@ static void two_way_NNI_SPR_sample(Parameters& PP, MoveStats& Stats, int b, int 
     // The inverse of a join on one side joins on the other side of the same exchange.
     auto order = exchange_order(PP.t(), b, b1, b2);
     const auto& nodes = order.nodes;
+    auto t0 = PP.t();
+    const int a = t0.find_branch(nodes[4], nodes[0]);
+    const int c = t0.find_branch(nodes[5], nodes[3]);
+    // The exchange moves the other two subtrees. These same three branch IDs are
+    // joined and split in reverse, so a fixed coordinate rules out both directions.
+    for (int branch: {a, b, c})
+        if (not t0.can_set_branch_length_or_duration(branch)) return;
     PP.select_root(b);
     PP.cache_likelihood_branches();
 
@@ -236,9 +243,9 @@ static void two_way_NNI_SPR_sample(Parameters& PP, MoveStats& Stats, int b, int 
     //  if (not extends(p[1].t(), PP.PC->TC))
     //    return;
 
-    double LA = p[0].t().branch_length_or_duration(p[0].t().find_branch(nodes[4],nodes[0]));
-    double LB = p[0].t().branch_length_or_duration(p[0].t().find_branch(nodes[4],nodes[5]));
-    double LC = p[0].t().branch_length_or_duration(p[0].t().find_branch(nodes[5],nodes[3]));
+    double LA = t0.branch_length_or_duration(a);
+    double LB = t0.branch_length_or_duration(b);
+    double LC = t0.branch_length_or_duration(c);
 
     // Join and split the additive stored coordinates.  The forward and reverse uniform-split
     // densities are 1/LC and 1/(LA+LB), so the reverse/forward ratio is LC/(LA+LB).
@@ -246,9 +253,9 @@ static void two_way_NNI_SPR_sample(Parameters& PP, MoveStats& Stats, int b, int 
     double LC1 = LC * uniform();
     double LC2 = LC - LC1;
     auto t1 = p[1].t();
-    t1.set_branch_length_or_duration(t1.find_branch(nodes[0],nodes[4]), LAB);
-    t1.set_branch_length_or_duration(t1.find_branch(nodes[4],nodes[5]), LC1);
-    t1.set_branch_length_or_duration(t1.find_branch(nodes[5],nodes[3]), LC2);
+    t1.set_branch_length_or_duration(a, LAB);
+    t1.set_branch_length_or_duration(b, LC1);
+    t1.set_branch_length_or_duration(c, LC2);
 
     vector<log_double_t> rho(2,1);
     rho[1] = LC/LAB;
