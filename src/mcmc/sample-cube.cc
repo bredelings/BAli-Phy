@@ -17,7 +17,7 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include <algorithm>                                // for sort
+#include <algorithm>                                // for max
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
 #include <iostream>                                 // for operator<<, endl
 #include <memory>                                   // for shared_ptr, __sha...
@@ -32,13 +32,12 @@
 #include "dp/hmm.hh"                                 // for HMM, HMM::bitmask_t
 #include "models/TreeInterface.hh"                   // for TreeInterface
 #include "models/parameters.hh"                      // for Parameters, mutab...
-#include "probability/choose.hh"                     // for choose_MH_P
 #include "substitution/likelihood.hh"                // for get_column_likeli...
 #include "util/assert.hh"                           // for assert
 #include "util/math/log-double.hh"                   // for log_double_t, ope...
+#include "util/myexception.hh"
 #include "util/settings.hh"                          // for get_setting_or( )
 #include "util/log-level.hh"                         // for log_verbose
-#include "util/rng.hh"                               // for uniform
 class DPengine;
 
 //Assumptions:
@@ -54,8 +53,7 @@ using boost::dynamic_bitset;
 
 pair<shared_ptr<DPcubeSimple>,Availability<log_double_t>>
 cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0, 
-                           const vector<int>& nodes, const vector<int>& nodes0,
-                           optional<int> /*bandwidth*/)
+                           const vector<int>& nodes, const vector<int>& nodes0)
 {
     const auto t = P.t();
     const auto t0 = P0.t();
@@ -178,16 +176,19 @@ cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 
 pair<shared_ptr<DPengine>,Availability<log_double_t>> sample_cube_multi_calculation::compute_matrix(int i, int j)
 {
-    return cube_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth);
+    return cube_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0]);
 }
 
 sample_cube_multi_calculation::sample_cube_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
     optional<int> bw)
-    :sample_star_multi_calculation(pp, nodes_, bw)
-{ }
-
-// Consider making into object! That would make it easier to mix
-// and match parts of the routine, while saving state.
+    :sample_star_multi_calculation(pp, nodes_, std::nullopt)
+{
+    // The alignment and SPR drivers can supply simple_bandwidth; the direct move also
+    // recognizes bandwidth. Both require an unimplemented banded cube when nonnegative.
+    const int width = std::max(bw.value_or(-1), get_setting_or("bandwidth", -1));
+    if (width >= 0)
+        throw myexception()<<"Banded cube alignment sampling is not implemented (bandwidth = "<<width<<").";
+}
 
 optional<int> sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 		                const vector<log_double_t>& rho)
@@ -197,84 +198,24 @@ optional<int> sample_cube_multi(vector<Parameters>& p,const vector< vector<int> 
         bandwidth  = get_setting("simple_bandwidth").as_int64();
 
     try {
-	sample_cube_multi_calculation tri(p, nodes, bandwidth);
+	sample_cube_multi_calculation cube(p, nodes, bandwidth);
+	cube.run_dp();
 
 	// The DP matrix construction didn't work.
-	if (not tri.Pr[0]) return {};
+	if (not cube.Pr[0]) return {};
 
-	tri.set_proposal_probabilities(rho);
+	cube.set_proposal_probabilities(rho);
 
-	return tri.choose();
+	return cube.choose();
     }
     catch (std::bad_alloc&) {
 	std::cerr<<"Allocation failed in sample_cube_multi!  Proceeding."<<std::endl;
 	return {};
     }
 }
-
-optional<int> sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
-		                const vector<log_double_t>& rho, optional<int> bandwidth)
-{
-    try {
-	vector<Parameters> p2 = p;
-
-	//----------------- Part 1: Forward -----------------//
-	sample_cube_multi_calculation tri1(p, nodes, bandwidth);
-
-	// The DP matrix construction didn't work.
-	if (not tri1.Pr[0]) return {};
-
-	tri1.set_proposal_probabilities(rho);
-
-	auto choice1 = tri1.choose(false);
-	if (not choice1) return {};
-	int C1 = *choice1;
-
-	//----------------- Part 2: Backward -----------------//
-
-	// Set the initial alignment, so that our bandwidth is relative to this one.
-	//
-	// This just selects another alignment w/in the range of possible alignments, so the previous
-	//   cache invalidations should work for this alignment as well.
-	//
-
-	// FIXME: direct access to A_?
-	//    for(int i=0;i<p2.size();i++)
-	//      for(int j=0;j<p2[i].n_data_partitions();j++)
-	//	p2[i][j].A_ = p[C1][j].A_;
-	std::abort();
-
-	sample_cube_multi_calculation tri2(p2, nodes, bandwidth);
-
-	// The DP matrix construction didn't work.
-	if (not tri2.Pr[0]) return {};
-
-	tri2.set_proposal_probabilities(rho);
-
-    auto forward_choice = choose_MH_P(0, C1, tri1.Pr);
-    auto reverse_choice = choose_MH_P(C1, 0, tri2.Pr);
-    if (not tri1.Pr[C1] or not tri2.Pr[0] or not forward_choice or not reverse_choice)
-        return {};
-    log_double_t ratio = (*tri1.Pr[C1] / *tri2.Pr[0]) * *forward_choice / *reverse_choice;
-
-	ratio *= tri1.C1 / tri2.C1;
-
-	if (uniform() < double(ratio))
-	    return C1;
-	else
-	    return {};
-    }
-    catch (std::bad_alloc&) {
-	std::cerr<<"Allocation failed in sample_cube_multi!  Proceeding."<<std::endl;
-	return {};
-    }
-}
-
 
 void cube_sample_alignment(Parameters& P,int node1,int node2) 
 {
-    int bandwidth = get_setting_or("bandwidth", -1);
-
     P.set_root(node1);
 
     //------------(Gibbs) sample from proposal distribution ------------------//
@@ -285,11 +226,7 @@ void cube_sample_alignment(Parameters& P,int node1,int node2)
 
     vector<log_double_t> rho(1,1);
 
-    optional<int> choice;
-    if (bandwidth >= 0)
-	choice = sample_cube_multi(p,nodes,rho, bandwidth);
-    else
-	choice = sample_cube_multi(p,nodes,rho);
+    auto choice = sample_cube_multi(p,nodes,rho);
 
     if (choice)
 	P = p[*choice];
