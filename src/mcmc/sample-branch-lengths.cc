@@ -440,7 +440,7 @@ void slide_node(owned_ptr<context>& P, MoveStats& Stats,int b)
     }
 }
 
-/// Propose three neighboring branch lengths all anti-correlated
+/// Propose one lognormal change to each pairwise sum at a degree-three node.
 void change_3_branch_lengths(owned_ptr<context>& P,MoveStats& Stats,int n) 
 {
     if (log_verbose >= 3) std::cerr<<"\n\n[change_3_branch_lengths]\n";
@@ -467,32 +467,27 @@ void change_3_branch_lengths(owned_ptr<context>& P,MoveStats& Stats,int n)
 
     //----------- Propose new distances -------------//
     double sigma = get_setting_or("log_branch_sigma",0.6)/2.0;
-    log_double_t ratio = 1.0;
+    auto R12 = exp_to_log_space(gaussian(0,sigma));
+    auto R23 = exp_to_log_space(gaussian(0,sigma));
+    auto R31 = exp_to_log_space(gaussian(0,sigma));
 
-    double T1_ = T1;
-    double T2_ = T2;
-    double T3_ = T3;
+    double S12_ = double(S12 * R12);
+    double S23_ = double(S23 * R23);
+    double S31_ = double(S31 * R31);
 
-    for(int i=0;i<20;i++) 
+    double T1_ = (S12_ + S31_ - S23_)/2.0;
+    double T2_ = (S12_ + S23_ - S31_)/2.0;
+    double T3_ = (S23_ + S31_ - S12_)/2.0;
+
+    // Each feasible draw has reverse/forward density ratio R12 R23 R31. Retrying an
+    // infeasible draw would condition that proposal on a state-dependent success probability.
+    auto ratio = R12 * R23 * R31;
+    if (not (T1_ > 0 and T2_ > 0 and T3_ > 0) or
+        not (std::isfinite(T1_) and std::isfinite(T2_) and std::isfinite(T3_)))
     {
-	auto R12 = exp_to_log_space(gaussian(0,sigma));
-	auto R23 = exp_to_log_space(gaussian(0,sigma));
-	auto R31 = exp_to_log_space(gaussian(0,sigma));
-
-	double S12_ = double(S12 * R12);
-	double S23_ = double(S23 * R23);
-	double S31_ = double(S31 * R31);
-
-	//---------------- Change back ------------------//
-	T1_ = (S12_ + S31_ - S23_)/2.0;
-	T2_ = (S12_ + S23_ - S31_)/2.0;
-	T3_ = (S23_ + S31_ - S12_)/2.0;
-
-	ratio = R12 * R23 * R31;
-
-	if (T1_ > 0.0 and T2_ > 0.0 and T3_ > 0.0) break;
+        Stats.inc("3-branch-lengths",result);
+        return;
     }
-    if (T1_ <= 0.0 or T2_ <= 0.0 or T3_ <= 0.0) return;
 
     //----------- Construct proposed Tree -----------//
     owned_ptr<context> P2 = P;
