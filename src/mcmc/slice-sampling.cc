@@ -633,7 +633,7 @@ find_slice_boundaries_doubling(double x0, slice_function& g, const ProbDensity& 
 // I think it just serves to let you know which way the interval gets shrunk...
 
 double search_interval(double x0, double L, double R, slice_function& g,
-                       const ProbDensity& slice_level)
+                       const ProbDensity& slice_level, bool open_bounds = false)
 {
     // Shrink interval to lower and upper bounds.
     if (g.below_lower_bound(L)) L = *g.lower_bound;
@@ -659,7 +659,8 @@ double search_interval(double x0, double L, double R, slice_function& g,
 	    g.reset();
 	    return x0;
 	}
-	auto gx1 = g(x1);
+	// A uniform floating-point draw can land exactly on a support endpoint.
+	auto gx1 = open_bounds and (x1 == L0 or x1 == R0) ? std::nullopt : g(x1);
 	if (log_verbose >= 4)
 	    std::cerr<<"    L  = "<<L <<"   x = "<<g.current_value()<<"   x = "<<x1<<"  R  = "<<R<<"     g(x) = "<<gx1<<std::endl;
 
@@ -686,7 +687,7 @@ double search_interval(double x0, double L, double R, slice_function& g,
 
 // Validate the recoverable state and numeric preconditions required by the
 // interval algorithms, while allowing any internally valid exceptional rank.
-bool pre_slice_sampling_check_OK(double x0, slice_function& g, double w)
+bool pre_slice_sampling_check_OK(double x0, slice_function& g, optional<double> w)
 {
     // Report one concise reason when a reachable state makes this kernel inapplicable.
     auto decline = [](const char* reason)
@@ -702,12 +703,19 @@ bool pre_slice_sampling_check_OK(double x0, slice_function& g, double w)
     if (not std::isfinite(x0))
         return decline("starting coordinate is not finite");
 
-    if (not std::isfinite(w) or not (w > 0))
-        return decline("window is not finite and positive");
+    if (w)
+    {
+        if (not std::isfinite(*w) or not (*w > 0))
+            return decline("window is not finite and positive");
 
-    if (not std::isfinite(x0 - w) or not (x0 - w < x0) or
-        not std::isfinite(x0 + w) or not (x0 < x0 + w))
-        return decline("window cannot form a finite interval around the starting coordinate");
+        if (not std::isfinite(x0 - *w) or not (x0 - *w < x0) or
+            not std::isfinite(x0 + *w) or not (x0 < x0 + *w))
+            return decline("window cannot form a finite interval around the starting coordinate");
+    }
+    else if (not g.lower_bound or not g.upper_bound or
+             not std::isfinite(*g.lower_bound) or not std::isfinite(*g.upper_bound) or
+             not (*g.lower_bound < x0 and x0 < *g.upper_bound))
+        return decline("starting coordinate is not inside a finite open interval");
 
     if ((g.lower_bound and std::isnan(*g.lower_bound)) or
         (g.upper_bound and std::isnan(*g.upper_bound)))
@@ -852,7 +860,8 @@ double slice_sample_doubling_(double x0, slice_function& g, double w, int m)
         return x0;
 }
 
-double slice_sample(double x0, slice_function& g,double w, int m)
+// Both bracket choices share initial-state validation and restoration on a failed evaluation.
+static double slice_sample_checked(double x0, slice_function& g, optional<double> w, int m)
 {
     try
     {
@@ -861,7 +870,11 @@ double slice_sample(double x0, slice_function& g,double w, int m)
             g.reset();
             return x0;
         }
-        return slice_sample_doubling_(x0, g, w, m);
+        if (w) return slice_sample_doubling_(x0, g, *w, m);
+
+        // Every point on this conditional has the same initial bracket. Shrinkage alone
+        // therefore supplies the reverse path, including when its trial limit is reached.
+        return search_interval(x0, *g.lower_bound, *g.upper_bound, g, draw_slice_level(g()), true);
     }
     catch (variables_changed_exception& e)
     {
@@ -869,6 +882,16 @@ double slice_sample(double x0, slice_function& g,double w, int m)
         g.reset();
     }
     return x0;
+}
+
+double slice_sample(double x0, slice_function& g, double w, int m)
+{
+    return slice_sample_checked(x0, g, w, m);
+}
+
+double slice_sample_full_interval(slice_function& g)
+{
+    return slice_sample_checked(g.current_value(), g, std::nullopt, 0);
 }
 
 double slice_sample(slice_function& g, double w, int m)

@@ -17,6 +17,8 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include "util/log-level.hh"
 #include "util/rng.hh"
@@ -504,4 +506,70 @@ void change_3_branch_lengths(owned_ptr<context>& P,MoveStats& Stats,int n)
     }
 
     Stats.inc("3-branch-lengths",result);
+}
+
+// Evaluate (a+b)-u without first rounding the pairwise sum. Near the upper endpoint,
+// subtracting u from the larger summand first retains the contribution of the smaller one.
+double branch_length_at_fixed_pair_sum(double a, double b, double u)
+{
+    return (std::max(a,b) - u) + std::min(a,b);
+}
+
+namespace
+{
+    // On this line the stored lengths are (u, s-u, t-u); changing coordinates to
+    // (u,s,t) has unit Jacobian, so the base context density is already the slice density.
+    class three_branch_slice_function: public context_slice_function
+    {
+        const vector<int>& branches;
+        const std::array<double,3> initial;
+
+    public:
+        three_branch_slice_function(Parameters& p, const vector<int>& branches, std::array<double,3> lengths)
+            :context_slice_function(p, between(0.0, lengths[0] + std::min(lengths[1], lengths[2]))),
+             branches(branches), initial(lengths)
+        {}
+
+        double current_value() const override
+        {
+            return static_cast<const Parameters&>(C).t().branch_length_or_duration(branches[0]);
+        }
+
+        // Each evaluation starts from the saved context. Reusing it at the original focal
+        // length reproduces all three starting values exactly.
+        void set_value(double u) override
+        {
+            const double a = initial[0];
+            if (u == a) return;
+            auto tree = static_cast<Parameters&>(C).t();
+            tree.set_branch_length_or_duration(branches[0], u);
+            for (int i: {1, 2})
+                tree.set_branch_length_or_duration(branches[i], branch_length_at_fixed_pair_sum(a, initial[i], u));
+        }
+    };
+}
+
+// Choose a focal branch independently of the stored lengths and keep its two pairwise sums fixed.
+void slice_sample_3_branch_lengths(owned_ptr<context>& P, MoveStats& Stats, int n)
+{
+    auto& p = *P.as<Parameters>();
+    auto tree = p.t();
+    auto branches = randomize(tree.branches_out(n));
+    if (branches.size() != 3) return;
+
+    std::array<double,3> lengths;
+    for (int i=0; i<3; i++)
+        lengths[i] = tree.branch_length_or_duration(branches[i]);
+
+    MCMC::Result result(2);
+    if (std::ranges::all_of(lengths, [](double x) {return x > 0 and std::isfinite(x);}) and
+        std::isfinite(lengths[0] + std::max(lengths[1], lengths[2])))
+    {
+        p.set_root(n);
+        three_branch_slice_function logp(p, branches, lengths);
+        double u = slice_sample_full_interval(logp);
+        result.totals[0] = 3 * abs(u - lengths[0]);
+        result.totals[1] = logp.count;
+    }
+    Stats.inc("3-branch-lengths (slice)", result);
 }

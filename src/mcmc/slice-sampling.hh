@@ -66,6 +66,9 @@ double slice_sample(double x0, slice_function& g, double w, int m);
 
 double slice_sample(slice_function& g, double w, int m);
 
+/// Shrink from the whole finite open support, which must be fixed along the conditional.
+double slice_sample_full_interval(slice_function& g);
+
 class context_slice_function: public slice_function
 {
 private:

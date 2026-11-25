@@ -123,6 +123,8 @@ void slide_node_move(owned_ptr<context>&, MCMC::MoveStats&, int);
 void change_branch_length_or_duration_move(owned_ptr<context>&, MCMC::MoveStats&, int);
 void change_branch_length_or_duration_multi_move(owned_ptr<context>&, MCMC::MoveStats&, int);
 void change_branch_length_and_T(owned_ptr<context>&, MCMC::MoveStats&, int);
+double branch_length_at_fixed_pair_sum(double a, double b, double u);
+void slice_sample_3_branch_lengths(owned_ptr<context>& P, MCMC::MoveStats& Stats, int n);
 void change_3_branch_lengths(owned_ptr<context>& P, MCMC::MoveStats& Stats,int); 
 
 

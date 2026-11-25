@@ -1,4 +1,5 @@
 #include "mcmc/slice-sampling.hh"
+#include "mcmc/sample.hh"
 #include "test-util.hh"
 #include "util/rng.hh"
 
@@ -17,6 +18,7 @@ namespace
         ProbDensity base_density_;
 
     public:
+        bool fail_on_change = false;
         int evaluations = 0;
         int resets = 0;
         bool evaluated_nonfinite_coordinate = false;
@@ -31,6 +33,8 @@ namespace
             evaluations++;
             evaluated_nonfinite_coordinate |= not std::isfinite(x);
             x_ = x;
+            if (fail_on_change and x != initial_x_)
+                throw variables_changed_exception("test density changed variables");
             return operator()();
         }
 
@@ -81,6 +85,51 @@ namespace
         }
     }
 
+    // On a shared full interval, equal-height starts accept the same first in-slice draw.
+    // A failed density evaluation must restore the state, even after installing a trial value.
+    void check_full_interval()
+    {
+        const double near_end = std::nextafter(1.0, 0.0);
+        test_slice_function left(-near_end), right(near_end);
+        left.set_lower_bound(-1);
+        left.set_upper_bound(1);
+        right.set_lower_bound(-1);
+        right.set_upper_bound(1);
+
+        myrand_init(917315);
+        double sampled = slice_sample_full_interval(left);
+        myrand_init(917315);
+        BALI_PHY_TEST_CHECK(slice_sample_full_interval(right) == sampled);
+        BALI_PHY_TEST_CHECK(-near_end < sampled and sampled < near_end);
+
+        left.reset();
+        left.fail_on_change = true;
+        BALI_PHY_TEST_CHECK(slice_sample_full_interval(left) == -near_end);
+        BALI_PHY_TEST_CHECK(left.current_value() == -near_end);
+        BALI_PHY_TEST_CHECK(left.resets == 2);
+
+        // Adding a tiny adjacent length can round back to the focal length at the upper bound.
+        test_slice_function endpoint(1.0);
+        endpoint.set_lower_bound(0.0);
+        endpoint.set_upper_bound(1.0 + std::ldexp(1.0, -54));
+        BALI_PHY_TEST_CHECK(slice_sample_full_interval(endpoint) == 1.0);
+        BALI_PHY_TEST_CHECK(endpoint.resets == 1 and endpoint.evaluations == 0);
+    }
+
+    // Ordinary branch lengths check both conserved sums. Unbalanced pairs expose loss of a
+    // small residual when a rounded sum is used to reconstruct a neighboring length.
+    void check_three_branch_slice_coordinates()
+    {
+        const double a = 0.25, b = 0.5, c = 0.125, u = 0.3;
+        BALI_PHY_TEST_CHECK(u + branch_length_at_fixed_pair_sum(a, b, u) == a+b);
+        BALI_PHY_TEST_CHECK(u + branch_length_at_fixed_pair_sum(a, c, u) == a+c);
+
+        const double tiny = std::ldexp(1.0, -54);
+        const double near_one = std::nextafter(1.0, 0.0);
+        BALI_PHY_TEST_CHECK(branch_length_at_fixed_pair_sum(1, tiny, near_one) == (1-near_one) + tiny);
+        BALI_PHY_TEST_CHECK(branch_length_at_fixed_pair_sum(tiny, 1, near_one) == (1-near_one) + tiny);
+    }
+
     // Verify that a zero-density rank supports an actual move rather than a reset to the start.
     void check_samples_within_existing_exceptional_rank()
     {
@@ -105,5 +154,7 @@ namespace
 int main()
 {
     check_declines_invalid_boundaries();
+    check_full_interval();
+    check_three_branch_slice_coordinates();
     check_samples_within_existing_exceptional_rank();
 }

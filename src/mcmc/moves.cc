@@ -508,8 +508,16 @@ void sample_branch_length_(owned_ptr<context>& P,  MoveStats& Stats, int b)
     {
         if (uniform() < 0.5)
             slide_node(P, Stats, t.find_branch(e));
-        else 
-            change_3_branch_lengths(P,Stats, e.node2);
+        else
+        {
+            const int n = e.node2;
+            // A neighboring branch can be fixed even when the visited branch is modifiable.
+            if (std::ranges::all_of(t.branches_out(n), [&](int i) {return t.can_set_branch_length_or_duration(i);}))
+            {
+                change_3_branch_lengths(P, Stats, n);
+                slice_sample_3_branch_lengths(P, Stats, n);
+            }
+        }
     }
 
     if (not do_slice) {
