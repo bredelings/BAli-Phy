@@ -145,7 +145,7 @@ bool Literal::operator==(const Literal& L) const
 }
 
 // A source decimal has denominator 2^a * 5^b in lowest terms. Scale it to a power
-// of ten, then choose the shorter exact fixed or scientific spelling (fixed on ties).
+// of ten to recover the exact digits. Use fixed notation up to four padding zeros.
 string print_decimal_literal(const rational& r)
 {
     if (r == 0) return "0.0";
@@ -166,15 +166,13 @@ string print_decimal_literal(const rational& r)
     const auto point = std::int64_t(digits.size()) - std::max(twos, fives);
     digits.erase(digits.find_last_not_of('0') + 1);
     const auto size = std::int64_t(digits.size());
-    string scientific = digits;
-    if (size > 1) scientific.insert(1, ".");
-    scientific += "e" + std::to_string(point - 1);
-
-    const auto fixed_size = point <= 0 ? 2 - point + size :
-                            point < size ? size + 1 : point + 2;
+    constexpr int max_padding = 4;
     string result;
-    if (std::size_t(fixed_size) > scientific.size())
-        result = std::move(scientific);
+    if (-point > max_padding or point - size > max_padding)
+    {
+        if (size > 1) digits.insert(1, ".");
+        result = digits + "e" + std::to_string(point - 1);
+    }
     else if (point <= 0)
         result = "0." + string(-point, '0') + digits;
     else if (point < size)
