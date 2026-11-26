@@ -357,35 +357,34 @@ sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p
     :sample_star_multi_calculation(pp, nodes_, b)
 { }
 
-// Consider making into object! That would make it easier to mix
-// and match parts of the routine, while saving state.
-
-optional<int> sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
-		               const vector<log_double_t>& rho)
+// Sample on the two-dimensional grid, preserving the ordered alignment of neighbors 2 and 3.
+optional<int> sample_tri_2D_multi(vector<Parameters>& p, const vector<vector<int>>& nodes,
+                                  const vector<log_double_t>& rho, optional<int> bandwidth)
 {
-    optional<int> bandwidth;
-    if (setting_exists("simple_bandwidth"))
-        bandwidth  = get_setting("simple_bandwidth").as_int64();
+    if (not bandwidth and setting_exists("simple_bandwidth"))
+        bandwidth = get_setting("simple_bandwidth").as_int64();
 
     try {
-	shared_ptr<sample_star_multi_calculation> tri;
-	if (uniform() < get_setting_or("cube_fraction",0.0))
-	    tri = shared_ptr<sample_star_multi_calculation>(new sample_cube_multi_calculation(p, nodes, bandwidth));
-	else
-	    tri = shared_ptr<sample_star_multi_calculation>(new sample_tri_multi_calculation(p, nodes, bandwidth));
-	tri->run_dp();
-
-	// The DP matrix construction didn't work.
-	if (not tri->Pr[0]) return {};
-
-	tri->set_proposal_probabilities(rho);
-
-	return tri->choose();
+        sample_tri_multi_calculation tri(p, nodes, bandwidth);
+        tri.run_dp();
+        if (not tri.Pr[0]) return {};
+        tri.set_proposal_probabilities(rho);
+        return tri.choose();
     }
     catch (std::bad_alloc&) {
-	std::cerr<<"Allocation failed in sample_tri_multi!  Proceeding."<<std::endl;
-	return {};
+        std::cerr<<"Allocation failed in sample_tri_2D_multi!  Proceeding."<<std::endl;
+        return {};
     }
+}
+
+// Other star moves can also select the full cube using the configured mixture.
+optional<int> sample_tri_multi(vector<Parameters>& p, const vector<vector<int>>& nodes,
+                               const vector<log_double_t>& rho)
+{
+    if (uniform() < get_setting_or("cube_fraction",0.0))
+        return sample_cube_multi(p, nodes, rho);
+
+    return sample_tri_2D_multi(p, nodes, rho, {});
 }
 
 /*

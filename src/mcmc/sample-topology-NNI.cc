@@ -26,6 +26,7 @@
 #include "sample.hh"
 #include "probability/choose.hh"
 #include "util/rng.hh"
+#include "dp/1way.hh"
 #include "dp/4way.hh"
 #include "dp/5way.hh"
 #include "dp/alignment-sums.hh"
@@ -828,11 +829,28 @@ void three_way_topology_and_A3_2D_sample(owned_ptr<context>& P, MoveStats& Stats
     for(int i=0;i<p.size();i++)
 	nodes.push_back(A3::get_nodes_branch_random(p[i].t(), two_way_nodes[4], two_way_nodes[0]) );
 
+    // Prune P--u from (P,S)u--v(X,Y). All candidates constrain the same three ordered
+    // pairwise alignments on the reduced tree: S--v, X--v and Y--v. In p[0] we obtain
+    // S--v by projecting S--u--v through u. The order in nodes[0] determines which of
+    // two unpaired residues comes first. Install that projection on both fused edges.
+    const auto& old_star = nodes[0];
+    for (int j = 0; j < p[0].n_data_partitions(); ++j)
+        if (p[0][j].variable_alignment())
+        {
+            auto path = A3::get_bitpath(p[0][j], old_star);
+            auto fused = get_pairwise_alignment_from_bits(path, 1, 2);
+            for (int i = 1; i < p.size(); ++i)
+            {
+                int b23 = p[i].t().find_branch(old_star[2], old_star[3]);
+                p[i][j].set_pairwise_alignment(b23, fused);
+            }
+        }
+
     const vector<log_double_t> rho(3,1);
 
     optional<int> choice;
     try {
-	choice = sample_tri_multi(p,nodes,rho);
+	choice = sample_tri_2D_multi(p, nodes, rho, bandwidth);
     }
     catch (choose_exception<Availability<ChoiceWeight>>& c)
     {

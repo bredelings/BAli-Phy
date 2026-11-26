@@ -71,6 +71,10 @@ Availability<log_double_t> sample_A5_ratio(std::vector<Parameters>& p,
                                            const std::vector<A5::hmm_order>& order,
                                            const std::vector<log_double_t>& rho);
 
+/// Constrain each attachment to its ordered two-neighbor projection.
+std::optional<int> sample_tri_2D_multi(std::vector<Parameters>& p, const std::vector<std::vector<int>>& nodes,
+                                       const std::vector<log_double_t>& rho, std::optional<int> bandwidth);
+
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 std::optional<int> sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
                                     const std::vector<log_double_t>& rho);
