@@ -15,6 +15,10 @@
 #include "computation/program.hh"
 #include "computation/fresh_vars.hh"
 #include <boost/container/small_vector.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/identity.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
 #include "computation/loader.hh"
 #include "computation/machine/eval_result.hh"
 #include "util/assert.hh"
@@ -450,10 +454,12 @@ public:
     void   register_interchangeable(const RegisterInterchangeable& I, int s);
     void unregister_interchangeable(const RegisterInterchangeable& I, int s);
 
-    // the list of transition kernels
-    std::unordered_set<int> transition_kernels_;
+    // Visit registrations in arrival order when assigning the scheduler's random draws.
+    using kernel_registrations = boost::multi_index_container<int, boost::multi_index::indexed_by<
+        boost::multi_index::sequenced<>, boost::multi_index::hashed_unique<boost::multi_index::identity<int>>>>;
+    kernel_registrations transition_kernels_;
 
-    const std::unordered_set<int>& transition_kernels() const;
+    const auto& transition_kernels() const { return transition_kernels_; }
 
     void   register_transition_kernel(int r, int s);
     void unregister_transition_kernel(int r, int s);

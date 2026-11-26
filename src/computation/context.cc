@@ -253,26 +253,20 @@ void context_ref::run_transition_kernels()
     }
 
     std::set<int> tk_steps_removed;
-    std::set<int> tk_steps_added;
+    reg_heap::kernel_registrations tk_steps_added;
 
     std::function<void(int, int)> register_tk_handler = [&](int, int s)
     {
-        auto it = tk_steps_removed.find(s);
-        if (it != tk_steps_removed.end())
-            tk_steps_removed.erase(it);
-        else
+        if (not tk_steps_removed.erase(s))
         {
-            assert(not tk_steps_added.count(s));
-            tk_steps_added.insert(s);
+            assert(not tk_steps_added.get<1>().count(s));
+            tk_steps_added.push_back(s);
         }
     };
 
     std::function<void(int, int)> unregister_tk_handler = [&](int, int s)
     {
-        auto it = tk_steps_added.find(s);
-        if (it != tk_steps_added.end())
-            tk_steps_added.erase(it);
-        else
+        if (not tk_steps_added.get<1>().erase(s))
         {
             assert(not tk_steps_removed.count(s));
             tk_steps_removed.insert(s);
@@ -309,7 +303,8 @@ void context_ref::run_transition_kernels()
             add_transition_kernel(e, tk_step, t, tk_groups);
         }
 
-        tk_steps_added.clear();
+        // Erase just the live entries. clear() also resets buckets retained from larger batches.
+        tk_steps_added.erase(tk_steps_added.begin(), tk_steps_added.end());
         tk_steps_removed.clear();
     }
 
