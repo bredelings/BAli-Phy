@@ -163,6 +163,7 @@ void Step::clear()
     // We are clearing created_regs in clear_back_edges_for_step.
     assert(created_regs.empty());
 
+    assert(pending_effect_slot == -1);
     flags.reset();
     // This should already be cleared.
     // assert(flags.none());
@@ -177,6 +178,7 @@ void Step::check_cleared() const
     assert(dependent_observations.empty());
 #endif
     assert(created_regs.empty());
+    assert(pending_effect_slot == -1);
     assert(flags.none());
 }
 
@@ -191,6 +193,7 @@ Step& Step::operator=(Step&& S) noexcept
 #endif
     created_regs  = std::move( S.created_regs );
     flags = S.flags;
+    pending_effect_slot = S.pending_effect_slot;
 
     return *this;
 }
@@ -204,7 +207,8 @@ Step::Step(Step&& S) noexcept
      dependent_observations(std::move(S.dependent_observations)),
 #endif
      created_regs ( std::move(S.created_regs) ),
-     flags ( S.flags )
+     flags ( S.flags ),
+     pending_effect_slot(S.pending_effect_slot)
 { }
 
 void reg::mark_unconditionally_evaluated()
@@ -354,86 +358,69 @@ int reg_heap::follow_reg_ref_no_force(int r) const
     return r;
 }
 
+// Each pending step points to its only live slot. Append even after cancellation so a
+// requeued step follows all surviving entries. Zero is available because step IDs start at one.
+void reg_heap::enqueue_effect(pending_effects& pending, int s)
+{
+    assert(s > 0 and steps[s].has_effect());
+    assert(steps[s].pending_effect_slot == -1);
+    auto& slots = pending.slots;
+
+    // At capacity, either grow or reclaim at least half the slots. The holes pay for
+    // the scan. Copy survivors forward in order and repair their indices before appending.
+    if (not slots.empty() and slots.size() == slots.capacity() and pending.live <= slots.size() / 2)
+    {
+        size_t out = 0;
+        for (int step: slots)
+            if (step)
+            {
+                steps[step].pending_effect_slot = out;
+                slots[out++] = step;
+            }
+        assert(out == pending.live);
+        slots.resize(out);
+    }
+
+    slots.push_back(s);
+    steps[s].pending_effect_slot = slots.size() - 1;
+    ++pending.live;
+}
+
+// Cancel in constant time. Clearing the last entry also resets the next drain's scan range.
+void reg_heap::remove_pending_effect(pending_effects& pending, int s)
+{
+    auto& slot = steps[s].pending_effect_slot;
+    assert(slot >= 0 and pending.slots.at(slot) == s);
+    pending.slots[slot] = 0;
+    slot = -1;
+    if (--pending.live == 0)
+        pending.slots.clear();
+}
+
 void reg_heap::mark_effect_to_register_at_step(int s)
 {
-    // Step must have effect
-    assert(steps[s].has_effect());
-
-    // Step must have not be on pending reg list
-    assert(not steps[s].has_pending_effect_registration());
-
+    enqueue_effect(pending_registrations, s);
     steps[s].set_pending_effect_registration();
-
-    steps_pending_effect_registration.insert(s);
 }
 
 void reg_heap::unmark_effect_to_register_at_step(int s)
 {
-    // Step must have effect
-    assert(steps[s].has_effect());
-
-    // Step must have be on pending reg list
     assert(steps[s].has_pending_effect_registration());
-    assert(steps_pending_effect_registration.count(s));
-
-    // Remove step from pending reg list
-    steps_pending_effect_registration.erase(s);
+    remove_pending_effect(pending_registrations, s);
     steps[s].clear_pending_effect_registration();
 }
 
 void reg_heap::mark_effect_to_unregister_at_step(int s)
 {
-    // Step must have effect
-    assert(steps[s].has_effect());
-
-    // Step must have not be on pending unreg list
-    assert(not steps[s].has_pending_effect_unregistration());
-
+    enqueue_effect(pending_unregistrations, s);
     steps[s].set_pending_effect_unregistration();
-
-    steps_pending_effect_unregistration.insert(s);
 }
 
 void reg_heap::unmark_effect_to_unregister_at_step(int s)
 {
-    // Step must have effect
-    assert(steps[s].has_effect());
-
-    // Step must have be on pending unreg list
     assert(steps[s].has_pending_effect_unregistration());
-    assert(steps_pending_effect_unregistration.count(s));
-
-    // Remove step from pending unreg list
-    steps_pending_effect_unregistration.erase(s);
+    remove_pending_effect(pending_unregistrations, s);
     steps[s].clear_pending_effect_unregistration();
-}
-
-void reg_heap::register_effect_at_step(int s)
-{
-    // Step must have effect
-    assert(steps[s].has_effect());
-
-    // Remove step from pending-reg list if it is there.
-    if (steps[s].has_pending_effect_registration())
-        unmark_effect_to_register_at_step(s);
-    else
-        assert(not steps_pending_effect_registration.count(s));
-
-    _register_effect_at_reg(steps[s].call, s);
-}
-
-void reg_heap::unregister_effect_at_step(int s)
-{
-    // Step must have effect
-    assert(steps[s].has_effect());
-
-    // Remove step from pending-unreg list if it is there.
-    if (steps[s].has_pending_effect_unregistration())
-        unmark_effect_to_unregister_at_step(s);
-    else
-        assert(not steps_pending_effect_unregistration.count(s));
-
-    _unregister_effect_at_reg(steps[s].call, s);
 }
 
 void reg_heap::_register_effect_at_reg(int r, int s)
@@ -592,32 +579,30 @@ std::set<int> reg_heap::find_affected_sampling_events(int c, const std::function
     return downstream_sampling_events;
 }
 
+// Handlers update effect registries and observers. Removing the last live step clears slots.
 void reg_heap::do_pending_effect_registrations()
 {
-    // Don't modify `steps_pending_effect_registration` while we are walking it!
-    auto v = steps_pending_effect_registration | std::ranges::to<vector>();
-    for(int s: v)
-    {
-        assert(steps[s].has_pending_effect_registration());
-        assert(steps_pending_effect_registration.count(s));
-        register_effect_at_step(s);
-    }
-
-    assert(steps_pending_effect_registration.empty());
+    auto& slots = pending_registrations.slots;
+    for (size_t i = 0; i < slots.size(); ++i)
+        if (int s = slots[i])
+        {
+            unmark_effect_to_register_at_step(s);
+            _register_effect_at_reg(steps[s].call, s);
+        }
+    assert(slots.empty());
 }
 
+// Handlers update effect registries and observers. Removing the last live step clears slots.
 void reg_heap::do_pending_effect_unregistrations()
 {
-    // Don't modify `steps_pending_effect_unregistration` while we are walking it!
-    auto v = steps_pending_effect_unregistration | std::ranges::to<vector>();
-    for(int s: v)
-    {
-        assert(steps[s].has_pending_effect_unregistration());
-        assert(steps_pending_effect_unregistration.count(s));
-        unregister_effect_at_step(s);
-    }
-
-    assert(steps_pending_effect_unregistration.empty());
+    auto& slots = pending_unregistrations.slots;
+    for (size_t i = 0; i < slots.size(); ++i)
+        if (int s = slots[i])
+        {
+            unmark_effect_to_unregister_at_step(s);
+            _unregister_effect_at_reg(steps[s].call, s);
+        }
+    assert(slots.empty());
 }
 
 void reg_heap::compute_initial_force_counts()
@@ -723,7 +708,7 @@ void reg_heap::first_evaluate_program(int r_prog, int r_log, int c)
 
     // 3. Perform any pending registration or unregistration of effects.
     do_pending_effect_registrations();
-    assert(steps_pending_effect_unregistration.empty());
+    assert(pending_unregistrations.slots.empty());
 
     // 4. Compute initial force counts
     compute_initial_force_counts();
@@ -969,8 +954,8 @@ const closure& reg_heap::evaluate_program(int c)
 
     // 4. Perform any pending registration or unregistration of effects.
     do_pending_effect_registrations();
-    assert(steps_pending_effect_unregistration.empty());
-    assert(steps_pending_effect_registration.empty());
+    assert(pending_unregistrations.slots.empty());
+    assert(pending_registrations.slots.empty());
 
     int r = heads[*program_result_head];
     assert(reg_has_value(r));

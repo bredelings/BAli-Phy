@@ -295,7 +295,11 @@ void reg_heap::release_tip_token(int t)
     {
         assert(is_root_token(t));
         root_token = -1;
-        steps_pending_effect_registration.clear();
+        // Discard undelivered registrations before their steps are reclaimed.
+        auto& slots = pending_registrations.slots;
+        for (size_t i = 0; i < slots.size(); ++i)
+            if (int s = slots[i])
+                unmark_effect_to_register_at_step(s);
         assert(tokens.size() - unused_tokens.size() == 0);
     }
 

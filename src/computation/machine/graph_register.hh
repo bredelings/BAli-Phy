@@ -81,6 +81,7 @@ struct Step
     boost::container::small_vector< int, 2 > created_regs;
 
     bitmask_8 flags;
+    int pending_effect_slot = -1;
 
     // Bit 6 for being an effect step.
 
@@ -384,10 +385,6 @@ private:
 
     void unmark_effect_to_unregister_at_step(int s);
 
-    void register_effect_at_step(int s);
-
-    void unregister_effect_at_step(int s);
-
     void note_step_not_in_root(int s);
 
     void note_step_in_root(int s);
@@ -614,8 +611,15 @@ private:
     mutable std::vector<bitmask_8> prog_temp;
     mutable std::vector<bitmask_8> prog_unshare;
 
-    std::unordered_set<int> steps_pending_effect_registration;
-    std::unordered_set<int> steps_pending_effect_unregistration;
+    struct pending_effects
+    {
+        std::vector<int> slots;   // Positive step IDs in enqueue order, with zero for a canceled entry.
+        size_t live = 0;
+    };
+
+    pending_effects pending_registrations, pending_unregistrations;
+    void enqueue_effect(pending_effects&, int s);
+    void remove_pending_effect(pending_effects&, int s);
 
 public:
 
