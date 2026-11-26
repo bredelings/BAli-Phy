@@ -19,10 +19,10 @@
 
 #include "sample-alignment.hh"
 
+#include <new>
 #include <valarray>
 #include <iostream>
 #include <cmath>
-#include <new>                                       // for bad_alloc
 #include "sample.hh"
 #include "dp/1way.hh"
 #include "dp/alignment-sums.hh"
@@ -116,14 +116,18 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
     MatrixShape matrix_shape(matrix_size, std::move(yboundaries));
 
     //------------------ Compute the DP matrix ---------------------//
-    auto Matrices = std::make_shared<DPmatrixSimple>
-                    (
-                         std::move(matrix_shape),
-                         HMM(state_emit, hmm.start_pi(), hmm, P.get_beta()),
-                         std::move(dists1),
-                         std::move(dists2),
-                         *F
-                    );
+    HMM model(state_emit, hmm.start_pi(), hmm, P.get_beta());
+    shared_ptr<DPmatrixSimple> Matrices;
+    try
+    {
+        Matrices = std::make_shared<DPmatrixSimple>(std::move(matrix_shape), model,
+                                                    std::move(dists1), std::move(dists2), *F);
+    }
+    catch (const std::bad_alloc& e)
+    {
+        std::cerr<<"Allocation failed in sample_alignment: "<<e.what()<<"!  Proceeding."<<std::endl;
+        return {};
+    }
 
     Matrices->forward_band();
 
@@ -135,6 +139,8 @@ pair<shared_ptr<DPmatrixSimple>,Availability<log_double_t>>
 sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b, optional<int> bandwidth)
 {
     auto Matrices = sample_alignment_forward(P, P.t(), hmm, b, bandwidth);
+
+    if (not Matrices) return {nullptr, unavailable};
 
     auto path = Matrices->sample_path();
     if (not path)
@@ -192,38 +198,33 @@ Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool check_init
     vector< vector< shared_ptr<DPmatrixSimple> > > Matrices(1);
     vector<vector<bool>> sampled(1);
     auto total_sampling_pr = available(log_double_t(1.0));
-    try
+    for(int i=0;i<p.size();i++) 
     {
-        for(int i=0;i<p.size();i++)
-        {
-            for(int j=0;j<p[i].n_data_partitions();j++)
-                if (p[i][j].variable_alignment())
+	for(int j=0;j<p[i].n_data_partitions();j++) 
+	    if (p[i][j].variable_alignment()) 
+	    {
+                auto [M, sampling_pr] = sample_alignment_base(p[i][j], b, bandwidth);
+		if (not M)
                 {
-                    auto [M, sampling_pr] = sample_alignment_base(p[i][j], b, bandwidth);
-                    total_sampling_pr *= sampling_pr;
-                    Matrices[i].push_back(M);
-                    sampled[i].push_back(sampling_pr.has_value());
-                    // If sampling is unavailable, the alignment for this partition is unchanged.
+                    // Both endpoint lengths, the state count and the band are fixed by this update,
+                    // so a size limit refuses the same table in reverse. Discard all partitions.
+                    p.clear();
+                    Matrices.clear();
+                    P.evaluate_program();
+                    return unavailable;
+                }
+                total_sampling_pr *= sampling_pr;
+		Matrices[i].push_back(M);
+		sampled[i].push_back(sampling_pr.has_value());
+		// If sampling is unavailable, the alignment for this partition is unchanged.
 #ifndef NDEBUG
-                    p[i][j].likelihood();  // check the likelihood calculation
+		p[i][j].likelihood();  // check the likelihood calculation
 #endif
-                }
-                else {
-                    Matrices[i].push_back(shared_ptr<DPmatrixSimple>());
-                    sampled[i].push_back(false);
-                }
-        }
-    }
-    catch (std::bad_alloc& e)
-    {
-        // The DP matrix for some partition could not be allocated, so skip this proposal as the
-        // three-branch moves do.  Earlier partitions may already have new alignments in p[0]:
-        // discard them before evaluating P, which must not have modified copies when it is executed.
-        std::cerr<<"Allocation failed in sample_alignment: "<<e.what()<<"!  Proceeding."<<std::endl;
-        p.clear();
-        Matrices.clear();
-        P.evaluate_program();
-        return unavailable;
+	    }
+	    else {
+		Matrices[i].push_back(shared_ptr<DPmatrixSimple>());
+		sampled[i].push_back(false);
+	    }
     }
 
     Availability<ProbDensity> total_ratio;
