@@ -67,7 +67,7 @@ string register_likelihood::print() const
 
 bool RegisterInterchangeable::operator==(const RegisterInterchangeable& e) const
 {
-    return id == e.id and r_interchangeable == e.r_interchangeable;
+    return id == e.id and r_interchangeable == e.r_interchangeable and serial == e.serial;
 }
 
 bool RegisterInterchangeable::operator==(const Object& O) const
@@ -83,7 +83,8 @@ bool RegisterInterchangeable::operator==(const Object& O) const
 
 string RegisterInterchangeable::print() const
 {
-    return string("RegisterInterchangeable[")+std::to_string(id)+","+std::to_string(r_interchangeable)+"]";
+    return string("RegisterInterchangeable[")+std::to_string(id)+","+std::to_string(r_interchangeable)
+        +",serial="+std::to_string(serial)+"]";
 }
 
 void RegisterInterchangeable::get_regs(std::vector<int>& regs) const
@@ -96,7 +97,7 @@ void RegisterInterchangeable::update_regs(const std::vector<int>& remap) const
     r_interchangeable = remap[r_interchangeable];
 }
 
-RegisterInterchangeable::RegisterInterchangeable(int i, int r)
-    :id(i), r_interchangeable(r)
+RegisterInterchangeable::RegisterInterchangeable(int id, int r, std::uint64_t serial)
+    :id(id), r_interchangeable(r), serial(serial)
 {
 }

@@ -1176,25 +1176,18 @@ void reg_heap::unregister_prior(const register_prob& E, int s)
 
 void reg_heap::register_interchangeable(const RegisterInterchangeable& I, int /*s*/)
 {
-    if (not interchangeables.count(I.id))
-        interchangeables.insert({I.id, {}});
-
-    auto& i_regs = interchangeables.at(I.id);
-
-    assert(not i_regs.count(I.r_interchangeable));
-
-    i_regs.insert(I.r_interchangeable);
+    auto& members = interchangeables[I.id];
+    bool inserted = members.emplace(I.serial, I.r_interchangeable).second;
+    assert(inserted);
 }
 
 void reg_heap::unregister_interchangeable(const RegisterInterchangeable& I, int /*s*/)
 {
-    auto& i_regs = interchangeables.at(I.id);
+    auto& members = interchangeables.at(I.id);
+    assert(members.contains(I.serial) and members.at(I.serial) == I.r_interchangeable);
+    members.erase(I.serial);
 
-    assert(i_regs.count(I.r_interchangeable));
-
-    i_regs.erase(I.r_interchangeable);
-
-    if (i_regs.empty())
+    if (members.empty())
         interchangeables.erase(I.id);
 }
 

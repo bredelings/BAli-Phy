@@ -1,5 +1,6 @@
 #ifndef EFFECTS_H
 #define EFFECTS_H
+#include <cstdint>
 #include "effect.hh"
 #include "gcobject.hh"
 #include "util/math/ProbDensity.hh"
@@ -46,6 +47,7 @@ struct RegisterInterchangeable: public effect
 {
     int id;
     mutable int r_interchangeable;
+    std::uint64_t serial;
 
     void get_regs(std::vector<int>& regs) const override;
     void update_regs(const std::vector<int>& regs) const override;
@@ -57,7 +59,7 @@ struct RegisterInterchangeable: public effect
 
     std::string print () const override;
 
-    RegisterInterchangeable(int,int);
+    RegisterInterchangeable(int id, int r, std::uint64_t serial);
 };
 
 #endif

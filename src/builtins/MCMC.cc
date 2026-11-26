@@ -21,6 +21,7 @@
 #include <cmath>
 #include <limits>
 #include <numeric>
+#include <unordered_set>
 
 using boost::dynamic_pointer_cast;
 
@@ -1464,7 +1465,7 @@ extern "C" closure builtin_function_registerInterchangeable(OperationArgs& Args)
     assert(is_interchangeable(M.closure_at(r_ix).get_code()));
 
     // 3. Create the effect
-    object_ptr<RegisterInterchangeable> e(new RegisterInterchangeable{id, r_ix});
+    object_ptr<RegisterInterchangeable> e(new RegisterInterchangeable{id, r_ix, M.next_interchangeable_serial++});
 
     int r_effect = Args.allocate(closure(e));
 
@@ -1518,11 +1519,16 @@ extern "C" closure builtin_function_interchangeEntriesRaw(OperationArgs& Args)
     int id = C1.get_reg_value(Args.reg_for_slot(0)).as_int();
 
     //------------ 2. Find interchangeable regs ----------//
-    if (M.interchangeables.count(id))
+    auto group = M.interchangeables.find(id);
+    if (group != M.interchangeables.end())
     {
+        // Snapshot the members in effect creation order so seeded draws are independent of register
+        // numbers. A restored effect has its original serial and thus keeps its relative order.
         vector<int> interchange_regs;
-        for(int r: M.interchangeables.at(id))
+        interchange_regs.reserve(group->second.size());
+        for(const auto& [serial, r]: group->second)
             interchange_regs.push_back(r);
+        assert(std::unordered_set<int>(interchange_regs.begin(), interchange_regs.end()).size() == interchange_regs.size());
 
         if (log_verbose >= 3)
         {
