@@ -527,35 +527,6 @@ void sample_branch_length_(owned_ptr<context>& P,  MoveStats& Stats, int b)
     }
 }
 
-void walk_time_tree_sample_NNI_and_node_times(owned_ptr<context>& P, MoveStats& Stats)
-{
-    if (log_verbose >= 3) std::cerr<<"\n\n[walk_time_tree_sample_NNI_and_node_times]\n";
-    Parameters& PP = *P.as<Parameters>();
-    vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
-
-    for(int b: branches)
-    {
-	int n1 = PP.t().source(b);
-	int n2 = PP.t().target(b);
-        double U = uniform();
-
-        if (U < 0.1)
-	{
-            slice_sample_node_time(P,Stats,n1);
-            slice_sample_node_time(P,Stats,n2);
-	}
-
-	three_way_time_tree_NNI_sample(P,Stats,b);
-
-        if (U > 0.9)
-	{
-            slice_sample_node_time(P,Stats,n2);
-            slice_sample_node_time(P,Stats,n1);
-	}
-    }
-}
-
-
 // At each fork update the first child before visiting either subtree, and the other
 // child after visiting both. An update may exchange the sibling with a grandchild,
 // but must preserve the central branch and incoming stem. Thus each branch ID is
@@ -624,31 +595,39 @@ static void walk_binary_tree(const TreeInterface& t, int root, auto&& update)
 
 // Binary neighborhoods admit the live walk. Otherwise exchangeable stable edge IDs give
 // the same probability to an order and its reverse; those visits have no protected stem.
-static void walk_nni_edges(const TreeInterface& t, auto&& update)
+static void walk_nni_edges(const TreeInterface& t, optional<int> root, auto&& update)
 {
     if (not t.n_branches()) return;
 
     vector<int> tips;
-    optional<int> binary_root;
+    optional<int> degree_two;
+    bool binary = not root or t.degree(*root) <= 2;
     for (int node: t.nodes())
     {
         int degree = t.degree(node);
         if (degree == 1)
             tips.push_back(node);
-        else if (degree == 2 and not binary_root)
-            binary_root = node;
+        else if (degree == 2 and not degree_two and (not root or *root == node))
+            degree_two = node;
         else if (degree != 3)
         {
-            auto branches = t.branches();
-            random_shuffle(branches);
-            for (int b: branches)
-                update(b, {});
-            return;
+            binary = false;
+            break;
         }
     }
 
-    int root = binary_root ? *binary_root : uniform_element(tips);
-    walk_binary_tree(t, root, update);
+    if (binary)
+    {
+        if (not root) root = degree_two ? *degree_two : uniform_element(tips);
+        walk_binary_tree(t, *root, update);
+    }
+    else
+    {
+        auto branches = t.branches();
+        random_shuffle(branches);
+        for (int b: branches)
+            update(b, {});
+    }
 }
 
 // Apply ordinary NNI at b. A supplied stem fixes the sibling/grandchild exchange
@@ -689,7 +668,7 @@ static void sample_walk_nni(owned_ptr<context>& P, MoveStats& Stats, int b, opti
 
 void walk_tree_sample_NNI(owned_ptr<context>& P, MoveStats& Stats)
 {
-    walk_nni_edges(P.as<Parameters>()->t(), [&](int b, optional<int> stem) { sample_walk_nni(P,Stats,b,stem); });
+    walk_nni_edges(P.as<Parameters>()->t(), {}, [&](int b, optional<int> stem) { sample_walk_nni(P,Stats,b,stem); });
 }
 
 
@@ -698,7 +677,7 @@ void walk_tree_sample_NNI(owned_ptr<context>& P, MoveStats& Stats)
 void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<context>& P, MoveStats& Stats)
 {
     auto t = P.as<Parameters>()->t();
-    walk_nni_edges(t, [&](int b, optional<int> stem)
+    walk_nni_edges(t, {}, [&](int b, optional<int> stem)
     {
         double u = uniform();
         if (t.has_branch_lengths() and u < 0.1)
@@ -706,6 +685,40 @@ void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<context>& P, MoveStats& S
         sample_walk_nni(P,Stats,b,stem);
         if (t.has_branch_lengths() and u > 0.9)
             slice_sample_branch_length_or_duration(P,Stats,b);
+    });
+}
+
+
+// Start at the biological root so that an eligible NNI exchanges the sibling with a
+// grandchild. Both endpoints survive the swap, even if their allowable ages change.
+void walk_time_tree_sample_NNI_and_node_times(owned_ptr<context>& P, MoveStats& Stats)
+{
+    if (log_verbose >= 3) std::cerr<<"\n\n[walk_time_tree_sample_NNI_and_node_times]\n";
+    auto t = P.as<Parameters>()->t();
+    if (not t.n_branches()) return;
+    const int root = t.root();
+    // The reverse of parent then child before NNI is child then parent after NNI.
+    walk_nni_edges(t, root, [&](int b, optional<int>)
+    {
+        if (not t.away_from_root(b)) b = t.reverse(b);
+        int parent = t.source(b);
+        int child = t.target(b);
+        double u = uniform();
+        if (u < 0.1)
+        {
+            slice_sample_node_time(P,Stats,parent);
+            slice_sample_node_time(P,Stats,child);
+        }
+
+        // Even in the shuffled-edge fallback, NNI needs one sibling and two grandchildren.
+        if (t.degree(parent) == (parent == root ? 2 : 3) and t.degree(child) == 3)
+            three_way_time_tree_NNI_sample(P,Stats,b);
+
+        if (u > 0.9)
+        {
+            slice_sample_node_time(P,Stats,child);
+            slice_sample_node_time(P,Stats,parent);
+        }
     });
 }
 
