@@ -4,6 +4,8 @@ module Main where
 import Compiler.Num
 import Compiler.Fractional
 import Compiler.Error (error)
+import Data.Floating.Types (toFloating)
+import Data.Ord ((<))
 import Probability.Dist (HasPdf(pdf))
 import Probability.Distribution.Discrete (delta)
 import Probability.Distribution.Mixture
@@ -30,9 +32,10 @@ main = do
     print [firstValue, middleValue, finalValue, singleValue, boundaryValue, precedenceValue]
     -- Density traversal must normalize globally and ignore inactive components, even an undefined tail.
     -- Selection tests alone do not catch suffix normalization or eager zero-weight evaluation.
-    print [ pdf (3 .*. delta 40) 40
-          , pdf (2 .*. delta 10 |+| 6 .*. delta 20) 10
-          , pdf (20 .*. delta 10 |+| 60 .*. delta 20) 10
+    let quarter density = abs ((toFloating density :: Double) - 0.25) < 1e-14
+    print ( pdf (3 .*. delta 40) 40
+          , quarter (pdf (2 .*. delta 10 |+| 6 .*. delta 20) 10)
+          , quarter (pdf (20 .*. delta 10 |+| 60 .*. delta 20) 10)
           , pdf (1 .*. delta 10 |+| 0 .*. (error "inactive" :: Normal)) 10
           , pdf (0 .*. (error "inactive" :: Normal) |+| 1 .*. delta 20) 20
-          ]
+          )

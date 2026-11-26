@@ -1,12 +1,12 @@
-x = 20020000000000
+x = 2.002e+13
 floatRadix x = 2
 floatDigits x = 53
 floatRange x = (-1021,1024)
 decodeFloat x = (5125120000000000,-8)
 encodeFloat 2 3 = 16
-significand x = 0.569002622796688
+significand x = 0.5690026227966882
 exponent x = 45
-scaleFloat 2 x = 80080000000000
+scaleFloat 2 x = 8.008e+13
 isNaN x = False
 isInfinite x = False
 isDenormalized x = False

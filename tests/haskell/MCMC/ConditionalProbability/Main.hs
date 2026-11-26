@@ -1,10 +1,12 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Main where
 
+import Compiler.Floating (log)
 import Compiler.Fractional
 import Compiler.Num
 import Control.Monad (return)
 import Data.Function (($))
+import Data.List (map)
 import Data.OldList (replicate)
 import Data.Ord ((<))
 import qualified Data.Vector.Unboxed as U
@@ -24,8 +26,9 @@ report dimensionSelector restrictedSelector = TransitionKernel (\context -> do
   dimensionProb <- runContextAction (condPr dimensionSelector 1 3) context
   restrictedProb <- runContextAction (condPr restrictedSelector 2 3) context
   fixedProb <- runContextAction (condPr (1 :: Int) 1 3) context
-  putStrLn (show (U.toList dimensionLogOdds, U.toList restrictedLogOdds, fixedLogOdds))
-  putStrLn (show (dimensionProb, restrictedProb, fixedProb)))
+  let equalMassOdds x = abs (x - log (1/2)) < 1e-14
+  putStrLn (show (map equalMassOdds (U.toList dimensionLogOdds), U.toList restrictedLogOdds, fixedLogOdds))
+  putStrLn (show (abs (dimensionProb - 1/3) < 1e-14, restrictedProb, fixedProb)))
 
 -- Give all dimension-changing states equal mass and make the third restricted state impossible.
 model = do

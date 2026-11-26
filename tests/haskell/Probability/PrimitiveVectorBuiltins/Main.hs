@@ -3,6 +3,8 @@
 import Compiler.Fractional
 import Compiler.IO (IO)
 import Compiler.Num
+import Data.Floating.Types (toFloating)
+import Data.Ord ((<))
 import qualified Data.Vector.Unboxed as U
 import Data.Vector.Unboxed.Internal (intVectorNativeView)
 import Foreign.NativeVector (NativeVector)
@@ -19,15 +21,16 @@ foreign import bpcall "PopGen:selfing_coalescence_probability" builtin_selfing_c
 -- Exercise boxed-log and primitive-vector probability boundaries without
 -- exposing their internal representations in the public list-facing interfaces.
 main = do
-    print (pdf (multinomial 2 [0.25,0.75]) [1,1])
+    let density = pdf (multinomial 2 [0.25,0.75]) [1,1]
+    print ("multinomial", abs ((toFloating density :: Double) - 0.375) < 1e-14)
     print (multinomial_density 2 [0.25,0.75] [2,1])
     -- Protect exact-zero categories: density must retain 0^0=1 and sampling must avoid a trailing
     -- 0/0 conditional. Positive-probability checks cannot expose either endpoint behavior.
     print (multinomial_density 2 [1,0] [2,0])
     sampledMultinomial <- sampleIO (multinomial 5 [0,1,0])
     print sampledMultinomial
-    print (builtin_haplotype01_from_plaf_probability (U.fromList [0.25,0.75])
-                                                     (listToVector [0,1]))
+    let haplotype = builtin_haplotype01_from_plaf_probability (U.fromList [0.25,0.75]) (listToVector [0,1])
+    print ("haplotype", abs ((toFloating haplotype :: Double) - 0.5625) < 1e-14)
     sampled <- builtin_sample_haplotype01_from_plaf (U.fromList [0,1])
     print (vectorToList sampled)
     print (builtin_selfing_coalescence_probability 2 0 indicatorOffset
