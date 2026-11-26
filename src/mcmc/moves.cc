@@ -652,10 +652,10 @@ static void walk_binary_tree(const TreeInterface& t, int root, auto&& update)
     }
 }
 
-void walk_tree_sample_NNI(owned_ptr<context>& P, MoveStats& Stats)
+// Binary neighborhoods admit the live walk. Otherwise exchangeable stable edge IDs give
+// the same probability to an order and its reverse; those visits have no protected stem.
+static void walk_nni_edges(const TreeInterface& t, auto&& update)
 {
-    auto& PP = *P.as<Parameters>();
-    auto t = PP.t();
     if (not t.n_branches()) return;
 
     vector<int> tips;
@@ -669,46 +669,55 @@ void walk_tree_sample_NNI(owned_ptr<context>& P, MoveStats& Stats)
             binary_root = node;
         else if (degree != 3)
         {
-            // Other degree patterns have no binary walk of this form. Stable edge IDs
-            // in uniform random order preserve the existing fixed-edge A4 opportunities.
             auto branches = t.branches();
             random_shuffle(branches);
             for (int b: branches)
-                if (uniform() < 0.95)
-                    three_way_topology_sample(P,Stats,b);
-                else
-                    two_way_NNI_sample(P,Stats,b);
+                update(b, {});
             return;
         }
     }
 
     int root = binary_root ? *binary_root : uniform_element(tips);
-    walk_binary_tree(t, root, [&](int b, optional<int> stem)
+    walk_binary_tree(t, root, update);
+}
+
+// Apply ordinary NNI at b. A supplied stem fixes the sibling/grandchild exchange
+// family. At the degree-two root the three A4 resolutions already preserve b.
+static void sample_walk_nni(owned_ptr<context>& P, MoveStats& Stats, int b, optional<int> stem)
+{
+    auto& PP = *P.as<Parameters>();
+    auto t = PP.t();
+    if (t.is_leaf_branch(b)) return;
+    if (log_verbose >= 3)
+        std::cerr<<" <walk_tree_sample_NNI: branch "<<b<<"> start: Pr = "<<P->probability()<<"\n";
+
+    if (not stem)
     {
-        if (t.is_leaf_branch(b)) return;
-        if (log_verbose >= 3)
-            std::cerr<<" <walk_tree_sample_NNI: branch "<<b<<"> start: Pr = "<<P->probability()<<"\n";
-        if (not stem)
-        {
-            // At the degree-two root, the three A4 resolutions all preserve b.
-            three_way_topology_sample(P,Stats,b);
-        }
+        if (t.degree(t.source(b)) == 3 and t.degree(t.target(b)) == 3 and uniform() >= 0.95)
+            two_way_NNI_sample(P,Stats,b);
         else
-        {
-            auto sides = t.branches_after(t.reverse(b));
-            int incoming = t.reverse(*stem);
-            assert(sides.size() == 2 and (sides[0] == incoming or sides[1] == incoming));
-            int sibling = sides[0] == incoming ? sides[1] : sides[0];
-            auto children = t.branches_after(b);
-            assert(children.size() == 2);
-            if (uniform() < 0.95)
-                three_way_NNI_sample(PP,Stats,b,sibling,children[0],children[1]);
-            else
-                two_way_NNI_sample(PP,Stats,b,sibling,uniform_element(children));
-        }
-        if (log_verbose >= 3)
-            std::cerr<<" <walk_tree_sample_NNI: branch "<<b<<">  end: Pr = "<<P->probability()<<"\n";
-    });
+            three_way_topology_sample(P,Stats,b);
+    }
+    else
+    {
+        auto sides = t.branches_after(t.reverse(b));
+        int incoming = t.reverse(*stem);
+        assert(sides.size() == 2 and (sides[0] == incoming or sides[1] == incoming));
+        int sibling = sides[0] == incoming ? sides[1] : sides[0];
+        auto children = t.branches_after(b);
+        assert(children.size() == 2);
+        if (uniform() < 0.95)
+            three_way_NNI_sample(PP,Stats,b,sibling,children[0],children[1]);
+        else
+            two_way_NNI_sample(PP,Stats,b,sibling,uniform_element(children));
+    }
+    if (log_verbose >= 3)
+        std::cerr<<" <walk_tree_sample_NNI: branch "<<b<<">  end: Pr = "<<P->probability()<<"\n";
+}
+
+void walk_tree_sample_NNI(owned_ptr<context>& P, MoveStats& Stats)
+{
+    walk_nni_edges(P.as<Parameters>()->t(), [&](int b, optional<int> stem) { sample_walk_nni(P,Stats,b,stem); });
 }
 
 
