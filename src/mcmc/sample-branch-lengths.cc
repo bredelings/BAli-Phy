@@ -125,17 +125,6 @@ void change_branch_length_or_duration_log_scale(owned_ptr<context>& P,
 
 #include "slice-sampling.hh"
 
-// In one case, we had x~1e-99 and y~1e26
-// In that case, setting the window size to 1e26 meant that
-// we couldn't shrink to a small enough window in 200 steps.
-double scale_between(double x, double y)
-{
-    if (x > 0 and y > 0)
-        return exp( (log(x) + log(y))/2 );
-    else
-        return (x + y)/2.0;
-}
-
 void slice_sample_branch_length_or_duration(owned_ptr<context>& P,MoveStats& Stats,int b)
 {
     Parameters& PP = *P.as<Parameters>();
@@ -152,8 +141,8 @@ void slice_sample_branch_length_or_duration(owned_ptr<context>& P,MoveStats& Sta
     // Slice-sample the stored variable.  Its context density needs no rate Jacobian because
     // branch-rate layers remain fixed and the program already defines a density for this variable.
     double sigma = get_setting_or("slice_branch_sigma",1.5);
-    // NOTE - it is OK to depend on x below -- IF AND ONLY IF the likelihood is unimodal.
-    double w = sigma * scale_between(PP.branch_mean(),x);
+    // mu is the reciprocal branch count, so the reverse slice starts with the same width.
+    const double w = sigma * mu;
     branch_length_or_duration_slice_function logp(PP,b);
     double x2 = slice_sample(x,logp,w,50);
 
@@ -217,8 +206,8 @@ void alignment_slice_sample_branch_length_or_duration(owned_ptr<context>& P,Move
     // Alignment sampling observes the effective length recomputed after the underlying value changes;
     // the context density and proposal correction remain expressed for that underlying variable.
     double sigma = get_setting_or("slice_branch_sigma",1.5);
-    // NOTE - it is OK to depend on x below -- IF AND ONLY IF the likelihood is unimodal.
-    double w = sigma * scale_between(PP.branch_mean(),x);
+    // mu is the reciprocal branch count, so the reverse slice starts with the same width.
+    const double w = sigma * mu;
     alignment_branch_length_or_duration_slice_function logp(PP,b);
     double x2 = slice_sample(x,logp,w,50);
 
