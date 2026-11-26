@@ -527,36 +527,6 @@ void sample_branch_length_(owned_ptr<context>& P,  MoveStats& Stats, int b)
     }
 }
 
-void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<context>& P, MoveStats& Stats) 
-{
-    Parameters& PP = *P.as<Parameters>();
-    vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
-
-    for(int b: branches)
-    {
-        double U = uniform();
-
-        if (PP.t().has_branch_lengths() and U < 0.1)
-            slice_sample_branch_length_or_duration(P,Stats,b);
-
-        if (PP.t().is_internal_branch(b)) 
-        {
-            // In theory the 3-way move should have twice the acceptance rate, when the branch length
-            // is non-zero, and one of the two other topologies is good while one is bad.
-            //
-            // This seems to actually occur for the Enolase-48 data set.
-            if (uniform() < 0.95)
-                three_way_topology_sample(P,Stats,b);
-            else
-                two_way_NNI_sample(P,Stats,b);
-        }
-
-        if (PP.t().has_branch_lengths() and U > 0.9)
-            slice_sample_branch_length_or_duration(P,Stats,b);
-    }
-}
-
-
 void walk_time_tree_sample_NNI_and_node_times(owned_ptr<context>& P, MoveStats& Stats)
 {
     if (log_verbose >= 3) std::cerr<<"\n\n[walk_time_tree_sample_NNI_and_node_times]\n";
@@ -706,6 +676,8 @@ static void sample_walk_nni(owned_ptr<context>& P, MoveStats& Stats, int b, opti
         int sibling = sides[0] == incoming ? sides[1] : sides[0];
         auto children = t.branches_after(b);
         assert(children.size() == 2);
+        // When one alternative is good and the other is poor, three-way NNI can accept
+        // about twice as often as two-way NNI, as observed on the Enolase-48 data set.
         if (uniform() < 0.95)
             three_way_NNI_sample(PP,Stats,b,sibling,children[0],children[1]);
         else
@@ -718,6 +690,23 @@ static void sample_walk_nni(owned_ptr<context>& P, MoveStats& Stats, int b, opti
 void walk_tree_sample_NNI(owned_ptr<context>& P, MoveStats& Stats)
 {
     walk_nni_edges(P.as<Parameters>()->t(), [&](int b, optional<int> stem) { sample_walk_nni(P,Stats,b,stem); });
+}
+
+
+// Visit pendant edges as well: only the NNI part is trivial there. The equal chances of
+// slicing before or after NNI pair the two local orders on the reverse traversal.
+void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<context>& P, MoveStats& Stats)
+{
+    auto t = P.as<Parameters>()->t();
+    walk_nni_edges(t, [&](int b, optional<int> stem)
+    {
+        double u = uniform();
+        if (t.has_branch_lengths() and u < 0.1)
+            slice_sample_branch_length_or_duration(P,Stats,b);
+        sample_walk_nni(P,Stats,b,stem);
+        if (t.has_branch_lengths() and u > 0.9)
+            slice_sample_branch_length_or_duration(P,Stats,b);
+    });
 }
 
 
