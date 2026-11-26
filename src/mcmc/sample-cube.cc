@@ -208,8 +208,8 @@ optional<int> sample_cube_multi(vector<Parameters>& p,const vector< vector<int> 
 
 	return cube.choose();
     }
-    catch (std::bad_alloc&) {
-	std::cerr<<"Allocation failed in sample_cube_multi!  Proceeding."<<std::endl;
+    catch (std::bad_alloc& e) {
+	std::cerr<<"Allocation failed in sample_cube_multi: "<<e.what()<<"!  Proceeding."<<std::endl;
 	return {};
     }
 }

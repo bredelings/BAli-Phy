@@ -1497,8 +1497,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 	    accepted = SPR_accept_or_reject_proposed_tree(P, p, Pr, proposal_weights, I, C,
 							     locations, nodes, sum_out_A);
     }
-    catch (std::bad_alloc&) {
-	std::cerr<<"Allocation failed in sample_try_multi (in SPR_search_one)!  Proceeding."<<std::endl;
+    catch (std::bad_alloc& e) {
+	std::cerr<<"Allocation failed in sample_try_multi (in SPR_search_one): "<<e.what()<<"!  Proceeding."<<std::endl;
 	return false;
     }
 
