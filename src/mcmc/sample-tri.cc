@@ -461,18 +461,24 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
 {
     P.set_root(node1);
 
-    //------------(Gibbs) sample from proposal distribution ------------------//
-    vector<Parameters> p(1,P);
+    {
+        //------------(Gibbs) sample from proposal distribution ------------------//
+        vector<Parameters> p(1,P);
 
-    vector< vector<int> > nodes(1);
-    nodes[0] = A3::get_nodes_branch_random(P.t(),node1,node2);
+        vector< vector<int> > nodes(1);
+        nodes[0] = A3::get_nodes_branch_random(P.t(),node1,node2);
 
-    vector<log_double_t> rho(1,1);
+        vector<log_double_t> rho(1,1);
 
-    auto choice = sample_tri_multi(p,nodes,rho);
+        auto choice = sample_tri_multi(p,nodes,rho);
 
-    if (choice)
-	P = p[*choice];
+        if (choice)
+            P = p[*choice];
+
+        // If there is no choice, then p[0] may still hold new alignments for the partitions
+        // that were handled before the DP matrix of a later partition failed.  Destroy the
+        // proposals here: P cannot be executed while a modified copy of it exists.
+    }
 
     // Ensure that the program is executed.
     P.evaluate_program();

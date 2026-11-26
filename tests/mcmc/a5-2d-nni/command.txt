@@ -1,0 +1,1 @@
+data/5d-muscle.fasta:1-8 --iterations=2 --set A5_fraction=1 --set NNI+A_fraction=1 --name=ignore

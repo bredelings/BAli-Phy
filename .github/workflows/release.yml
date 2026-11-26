@@ -58,8 +58,8 @@ jobs:
               {"name": "ubuntu-gcc-14-24.04-arm", "os": "ubuntu-24.04-arm", "compiler": "gcc", "version": "14", "arch": "linux64"},
               {"name": "ubuntu-gcc-15-26.04", "os": "ubuntu-26.04", "compiler": "gcc", "version": "15", "cxxflags": "-march=x86-64-v3", "arch": "linux64"},
               {"name": "ubuntu-gcc-15-26.04-arm", "os": "ubuntu-26.04-arm", "compiler": "gcc", "version": "15", "arch": "linux64"},
-              {"name": "macos15-xcode16-intel", "os": "macos-15-intel", "compiler": "xcode", "version": "16", "cxxflags": "-march=x86-64-v3", "arch": "mac-intel64"},
-              {"name": "macos16-xcode26-arm", "os": "macos-latest", "compiler": "xcode", "version": "26", "arch": "mac-arm64"},
+              {"name": "macos-xcode-intel", "os": "macos-26-intel", "compiler": "xcode", "version": "latest-stable", "osx-version-min": "26.0", "cxxflags": "-march=x86-64-v3", "arch": "mac-intel64"},
+              {"name": "macos-xcode-arm", "os": "macos-latest", "compiler": "xcode", "version": "latest-stable", "osx-version-min": "26.0", "arch": "mac-arm64"},
               {"name": "windows-native-mingw", "os": "windows-latest", "compiler": "mingw", "version": "N/A", "arch": "win64"}
             ]') }}
 

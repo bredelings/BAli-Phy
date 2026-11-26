@@ -24,8 +24,8 @@ jobs:
                ubuntu-gcc-16-assertions,
                ubuntu-clang-20-arm-release,
                macos-intel-NDEBUG_DP,
-               macos-xcode16-arm-sanitize,
-               macos-xcode26-arm-assertions,
+               macos-xcode-arm-sanitize,
+               macos-xcode-arm-assertions,
                macos-homebrew-llvm-libcxx,
                windows-cross,
                windows-native-mingw
@@ -68,24 +68,27 @@ jobs:
             arch: "linux64"
 
           - name: macos-intel-NDEBUG_DP
-            os: macos-15-intel
+            os: macos-26-intel
             compiler: xcode
-            version: "16"
+            version: latest-stable
+            osx-version-min: "26.0"
             assertions: true
             cxxflags: "-DNDEBUG_DP"  # Test without realignment checking code.
             arch: "mac-intel64"
 
-          - name: macos-xcode16-arm-sanitize
-            os: macos-15
+          - name: macos-xcode-arm-sanitize
+            os: macos-latest
             compiler: xcode
-            version: "16"
+            version: latest-stable
+            osx-version-min: "26.0"
             sanitize: "undefined,local-bounds"
             arch: "mac-arm64"
 
-          - name: macos-xcode26-arm-assertions
+          - name: macos-xcode-arm-assertions
             os: macos-latest
             compiler: xcode
-            version: "26"
+            version: latest-stable
+            osx-version-min: "26.0"
             assertions: true
             arch: "mac-arm64"
 
