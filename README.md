@@ -14,7 +14,7 @@ The oldest compiler versions tested in CI are:
 
  * GCC 14
  * Clang 20
- * Xcode 16
+ * Xcode 26
 
 Linux Clang builds also need libstdc++ 14 or newer.
 
