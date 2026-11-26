@@ -113,6 +113,9 @@ void three_way_NNI_sample(Parameters&, MCMC::MoveStats&, int b, int sibling, int
 void two_way_NNI_sample(owned_ptr<context>&, MCMC::MoveStats&, int);
 void two_way_NNI_sample(Parameters&, MCMC::MoveStats&, int b, int left, int right);
 void three_way_topology_and_alignment_sample(owned_ptr<context>&, MCMC::MoveStats&, int, std::optional<int> bandwidth = {});
+// On a degree-three/degree-three edge, keep the focal boundary node attached to its current endpoint.
+void three_way_topology_and_alignment_sample_at_node(owned_ptr<context>&, MCMC::MoveStats&, int b,
+                                                     int focal_node, std::optional<int> bandwidth = {});
 
 void sample_SPR_all(owned_ptr<context>&, MCMC::MoveStats&);
 void sample_SPR_search_all(owned_ptr<context>&, MCMC::MoveStats&);

@@ -723,25 +723,28 @@ void walk_time_tree_sample_NNI_and_node_times(owned_ptr<context>& P, MoveStats& 
 }
 
 
-void walk_tree_sample_NNI_and_A(owned_ptr<context>& P, MoveStats& Stats) 
+// Mix ordinary NNI with a joint topology/alignment update on the same live traversal.
+void walk_tree_sample_NNI_and_A(owned_ptr<context>& P, MoveStats& Stats)
 {
-    double NNI_A_fraction = get_setting_or("NNI+A_fraction",0.01);
-
-    Parameters& PP = *P.as<Parameters>();
-    vector<int> branches = walk_tree_path(PP.t(), PP.subst_root());
-
-    for(int b: branches)
+    const double NNI_A_fraction = get_setting_or("NNI+A_fraction",0.01);
+    auto t = P.as<Parameters>()->t();
+    // On an internal edge u->v with stem p->u, choosing p as the focal node preserves
+    // both edges even when the update changes the alignment between p and u.
+    walk_nni_edges(t, {}, [&](int b, optional<int> stem)
     {
         if (log_verbose >= 3)
             std::cerr<<" <walk_tree_sample_NNI_and_A: branch "<<b<<">\n";
+        if (t.is_leaf_branch(b)) return;
         if (uniform() < NNI_A_fraction)
-            three_way_topology_and_alignment_sample(P,Stats,b);
-        else
-            if (uniform() < 0.95)
-                three_way_topology_sample(P,Stats,b);
+        {
+            if (stem)
+                three_way_topology_and_alignment_sample_at_node(P, Stats, b, t.source(*stem));
             else
-                two_way_NNI_sample(P,Stats,b);
-    }
+                three_way_topology_and_alignment_sample(P, Stats, b);
+        }
+        else
+            sample_walk_nni(P, Stats, b, stem);
+    });
 }
 
 

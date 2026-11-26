@@ -728,17 +728,16 @@ void three_way_time_tree_NNI_sample(owned_ptr<context>& P, MoveStats& Stats, int
     }
 }
 
-void three_way_topology_and_A5_2D_sample(owned_ptr<context>& P, MoveStats& Stats, int b, std::optional<int> bandwidth)
+// Compare the three partners of the focal subtree using a five-branch alignment update.
+static void three_way_topology_and_A5_2D_sample(owned_ptr<context>& P, MoveStats& Stats, int b,
+                                                A5::hmm_order order, optional<int> bandwidth)
 {
     Parameters& PP = *P.as<Parameters>();
     auto t = PP.t();
-    if (t.degree(t.source(b)) != 3 or t.degree(t.target(b)) != 3) return;
 
     if (log_verbose >= 3) std::cerr<<"[three_way_topology_and_A5_2D_sample]\n";
 
     //--------- Generate the Different Topologies -------//
-    // We do NOT always resample the connection between two_way_nodes [0] and [4].
-    // Should we?
     PP.select_root(b);
     PP.cache_likelihood_branches();
 
@@ -750,7 +749,7 @@ void three_way_topology_and_A5_2D_sample(owned_ptr<context>& P, MoveStats& Stats
 	L0 = PP.t().branch_length(b);
 
     vector< A5::hmm_order > orders(3);
-    orders[0] = A5::get_nodes_random(PP.t(), b);
+    orders[0] = std::move(order);
 
     auto& nodes = orders[0].nodes;
     int b1 = t.find_branch(nodes[4], nodes[1]);
@@ -794,15 +793,13 @@ void three_way_topology_and_A5_2D_sample(owned_ptr<context>& P, MoveStats& Stats
     NNI_inc(Stats,"NNI (5-way) + A", result, L0);
 }
 
-void three_way_topology_and_A3_2D_sample(owned_ptr<context>& P, MoveStats& Stats, int b, std::optional<int> bandwidth) 
+// Compare the three attachment points for the focal subtree using constrained A3 updates.
+static void three_way_topology_and_A3_2D_sample(owned_ptr<context>& P, MoveStats& Stats, int b,
+                                                const vector<int>& two_way_nodes, optional<int> bandwidth)
 {
     Parameters& PP = *P.as<Parameters>();
-    if (PP.t().degree(PP.t().source(b)) != 3 or PP.t().degree(PP.t().target(b)) != 3) return;
 
     if (log_verbose >= 3) std::cerr<<"[three_way_topology_and_A3_2D_sample]\n";
-
-    A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
-    const auto& two_way_nodes = order.nodes;
 
     //--------- Generate the Different Topologies -------//
     // We ALWAYS resample the connection between two_way_nodes [0] and [4].
@@ -875,6 +872,17 @@ void three_way_topology_and_A3_2D_sample(owned_ptr<context>& P, MoveStats& Stats
     NNI_inc(Stats,"NNI (3-way) + A", result, L0);
 }
 
+// Both kernels keep the subtree in slot zero attached to the same central endpoint.
+static void three_way_topology_and_alignment_sample(owned_ptr<context>& P, MoveStats& Stats, int b,
+                                                    A5::hmm_order order, optional<int> bandwidth)
+{
+    if (uniform() < get_setting_or("A5_fraction",0.0))
+        three_way_topology_and_A5_2D_sample(P, Stats, b, std::move(order), bandwidth);
+    else
+        three_way_topology_and_A3_2D_sample(P, Stats, b, order.nodes, bandwidth);
+}
+
+// Choose the focal subtree uniformly, using ordinary NNI outside a five-branch neighborhood.
 void three_way_topology_and_alignment_sample(owned_ptr<context>& P, MoveStats& Stats, int b, std::optional<int> bandwidth)
 {
     auto t = P.as<Parameters>()->t();
@@ -885,9 +893,13 @@ void three_way_topology_and_alignment_sample(owned_ptr<context>& P, MoveStats& S
         return;
     }
 
-    double NNI_A5_fraction = get_setting_or("A5_fraction",0.0);
-    if (uniform() < NNI_A5_fraction)
-        three_way_topology_and_A5_2D_sample(P, Stats, b, bandwidth);
-    else
-        three_way_topology_and_A3_2D_sample(P, Stats, b, bandwidth);
+    three_way_topology_and_alignment_sample(P, Stats, b, A5::get_nodes_random(t, b), bandwidth);
+}
+
+// Compare all three partners of focal_node, a boundary node of this five-branch neighborhood.
+void three_way_topology_and_alignment_sample_at_node(owned_ptr<context>& P, MoveStats& Stats, int b,
+                                                     int focal_node, optional<int> bandwidth)
+{
+    auto t = P.as<Parameters>()->t();
+    three_way_topology_and_alignment_sample(P, Stats, b, A5::get_nodes_random(t, b, focal_node), bandwidth);
 }
