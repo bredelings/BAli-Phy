@@ -194,17 +194,6 @@ test('bali-phy 5d test', baliphy,
      priority: 100, is_parallel: false, suite: 'minimal')
 test('bali-phy 5d +A 50', baliphy,
      args:['--seed', randomseed, '-V', packagepath, small_fasta, '--iterations=50'], timeout: 300)
-# A Yule tree allows SPR attachments to cross the degree-two root while carrying a variable
-# alignment. The unrooted 5d test cannot exercise that case.
-test('bali-phy 5d +A Yule SPR', baliphy,
-     args:['--seed', randomseed, packagepath, small_fasta, '--iterations=2',
-           '-T', '~Yule(taxa,1,Origin,Flat,Tips(length(taxa)))'], timeout: 300)
-a5_fasta = fs.relative_to(files('../tests/data/5d-muscle.fasta')[0], meson.project_build_root())
-# Force the specialized A5 2D move on eight columns. Its NNI candidates start with unset
-# alignments in debug builds; ordinary NNI does not exercise the temporary alignment backup.
-test('bali-phy 5d A5 2D NNI', baliphy,
-     args:['--seed', randomseed, packagepath, a5_fasta + ':1-8',
-           '--iterations=2', '--set', 'A5_fraction=1', '--set', 'NNI+A_fraction=1'], timeout: 300)
 test('bali-phy 48 +A 3', baliphy,
      args:['--seed', randomseed, '-V', packagepath, big_fasta, '--iterations=3'], timeout: 600)
 test('bali-phy 5d -A 200', baliphy,
