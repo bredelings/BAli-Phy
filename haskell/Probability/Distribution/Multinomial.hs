@@ -33,11 +33,17 @@ instance Sampleable Multinomial where
     sample (Multinomial n ps) = sample_multinomial n ps
 
 -- Given current mass p and remaining mass r, the conditional success probability p/(p+r)
--- has log odds log(p)-log(r). Suffix sums therefore avoid renormalizing probabilities in Double.
+-- has log odds log(p)-log(r). Dividing all weights by their largest finite positive weight
+-- preserves these odds. In Log Double this subtracts a common log weight before summation,
+-- so even two equal, tiny weights retain the log 2 contribution in their sum.
 sample_multinomial :: Int -> V.Vector (Log Double) -> Random [Int]
 sample_multinomial n probabilities = sampleConditionals n conditionals
   where
-    probabilityList = V.toList probabilities
+    weights = V.toList probabilities
+    scale = case filter (isDoubleFinite . ln) weights of
+              [] -> 1
+              w:ws -> foldl' max w ws
+    probabilityList = map (/ scale) weights
     suffixes = scanr (+) 0 probabilityList
     conditionals :: [(Log Double, Log Double)]
     conditionals = zip probabilityList (tail suffixes)
