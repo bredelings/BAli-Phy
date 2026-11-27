@@ -229,9 +229,13 @@ int binomial(int n, double p) {
     assert(n >= 0);
     assert(0 <= p and p <= 1);
 
-    // Maybe the library already does these optimizations?
     if (n == 0 or p == 0) return 0;
     if (p == 1) return n;
+
+    // libstdc++ forms 32*n in the result type and uses 1-p in its rare-event path.
+    // The wide sampler handles both cases, and a binomial result is always at most n.
+    if (n > std::numeric_limits<int>::max()/32 or std::min(p, 1-p) < std::sqrt(std::numeric_limits<double>::epsilon()))
+        return static_cast<int>(binomial_from_logs(n, std::log(p), std::log1p(-p)));
 
     return std::binomial_distribution<>(n,p)(standard_rng);
 }
