@@ -1032,7 +1032,8 @@ void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_atta
 
             // Full-width tri sampling recovers the same reduced alignment and table sizes in reverse.
             // Keep the site in the shared set with zero selection probability and traverse past it.
-            std::cerr << "Skipping oversized SPR attachment site: " << e.what() << '\n';
+            if (log_verbose >= 1)
+                std::cerr << "Skipping oversized SPR attachment site: " << e.what() << '\n';
             Pr[target_edge] = unavailable;
             return;
         }
@@ -1444,7 +1445,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     catch (const dp_table_allocation_failure& e)
     {
         // This includes refusal at the current site and transient failures anywhere in the search.
-        std::cerr << "Skipping SPR attachment search: " << e.what() << '\n';
+        if (log_verbose >= 1)
+            std::cerr << "Skipping SPR attachment search: " << e.what() << '\n';
         return false;
     }
     catch (choose_exception<log_double_t>& c)
@@ -1509,7 +1511,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     }
     catch (const dp_table_allocation_failure& e)
     {
-        std::cerr << "Skipping SPR acceptance step: " << e.what() << '\n';
+        if (log_verbose >= 1)
+            std::cerr << "Skipping SPR acceptance step: " << e.what() << '\n';
 	return false;
     }
 

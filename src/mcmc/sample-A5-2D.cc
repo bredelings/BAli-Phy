@@ -494,7 +494,8 @@ try
 }
 catch (const dp_table_allocation_failure& e)
 {
-    std::cerr << "Skipping 2D A5 proposal: " << e.what() << '\n';
+    if (log_verbose >= 1)
+        std::cerr << "Skipping 2D A5 proposal: " << e.what() << '\n';
     return {};
 }
 

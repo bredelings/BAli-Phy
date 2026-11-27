@@ -220,7 +220,8 @@ optional<int> sample_cube_multi(vector<Parameters>& p,const vector< vector<int> 
 	return cube.choose();
     }
     catch (const dp_table_allocation_failure& e) {
-	std::cerr<<"Allocation failed in sample_cube_multi: "<<e.what()<<"!  Proceeding."<<std::endl;
+	if (log_verbose >= 1)
+	    std::cerr<<"Allocation failed in sample_cube_multi: "<<e.what()<<"!  Proceeding."<<std::endl;
 	return {};
     }
 }

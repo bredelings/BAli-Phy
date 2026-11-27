@@ -24,6 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "dp/dp-matrix.hh"
 #include "alignment/alignment-constraint.hh"
 #include "substitution/likelihood.hh"
+#include "util/log-level.hh"
 #include "util/myexception.hh"
 #include <cmath>
 #include <iostream>
@@ -144,7 +145,8 @@ void sample_A2(Parameters& P, int middle, int left)
     }
     catch (const dp_table_allocation_failure& e)
     {
-        std::cerr<<"Allocation failed in sample_A2: "<<e.what()<<"!  Proceeding."<<std::endl;
+        if (log_verbose >= 1)
+            std::cerr<<"Allocation failed in sample_A2: "<<e.what()<<"!  Proceeding."<<std::endl;
     }
     P.evaluate_program();
 }

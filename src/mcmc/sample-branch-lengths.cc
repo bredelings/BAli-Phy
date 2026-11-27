@@ -220,7 +220,8 @@ void alignment_slice_sample_branch_length_or_duration(owned_ptr<context>& P,Move
         }
         catch (const dp_table_allocation_failure& e)
         {
-            std::cerr << "Skipping joint alignment and branch length update: " << e.what() << '\n';
+            if (log_verbose >= 1)
+                std::cerr << "Skipping joint alignment and branch length update: " << e.what() << '\n';
         }
         result.totals[2] = logp ? logp->count : 0;
     }

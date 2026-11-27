@@ -209,7 +209,8 @@ static Availability<ProbDensity> sample_alignment_partitions(Parameters& P, int 
         {
             if (require_all_tables) throw;
             // Both endpoint sequences and the band are fixed. This partition also skips in reverse.
-            std::cerr << "Skipping A1 alignment for partition " << j+1 << ": " << e.what() << '\n';
+            if (log_verbose >= 1)
+                std::cerr << "Skipping A1 alignment for partition " << j+1 << ": " << e.what() << '\n';
         }
 #ifndef NDEBUG
         P[j].likelihood();  // check the likelihood calculation
@@ -352,7 +353,8 @@ void sample_alignment(Parameters& P, int b)
     }
     catch (const dp_table_allocation_failure& e)
     {
-        std::cerr << "Skipping A1 alignment update: " << e.what() << '\n';
+        if (log_verbose >= 1)
+            std::cerr << "Skipping A1 alignment update: " << e.what() << '\n';
         P.evaluate_program();
     }
 }

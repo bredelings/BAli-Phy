@@ -448,7 +448,7 @@ try
 }
 catch (const dp_table_allocation_failure&)
 {
-    // The builder reported the failed table. The caller discards all candidate contexts.
+    // Returning no choice tells the caller to discard all candidate contexts.
     return {};
 }
 

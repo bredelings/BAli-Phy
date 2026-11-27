@@ -28,6 +28,7 @@
 #include "dp-array.hh"
 #include "math/pow2.hh"
 #include "probability/choose.hh"
+#include "util/log-level.hh"
 #include "util/mapping.hh"
 
 using std::vector;
@@ -473,7 +474,8 @@ try
 }
 catch (const std::bad_alloc& e)
 {
-    std::cerr << "Allocation failed for 1D alignment table with " << columns.size()
-              << " projected columns: " << e.what() << '\n';
+    if (log_verbose >= 1)
+        std::cerr << "Allocation failed for 1D alignment table with " << columns.size()
+                  << " projected columns: " << e.what() << '\n';
     throw dp_table_allocation_failure{};
 }

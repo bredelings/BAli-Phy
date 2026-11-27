@@ -314,7 +314,8 @@ optional<int> sample_tri_2D_multi(vector<Parameters>& p, const vector<vector<int
         return tri.choose();
     }
     catch (const dp_table_allocation_failure& e) {
-        std::cerr<<"Allocation failed in sample_tri_2D_multi: "<<e.what()<<"!  Proceeding."<<std::endl;
+        if (log_verbose >= 1)
+            std::cerr<<"Allocation failed in sample_tri_2D_multi: "<<e.what()<<"!  Proceeding."<<std::endl;
         return {};
     }
 }
@@ -393,7 +394,8 @@ optional<int> sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >
 	    return {};
     }
     catch (const dp_table_allocation_failure& e) {
-	std::cerr<<"Allocation failed in sample_tri_multi: "<<e.what()<<"!  Proceeding."<<std::endl;
+	if (log_verbose >= 1)
+	    std::cerr<<"Allocation failed in sample_tri_multi: "<<e.what()<<"!  Proceeding."<<std::endl;
 	return {};
     }
 }
