@@ -6,6 +6,6 @@ import Data.Ix
 import System.IO (print)
 
 bounds :: ((Int,Int),(Int,Int))
-bounds = ((0,0),(65535,65535))
+bounds = ((0,0),(4294967295,4294967295))
 
 main = print (rangeSize bounds)

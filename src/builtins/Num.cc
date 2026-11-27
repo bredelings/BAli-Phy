@@ -100,48 +100,49 @@ extern "C" R::Exp simple_function_signum_integer(vector<R::Exp>& args)
 
 //********** Builtins for Num Int ****************//
 
+// GHC Int arithmetic wraps modulo 2^64. Unsigned arithmetic also defines negation of minBound.
 extern "C" R::Exp simple_function_add_int(vector<R::Exp>& args)
 {
-    int x = get_arg(args).as_int();
-    int y = get_arg(args).as_int();
+    auto x = get_arg(args).as_int();
+    auto y = get_arg(args).as_int();
 
-    return { x + y };
+    return static_cast<haskell_int>(std::uint64_t(x) + std::uint64_t(y));
 }
 
 extern "C" R::Exp simple_function_subtract_int(vector<R::Exp>& args)
 {
-    int x = get_arg(args).as_int();
-    int y = get_arg(args).as_int();
+    auto x = get_arg(args).as_int();
+    auto y = get_arg(args).as_int();
 
-    return { x - y };
+    return static_cast<haskell_int>(std::uint64_t(x) - std::uint64_t(y));
 }
 
 extern "C" R::Exp simple_function_multiply_int(vector<R::Exp>& args)
 {
-    int x = get_arg(args).as_int();
-    int y = get_arg(args).as_int();
+    auto x = get_arg(args).as_int();
+    auto y = get_arg(args).as_int();
 
-    return { x * y };
+    return static_cast<haskell_int>(std::uint64_t(x) * std::uint64_t(y));
 }
 
 extern "C" R::Exp simple_function_abs_int(vector<R::Exp>& args)
 {
-    int x = get_arg(args).as_int();
+    auto x = get_arg(args).as_int();
 
-    return { std::abs(x) };
+    return x < 0 ? static_cast<haskell_int>(-std::uint64_t(x)) : x;
 }
 
 
 extern "C" R::Exp simple_function_negate_int(vector<R::Exp>& args)
 {
-    int x = get_arg(args).as_int();
+    auto x = get_arg(args).as_int();
 
-    return { -x };
+    return static_cast<haskell_int>(-std::uint64_t(x));
 }
 
 extern "C" R::Exp simple_function_signum_int(vector<R::Exp>& args)
 {
-    int x = get_arg(args).as_int();
+    auto x = get_arg(args).as_int();
 
     auto result = (x > 0 ? 1 : 0) - (x < 0 ? 1 : 0);
 
@@ -153,15 +154,13 @@ extern "C" R::Exp simple_function_integerToInt(vector<R::Exp>& args)
 {
     integer x = get_arg(args).as_integer();
 
-    int result = x.convert_to<int>();
-
-    return result;
+    return integer_to_int(x);
 }
 
 
 extern "C" R::Exp simple_function_intToInteger(vector<R::Exp>& args)
 {
-    int x = get_arg(args).as_int();
+    auto x = get_arg(args).as_int();
 
     return integer(x);
 }
@@ -235,7 +234,7 @@ extern "C" R::Exp simple_function_charToInteger(vector<R::Exp>& args)
 
 extern "C" R::Exp simple_function_intToChar(vector<R::Exp>& args)
 {
-    int x = get_arg(args).as_int();
+    auto x = get_arg(args).as_int();
 
     return checked_char_code(integer(x), "intToChar");
 }
@@ -329,7 +328,7 @@ extern "C" R::Exp simple_function_integerToDouble(vector<R::Exp>& args)
 
 extern "C" R::Exp simple_function_intToDouble(vector<R::Exp>& args)
 {
-    int i = get_arg(args).as_int();
+    auto i = get_arg(args).as_int();
     return {double(i)};
 }
 

@@ -297,7 +297,8 @@ extern "C" R::Exp simple_function_encodeDouble(vector<R::Exp>& args)
     auto sig = (int64_t)get_arg(args).as_integer();
     auto exp = get_arg(args).as_int();
 
-    return { std::ldexp(sig,exp) };
+    using limits = std::numeric_limits<int>;
+    return { std::ldexp(sig, static_cast<int>(std::clamp<haskell_int>(exp, limits::min(), limits::max()))) };
 }
 
 // For x>1, the IOdds parameter is log(x-1) = log(x)+log1p(-1/x).

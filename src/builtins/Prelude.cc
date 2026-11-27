@@ -9,6 +9,7 @@
 #include "computation/runtime/ast.hh"
 
 #include <cerrno>
+#include <cctype>
 #include <cmath>
 #include <cstdlib>
 #include <limits>
@@ -18,25 +19,33 @@ using std::string;
 using std::vector;
 
 //*****************************************************//
+// Convert the rounded Double directly in range. Outside it, preserve the low bits of the
+// mathematical integer without an out-of-range floating-to-integral cast.
+static haskell_int double_to_int(double x)
+{
+    if (x >= -0x1p63 and x < 0x1p63) return static_cast<haskell_int>(x);
+    return std::isfinite(x) ? integer_to_int(integer(x)) : 0;
+}
+
 extern "C" R::Exp simple_function_truncate(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
-    return static_cast<int>(std::trunc(x));
+    return double_to_int(std::trunc(x));
 }
 
 extern "C" R::Exp simple_function_ceiling(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
-    return static_cast<int>(std::ceil(x));
+    return double_to_int(std::ceil(x));
 }
 
 extern "C" R::Exp simple_function_floor(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
-    return static_cast<int>(std::floor(x));
+    return double_to_int(std::floor(x));
 }
 
 
@@ -44,14 +53,13 @@ extern "C" R::Exp simple_function_round(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
-    return static_cast<int>(std::rint(x));
+    return double_to_int(std::rint(x));
 }
 
 extern "C" R::Exp simple_function_doubleToInt(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
-    int xi = (int)x;
-    return xi;
+    return double_to_int(x);
 }
 
 extern "C" R::Exp simple_function_divide_double(vector<R::Exp>& args)
@@ -119,7 +127,9 @@ extern "C" R::Exp simple_function_div_int(vector<R::Exp>& args)
     auto x = get_arg(args).as_int();
     auto y = get_arg(args).as_int();
   
-    return div<int>(x,y);
+    if (y == 0) throw myexception()<<"divide by zero";
+    if (y == -1 and x == std::numeric_limits<haskell_int>::min()) throw myexception()<<"arithmetic overflow";
+    return div<haskell_int>(x,y);
 }
 
 extern "C" R::Exp simple_function_mod_int(vector<R::Exp>& args)
@@ -127,6 +137,8 @@ extern "C" R::Exp simple_function_mod_int(vector<R::Exp>& args)
     auto x = get_arg(args).as_int();
     auto y = get_arg(args).as_int();
   
+    if (y == 0) throw myexception()<<"divide by zero";
+    if (y == -1) return 0;
     return mod(x,y);
 }
 
@@ -137,6 +149,8 @@ extern "C" R::Exp simple_function_quot_int(vector<R::Exp>& args)
     auto x = get_arg(args).as_int();
     auto y = get_arg(args).as_int();
   
+    if (y == 0) throw myexception()<<"divide by zero";
+    if (y == -1 and x == std::numeric_limits<haskell_int>::min()) throw myexception()<<"arithmetic overflow";
     return x / y;
 }
 
@@ -145,6 +159,8 @@ extern "C" R::Exp simple_function_rem_int(vector<R::Exp>& args)
     auto x = get_arg(args).as_int();
     auto y = get_arg(args).as_int();
   
+    if (y == 0) throw myexception()<<"divide by zero";
+    if (y == -1) return 0;
     return x % y;
 }
 
@@ -192,7 +208,7 @@ extern "C" R::Exp simple_function_increment_int(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_int();
 
-    return x + 1;
+    return static_cast<haskell_int>(std::uint64_t(x) + 1);
 }
 
 
@@ -378,7 +394,7 @@ extern "C" R::Exp simple_function_read_int(vector<R::Exp>& args)
 {
     string s = get_arg(args).as_string();
 
-    if (auto i = can_be_converted_to<int>(s))
+    if (auto i = can_be_converted_to<haskell_int>(s))
 	return *i;
     else
 	throw myexception()<<"Cannot convert string '"<<s<<"' to int!";
@@ -397,28 +413,32 @@ extern "C" R::Exp simple_function_read_double(vector<R::Exp>& args)
 extern "C" R::Exp simple_function_read_int_at(vector<R::Exp>& args)
 {
     string s = get_arg(args).as_string();
-    int offset = get_arg(args).as_int();
+    auto offset = get_arg(args).as_int();
     if (offset < 0 or offset > s.size())
         return R::RPair(0, -1);
 
-    const char* start = s.c_str() + offset;
-    char* end = nullptr;
-    errno = 0;
-    long value = std::strtol(start, &end, 10);
-    if (end == start or errno == ERANGE or value < std::numeric_limits<int>::min() or value > std::numeric_limits<int>::max())
-        return R::RPair(0, -1);
+    auto pos = offset;
+    while (pos < s.size() and std::isspace(static_cast<unsigned char>(s[pos]))) ++pos;
+    bool negative = pos < s.size() and s[pos] == '-';
+    if (negative or (pos < s.size() and s[pos] == '+')) ++pos;
 
-    return R::RPair(int(value), offset + int(end - start));
+    auto first_digit = pos;
+    std::uint64_t bits = 0;
+    // Read Int agrees with fromInteger even when the decimal input exceeds 64 bits.
+    while (pos < s.size() and s[pos] >= '0' and s[pos] <= '9')
+        bits = 10 * bits + (s[pos++] - '0');
+    if (pos == first_digit) return R::RPair(0, -1);
+    return R::RPair(static_cast<haskell_int>(negative ? -bits : bits), pos);
 }
 
 extern "C" R::Exp simple_function_read_integer_at(vector<R::Exp>& args)
 {
     string s = get_arg(args).as_string();
-    int offset = get_arg(args).as_int();
+    auto offset = get_arg(args).as_int();
     if (offset < 0 or offset > s.size())
         return R::RPair(R::Integer(integer(0)), -1);
 
-    int pos = offset;
+    auto pos = offset;
     bool negative = false;
     if (pos < s.size() and (s[pos] == '-' or s[pos] == '+'))
     {
@@ -446,7 +466,7 @@ extern "C" R::Exp simple_function_read_integer_at(vector<R::Exp>& args)
 extern "C" R::Exp simple_function_read_double_at(vector<R::Exp>& args)
 {
     string s = get_arg(args).as_string();
-    int offset = get_arg(args).as_int();
+    auto offset = get_arg(args).as_int();
     if (offset < 0 or offset > s.size())
         return R::RPair(0.0, -1);
 
@@ -457,7 +477,7 @@ extern "C" R::Exp simple_function_read_double_at(vector<R::Exp>& args)
     if (end == start or errno == ERANGE)
         return R::RPair(0.0, -1);
 
-    return R::RPair(value, offset + int(end - start));
+    return R::RPair(value, offset + (end - start));
 }
 
 extern "C" R::Exp simple_function_cNothing(vector<R::Exp>&)

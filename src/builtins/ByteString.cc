@@ -15,7 +15,7 @@ namespace
     // catches any internal value that bypassed Data.Word's modulo constructor.
     std::byte word8_to_byte(const R::Exp& value, const char* function_name)
     {
-        int byte = value.as_int();
+        auto byte = value.as_int();
         if (byte < 0 or byte > 255)
             throw myexception()<<function_name<<": Word8 runtime value "<<byte<<" is outside [0,255].";
         return static_cast<std::byte>(static_cast<unsigned char>(byte));
@@ -23,10 +23,10 @@ namespace
 
     // Convert public Int indices to size_t only after validating their sign.
     // This avoids accidentally turning negative Haskell indices into huge sizes.
-    std::size_t nonnegative_size(int value, const char* function_name, const char* label)
+    std::size_t nonnegative_size(haskell_int value, const char* function_name, const char* label)
     {
-        if (value < 0)
-            throw myexception()<<function_name<<": negative "<<label<<".";
+        if (value < 0) throw myexception()<<function_name<<": negative "<<label<<".";
+        if (not std::in_range<std::size_t>(value)) throw myexception()<<function_name<<": "<<label<<" is too large.";
         return static_cast<std::size_t>(value);
     }
 }
@@ -40,7 +40,7 @@ extern "C" R::Exp simple_function_length(vector<R::Exp>& args)
 {
     auto arg = get_arg(args);
     const auto& bytes = arg.as_<ByteString>();
-    return static_cast<int>(bytes.size());
+    return static_cast<haskell_int>(bytes.size());
 }
 
 extern "C" R::Exp simple_function_index(vector<R::Exp>& args)

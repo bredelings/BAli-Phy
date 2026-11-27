@@ -17,7 +17,7 @@ namespace bali_phy_test
 namespace
 {
     // Constructs a Core integer constant for builtin serialization tests.
-    Core::Exp<> int_constant(int x)
+    Core::Exp<> int_constant(haskell_int x)
     {
         Core::Constant c;
         c.value = x;
@@ -58,7 +58,8 @@ namespace
     // Checks serialization of constructors, cases, and both Runtime binding forms.
     void check_constructor_serialization()
     {
-        Runtime::Exp literal = Runtime::ConstructorApp("Data.Bool.True", 0, {});
+        // Check a high bit in the serialized payload. Small constants survive a 32-bit archive.
+        Runtime::Exp literal = Runtime::Int(INT64_MAX);
         check_archive_roundtrip(literal);
 
         Runtime::Exp app = Runtime::ConstructorApp("Data.Bool.True", 0, {});
@@ -260,7 +261,7 @@ namespace
         const Program program(loader, {module});
 
         auto op = loader->load_builtin_ptr("Num", "add_int", "ecall");
-        std::vector<Core::Exp<>> args = {int_constant(1), int_constant(2)};
+        std::vector<Core::Exp<>> args = {int_constant(INT64_MIN), int_constant(INT64_MAX)};
         Core::BuiltinOp<> builtin("Num", "add_int", "ecall", args, op);
 
         auto before = indexify(Core::Exp<>(builtin));

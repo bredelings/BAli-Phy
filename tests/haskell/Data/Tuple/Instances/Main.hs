@@ -149,7 +149,7 @@ main = do
         && [index bounds15 v | v <- range bounds15] == [0,1,2,3]
         && rangeSize bounds15 == 4
         && not (inRange bounds15 (3,0,0,0,0,0,0,0,0,0,0,0,0,0,3)))
-    print (rangeSize (((-1073741824,0,1),(1073741823,0,0)) :: ((Int,Int,Int),(Int,Int,Int))) == 0)
+    print (rangeSize (((-4611686018427387904,0,1),(4611686018427387903,0,0)) :: ((Int,Int,Int),(Int,Int,Int))) == 0)
     let m3 = ([0],[1],[2]) :: ([Int],[Int],[Int])
     print (mempty <> m3 == m3 && m3 <> ([9],[9],[9]) == ([0,9],[1,9],[2,9]))
     let m4 = ([0],[1],[2],[3]) :: ([Int],[Int],[Int],[Int])

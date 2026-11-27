@@ -3,6 +3,7 @@
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/rational.hpp>
+#include <limits>
 #include "computation/haskell/Int.hh"
 
 typedef boost::multiprecision::cpp_int integer;
@@ -11,7 +12,8 @@ typedef boost::rational<integer> rational;
 // Taking the low 64 bits implements GHC's conversion even for negative or oversized Integers.
 inline haskell_int integer_to_int(const integer& x)
 {
-    return static_cast<haskell_int>((x & UINT64_MAX).convert_to<std::uint64_t>());
+    constexpr auto mask = std::numeric_limits<std::uint64_t>::max();
+    return static_cast<haskell_int>((x & mask).convert_to<std::uint64_t>());
 }
 
 struct integer_container

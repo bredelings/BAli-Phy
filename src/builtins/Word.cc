@@ -8,9 +8,9 @@ namespace
 {
     // Normalize any integral value into the byte range used by the temporary
     // Int-backed Word8 representation.
-    int normalize_word8(int x)
+    int normalize_word8(haskell_int x)
     {
-        int result = x % 256;
+        int result = static_cast<int>(x % 256);
         if (result < 0)
             result += 256;
         return result;
@@ -35,12 +35,12 @@ extern "C" R::Exp simple_function_integerToWord8(vector<R::Exp>& args)
 
 extern "C" R::Exp simple_function_intToWord8(vector<R::Exp>& args)
 {
-    int x = get_arg(args).as_int();
+    auto x = get_arg(args).as_int();
     return normalize_word8(x);
 }
 
 extern "C" R::Exp simple_function_word8ToInt(vector<R::Exp>& args)
 {
-    int x = get_arg(args).as_int();
+    auto x = get_arg(args).as_int();
     return x;
 }

@@ -16,7 +16,9 @@ main = do
  let width = finiteBitSize (0::Int)
      top = bit (width-1)::Int
      big = bit 100::Integer
-     ints = and [ (6::Int) .&. 3 == 2, (6::Int) .|. 3 == 7, xor (6::Int) 3 == 5,
+     -- A dynamic width alone also passes for a 32-bit runtime. Check the public Int width
+     -- and the conversion of an Integer with nonzero bits above that width.
+     ints = and [ width == 64, (18446744073709551619 :: Int) == 3, (6::Int) .&. 3 == 2, (6::Int) .|. 3 == 7, xor (6::Int) 3 == 5,
                   complement (0::Int) == -1, shift (-3::Int) (-1) == -2,
                   shiftL (-1::Int) width == 0, shiftR (-1::Int) width == -1,
                   shift (1::Int) top == 0, rotate (1::Int) (width-1) == top,

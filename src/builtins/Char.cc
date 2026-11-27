@@ -23,9 +23,9 @@ static int bool_int(bool b)
 
 // Convert an Int to a Runtime Char while preserving the Unicode scalar
 // invariant expected by Haskell Char.
-static char32_t checked_char_code(int i, const char* function_name)
+static char32_t checked_char_code(haskell_int i, const char* function_name)
 {
-    if (i < 0)
+    if (i < 0 or i > 0x10FFFF)
         throw myexception()<<function_name<<": integer "<<i<<" is not a Unicode scalar value.";
 
     auto c = static_cast<char32_t>(i);
@@ -224,9 +224,9 @@ extern "C" R::Exp simple_function_intToDigit(vector<R::Exp>& args)
 
     char32_t c = 0;
     if (i >= 0 and i<=9)
-        c = U'0' + i;
+        c = U'0' + static_cast<char32_t>(i);
     else if (i >= 10 and i <= 15)
-        c = U'a' + (i - 10);
+        c = U'a' + static_cast<char32_t>(i - 10);
     else
         throw myexception()<<"intToDigit: integer "<<i<<" is not a digit!";
 

@@ -9,4 +9,4 @@ import System.IO (print)
 
 data Grid = Grid Int Int deriving Eq deriving Ord deriving Ix
 
-main = print (rangeSize (Grid 0 0, Grid 65535 65535))
+main = print (rangeSize (Grid 0 0, Grid 4294967295 4294967295))
