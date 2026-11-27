@@ -35,9 +35,8 @@
 #include "substitution/cache.hh"
 
 /// Thrown instead of allocating a DP matrix of more than 2^32 - 1 values.
-/// It is a std::bad_alloc, so the moves that already skip a proposal on allocation failure
-/// keep doing so, but it says which matrix was refused and how large it would have been.
-class dp_matrix_too_large: public std::bad_alloc
+/// Report the dimensions and requested size when a move discards the proposal.
+class dp_matrix_too_large: public dp_table_allocation_failure
 {
     // Shared so that copying the exception cannot throw.
     std::shared_ptr<const std::string> message;
@@ -310,6 +309,10 @@ public:
 
     virtual ~DPmatrixConstrained() {}
 };
+
+std::shared_ptr<DPmatrixConstrained> make_constrained_matrix(
+    const HMM&, DPmatrixEmit::EmissionProbs&&, DPmatrixEmit::EmissionProbs&&, const DenseMatrix<double>&,
+    const std::vector<HMM::bitmask_t>& columns, HMM::bitmask_t emit2, std::optional<int> bandwidth);
 
 YBoundaries yboundaries_everything(int I, int J);
 YBoundaries yboundaries_simple_band(int I, int J, int bandwidth);

@@ -7,6 +7,13 @@
 #include <limits>
 #include <new>
 
+// A required alignment table could not be built. The move can discard its candidate copies.
+class dp_table_allocation_failure: public std::bad_alloc
+{
+public:
+    const char* what() const noexcept override {return "could not allocate alignment DP table";}
+};
+
 // Check the byte size at allocation time so that signed offsets into the table need
 // only ordinary multiplication and addition during the forward and backward passes.
 template <typename T>

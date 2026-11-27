@@ -884,3 +884,53 @@ DPmatrixConstrained::DPmatrixConstrained(MatrixShape&& ms,
     DPmatrixEmit(std::move(ms),M,std::move(d1),std::move(d2),f),
     allowed_states(dists2.n_columns())
 { }
+
+// Build the padded 2D table for one sequence against a fixed projection of its neighbors.
+// Only native table setup can signal a refusal to the move that owns all the candidates.
+std::shared_ptr<DPmatrixConstrained> make_constrained_matrix(
+    const HMM& hmm, DPmatrixEmit::EmissionProbs&& dists1, DPmatrixEmit::EmissionProbs&& dists2,
+    const DenseMatrix<double>& frequencies, const vector<HMM::bitmask_t>& columns,
+    HMM::bitmask_t emit2, optional<int> bandwidth)
+try
+{
+    MatrixSize size{dists1.n_columns(), dists2.n_columns()};
+    auto boundaries = bandwidth ? yboundaries_simple_band(size.size1-2, size.size2-2, *bandwidth)
+                                : yboundaries_everything(size.size1-2, size.size2-2);
+    auto table = std::make_shared<DPmatrixConstrained>(MatrixShape(size, std::move(boundaries)), hmm,
+                                                       std::move(dists1), std::move(dists2), frequencies);
+    table->emit1 = 1;
+    table->emit2 = emit2;
+
+    // Bit 0 belongs to the free sequence. A state silent on the second axis is allowed in
+    // every column. Other states must match its projected bits, in the original DP order.
+    vector<vector<int>> allowed((emit2.raw() >> 1) + 1);
+    for (auto& states: allowed)
+        states.reserve(table->n_dp_states());
+    for (int state: table->dp_order())
+    {
+        auto mask = (hmm.state_emit[state] & emit2).raw() >> 1;
+        if (mask)
+            allowed[mask].push_back(state);
+        else
+            for (auto& states: allowed)
+                states.push_back(state);
+    }
+
+    table->states(1) = table->dp_order();
+    assert(columns.size() == std::size_t(size.size2-2));
+    for (int j=2; j<size.size2; ++j)
+    {
+        auto mask = (columns[j-2] & emit2).raw() >> 1;
+        assert(mask);
+        table->states(j) = allowed[mask];
+    }
+    return table;
+}
+catch (const dp_table_allocation_failure&)
+{
+    throw;
+}
+catch (const std::bad_alloc&)
+{
+    throw dp_table_allocation_failure{};
+}

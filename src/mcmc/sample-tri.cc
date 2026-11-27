@@ -22,7 +22,6 @@
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
 #include <iostream>                                 // for operator<<, endl
 #include <memory>                                   // for shared_ptr, __sha...
-#include <new>                                      // for bad_alloc
 #include <optional>                                 // for optional
 #include <string>                                   // for operator+, string
 #include <utility>                                  // for pair, move
@@ -96,64 +95,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
     auto dists3 = P.cache(b3);
     auto dists23 = substitution::get_column_likelihoods({dists2, dists3}, get_indices_from_bitpath_w(a23, {1,2}, m23), *F, 2);
 
-    //-------------- Create matrix shape -----------------//
-
-    auto yboundaries = yboundaries_everything(dists1.n_columns()-2, dists23.n_columns()-2);
-
-    if (bandwidth)
-        yboundaries = yboundaries_simple_band(dists1.n_columns()-2, dists23.n_columns()-2, *bandwidth);
-
-    // This includes the 2 columns of padding that we asked for above.
-    MatrixSize matrix_size{dists1.n_columns(), dists23.n_columns()};
-
-    MatrixShape matrix_shape(matrix_size, std::move(yboundaries));
-
-    //-------------- Create alignment matrices ---------------//
-    auto Matrices = std::make_shared<DPmatrixConstrained>
-                    (
-                        std::move(matrix_shape),
-                        m123,
-                        std::move(dists1),
-                        std::move(dists23),
-                        *F
-                    );
-    Matrices->emit1 = 1;
-    Matrices->emit2 = 2|4;
-
-    // collect the silent-or-correct-emissions for each type columns
-    vector< vector<int> > allowed_states_for_mask(4);
-    for(auto& m: allowed_states_for_mask)
-	m.reserve(Matrices->n_dp_states());
-
-    // Construct the states that are allowed for each emission pattern.
-    for(int S2: Matrices->dp_order())
-    {
-	auto mask = (m123.state_emit[S2] & Matrices->emit2).raw();
-
-	// Hidden states never contradict an emission pattern.
-	if (not mask) // m123.silent(S2))
-	    for(int j=0;j<allowed_states_for_mask.size();j++)
-		allowed_states_for_mask[j].push_back(S2);
-	else
-	{
-	    mask >>= 1;
-	    allowed_states_for_mask[mask].push_back(S2);
-	}
-    }
-
-    Matrices->states(1) = Matrices->dp_order();
-
-    // Determine which states are allowed to match (,c2)
-    for(int c2=1;c2<Matrices->dists2.n_columns()-1;c2++) 
-    {
-	auto mask = (a23[c2-1]&Matrices->emit2).raw();
-	mask >>= 1;
-	assert(mask);
-
-	Matrices->states(c2+1) = allowed_states_for_mask[mask];
-    }
-
-    //------------------ Compute the DP matrix ---------------------//
+    auto Matrices = make_constrained_matrix(m123, std::move(dists1), std::move(dists23), *F, a23, m23, bandwidth);
     Matrices->forward_band();
 
 /*
@@ -371,7 +313,7 @@ optional<int> sample_tri_2D_multi(vector<Parameters>& p, const vector<vector<int
         tri.set_proposal_probabilities(rho);
         return tri.choose();
     }
-    catch (std::bad_alloc& e) {
+    catch (const dp_table_allocation_failure& e) {
         std::cerr<<"Allocation failed in sample_tri_2D_multi: "<<e.what()<<"!  Proceeding."<<std::endl;
         return {};
     }
@@ -450,7 +392,7 @@ optional<int> sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >
 	else
 	    return {};
     }
-    catch (std::bad_alloc& e) {
+    catch (const dp_table_allocation_failure& e) {
 	std::cerr<<"Allocation failed in sample_tri_multi: "<<e.what()<<"!  Proceeding."<<std::endl;
 	return {};
     }

@@ -100,8 +100,8 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     // But we need to get the emission probabilities at node 4 WITHOUT relying on alignments on the internal branches.
 
     // Combining dists3 + dists4 -> dists34 needs to (a) propagate across branch b54 and (b) include root frequencies if the root is behind b54.
-    // These temporary alignments construct dists34.  Restore them unless a complete path and
-    // finite sampling probability are available to replace all five affected alignments.
+    // Restore these projections if a completed table supplies no usable path. A table allocation
+    // failure unwinds to the move, which discards all candidate contexts, including this one.
     // NNI can leave the proposed branches unset. An unset entry and an empty alignment
     // are different states; save each branch independently before installing the projections.
     optional<pairwise_alignment_t> alignment25, alignment35;
@@ -127,63 +127,7 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     auto dists234 = substitution::get_column_likelihoods({dists2, dists34}, get_indices_from_bitpath_w(a234, {1,5}, bits234), *F, 2);
     assert(dists234.n_columns() == a234.size()+2);
 
-    /*------------- Create matrix shape ----------------*/
-    auto yboundaries = yboundaries_everything(dists1.n_columns()-2, dists234.n_columns()-2);
-
-    if (bandwidth)
-        yboundaries = yboundaries_simple_band(dists1.n_columns()-2, dists234.n_columns()-2, *bandwidth);
-
-    // This includes the 2 columns of padding that we asked for above.
-    MatrixSize matrix_size{dists1.n_columns(), dists234.n_columns()};
-
-    MatrixShape matrix_shape(matrix_size, std::move(yboundaries));
-
-    /*-------------- Create DP matrices ---------------*/
-
-    auto Matrices = std::make_shared<DPmatrixConstrained>(
-        std::move(matrix_shape),
-        m12345,
-        std::move(dists1),
-        std::move(dists234),
-        *F
-        );
-    Matrices->emit1 = 1;
-    Matrices->emit2 = bits234;
-
-    // collect the silent-or-correct-emissions for each type columns
-    vector< vector<int> > allowed_states_for_mask(8);
-    for(auto& m: allowed_states_for_mask)
-        m.reserve(Matrices->n_dp_states());
-
-    for(int S2: Matrices->dp_order())
-    {
-        auto mask = (m12345.state_emit[S2] & Matrices->emit2).raw();
-
-        // Hidden states never contradict an emission pattern.
-        if (not mask)
-            for(int j=0;j<8;j++)
-                allowed_states_for_mask[j].push_back(S2);
-        else
-        {
-            mask >>= 1; // remap bits 123 to bits 012
-            allowed_states_for_mask[mask].push_back(S2);
-        }
-    }
-
-    Matrices->states(1) = Matrices->dp_order();
-
-    // Determine which states are allowed to match (c2)
-    for(int c2=1;c2<Matrices->dists2.n_columns()-1;c2++)
-    {
-        auto mask=(a234[c2-1]&Matrices->emit2).raw();
-        mask >>= 1;
-        assert(mask);
-
-        Matrices->states(c2+1) = allowed_states_for_mask[mask];
-    }
-
-    //------------------ Compute the DP matrix ---------------------//
-
+    auto Matrices = make_constrained_matrix(m12345, std::move(dists1), std::move(dists234), *F, a234, bits234, bandwidth);
     Matrices->forward_band();
 
     // If the DP matrix ended up having probability 0, don't try to sample a path through it!
@@ -358,6 +302,7 @@ Availability<log_double_t> sample_A5_2D_ratio(vector<Parameters>& p, const vecto
 ///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
 optional<int> sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
 			                 const vector<log_double_t>& rho_, optional<int> bandwidth)
+try
 {
     for(int i=1;i<p.size();i++)
         for(int j=0;j<p[0].n_data_partitions();j++)
@@ -546,6 +491,11 @@ optional<int> sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_orde
         return {};
 
     return C;
+}
+catch (const dp_table_allocation_failure& e)
+{
+    std::cerr << "Skipping 2D A5 proposal: " << e.what() << '\n';
+    return {};
 }
 
 
