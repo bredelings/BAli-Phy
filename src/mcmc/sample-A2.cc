@@ -56,15 +56,27 @@ sample_A2_base(mutable_data_partition P, const std::vector<int>& nodes)
     auto F = P.WeightedFrequencyMatrix(nodes[0]);
     auto dists1 = substitution::shift(*P.cache(b1), 2);
     auto dists2 = substitution::shift(*P.cache(b2), 2);
-    auto boundaries = yboundaries_everything(dists1.n_columns()-2, dists2.n_columns()-2);
-    MatrixSize size{dists1.n_columns(), dists2.n_columns()};
-    auto matrices = std::make_shared<DPmatrixConstrained>(
-        MatrixShape(size, std::move(boundaries)), m12, std::move(dists1), std::move(dists2), *F);
-    matrices->emit1 = 1;
-    matrices->emit2 = 2;
-    // Even the padding column needs the state order when used as a predecessor of a boundary cell.
-    for(int j=0;j<matrices->dists2.n_columns();j++)
-        matrices->states(j) = matrices->dp_order();
+    std::shared_ptr<DPmatrixConstrained> matrices;
+    try
+    {
+        MatrixSize size{dists1.n_columns(), dists2.n_columns()};
+        auto boundaries = yboundaries_everything(size.size1-2, size.size2-2);
+        matrices = std::make_shared<DPmatrixConstrained>(
+            MatrixShape(size, std::move(boundaries)), m12, std::move(dists1), std::move(dists2), *F);
+        matrices->emit1 = 1;
+        matrices->emit2 = 2;
+        // Even the padding column needs the state order when used as a predecessor of a boundary cell.
+        for(int j=0;j<size.size2;j++)
+            matrices->states(j) = matrices->dp_order();
+    }
+    catch (const dp_table_allocation_failure&)
+    {
+        throw;
+    }
+    catch (const std::bad_alloc&)
+    {
+        throw dp_table_allocation_failure{};
+    }
     matrices->forward_band();
 
     auto generalized_path = matrices->sample_path();
@@ -130,7 +142,7 @@ void sample_A2(Parameters& P, int middle, int left)
                 P = p[*choice];
         }
     }
-    catch (const std::bad_alloc& e)
+    catch (const dp_table_allocation_failure& e)
     {
         std::cerr<<"Allocation failed in sample_A2: "<<e.what()<<"!  Proceeding."<<std::endl;
     }
