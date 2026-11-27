@@ -19,6 +19,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "probability/probability.hh"
 #include <iostream>
+#include <numbers>
+#include <boost/math/special_functions/log1p.hpp>
 #include <boost/math/special_functions/gamma.hpp>
 #include <boost/math/special_functions/beta.hpp>
 #include <boost/math/distributions.hpp>
@@ -65,9 +67,28 @@ double log_gamma(double x) {
   return lgamma(x);
 }
 
-double log_factorial(std::int64_t n)
+namespace {
+const double log_two_pi = std::log(2 * std::numbers::pi);
+
+// The remainder in log(x!) = (x+1/2)log(x) - x + log(2π)/2 + remainder.
+// For x >= 32, the first omitted Stirling term, 1/(1188 x⁹), is below 3e-17.
+double stirling_remainder(double x)
 {
-  return log_gamma(double(n)+1);
+    if (x < 32)
+        return std::lgamma(x + 1) - ((x + 0.5)*std::log(x) - x + 0.5*log_two_pi);
+    const double t = 1 / (x*x);
+    return (1.0/12 - t*(1.0/360 - t*(1.0/1260 - t/1680))) / x;
+}
+
+// Loader's deviance term D(x,m) = x log(x/m) + m - x, for x > 0. Near the mean,
+// D = -x (log(1+d)-d), d=(m-x)/x. The supplied log mean survives underflow of m.
+double count_deviance(double x, double mean, double log_mean)
+{
+    const double difference = mean - x;
+    if (std::abs(difference) < 0.5*x)
+        return -x * boost::math::log1pmx(difference/x);
+    return x*(std::log(x) - log_mean) + difference;
+}
 }
 
 double log_beta(double a, double b)
@@ -787,26 +808,19 @@ log_double_t poisson_pdf(double mu, std::int64_t k)
 {
     assert(mu >= 0);
 
-    log_double_t Pr;
+    if (k < 0) return 0;
+    if (not std::isfinite(mu))
+        return exp_to_log_space(std::numeric_limits<double>::quiet_NaN());
+    if (k == 0) return exp_to_log_space(-mu);
+    if (mu == 0) return 0;
 
-    if (k < 0)
-    {
-        Pr = 0;
-    }
-    else if (mu == 0)
-    {
-        // Don't do log(mu) if mu is 0.
-        if (k == 0)
-            Pr = 1;
-        else
-            Pr = 0;
-    }
-    else
-    {
-        Pr.log()= k * log(mu) - mu - log_factorial(k);
-    }
+    // At small counts the factorial is modest and the direct formula costs fewer operations.
+    if (k < 32) return exp_to_log_space(k*std::log(mu) - mu - std::lgamma(double(k) + 1));
 
-    return Pr;
+    // Substituting Stirling's formula into k log(mu) - mu - log(k!) leaves
+    // the deviance and the normalization, even when k and mu are equal.
+    return exp_to_log_space(-count_deviance(k, mu, std::log(mu)) - stirling_remainder(k)
+                            - 0.5*(log_two_pi + std::log(double(k))));
 }
 
 // With d=|lambda-mu|, K=rho*lambda and A=(1-exp(-d*t))/d (A=t at d=0),
