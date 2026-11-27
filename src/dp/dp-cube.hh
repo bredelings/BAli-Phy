@@ -91,6 +91,10 @@ public:
         :s1(i1), s2(i2), s3(i3), s4(i4)
     {
         auto cells = checked_dp_product<int>(checked_dp_product<int>(s1, s2), s3);
+        // The auxiliary emission matrices index cells and pairs of axes with int. Each padded
+        // dimension is positive, so their products also fit when the full cell count fits.
+        if (cells > std::numeric_limits<int>::max())
+            throw dp_table_allocation_failure{};
         data = std::make_unique_for_overwrite<double[]>(checked_dp_product<double>(cells, s4));
         scale_ = std::make_unique_for_overwrite<int[]>(cells);
     }
