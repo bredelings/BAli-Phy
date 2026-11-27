@@ -1,5 +1,7 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 
+#include <cstdint>
+#include <limits>
 #include <vector>
 #include <span>
 
@@ -1681,42 +1683,40 @@ double wsaf_at_site(int site, const R::RVector& weights, const R::RVector& haplo
     return std::min(q,1.0);
 }
 
-R::Exp sample_site_reads01(int N, double wsaf, double error_rate, double c, double outlier_frac)
+R::Exp sample_site_reads01(std::int64_t N, double wsaf, double error_rate, double c, double outlier_frac)
 {
-    assert(0 <= N);
+    if (N < 0) throw myexception()<<"sample_reads01: read depth must be nonnegative";
     assert(0 <= wsaf and wsaf <= 1.0);
     assert(0 <= error_rate and error_rate <= 1.0);
     assert(0 <= c);
 
     double pi = wsaf + error_rate*(1.0 - 2.0*wsaf);
 
-    int alt = (bernoulli(outlier_frac)) ? beta_binomial(N, 1.0, 1.0) : beta_binomial(N, c*pi, c*(1-pi));
-    int ref = N - alt;
+    auto alt = (bernoulli(outlier_frac)) ? beta_binomial(N, 1.0, 1.0) : beta_binomial(N, c*pi, c*(1-pi));
+    auto ref = N - alt;
 
     return R::RPair(ref, alt);
 }
 
-log_double_t site_likelihood_for_reads01(int counts, int ref, int alt, double wsaf, double error_rate, double c, double outlier_frac)
+log_double_t site_likelihood_for_reads01(std::int64_t counts, std::int64_t ref, std::int64_t alt, double wsaf, double error_rate, double c, double outlier_frac)
 {
-    assert(0 <= ref);
-    assert(0 <= alt);
     assert(std::isnan(wsaf) or (0 <= wsaf and wsaf <= 1.0));
     assert(0 <= error_rate and error_rate <= 1.0);
     assert(0 <= c);
 
-    if (counts != ref + alt)
+    if (ref < 0 or alt < 0 or ref > counts or counts - ref != alt)
         return 0.0;
 
     double pi = wsaf + error_rate*(1.0 - 2.0*wsaf);
 
-    return (1.0-outlier_frac) * beta_binomial_pdf(ref+alt, c*pi, c*(1.0-pi), alt)
-           +outlier_frac      * beta_binomial_pdf(ref+alt, 1.0, 1.0, alt);
+    return (1.0-outlier_frac) * beta_binomial_pdf(counts, c*pi, c*(1.0-pi), alt)
+           +outlier_frac      * beta_binomial_pdf(counts, 1.0, 1.0, alt);
 }
 
-log_double_t site_likelihood_for_reads01(int counts, const R::Exp& reads, double wsaf, double error_rate, double c, double outlier_frac)
+log_double_t site_likelihood_for_reads01(std::int64_t counts, const R::Exp& reads, double wsaf, double error_rate, double c, double outlier_frac)
 {
-    int ref = reads.as_<R::RPair>().first.as_cpp_int();
-    int alt = reads.as_<R::RPair>().second.as_cpp_int();
+    auto ref = reads.as_<R::RPair>().first.as_int();
+    auto alt = reads.as_<R::RPair>().second.as_int();
 
     return site_likelihood_for_reads01(counts, ref, alt, wsaf, error_rate, c, outlier_frac);
 }
@@ -1772,7 +1772,7 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
     {
         double wsaf = wsaf_at_site(site, weights, haplotypes);
 
-        auto pr = site_likelihood_for_reads01(counts[site].as_cpp_int(), reads[site], wsaf, error_rate, c, outlier_frac);
+        auto pr = site_likelihood_for_reads01(counts[site].as_int(), reads[site], wsaf, error_rate, c, outlier_frac);
 
         if (pr == 0.0)
         {
@@ -1831,7 +1831,7 @@ extern "C" closure builtin_function_sample_reads01(OperationArgs& Args)
     {
         double wsaf = wsaf_at_site(site, weights, haplotypes);
 
-        reads[site] = sample_site_reads01(counts[site].as_cpp_int(), wsaf, error_rate, c, outlier_frac);
+        reads[site] = sample_site_reads01(counts[site].as_int(), wsaf, error_rate, c, outlier_frac);
     }
 
     return reads;
@@ -1864,6 +1864,14 @@ matrix<log_double_t> emission_pr(const vector<int>& K, const R::RVector& reads, 
     auto E = matrix<log_double_t>(L, n_states);
     for(int site=0; site<L; site++)
     {
+        const auto& pair = reads[site].as_<R::RPair>();
+        const auto ref = pair.first.as_int(), alt = pair.second.as_int();
+        // A pair outside the support of every Int-valued depth has zero likelihood in every state.
+        if (ref < 0 or alt < 0 or ref > std::numeric_limits<std::int64_t>::max() - alt)
+        {
+            for (int state=0; state<n_states; ++state) E(site, state) = 0.0;
+            continue;
+        }
         double current_wsaf = wsaf_at_site(site, weights, haplotypes);
         for(int state = 0; state < n_states; state++)
         {
@@ -1879,9 +1887,7 @@ matrix<log_double_t> emission_pr(const vector<int>& K, const R::RVector& reads, 
             // Avoid out-of-bounds terms caused by rounding error.
             wsaf = std::max(0.0,std::min(1.0,wsaf));
 
-            int ref = reads[site].as_<R::RPair>().first.as_cpp_int();
-            int alt = reads[site].as_<R::RPair>().second.as_cpp_int();
-            E(site, state) = site_likelihood_for_reads01(ref+alt, reads[site], wsaf, error_rate, concentration, outlier_frac);
+            E(site, state) = site_likelihood_for_reads01(ref+alt, ref, alt, wsaf, error_rate, concentration, outlier_frac);
         }
     }
     return E;

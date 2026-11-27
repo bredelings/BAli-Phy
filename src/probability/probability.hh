@@ -86,7 +86,7 @@ log_double_t negative_binomial_pdf(int r, double p, int k);
 
 log_double_t negative_binomial_pdf_from_logs(std::int64_t r, double log_p, double log_q, std::int64_t k);
 
-log_double_t beta_binomial_pdf(int n, double a, double b, int k);
+log_double_t beta_binomial_pdf(std::int64_t n, double a, double b, std::int64_t k);
 
 log_double_t binomial_pdf(int n, double p, int k);
 

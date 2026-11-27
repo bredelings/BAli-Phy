@@ -29,6 +29,7 @@
 #include "util/rng.hh"
 #include "util/myexception.hh"
 #include "util/math/count-probability.hh"
+#include "util/math/logsum.hh"
 #include "util/poisson.hh"
 
 using std::valarray;
@@ -275,10 +276,32 @@ std::int64_t binomial_from_logs(std::int64_t n, double log_p, double log_q)
     return successes ? count : n - count;
 }
 
-int beta_binomial(int n, double a, double b)
+// A Beta(a,b) mixture of binomials is beta-binomial. Work with the log ratio of
+// two gamma draws so a beta probability near one keeps its complementary tail.
+std::int64_t beta_binomial(std::int64_t n, double a, double b)
 {
-    double p = beta(a,b);
-    return binomial(n,p);
+    if (not (a > 0 and b > 0))
+    {
+        // Retain the original beta sampler and its domain checks for zero shapes.
+        const double p = beta(a,b);
+        if (n <= std::numeric_limits<int>::max()) return binomial(static_cast<int>(n), p);
+        assert(0 <= p and p <= 1);
+        return binomial_from_logs(n, std::log(p), std::log1p(-p));
+    }
+    if (a == 1 and b == 1) return uniform_int(0, n);
+
+    double log_odds = std::log(gamma(a < 1 ? a+1 : a, 1));
+    log_odds -= std::log(gamma(b < 1 ? b+1 : b, 1));
+    // For s<1, Gamma(s) = Gamma(s+1)*U^(1/s) in law. Scale both log uniforms
+    // before dividing, since both unscaled powers can underflow on the same draw.
+    const double scale = std::min(a,b);
+    if (scale < 1)
+    {
+        const double left = a < 1 ? log_unif()*(scale/a) : 0;
+        const double right = b < 1 ? log_unif()*(scale/b) : 0;
+        log_odds += (left-right)/scale;
+    }
+    return binomial_from_logs(n, -log1pexp(-log_odds), -log1pexp(log_odds));
 }
 
 unsigned bernoulli(double p)

@@ -713,23 +713,58 @@ ProbDensity multinomial_pdf(std::int64_t n, std::span<const log_double_t> weight
     return coefficient * ProbDensity(exp_to_log_space(mass.total()));
 }
 
-log_double_t beta_binomial_pdf(int n, double a, double b, int k)
+// For failures k before a positive real shape s, expand the three log gammas using
+// Stirling remainders. The two deviance offsets are opposite: k*p - s*q and its negative.
+static double log_negative_binomial_mass(double k, double shape, double log_p, double log_q, double offset)
+{
+    if (k == 0) return shape * log_p;
+    const double total = k + shape;
+    const double log_total = std::log(total);
+    const double log_k = std::log(k);
+    const double log_shape_fraction = -log1pexp(log_k - std::log(shape));
+    return stirling_remainder(total) - stirling_remainder(shape) - stirling_remainder(k)
+        + 0.5*(log_shape_fraction - log_k - log_two_pi)
+        - count_probability::count_deviance_from_offset(k, -offset, log_total + log_q)
+        - count_probability::count_deviance_from_offset(shape, offset, log_total + log_p);
+}
+
+// Independent negative-binomial counts with shapes a and b and a common success probability
+// have a beta-binomial split conditional on their sum n. Choose p so the sum has mean n.
+log_double_t beta_binomial_pdf(std::int64_t n, double a, double b, std::int64_t k)
 {
     assert(n >= 0);
     assert(std::isnan(a) or a >= 0);
-    assert(std::isnan(a) or b >= 0);
+    assert(std::isnan(b) or b >= 0);
+    if (k < 0 or k > n) return 0;
+    const auto rest = n - k;
 
-    if (k < 0) return 0;
-    if (k > n) return 0;
+    // Keep the original beta-function behavior for degenerate or nonfinite shapes.
+    if (not (a > 0 and b > 0 and std::isfinite(a) and std::isfinite(b)))
+    {
+        auto pr = L_beta(k+a, rest+b) / L_beta(a,b);
+        return pr / L_beta(double(rest)+1, double(k)+1) / (double(n)+1);
+    }
+    if (n == 0) return 1;
+    if (a == 1 and b == 1) return exp_to_log_space(-std::log1p(double(n)));
 
-    // pr = choose(n,k) * beta(k+a, n-k+b) / beta(a,b);
-    auto pr = L_beta(k+a, n-k+b) / L_beta(a,b);
+    const double log_n = std::log(double(n));
+    const double log_odds = logsum(std::log(a), std::log(b)) - log_n;
+    const double log_p = -log1pexp(-log_odds);
+    const double log_q = -log1pexp(log_odds);
 
-    // choose(n,k) = 1/[(n+1) * beta(n-k+1,k+1)]
-    pr /= L_beta(n-k+1,k+1);
-    pr /= (n+1);
+    // k*p - a*q = p*(k - n*a/(a+b)). Use the rarer shape's fraction and its count
+    // to retain a small expected count even if the other fraction rounds to one.
+    const double ratio = std::min(a,b) / std::max(a,b);
+    const double fraction = ratio / (1 + ratio);
+    const double offset = std::exp(log_p) * (a < b ? -std::fma(double(n), fraction, -double(k))
+                                                    : std::fma(double(n), fraction, -double(rest)));
 
-    return pr;
+    // For the sum both deviance terms vanish. Its shape fraction is exactly p.
+    const double shape = a + b;
+    const double log_sum_mass = stirling_remainder(double(n)+shape) - stirling_remainder(shape)
+        - stirling_remainder(n) + 0.5*(log_p - log_n - log_two_pi);
+    return exp_to_log_space(log_negative_binomial_mass(k, a, log_p, log_q, offset)
+                            + log_negative_binomial_mass(rest, b, log_p, log_q, -offset) - log_sum_mass);
 }
 
 log_double_t bernoulli_pdf(double p, int k)

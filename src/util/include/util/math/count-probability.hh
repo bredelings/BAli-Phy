@@ -21,12 +21,16 @@ inline double stirling_remainder(double x)
 
 // Loader's deviance term D(x,m) = x log(x/m) + m - x, for x > 0. Near the mean,
 // D = -x (log(1+d)-d), d=(m-x)/x. The supplied log mean survives underflow of m.
-inline double count_deviance(double x, double mean, double log_mean)
+inline double count_deviance_from_offset(double x, double difference, double log_mean)
 {
-    const double difference = mean - x;
     if (std::abs(difference) < 0.5*x)
         return -x * boost::math::log1pmx(difference/x);
     return x*(std::log(x) - log_mean) + difference;
+}
+
+inline double count_deviance(double x, double mean, double log_mean)
+{
+    return count_deviance_from_offset(x, mean - x, log_mean);
 }
 
 // The separate log mean retains the probability of a positive count if its mean underflows.

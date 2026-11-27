@@ -70,7 +70,7 @@ int binomial(int n, double p);
 std::int64_t binomial_from_logs(std::int64_t n, double log_p, double log_q);
 
 // return a binomial random variate
-int beta_binomial(int n, double a, double b);
+std::int64_t beta_binomial(std::int64_t n, double a, double b);
 
 // return a binomial random variate
 unsigned bernoulli(double p);
