@@ -474,7 +474,7 @@ namespace Runtime
         void serialize(Archive& ar) { ar(indices, body); }
     };
 
-    using RIntMap = Box<std::map<int, Exp>>;
+    using RIntMap = Box<std::map<haskell_int, Exp>>;
     using RPair = Box<std::pair<Exp, Exp>>;
 
     struct RMaybe: public Box<std::optional<Exp>>

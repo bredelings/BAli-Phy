@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <limits>
 
-typedef Box<immer::set<int>> IntSet;
+typedef Box<immer::set<haskell_int>> IntSet;
 
 using std::vector;
 
@@ -19,7 +19,7 @@ extern "C" R::Exp simple_function_empty(vector<R::Exp>& /*args*/)
 
 extern "C" R::Exp simple_function_singleton(vector<R::Exp>& args)
 {
-    int key = get_arg(args).as_int();
+    auto key = get_arg(args).as_int();
 
     IntSet S;
 
@@ -33,12 +33,12 @@ extern "C" R::Exp simple_function_size(vector<R::Exp>& args)
     auto arg0 = get_arg(args);
     auto& S = arg0.as_<IntSet>();
 
-    return (int)S.size();
+    return static_cast<haskell_int>(S.size());
 }
 
 extern "C" R::Exp simple_function_member(vector<R::Exp>& args)
 {
-    int e= get_arg(args).as_int();
+    auto e= get_arg(args).as_int();
 
     auto arg1 = get_arg(args);
     auto& S = arg1.as_<IntSet>();
@@ -48,7 +48,7 @@ extern "C" R::Exp simple_function_member(vector<R::Exp>& args)
 
 extern "C" closure builtin_function_delete(OperationArgs& Args)
 {
-    int e = Args.evaluate_slot_to_value(0).as_int();
+    auto e = Args.evaluate_slot_to_value(0).as_int();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto S = arg1.as_<IntSet>();
@@ -61,7 +61,7 @@ extern "C" closure builtin_function_delete(OperationArgs& Args)
 
 extern "C" closure builtin_function_insert(OperationArgs& Args)
 {
-    int e = Args.evaluate_slot_to_value(0).as_int();
+    auto e = Args.evaluate_slot_to_value(0).as_int();
 
     auto S = Args.evaluate_slot_to_value(1).as_<IntSet>();
 
@@ -78,10 +78,10 @@ extern "C" closure builtin_function_keys(OperationArgs& Args)
     auto& S = arg0.as_<IntSet>();
 
     if (S.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-        throw myexception()<<"IntSet.keys: key count exceeds supported Int range";
+        throw myexception()<<"IntSet.keys: key count exceeds the native indexing limit";
 
     int count = static_cast<int>(S.size());
-    object_ptr<Box<DenseVector<int>>> keys(new Box<DenseVector<int>>(count));
+    object_ptr<Box<DenseVector<haskell_int>>> keys(new Box<DenseVector<haskell_int>>(count));
     int index = 0;
     for(auto& k: S)
         (*keys)(index++) = k;
@@ -96,10 +96,10 @@ extern "C" closure builtin_function_toAscVector(OperationArgs& Args)
     auto& S = arg0.as_<IntSet>();
 
     if (S.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-        throw myexception()<<"IntSet.toAscVector: key count exceeds supported Int range";
+        throw myexception()<<"IntSet.toAscVector: key count exceeds the native indexing limit";
 
     int count = static_cast<int>(S.size());
-    object_ptr<Box<DenseVector<int>>> keys(new Box<DenseVector<int>>(count));
+    object_ptr<Box<DenseVector<haskell_int>>> keys(new Box<DenseVector<haskell_int>>(count));
     int index = 0;
     for(auto& key: S)
         (*keys)(index++) = key;
@@ -232,8 +232,8 @@ extern "C" closure builtin_function_mapNegate(OperationArgs& Args)
     auto& S1 = arg0.as_<IntSet>();
 
     IntSet S2;
-    for(int b: S1)
-	S2 = S2.insert(-b);
+    for(auto b: S1)
+	S2 = S2.insert(static_cast<haskell_int>(-std::uint64_t(b)));
 
     return S2;
 }

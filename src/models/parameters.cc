@@ -116,7 +116,7 @@ double data_partition::get_beta() const
 }
 
 int data_partition::subst_root() const {
-    return property(0).value().as_int();
+    return property(0).value().as_cpp_int();
 }
 
 bool data_partition::alignment_is_random() const
@@ -161,12 +161,12 @@ context_ptr data_partition::alignment_property(int i) const
 
 int data_partition::n_base_models() const
 {
-    return property(6).value().as_int();
+    return property(6).value().as_cpp_int();
 }
 
 int data_partition::n_states() const
 {
-    return property(5).value().as_int();
+    return property(5).value().as_cpp_int();
 }
 
 object_ptr<const Box<DenseMatrix<double>>> data_partition::WeightedFrequencyMatrix(int n) const
@@ -202,7 +202,7 @@ int data_partition::seqlength(int n) const
 {
     assert(has_pairwise_alignments());
 
-    return alignment_property(4)[n].value().as_int();
+    return alignment_property(4)[n].value().as_cpp_int();
 }
 
 bool data_partition::pairwise_alignment_is_unset(int b) const
@@ -849,7 +849,7 @@ Parameters::Parameters(const context_ref& C, int tree_reg, const std::vector<int
                 for(auto& [b,_]: tmp.as_<IntMap>())
                 {
 		    // This should unset both forward and reverse alignments.
-                    auto a_for_b = alignments[b];
+                    auto a_for_b = alignments[checked_cpp_int(b)];
                     if (auto m = a_for_b.modifiable())
                         m->set_value(0);
                 }

@@ -17,7 +17,7 @@ namespace views = std::views;
 
 using std::vector;
 
-typedef Box<immer::set<int>> IntSet;
+typedef Box<immer::set<haskell_int>> IntSet;
 
 extern "C" R::Exp simple_function_empty(vector<R::Exp>& /*args*/)
 {
@@ -28,7 +28,7 @@ extern "C" R::Exp simple_function_empty(vector<R::Exp>& /*args*/)
 
 extern "C" closure builtin_function_singleton(OperationArgs& Args)
 {
-    int key = Args.evaluate_slot_to_value(0).as_int();
+    auto key = Args.evaluate_slot_to_value(0).as_int();
 
     int v_reg = Args.reg_for_slot(1);
 
@@ -45,12 +45,12 @@ extern "C" R::Exp simple_function_size(vector<R::Exp>& args)
     auto& m = arg0.as_<IntMap>();
 
 
-    return (int)m.size();
+    return static_cast<haskell_int>(m.size());
 }
 
 extern "C" R::Exp simple_function_member(vector<R::Exp>& args)
 {
-    int key = get_arg(args).as_int();
+    auto key = get_arg(args).as_int();
 
     auto arg1 = get_arg(args);
     auto& m = arg1.as_<IntMap>();
@@ -61,7 +61,7 @@ extern "C" R::Exp simple_function_member(vector<R::Exp>& args)
 // Return a lazy Maybe: Just retains the existing value register without evaluating it.
 extern "C" closure builtin_function_lookup(OperationArgs& Args)
 {
-    int key = Args.evaluate_slot_to_value(0).as_int();
+    auto key = Args.evaluate_slot_to_value(0).as_int();
     auto map_value = Args.evaluate_slot_to_value(1);
     auto result = map_value.as_<IntMap>().lookup(key);
     if (result)
@@ -72,7 +72,7 @@ extern "C" closure builtin_function_lookup(OperationArgs& Args)
 // Forward the selected register directly; neither candidate is forced during selection.
 extern "C" closure builtin_function_findWithDefault(OperationArgs& Args)
 {
-    int key = Args.evaluate_slot_to_value(1).as_int();
+    auto key = Args.evaluate_slot_to_value(1).as_int();
     auto map_value = Args.evaluate_slot_to_value(2);
     auto result = map_value.as_<IntMap>().lookup(key);
     int result_reg = result ? *result : Args.reg_for_slot(0);
@@ -81,7 +81,7 @@ extern "C" closure builtin_function_findWithDefault(OperationArgs& Args)
 
 extern "C" closure builtin_function_subscript(OperationArgs& Args)
 {
-    int key = Args.evaluate_slot_to_value(1).as_int();
+    auto key = Args.evaluate_slot_to_value(1).as_int();
 
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& m = arg0.as_<IntMap>();
@@ -135,7 +135,7 @@ extern "C" closure builtin_function_mapWithKey(OperationArgs& Args)
 
 extern "C" closure builtin_function_delete(OperationArgs& Args)
 {
-    int key = Args.evaluate_slot_to_value(0).as_int();
+    auto key = Args.evaluate_slot_to_value(0).as_int();
 
     auto m = Args.evaluate_slot_to_value(1).as_<IntMap>();
 
@@ -147,7 +147,7 @@ extern "C" closure builtin_function_delete(OperationArgs& Args)
 
 extern "C" closure builtin_function_insert(OperationArgs& Args)
 {
-    int key = Args.evaluate_slot_to_value(0).as_int();
+    auto key = Args.evaluate_slot_to_value(0).as_int();
 
     int v_reg = Args.reg_for_slot(1);
 
@@ -161,7 +161,7 @@ extern "C" closure builtin_function_insert(OperationArgs& Args)
 extern "C" closure builtin_function_insertWith(OperationArgs& Args)
 {
     int f_reg = Args.reg_for_slot(0);
-    int key   = Args.evaluate_slot_to_value(1).as_int();
+    auto key   = Args.evaluate_slot_to_value(1).as_int();
     int v2_reg = Args.reg_for_slot(2);
 
     auto m = Args.evaluate_slot_to_value(3).as_<IntMap>();
@@ -187,10 +187,10 @@ extern "C" closure builtin_function_keys(OperationArgs& Args)
     auto& m = arg0.as_<IntMap>();
 
     if (m.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-        throw myexception()<<"IntMap.keys: key count exceeds supported Int range";
+        throw myexception()<<"IntMap.keys: key count exceeds the native indexing limit";
 
     int count = static_cast<int>(m.size());
-    object_ptr<Box<DenseVector<int>>> keys(new Box<DenseVector<int>>(count));
+    object_ptr<Box<DenseVector<haskell_int>>> keys(new Box<DenseVector<haskell_int>>(count));
     int index = 0;
     for(auto& [k,v]: m)
         (*keys)(index++) = k;
@@ -421,10 +421,10 @@ extern "C" closure builtin_function_fromSet(OperationArgs& Args)
 // evaluating the values or allocating intermediate Haskell associations.
 extern "C" closure builtin_function_fromDistinctKeysAndValues(OperationArgs& Args)
 {
-    int key_offset = Args.evaluate_slot_to_value(0).as_int();
-    int key_count = Args.evaluate_slot_to_value(1).as_int();
+    int key_offset = Args.evaluate_slot_to_value(0).as_cpp_int();
+    int key_count = Args.evaluate_slot_to_value(1).as_cpp_int();
     auto keys_value = Args.evaluate_slot_to_value(2);
-    const auto& keys = keys_value.as_<Box<DenseVector<int>>>();
+    const auto& keys = keys_value.as_<Box<DenseVector<haskell_int>>>();
 
     int values_reg = Args.evaluate_slot_use(3);
     const auto& value_regs = boxed_vector_element_regs(Args.memory().closure_at(values_reg));
@@ -487,7 +487,7 @@ extern "C" closure builtin_function_restrictKeysToVector(OperationArgs& Args)
     object_ptr<R::RVector> result = new R::RVector;
     result->reserve(keys.size());
 
-    for(int key: keys)
+    for(auto key: keys)
     {
         int r = map[key];
         int value_reg = Args.evaluate_reg_use(r, map_is_cont | keys_are_cont);
@@ -512,7 +512,7 @@ extern "C" closure builtin_function_withoutKeys(OperationArgs& Args)
 
 extern "C" closure builtin_function_esubscript(OperationArgs& Args)
 {
-    int key = Args.evaluate_slot_to_value(1).as_int();
+    auto key = Args.evaluate_slot_to_value(1).as_int();
 
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& m = arg0.as_<R::RIntMap>();

@@ -10,7 +10,7 @@
 #include "computation/machine/gcobject.hh"
 #include "immer/set.hpp"
 
-typedef Box<immer::set<int>> IntSet;
+typedef Box<immer::set<haskell_int>> IntSet;
 
 using std::string;
 using std::vector;

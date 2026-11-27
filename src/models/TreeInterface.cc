@@ -9,7 +9,7 @@
 #include "computation/machine/gcobject.hh"
 
 #include "immer/set.hpp"
-typedef Box<immer::set<int>> IntSet;
+typedef Box<immer::set<haskell_int>> IntSet;
 
 using std::vector;
 using std::string;
@@ -86,8 +86,9 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     assert(tree.size() == 6);
 
     auto edges_out_of_node = tree[0];
-    for(auto [node, _]: edges_out_of_node.value().as_<IntMap>())
+    for(auto [key, _]: edges_out_of_node.value().as_<IntMap>())
     {
+        int node = checked_cpp_int(key);
         auto tmp = edges_out_of_node[node][1];
 
         param m_edges = tmp;
@@ -98,8 +99,9 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     }
 
     auto nodes_for_edge    = tree[1];
-    for(auto [edge, _]: nodes_for_edge.value().as_<IntMap>())
+    for(auto [key, _]: nodes_for_edge.value().as_<IntMap>())
     {
+        int edge = checked_cpp_int(key);
         auto info = nodes_for_edge[edge];
 
         param m_source = info[0];
@@ -214,7 +216,7 @@ std::vector<int> TreeInterface::directed_branches() const
 {
     vector<int> branches;
     for(auto& [b,_]: get_tree_constants().parameters_for_tree_branch)
-        branches.push_back(b);
+        branches.push_back(checked_cpp_int(b));
     return branches;
 }
 
@@ -236,8 +238,9 @@ map<int,string> TreeInterface::labels() const
     assert(labels_map.is_a<IntMap>());
     
     map<int,string> labels;
-    for(auto& [node,_]: labels_map.as_<IntMap>())
+    for(auto& [key,_]: labels_map.as_<IntMap>())
     {
+        int node = checked_cpp_int(key);
         auto l = label(node);
         assert(l);
         labels.insert({node,*l});
@@ -281,7 +284,7 @@ int TreeInterface::branch_out(int n, int i) const
     for(int j=0;j<i;j++)
         iter++;
 
-    return *iter;
+    return checked_cpp_int(*iter);
 }
 
 int TreeInterface::branch_in(int n, int i) const {
@@ -303,8 +306,8 @@ vector<int> TreeInterface::branches_out(int n) const {
     auto out_edges_code = get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context());
     const auto& out_edges = out_edges_code.as_<IntSet>();
     vector<int> branches;
-    for(int b: out_edges)
-	branches.push_back(b);
+    for(auto b: out_edges)
+	branches.push_back(checked_cpp_int(b));
     return branches;
 }
 
@@ -320,10 +323,10 @@ void TreeInterface::append_branches_before(int b, vector<int>& branches) const
     int n = source(b);
     auto out_edges_code = get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context());
     const auto& out_edges = out_edges_code.as_<IntSet>();
-    for(int b2: out_edges)
+    for(auto b2: out_edges)
     {
 	if (b2 != b)
-	    branches.push_back(reverse(b2));
+	    branches.push_back(reverse(checked_cpp_int(b2)));
     }
 }
 
@@ -335,10 +338,10 @@ void TreeInterface::append_branches_after(int b, vector<int>& branches) const
     int n = source(b);
     auto out_edges_code = get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context());
     const auto& out_edges = out_edges_code.as_<IntSet>();
-    for(int b2: out_edges)
+    for(auto b2: out_edges)
     {
 	if (b2 != b)
-	    branches.push_back(b2);
+	    branches.push_back(checked_cpp_int(b2));
     }
 }
 
@@ -472,11 +475,11 @@ bool TreeInterface::subtree_contains_branch(int b1,int b2) const
 
 
 int TreeInterface::source(int b) const {
-    return std::get<0>(get_tree_constants().parameters_for_tree_branch.at(b)).get_code(get_const_context()).as_int();
+    return std::get<0>(get_tree_constants().parameters_for_tree_branch.at(b)).get_code(get_const_context()).as_cpp_int();
 }
 
 int TreeInterface::target(int b) const {
-    return std::get<1>(get_tree_constants().parameters_for_tree_branch.at(b)).get_code(get_const_context()).as_int();
+    return std::get<1>(get_tree_constants().parameters_for_tree_branch.at(b)).get_code(get_const_context()).as_cpp_int();
 }
 
 int TreeInterface::reverse(int b) const
@@ -513,8 +516,8 @@ optional<int> TreeInterface::search_branch(int n1, int n2) const
 {
     auto out_edges_code = get_tree_constants().parameters_for_tree_node.at(n1).get_code(get_const_context());
     const auto& out_edges = out_edges_code.as_<IntSet>();
-    for(int b: out_edges)
-	if (target(b) == n2) return b;
+    for(auto b: out_edges)
+	if (target(checked_cpp_int(b)) == n2) return checked_cpp_int(b);
 
     return {};
 }
@@ -657,8 +660,11 @@ map<int,double> TreeInterface::branch_lengths() const
     auto length_regs = branch_to_reg.value();
 
     map<int,double> lengths;
-    for(auto& [b,r]: length_regs.as_<IntMap>())
+    for(auto& [key,r]: length_regs.as_<IntMap>())
+    {
+        int b = checked_cpp_int(key);
         lengths.insert({b, branch_rate(b) * branch_to_reg[b].value().as_double()});
+    }
     return lengths;
 }
 

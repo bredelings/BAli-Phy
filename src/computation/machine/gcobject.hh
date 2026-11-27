@@ -1,6 +1,7 @@
 #ifndef GCOBJECT_H
 #define GCOBJECT_H
 
+#include "computation/haskell/Int.hh"
 #include <vector>
 #include <optional>
 #include "immer/map.hpp" // for immer::map
@@ -35,25 +36,25 @@ public:
 
 class IntMap: public GCObject
 {
-    mutable immer::map<int,int> regs;
+    mutable immer::map<haskell_int,int> regs;
 
 public:
     void get_regs(std::vector<int>& regs) const override;
     void update_regs(const std::vector<int>& regs) const override;
 
-    int size() const {return regs.size();}
-    bool has_key(int i) const {return regs.count(i);}
+    std::size_t size() const {return regs.size();}
+    bool has_key(haskell_int i) const {return regs.count(i);}
     // Find the stored interpreter register in one search, without evaluating its value.
-    std::optional<int> lookup(int key) const
+    std::optional<int> lookup(haskell_int key) const
     {
         if (auto value = regs.find(key))
             return *value;
         return std::nullopt;
     }
-    int operator[](int i) const {return regs.at(i);}
+    int operator[](haskell_int i) const {return regs.at(i);}
 
-    void erase(int k);
-    void insert(int k, int v);
+    void erase(haskell_int k);
+    void insert(haskell_int k, int v);
 
     auto begin() {return regs.begin();}
     auto end() {return regs.end();}
@@ -66,7 +67,7 @@ public:
 
     IntMap() = default;
     IntMap(const IntMap&) = default;
-    IntMap(const immer::map<int,int>& a);
+    IntMap(const immer::map<haskell_int,int>& a);
 };
 
 #endif

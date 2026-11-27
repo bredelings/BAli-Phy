@@ -28,12 +28,12 @@ IntArray::IntArray(const std::vector<int>& a)
 {
 }
 
-void IntMap::erase(int k)
+void IntMap::erase(haskell_int k)
 {
     regs = regs.erase(k);
 }
 
-void IntMap::insert(int k, int v)
+void IntMap::insert(haskell_int k, int v)
 {
     regs = regs.set(k,v);
 }
@@ -41,7 +41,7 @@ void IntMap::insert(int k, int v)
 void IntMap::get_regs(std::vector<int>& owned_regs) const
 {
     owned_regs.resize(regs.size());
-    int i=0;
+    std::size_t i=0;
     for(auto& [key,reg]: regs)
         owned_regs[i++] = reg;
 }
@@ -69,7 +69,7 @@ std::string IntMap::print() const
     return "I{"+join(kvs,",")+"}";
 }
 
-IntMap::IntMap(const immer::map<int,int>& a)
+IntMap::IntMap(const immer::map<haskell_int,int>& a)
     :regs(a)
 {
 }
