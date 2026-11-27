@@ -1,4 +1,5 @@
 #include "probability/choose.hh"
+#include "probability/probability.hh"
 #include "math/logprod.hh"
 #include "test-util.hh"
 #include "util/rng.hh"
@@ -69,6 +70,17 @@ namespace
         BALI_PHY_TEST_CHECK(repeated_zero.log().neginfs() == 2);
         BALI_PHY_TEST_CHECK(repeated_zero.is_zero());
         BALI_PHY_TEST_CHECK(not ProbDensity(1).is_zero());
+    }
+
+    // A scalar pdf hides the finite coefficient when a category has zero weight.
+    // MCMC compares this coefficient whenever two states have the same number of zero factors.
+    void check_multinomial_zero_factors()
+    {
+        const log_double_t weights[] = {0, 0, 0.25, 0.25};
+        const std::int64_t counts[] = {1, 2, 1, 2};
+        const auto mass = multinomial_pdf(6, weights, counts);
+        BALI_PHY_TEST_CHECK(mass.log().neginfs() == 3);
+        check_close(mass.log().ones(), std::log(22.5));  // 6!/(1!2!1!2!) times (1/2)^3.
     }
 
     // Protect batched finite products and per-factor defect multiplicities; this is
@@ -376,6 +388,7 @@ int main()
 {
     check_close_in_log_space();
     check_prob_density_zero();
+    check_multinomial_zero_factors();
     check_prob_density_product_accumulation();
     check_finite_weights();
     check_zero_order_addition();

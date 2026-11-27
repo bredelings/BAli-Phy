@@ -18,6 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "probability/probability.hh"
+#include "util/math/neumaier.hh"
 #include <iostream>
 #include <numbers>
 #include <boost/math/special_functions/log1p.hpp>
@@ -89,6 +90,20 @@ double count_deviance(double x, double mean, double log_mean)
         return -x * boost::math::log1pmx(difference/x);
     return x*(std::log(x) - log_mean) + difference;
 }
+
+// The separate log mean retains the probability of a positive count if its mean underflows.
+double log_poisson_mass(std::int64_t k, double mean, double log_mean)
+{
+    if (k == 0) return -mean;
+    // At small counts the factorial is modest and the direct formula costs fewer operations.
+    if (k < 32) return k*log_mean - mean - std::lgamma(double(k) + 1);
+
+    // Substituting Stirling's formula into k log(mean) - mean - log(k!) leaves
+    // the deviance and the normalization, even when k and mean are equal.
+    return -count_deviance(k, mean, log_mean) - stirling_remainder(k)
+           - 0.5*(log_two_pi + std::log(double(k)));
+}
+
 }
 
 log_double_t dirichlet_pdf(const valarray<double>& p,const valarray<double>& n) 
@@ -641,34 +656,94 @@ log_double_t L_beta(double x, double y)
     return L_gamma(x) * L_gamma(y) / L_gamma(x+y);
 }
 
-ProbDensity multinomial_pdf(std::int64_t n, std::span<const log_double_t> ps,
+// Remove the probability powers from the binomial log mass at its mode, where the
+// deviance is zero. log1p retains the smaller contribution even if n-k rounds to n.
+static double log_choose_count(std::int64_t n, std::int64_t k)
+{
+    const auto rest = n - k;
+    if (k == 0 or rest == 0) return 0;
+    if (k == 1 or rest == 1) return std::log(double(n));
+    const double log_p = -std::log1p(double(rest)/k);
+    const double log_q = -std::log1p(double(k)/rest);
+    return log_binomial_mass(n, k, log_p, log_q) - (k*log_p + rest*log_q);
+}
+
+// Conditional on their total n, independent Poisson counts with means n*p[i] have
+// multinomial probabilities. Evaluate their log masses with the same deviance as the Poisson.
+ProbDensity multinomial_pdf(std::int64_t n, std::span<const log_double_t> weights,
                             std::span<const std::int64_t> ks)
 {
-    // First check that the ks are in bounds
+    assert(weights.size() == ks.size());
     std::int64_t sum = 0;
-    for(auto k : ks)
+    size_t peak = 0;
+    bool invalid_weight = false;
+    for (size_t i = 0; i < ks.size(); ++i)
     {
+        const auto k = ks[i];
         if (k < 0 or k > n - sum) return 0;
         sum += k;
+        const double w = weights[i].log();
+        if (w > weights[peak].log()) peak = i;
+        if (std::isnan(w) or w == INFINITY) invalid_weight = true;
     }
     if (n != sum) return 0;
+    if (n == 0) return 1;
 
-    // If so, then compute the non-zero probability
-    ProbDensity Pr = L_factorial(n);
-    for(int i=0;i<ps.size();i++)
+    // Removing k observations at zero weight leaves choose(remaining,k) arrangements
+    // and k symbolic zeros. For undefined normalizations retain the supplied factors.
+    ProbDensity coefficient = 1;
+    auto remaining = n;
+    std::int64_t zero_factors = 0;
+    const double max_log_weight = weights[peak].log();
+    NeumaierAccumulator<double> other_weights;
+    for (size_t i = 0; i < weights.size(); ++i)
     {
-        Pr /= L_factorial(ks[i]);
-        // A zero count contributes p^0=1 even when log(p)=-infinity; skipping it
-        // avoids the indeterminate floating-point product 0*(-infinity).
-        if (ks[i] != 0)
+        const double w = weights[i].log();
+        if (invalid_weight or w == -INFINITY)
         {
-            // Treat k observations in one category like k independent categorical factors,
-            // so p^k retains k zero factors when p is exactly zero.
-            Pr *= pow(ProbDensity(ps[i]), ks[i]);
+            if (ks[i] == 0) continue;
+            coefficient *= exp_to_log_space(log_choose_count(remaining, ks[i]));
+            if (w == -INFINITY) zero_factors += ks[i];
+            else coefficient *= pow(ProbDensity(weights[i]), ks[i]);
+            remaining -= ks[i];
         }
+        else if (i != peak)
+            other_weights += std::exp(w - max_log_weight);
     }
+    // Count zeros in Int space before conversion to the multiplicity used by ProbDensity.
+    if (zero_factors) coefficient *= pow(ProbDensity(0), zero_factors);
+    if (remaining == 0) return coefficient;
 
-    return Pr;
+    // Exclude one largest weight from the sum so that log1p retains a small tail.
+    // Subtract the maximum before the log normalizer to cancel a common weight scale.
+    const double log_total = std::log1p(other_weights.total());
+    const double log_n = std::log(double(remaining));
+    NeumaierAccumulator<double> mass;
+    for (size_t i = 0; i < weights.size(); ++i)
+    {
+        if (weights[i].log() == -INFINITY) continue;
+        const double log_p = (weights[i].log() - max_log_weight) - log_total;
+        // A single occupied category has mass p^remaining, including when p is close to one.
+        if (ks[i] == remaining)
+        {
+            double log_mass = remaining*log_p;
+            if (i == peak and log_total < std::numeric_limits<double>::min())
+            {
+                // For a subnormal tail t, n*log1p(t) equals n*t to Double precision.
+                // Scale each tail weight by n before exponentiating to avoid losing that product.
+                NeumaierAccumulator<double> tail;
+                for (size_t j = 0; j < weights.size(); ++j)
+                    if (j != peak) tail += std::exp(log_n + (weights[j].log() - max_log_weight));
+                log_mass = -tail.total();
+            }
+            return coefficient * ProbDensity(exp_to_log_space(log_mass));
+        }
+        const double log_mean = log_n + log_p;
+        const double mean = remaining * std::exp(log_p);
+        mass += log_poisson_mass(ks[i], mean, log_mean);
+    }
+    mass -= log_poisson_mass(remaining, remaining, log_n);
+    return coefficient * ProbDensity(exp_to_log_space(mass.total()));
 }
 
 log_double_t beta_binomial_pdf(int n, double a, double b, int k)
@@ -807,13 +882,7 @@ log_double_t poisson_pdf(double mu, std::int64_t k)
     if (k == 0) return exp_to_log_space(-mu);
     if (mu == 0) return 0;
 
-    // At small counts the factorial is modest and the direct formula costs fewer operations.
-    if (k < 32) return exp_to_log_space(k*std::log(mu) - mu - std::lgamma(double(k) + 1));
-
-    // Substituting Stirling's formula into k log(mu) - mu - log(k!) leaves
-    // the deviance and the normalization, even when k and mu are equal.
-    return exp_to_log_space(-count_deviance(k, mu, std::log(mu)) - stirling_remainder(k)
-                            - 0.5*(log_two_pi + std::log(double(k))));
+    return exp_to_log_space(log_poisson_mass(k, mu, std::log(mu)));
 }
 
 // With d=|lambda-mu|, K=rho*lambda and A=(1-exp(-d*t))/d (A=t at d=0),

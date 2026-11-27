@@ -8,7 +8,7 @@ import Data.Bool ((&&))
 import Data.Eq ((==))
 import Data.Function (($))
 import Data.Ord ((<))
-import Numeric.Prob (toProb)
+import Numeric.Prob (fromLogOdds, toProb)
 import Probability.Dist (HasPdf(pdf), IOSampleable(sampleIO))
 import Probability.Distribution.Bernoulli (bernoulli)
 import Probability.Distribution.Binomial (binomial)
@@ -56,3 +56,16 @@ main = do
         && close (ln (pdf (negativeBinomial n (1-rare)) 1)) (-1)
         && close (ln (pdf (negativeBinomial 9223372036854775807 0.5) 9223372036854775807))
                  (-23.099648311122923))
+    -- A common weight scale must disappear even when factorial cancellation would erase the
+    -- whole mass. The rare category also matters when all observations fall in the other one.
+    let counts = [500000000000000000, 250000000000000000, 250000000000000000]
+        central = -41.551540788902305
+        tiny = fromLogOdds (-750)
+        tinyObserved = ln (pdf (multinomial n [1,tiny]) [n-1,1])
+        tinyUnobserved = ln (pdf (multinomial n [1,tiny]) [n,0])
+    print (close (ln (pdf (multinomial n [0.5,0.25,0.25]) counts)) central
+        && close (ln (pdf (multinomial n [1,0.5,0.5]) counts)) central
+        && close (ln (pdf (multinomial n [1,rare]) [n-1,1])) (-1)
+        && close (ln (pdf (multinomial n [1,rare]) [n,0])) (-1)
+        && close tinyObserved (log 1.0e18 - 750)
+        && close (1.0e308*tinyUnobserved) (-1.9016849634750065))
