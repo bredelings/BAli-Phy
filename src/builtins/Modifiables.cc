@@ -109,10 +109,10 @@ extern "C" closure builtin_function_registerDist(OperationArgs& Args)
 
     int r_effect = Args.allocate_reg();
 
-    R::Exp E = R::ConstructorApp("Effect.Dist", 3,
-                                 {R::IndexVar(0), observation, name});
-
     auto& M = Args.memory();
+    // Keep the creation ID on the event so re-registering it preserves its order.
+    R::Exp E = R::ConstructorApp("Effect.Dist", 4,
+                                 {R::IndexVar(0), observation, name, M.next_sampling_event_id++});
     M.set_C(r_effect, closure{std::move(E), {r_effect}});
 
     Args.set_effect(r_effect);

@@ -542,6 +542,13 @@ std::optional<std::string> context_ref::dist_type(int s) const
         return it->second;
 }
 
+haskell_int context_ref::sampling_event_id(int r_dist) const
+{
+    const auto& event = memory()->closure_at(r_dist);
+    assert(Runtime::has_constructor(event.get_code(), "Effect.Dist"));
+    return event.constructor_slot_ref(3).as_int();
+}
+
 ProbDensity context_ref::prior() const
 {
     return memory()->prior_for_context(context_index);

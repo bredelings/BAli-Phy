@@ -473,6 +473,8 @@ public:
     void   register_logger(int r, int s);
     void unregister_logger(int r, int s);
 
+    haskell_int next_sampling_event_id = 0;
+
     // Since there is only one out-edges, should we remove this?
     // No, if we observe the same data twice, we still need separate sampling events.
     std::map<int, std::string> dist_type;

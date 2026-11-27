@@ -128,6 +128,7 @@ public:
     std::optional<lazy_attribute_map> in_edges_to_dist(int r)  const;
     std::optional<lazy_attribute_map> dist_properties(int s) const;
     std::optional<std::string> dist_type(int s) const;
+    haskell_int sampling_event_id(int r_dist) const;
 
 public:
 

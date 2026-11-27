@@ -25,6 +25,7 @@
 ///        for the MCMC.
 ///
 
+#include <algorithm>
 #include <map>
 #include <sstream>
 #include "util/assert.hh"
@@ -811,7 +812,7 @@ Parameters::Parameters(const context_ref& C, int tree_reg, const std::vector<int
     TC = new tree_constants(*this, tree_reg);
 
     // Find the downstream partitions.
-    vector<int> partition_regs;
+    vector<pair<haskell_int, int>> partition_regs;
     {
         auto tweak_tree = [&](context_ref& C)
         {
@@ -870,7 +871,7 @@ Parameters::Parameters(const context_ref& C, int tree_reg, const std::vector<int
                     auto r_out = out_edges_from_dist(se);
                     if (not r_out)
                         throw myexception()<<"Can't find output reg for sampling event";
-                    partition_regs.push_back(*r_out);
+                    partition_regs.emplace_back(sampling_event_id(se), *r_out);
                 }
             }
             else
@@ -880,8 +881,10 @@ Parameters::Parameters(const context_ref& C, int tree_reg, const std::vector<int
 
     PC = new parameters_constants();
 
-    // create data partitions
-    for(int partition_reg: partition_regs)
+    // Partition order determines which partition gets each random draw. Event creation IDs
+    // preserve that order across changes in register allocation or discovery order.
+    std::ranges::sort(partition_regs, {}, &pair<haskell_int, int>::first);
+    for(auto [event_id, partition_reg]: partition_regs)
         PC->DPC.emplace_back(*this, partition_reg);
 
     // set variable_alignment_
