@@ -57,6 +57,9 @@ main = do
   putStrLn $ "subnormal rounding = " ++ show (encode (two 53 + 1) (-1128) == least
                 && encode (two 54) (-1129) == 0
                 && negativeHalf == 0 && 1 / negativeHalf < 0)
+  -- Underflow supplies both signs of zero. The negative subnormal also has its sign bit set.
+  putStrLn $ "signed zero classification = " ++ show (isNegativeZero negativeHalf,
+      isNegativeZero (encode (two 54) (-1129)), isNegativeZero (negate least))
   putStrLn $ "normal boundary = " ++ show (encode normalMidpoint (-1077) == leastNormal
                 && encode (normalMidpoint - 1) (-1077) == leastNormal - least)
   putStrLn $ "overflow midpoint = " ++ show (encode (2 * overflowMidpoint - 1) 969 == greatest

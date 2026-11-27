@@ -17,6 +17,7 @@ isNegativeZero x = False
 large significand = True
 even ties = True
 subnormal rounding = True
+signed zero classification = (True,False,False)
 normal boundary = True
 overflow midpoint = True
 extreme exponents = True

@@ -3,6 +3,7 @@
 #include "computation/haskell/Integer.hh"
 
 #include <algorithm>
+#include <bit>
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -269,7 +270,9 @@ extern "C" R::Exp simple_function_isDoubleNegativeZero(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
-    return x == 0 and std::signbit(x);
+    // Only the sign bit is set in binary64 negative zero. Optimized builds use
+    // -fno-signed-zeros, so test the representation directly.
+    return std::bit_cast<std::uint64_t>(x) == (std::uint64_t{1} << 63);
 }
 
 extern "C" R::Exp simple_function_atan2_double(vector<R::Exp>& args)
