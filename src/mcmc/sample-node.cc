@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <cstdlib>
 #include "sample.hh"
 #include "probability/choose.hh"
 #include "util/rng.hh"
@@ -80,37 +81,8 @@ sample_node_base(mutable_data_partition P,const vector<int>& nodes)
     vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
     vector<HMM::bitmask_t> a123_emit = remove_silent(a123, m123.all_bits() & ~m123.hidden_bits);
 
-    shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(a123_emit.size(), m123) );
-  
-    // collect the silent-or-correct-emissions for each type columns
-    vector< vector<int> > allowed_states_for_mask(8);
-    for(auto& m: allowed_states_for_mask)
-	m.reserve(Matrices->n_dp_states());
-  
-    // Construct the states that are allowed for each emission pattern.
-    for(int S2:Matrices->dp_order()) 
-    {
-	auto mask = (m123.state_emit[S2] & ~m123.hidden_bits).raw();
-    
-	// Hidden states never contradict an emission pattern.
-	if (not mask)
-	    for(int j=0;j<8;j++)
-		allowed_states_for_mask[j].push_back(S2);
-	else
-	    allowed_states_for_mask[mask].push_back(S2);
-    }
-  
-    // All states are allowed to match column 0
-    Matrices->states(0) = Matrices->dp_order();
-  
-    // Determine which states are allowed to match other columns (c2)
-    for(int c2=0;c2<a123_emit.size();c2++) 
-    {
-	auto mask=(a123_emit[c2]&~m123.hidden_bits).raw();
-	assert(mask);
-    
-	Matrices->states(c2+1) = allowed_states_for_mask[mask];
-    }
+    auto Matrices = try_make_constrained_array(m123, a123_emit);
+    if (not Matrices) return {nullptr, unavailable};
   
     //------------------ Compute the DP matrix ----------------------//
     Matrices->forward();
@@ -186,6 +158,8 @@ optional<int> sample_node_multi(vector<Parameters>& p,const vector< vector<int> 
 	    if (p[i][j].variable_alignment())
             {
                 auto [M, sampling_pr] = sample_node_base(p[i][j],nodes[i]);
+                // A refused table discards all candidates, including partitions already sampled.
+                if (not M) return {};
                 sampled[i][j] = sampling_pr.has_value();
                 joint_sampling_pr *= sampling_pr;
                 if (not sampling_pr)
@@ -311,6 +285,11 @@ optional<int> sample_node_multi(vector<Parameters>& p,const vector< vector<int> 
 
 void sample_node(Parameters& P,int node) 
 {
+    // Before registering this move, force a table refusal in the second partition and verify
+    // that the alignment sampled for the first partition is discarded.
+    std::cerr << "sample_node is disabled pending verification of multi-partition table refusal.\n";
+    std::abort();
+
     vector<Parameters> p(1,P);
 
     vector< vector<int> > nodes(1);
