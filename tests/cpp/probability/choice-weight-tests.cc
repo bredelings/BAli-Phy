@@ -15,6 +15,22 @@
 // This suite becomes redundant if ProbDensity itself acquires these choice semantics.
 namespace
 {
+    // Large trial counts used to give only zeros for a rare outcome and lose low bits near
+    // the centre. Check support across repeated draws without requiring a particular RNG sequence.
+    void check_large_binomial_samples()
+    {
+        constexpr std::int64_t n = 1'000'000'000'000'000'000;
+        bool saw_zero = false, saw_nonzero = false, saw_odd = false;
+        for (int i = 0; i < 128; ++i)
+        {
+            const auto rare = binomial_from_logs(n, std::log(1e-18), std::log1p(-1e-18));
+            saw_zero |= rare == 0;
+            saw_nonzero |= rare > 0;
+            saw_odd |= binomial_from_logs(n, std::log(0.5), std::log(0.5)) % 2 == 1;
+        }
+        BALI_PHY_TEST_CHECK(saw_zero and saw_nonzero and saw_odd);
+    }
+
     // Ordinary draws rarely expose an individual CDF step or the Int cap. Keep these
     // fixed quantiles while large-mean sampling uses a separate integer inversion.
     void check_large_poisson_quantiles()
@@ -401,6 +417,7 @@ namespace
 // Exercise the enduring algebraic invariants independently of an MCMC model.
 int main()
 {
+    check_large_binomial_samples();
     check_large_poisson_quantiles();
     check_close_in_log_space();
     check_prob_density_zero();

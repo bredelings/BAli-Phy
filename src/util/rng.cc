@@ -28,6 +28,7 @@
 
 #include "util/rng.hh"
 #include "util/myexception.hh"
+#include "util/math/count-probability.hh"
 #include "util/poisson.hh"
 
 using std::valarray;
@@ -225,6 +226,25 @@ int binomial(int n, double p) {
     return std::binomial_distribution<>(n,p)(standard_rng);
 }
 
+// Independent Poisson counts X and Y with means np and n(1-p), conditioned on X+Y=n,
+// give X a Binomial(n,p) law. Weight a proposed X=k by P(Y=n-k) divided by the
+// modal mass of Y. The accepted counts then have the conditional law in exact arithmetic.
+static std::int64_t binomial_by_poisson(std::int64_t n, double p)
+{
+    const double mean = double(n) * p;
+    const double other_mean = double(n) * (1 - p);
+    const double log_other_mean = std::log(other_mean);
+    // At maxBound the rounded mean can be 2^63. Its mode still fits an unsigned count.
+    const auto mode = static_cast<std::uint64_t>(other_mean);
+    const double peak = count_probability::log_poisson_mass(mode, other_mean, log_other_mean);
+    for (;;)
+    {
+        const auto k = poisson(mean);
+        if (k <= n and log_unif() <= count_probability::log_poisson_mass(n-k, other_mean, log_other_mean) - peak)
+            return k;
+    }
+}
+
 // Sample the less likely outcome and reflect failures back to successes when
 // p>1/2, avoiding construction of a probability near one.
 std::int64_t binomial_from_logs(std::int64_t n, double log_p, double log_q)
@@ -233,7 +253,16 @@ std::int64_t binomial_from_logs(std::int64_t n, double log_p, double log_q)
     if (log_q == -INFINITY) return n;
     const bool successes = log_p <= log_q;
     const double p = exp(successes ? log_p : log_q);
-    const auto count = p == 0 ? 0 : std::binomial_distribution<std::int64_t>(n, p)(standard_rng);
+    // Tiny p loses relative precision in library waiting times based on 1-p. Large n
+    // can overflow integer products or erase low count bits in library rejection samplers.
+    std::int64_t count = 0;
+    if (p > 0)
+    {
+        if (n > std::numeric_limits<std::int32_t>::max() or p < std::sqrt(std::numeric_limits<double>::epsilon()))
+            count = binomial_by_poisson(n, p);
+        else
+            count = std::binomial_distribution<std::int64_t>(n, p)(standard_rng);
+    }
     return successes ? count : n - count;
 }
 
