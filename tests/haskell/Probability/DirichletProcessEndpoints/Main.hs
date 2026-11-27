@@ -8,7 +8,7 @@ import Data.Bool
 import Data.Eq
 import Data.Function (($))
 import Data.OldList (all, head, length, nub, null)
-import Probability.Distribution.DirichletProcess (dirichletProcess)
+import Probability.Distribution.DirichletProcess (crp_density, dirichletProcess)
 import Probability.Distribution.Normal (normal)
 import Probability.Random (runRandomLazy)
 import System.IO (print)
@@ -27,3 +27,7 @@ main = do
         && length (nub allFresh) == sampleCount
         && null emptyZero
         && null emptyInfinite)
+    -- Endpoint samples always have valid labels. Check the native density's support directly
+    -- while assignments are used as indices into the restaurant counts.
+    print (crp_density 1 2 0 [-1,0] == 0 && crp_density 1 2 0 [0,2] == 0
+        && crp_density 1 2 0 [4294967296,0] == 0 && crp_density 1 2 0 [0,1] == 0.25)

@@ -1072,16 +1072,18 @@ extern "C" closure builtin_function_sample_poisson(OperationArgs& Args)
 
 log_double_t CRP_pdf(const double alpha, int N, int D, std::span<const haskell_int> z)
 {
-    if (z.size() != N) return 0.0;
+    if (not std::cmp_equal(z.size(), N)) return 0.0;
+    const auto n_labels = std::int64_t(N) + D;
+    if (n_labels < 0) return 0.0;
 
     log_double_t Pr = 1;
 
     // 1. Determine probability of the unlabelled pattern
-    vector<int> counts(N+D,0);
+    vector<int> counts(n_labels,0);
     int n_types = 0;
-    for(int i=0;i<z.size();i++)
+    for(int i=0;i<N;i++)
     {
-	assert(z[i] >=0 and z[i] < N+D);
+	if (z[i] < 0 or z[i] >= n_labels) return 0.0;
 	int& count = counts[z[i]];
 	if (count > 0)
 	    Pr *= double(count)/(i+alpha);
@@ -1096,7 +1098,7 @@ log_double_t CRP_pdf(const double alpha, int N, int D, std::span<const haskell_i
 
     // 2. Determine the probability of the labelling
     for(int i=0;i<n_types;i++)
-	Pr /= double(N+D-i);
+	Pr /= double(n_labels-i);
 
     return Pr;
 }
