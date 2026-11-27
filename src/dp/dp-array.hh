@@ -179,6 +179,6 @@ public:
     virtual ~DParrayConstrained() {}
 };
 
-
+std::shared_ptr<DParrayConstrained> try_make_constrained_array(const HMM&, const std::vector<HMM::bitmask_t>& columns);
 
 #endif

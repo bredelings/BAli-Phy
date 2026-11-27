@@ -24,6 +24,7 @@
  */
 
 #include <cmath>
+#include <iostream>
 #include "dp-array.hh"
 #include "math/pow2.hh"
 #include "probability/choose.hh"
@@ -440,4 +441,39 @@ DParrayConstrained::DParrayConstrained(std::size_t l, const HMM& H)
     :DParray(l,H)
 { 
     allowed_states.resize(size());
+}
+
+// Set up a 1D table for a fixed projection onto the visible nodes. A null pointer
+// means a required table could not be allocated, before any path was sampled.
+std::shared_ptr<DParrayConstrained> try_make_constrained_array(const HMM& hmm, const vector<HMM::bitmask_t>& columns)
+try
+{
+    auto table = std::make_shared<DParrayConstrained>(columns.size(), hmm);
+    auto visible = hmm.all_bits() & ~hmm.hidden_bits;
+    vector<vector<int>> allowed(visible.raw() + 1);
+    for (auto& states: allowed)
+        states.reserve(table->n_dp_states());
+
+    // A silent state can occur at any column. Other states must match the column's visible nodes.
+    for (int state: table->dp_order())
+    {
+        auto mask = (hmm.state_emit[state] & visible).raw();
+        if (mask)
+            allowed[mask].push_back(state);
+        else
+            for (auto& states: allowed)
+                states.push_back(state);
+    }
+
+    table->states(0) = table->dp_order();
+    for (int i = 0; i < columns.size(); ++i)
+        table->states(i+1) = allowed[columns[i].raw()];
+
+    return table;
+}
+catch (const std::bad_alloc& e)
+{
+    std::cerr << "Allocation failed for 1D alignment table with " << columns.size()
+              << " projected columns: " << e.what() << '\n';
+    return {};
 }

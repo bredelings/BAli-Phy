@@ -65,37 +65,8 @@ sample_A4_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345, c
 
     /*-------------- Create DP matrices ---------------*/
 
-    shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(a123.size(), m1234) );
-
-    // Collect the silent-or-correct-emissions for each type columns
-    // Here 8 = 2 * 2 * 2 for each of the 3 emitted nodes.
-    vector< vector<int> > allowed_states_for_mask(8);
-    for(auto& m: allowed_states_for_mask)
-	m.reserve(Matrices->n_dp_states());
-
-    for(int S2: Matrices->dp_order())
-    {
-	auto mask = (m1234.state_emit[S2] & ~m1234.hidden_bits).raw();
-
-	// Hidden states never contradict an emission pattern.
-	if (not mask)
-	    for(int j=0;j<8;j++)
-		allowed_states_for_mask[j].push_back(S2);
-	else
-	    allowed_states_for_mask[mask].push_back(S2);
-    }
-
-    Matrices->states(0) = Matrices->dp_order();
-
-    // Determine which states are allowed to match (c2)
-    for(int c2=0;c2<Matrices->size()-1;c2++)
-    {
-	auto mask=a123[c2].raw();
-
-	Matrices->states(c2+1) = allowed_states_for_mask[mask];
-    }
-
-    //------------------ Compute the DP matrix ---------------------//
+    auto Matrices = try_make_constrained_array(m1234, a123);
+    if (not Matrices) return {nullptr, unavailable};
 
     Matrices->forward();
 
@@ -164,7 +135,7 @@ struct IntegrationPrs
 };
 
 ///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
-vector<optional<IntegrationPrs>>
+static optional<vector<optional<IntegrationPrs>>>
 sample_A4_multi2(vector<Parameters>& p,const vector<A4::hmm_order>& order_,
                             const vector<log_double_t>& rho_)
 {
@@ -208,6 +179,8 @@ sample_A4_multi2(vector<Parameters>& p,const vector<A4::hmm_order>& order_,
             if (p[i][j].variable_alignment())
             {
                 auto [M, sampling_pr] = sample_A4_base(p[i][j], *a12345[j], order[i], order[0]);
+                // Refusing one required table discards the entire local proposal, including earlier partitions.
+                if (not M) return {};
 
 #ifndef NDEBUG_DP
                 Matrices[i][j] = M;
@@ -274,7 +247,9 @@ Availability<log_double_t> sample_A4_ratio(vector<Parameters>& p, const vector<A
     if (p.size() != 2)
 	throw myexception()<<"sample_A4_ratio only takes two Parameters objects!";
 
-    auto Prs = sample_A4_multi2(p, order, rho);
+    auto result = sample_A4_multi2(p, order, rho);
+    if (not result) return unavailable;
+    const auto& Prs = *result;
 
     if (Prs[0] and Prs[1] and Prs[2])
     {
@@ -345,6 +320,8 @@ optional<int> sample_A4_multi(vector<Parameters>& p,const vector<A4::hmm_order>&
 	    if (p[i][j].variable_alignment())
 	    {
                 auto [M, sampling_pr] = sample_A4_base(p[i][j], *a12345[j], order[i], order[0]);
+                // Refusing one required table discards the entire local proposal, including earlier partitions.
+                if (not M) return {};
 
 #ifndef NDEBUG_DP
                 Matrices[i][j] = M;
