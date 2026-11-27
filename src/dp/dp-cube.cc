@@ -42,16 +42,8 @@ using std::pair;
 
 void state_matrix4::clear() 
 {
-    delete[] data; 
-    data = NULL;
-  
-    delete[] scale_; 
-    scale_ = NULL;
-}
-
-state_matrix4::~state_matrix4() 
-{
-    clear();
+    data.reset();
+    scale_.reset();
 }
 
 inline void DPcube::clear_cell(int i2,int j2,int k2) 

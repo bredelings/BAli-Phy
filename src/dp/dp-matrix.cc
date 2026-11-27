@@ -50,18 +50,18 @@ MatrixShape::MatrixShape(const MatrixSize& ms, YBoundaries&& yb)
 {
 }
 
-static std::string dp_matrix_too_large_message(int size1, int size2, long int cells, int values_per_cell)
+static std::string dp_matrix_too_large_message(int size1, int size2, std::int64_t cells, std::int64_t values_per_cell)
 {
     const double GiB = 1024.0*1024.0*1024.0;
     std::ostringstream o;
     o<<std::fixed<<std::setprecision(1);
     o<<"DP matrix too large: "<<size1<<" x "<<size2<<" columns, "<<cells<<" cells of "<<values_per_cell
      <<" values = "<<double(cells)*values_per_cell*sizeof(double)/GiB<<" GiB, but at most "
-     <<UINT_MAX<<" values ("<<double(UINT_MAX)*sizeof(double)/GiB<<" GiB) are allowed";
+     <<dp_matrix_too_large::max_values<<" values ("<<double(dp_matrix_too_large::max_values)*sizeof(double)/GiB<<" GiB) are allowed";
     return o.str();
 }
 
-dp_matrix_too_large::dp_matrix_too_large(int size1, int size2, long int cells, int values_per_cell)
+dp_matrix_too_large::dp_matrix_too_large(int size1, int size2, std::int64_t cells, std::int64_t values_per_cell)
     :message(std::make_shared<const std::string>(dp_matrix_too_large_message(size1, size2, cells, values_per_cell)))
 {
 }
@@ -79,7 +79,7 @@ state_matrix::~state_matrix()
 
 inline void DPmatrix::clear_cell(Cell C)
 {
-    C.scale() = INT_MIN/2;
+    C.scale() = std::numeric_limits<int>::min()/2;
     for(int S=0;S<n_dp_states();S++)
         C.prob_for_state(S) = 0;
 }
@@ -136,7 +136,7 @@ inline void DPmatrix::forward_first_cell(Cell C)
 
 YBoundaries yboundaries_everything(int I, int J)
 {
-    return {std::size_t(I+1), {0,J}};
+    return {std::size_t(I)+1, {0,J}};
 }
 
 
@@ -152,12 +152,12 @@ YBoundaries yboundaries_simple_band(int I, int J, int W)
     assert(J >= 0);
     assert(W > 0);
 
-    auto yboundaries = vector<pair<int,int>>(I+1);
+    auto yboundaries = vector<pair<int,int>>(std::size_t(I)+1);
 
-    for(int i=0;i<I+1;i++)
+    for(std::int64_t i=0;i<=I;i++)
     {
-        int ymax = std::min(J, i + W + std::max(0, J - I) );
-        int ymin = std::max(0, i - W + std::min(0, J - I) );
+        int ymax = std::min<std::int64_t>(J, i + W + std::max(0, J - I) );
+        int ymin = std::max<std::int64_t>(0, i - W + std::min(0, J - I) );
         yboundaries[i] = {ymin, ymax};
     }
 
@@ -618,7 +618,7 @@ void DPmatrixSimple::forward_cell(int i2,int j2,Cell* cells)
 // Make this no longer virtual?
 inline void DPmatrixConstrained::clear_cell(Cell C)
 {
-    C.scale() = INT_MIN/2;
+    C.scale() = std::numeric_limits<int>::min()/2;
     for(int S=0;S<n_dp_states();S++)
         C.prob_for_state(S) = 0;
 }

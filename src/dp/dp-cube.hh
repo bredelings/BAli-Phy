@@ -27,18 +27,20 @@
 #define DP_CUBE_H
 
 #include <vector>
+#include <memory>
+#include "dp-size.hh"
 #include "dp-engine.hh"
 #include "substitution/cache.hh"
 
 class state_matrix4
 {
-    const int s1;
-    const int s2;
-    const int s3;
-    const int s4;
+    const std::int64_t s1;
+    const std::int64_t s2;
+    const std::int64_t s3;
+    const std::int64_t s4;
 
-    double* data;
-    int* scale_;
+    std::unique_ptr<double[]> data;
+    std::unique_ptr<int[]> scale_;
 
     // Guarantee that these things aren't ever copied
     state_matrix4& operator=(const state_matrix4&) = delete;
@@ -51,7 +53,7 @@ public:
     int size1() const {return s1;}
     int size2() const {return s2;}
     int size3() const {return s3;}
-    int size4() const {return s3;}
+    int size4() const {return s4;}
 
     double& operator()(int i,int j,int k,int l) {
 	assert(0 <= i and i < s1);
@@ -65,12 +67,14 @@ public:
 	assert(0 <= i and i < s1);
 	assert(0 <= j and j < s2);
 	assert(0 <= k and k < s3);
+	assert(0 <= l and l < s4);
 	return data[s4*(s3*(s2*(i) + j) + k) + l];
     }
 
     int& scale(int i,int j,int k) {
 	assert(0 <= i and i < s1);
 	assert(0 <= j and j < s2);
+	assert(0 <= k and k < s3);
 	return scale_[s3*(s2*i + j) +k];
     }
 
@@ -78,18 +82,21 @@ public:
     int scale(int i,int j,int k) const {
 	assert(0 <= i and i < s1);
 	assert(0 <= j and j < s2);
+	assert(0 <= k and k < s3);
 	return scale_[s3*(s2*i + j) +k];
     }
 
-    state_matrix4(int i1,int i2,int i3, int i4)
-	:s1(i1),s2(i2),s3(i3),s4(i4),
-	 data(new double[s1*s2*s3*s4]),
-	 scale_(new int[s1*s2*s3]) 
-	{}
+    // Each cube cell has one scale and one probability per HMM state.
+    state_matrix4(int i1, int i2, int i3, int i4)
+        :s1(i1), s2(i2), s3(i3), s4(i4)
+    {
+        auto cells = checked_dp_product<int>(checked_dp_product<int>(s1, s2), s3);
+        data = std::make_unique_for_overwrite<double[]>(checked_dp_product<double>(cells, s4));
+        scale_ = std::make_unique_for_overwrite<int[]>(cells);
+    }
 
     state_matrix4(const state_matrix4&) = delete;
     state_matrix4(state_matrix4&&) = delete;
-    ~state_matrix4();
 };
 
 

@@ -26,7 +26,7 @@
 #ifndef DP_MATRIX_H
 #define DP_MATRIX_H
 
-#include <climits>
+#include "dp-size.hh"
 #include <memory>
 #include <new>
 #include <string>
@@ -34,7 +34,7 @@
 #include "dp-engine.hh"
 #include "substitution/cache.hh"
 
-/// Thrown instead of allocating a DP matrix of more than UINT_MAX values.
+/// Thrown instead of allocating a DP matrix of more than 2^32 - 1 values.
 /// It is a std::bad_alloc, so the moves that already skip a proposal on allocation failure
 /// keep doing so, but it says which matrix was refused and how large it would have been.
 class dp_matrix_too_large: public std::bad_alloc
@@ -42,9 +42,10 @@ class dp_matrix_too_large: public std::bad_alloc
     // Shared so that copying the exception cannot throw.
     std::shared_ptr<const std::string> message;
 public:
+    static constexpr std::int64_t max_values = std::numeric_limits<std::uint32_t>::max();
     const char* what() const noexcept override {return message->c_str();}
 
-    dp_matrix_too_large(int size1, int size2, long int cells, int values_per_cell);
+    dp_matrix_too_large(int size1, int size2, std::int64_t cells, std::int64_t values_per_cell);
 };
 
 struct Cell
@@ -55,8 +56,8 @@ struct Cell
     int& scale()                         { return *(int*)start; }
     double  emitMM() const               { return start[1];     }
     double& emitMM()                     { return start[1];     }
-    double  prob_for_state(int s) const  { return start[s+2]; }
-    double& prob_for_state(int s)        { return start[s+2]; }
+    double  prob_for_state(int s) const  { return start[std::int64_t{s}+2]; }
+    double& prob_for_state(int s)        { return start[std::int64_t{s}+2]; }
 };
 
 struct MatrixSize
@@ -76,9 +77,9 @@ struct MatrixShape: public MatrixSize
 
 struct Extent
 {
-    long int offset;
-    long int start_index;
-    long int size;
+    std::int64_t offset;
+    std::int64_t start_index;
+    std::int64_t size;
 };
 
 class state_matrix
@@ -86,9 +87,9 @@ class state_matrix
     MatrixShape shape_;
     std:: vector<Extent> extents;
 
-    const int s1;
-    const int s2;
-    const int s3;
+    const std::int64_t s1;
+    const std::int64_t s2;
+    const std::int64_t s3;
 
     double* data;
 
@@ -104,7 +105,7 @@ public:
 
     int size1() const {return s1;}
     int size2() const {return s2;}
-    int size3() const {return s3;}
+    std::int64_t size3() const {return s3;}
     int n_states() const {return s3-2;}
 
     Cell cell(int i,int j)
@@ -117,7 +118,7 @@ public:
         i--;
         j--;
         auto [offset, y1, length] = extents[i+1];
-        int  delta = (j - y1);
+        auto delta = j - y1;
         assert( 0 <= delta and delta < length);
         double* start = data + s3*(offset + delta);
 
@@ -133,7 +134,7 @@ public:
         i--;
         j--;
         auto [offset, y1, length] = extents[i+1];
-        int  delta = (j - y1);
+        auto delta = j - y1;
         assert( 0 <= delta and delta < length);
         double* start = data + s3*(offset + delta);
 
@@ -144,38 +145,42 @@ public:
         :shape_(std::move(ms)),
          s1(shape_.size1),
          s2(shape_.size2),
-         s3(i3+2)
+         s3(std::int64_t{i3} + 2)
     {
         auto& yboundaries = shape().yboundaries;
 
+        if (s1 < 0 or s2 < 0 or i3 < 0)
+            throw std::bad_array_new_length();
+
         // We need an extent for column -1 also.
+        assert(yboundaries.size() + 1 == std::size_t(s1));
         extents.resize(yboundaries.size()+1);
 
-        long int offset = 0;
-        for(int i=0;i<extents.size();i++)
+        // Each cell belongs to an int-sized row and column, so their total fits in int64_t.
+        std::int64_t offset = 0;
+        for(std::size_t i=0;i<extents.size();i++)
         {
             // Column (i-1)
 
             // Column -1 starts at -1.
-            int y1 = -1;
+            std::int64_t y1 = -1;
             if (i>0)
-                y1 = yboundaries[i-1].first-1;
+                y1 = std::int64_t{yboundaries[i-1].first} - 1;
 
             // Column I ends at J.
             int y2 = yboundaries.back().second;
             if (i < yboundaries.size())
                 y2 = yboundaries[i].second;
 
-            int length = y2 - y1 + 1;
+            auto length = y2 - y1 + 1;
             assert(length > 0);
             extents[i] = {offset, y1, length};
             offset += length;
         }
 
-        long int mem = offset * s3;
-        if (mem > UINT_MAX)
+        if (offset > dp_matrix_too_large::max_values / s3)
             throw dp_matrix_too_large(s1, s2, offset, s3);
-        data = new double[mem];
+        data = new double[checked_dp_product<double>(offset, s3)];
     }
 
     state_matrix(const state_matrix&) = delete;

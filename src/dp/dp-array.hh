@@ -28,17 +28,19 @@
 
 #include <vector>
 #include <optional>
+#include <memory>
+#include "dp-size.hh"
 #include "dp-engine.hh"
 
 class state_array
 {
-    int s1 = 0;
-    int s2 = 0;
+    std::int64_t s1 = 0;
+    std::int64_t s2 = 0;
 
-    double* data = nullptr;
-    int data_size = 0;
+    std::unique_ptr<double[]> data;
+    std::int64_t data_size = 0;
 
-    int* scale_ = nullptr;
+    std::unique_ptr<int[]> scale_;
 
 public:
     // Guarantee that these things aren't ever copied
@@ -69,24 +71,23 @@ public:
         return scale_[i];
     }
 
-    void resize(int i1,int i2)
+    // Acquire both buffers before changing the shape, so a failed resize leaves it usable.
+    void resize(int i1, int i2)
+    {
+        auto count = checked_dp_product<double>(i1, i2);
+        std::unique_ptr<double[]> replacement;
+        if (count > data_size)
+            replacement = std::make_unique_for_overwrite<double[]>(count);
+        if (i1 > s1)
+            scale_ = std::make_unique_for_overwrite<int[]>(checked_dp_product<int>(i1, 1));
+        if (replacement)
         {
-            if (i1*i2 > data_size)
-            {
-                delete[] data;
-                data = new double[i1*i2];
-                data_size = i1*i2;
-            }
-
-            if (i1 > s1)
-            {
-                delete[] scale_;
-                scale_ = new int[i1];
-            }
-
-            s1 = i1;
-            s2 = i2;
+            data = std::move(replacement);
+            data_size = count;
         }
+        s1 = i1;
+        s2 = i2;
+    }
 
     state_array() = default;
 
@@ -95,11 +96,6 @@ public:
     state_array(int i1,int i2)
         { resize(i1,i2); }
 
-    ~state_array()
-     {
-         delete[] data;
-         delete[] scale_;
-     }
 };
 
 
@@ -134,10 +130,10 @@ public:
     virtual log_double_t Pr_sum_all_paths_to_column(int i) const;
 
     /// Change length
-    virtual void set_length(int l);
+    virtual void set_length(std::size_t l);
 
     /// Construct an 1D DP matrix from a length, and an HMM
-    DParray(int, const HMM&);
+    DParray(std::size_t, const HMM&);
 
     virtual ~DParray() {}
 };
@@ -175,10 +171,10 @@ public:
     log_double_t Pr_sum_all_paths_to_column(int i) const;
 
     /// Change length
-    void set_length(int l);
+    void set_length(std::size_t l);
 
     /// Construct an 1D DP matrix from a length, and an HMM
-    DParrayConstrained(int,const HMM&);
+    DParrayConstrained(std::size_t,const HMM&);
 
     virtual ~DParrayConstrained() {}
 };

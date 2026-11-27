@@ -158,12 +158,19 @@ log_double_t DParray::Pr_sum_all_paths_to_column(int i) const
     return pow(log_double_t(2.0),scale(i)) * total;
 }
 
-/// Here we set the SEQUENCE length 'l'.  This gives rise to a
-/// DP array of length 'l+1'.
-void DParray::set_length(int l)
+// One extra row holds the initial HMM probabilities. DP coordinates are signed ints.
+static int padded_length(std::size_t l)
 {
-    length = l+1;
-    state_array::resize(length, n_dp_states());
+    if (l >= std::numeric_limits<int>::max())
+        throw std::bad_array_new_length();
+    return static_cast<int>(l) + 1;
+}
+
+void DParray::set_length(std::size_t l)
+{
+    int padded = padded_length(l);
+    state_array::resize(padded, n_dp_states());
+    length = padded;
 
     for(int i=0;i<n_dp_states();i++)
         (*this)(0,i) = start_P[i];
@@ -183,7 +190,7 @@ void DParray::set_length(int l)
     Pr_total = 0;
 }
 
-DParray::DParray(int l, const HMM& H)
+DParray::DParray(std::size_t l, const HMM& H)
     :DPengine(H)
 {
     set_length(l);
@@ -422,13 +429,14 @@ log_double_t DParrayConstrained::Pr_sum_all_paths_to_column(int i) const
     return pow(log_double_t(2.0),scale(i)) * total;
 }
 
-void DParrayConstrained::set_length(int l)
+void DParrayConstrained::set_length(std::size_t l)
 {
+    allowed_states.reserve(padded_length(l));
     DParray::set_length(l);
     allowed_states.resize(size());
 }
 
-DParrayConstrained::DParrayConstrained(int l, const HMM& H)
+DParrayConstrained::DParrayConstrained(std::size_t l, const HMM& H)
     :DParray(l,H)
 { 
     allowed_states.resize(size());
