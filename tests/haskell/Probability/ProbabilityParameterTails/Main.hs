@@ -28,6 +28,10 @@ main = do
     saturatedGeometricSample <- sampleIO $ geometric 1.0e-300
     -- A mean above the Int cap used to retry indefinitely in the library sampler.
     saturatedPoissonSample <- sampleIO $ poisson 1.0e20
+    -- A tiny failure probability and a large number of successes must be sampled
+    -- without iterating over that count. This also exercises the overflow cap.
+    rareNegativeSample <- sampleIO $ negativeBinomial 1000000000000000000 (1 - toProb 1.0e-18)
+    cappedNegativeSample <- sampleIO $ negativeBinomial 1000000000000000000 (toProb 1.0e-300)
     let p = 1 - toProb 1.0e-20
         expectedRare = log 1.0e-20
         bernoulliActual = ln (pdf (bernoulli p) 0)
@@ -41,6 +45,7 @@ main = do
     print (zeroGeometricSample == 9223372036854775807
               && saturatedGeometricSample == 9223372036854775807
               && saturatedPoissonSample == 9223372036854775807
+              && rareNegativeSample < 100 && cappedNegativeSample == 9223372036854775807
               && tailActual < 0 && abs (tailActual-tailExpected) < 1.0e-10
               && abs (bernoulliActual-expectedRare) < 1.0e-10
               && abs (binomialActual-(log 2+expectedRare)) < 1.0e-10

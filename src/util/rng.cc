@@ -192,7 +192,7 @@ int negative_binomial(int r, double p)
     return std::negative_binomial_distribution<>(r,p)(standard_rng);
 }
 
-// Count the failures before each of r successive successes, saturating their sum at maxBound.
+// Sample failures before r successes, capping counts at maxBound.
 std::int64_t negative_binomial_from_logs(std::int64_t r, double log_p, double log_q)
 {
     assert(r >= 0);
@@ -201,6 +201,15 @@ std::int64_t negative_binomial_from_logs(std::int64_t r, double log_p, double lo
     if (std::isnan(log_p) or std::isnan(log_q)) return 0;
     if (r == 0 or log_q == -INFINITY) return 0;
     if (log_p == -INFINITY) return std::numeric_limits<std::int64_t>::max();
+
+    // Mixing a Poisson mean with Gamma(shape=r, scale=q/p) gives mass
+    // choose(r+k-1,k) p^r q^k. This avoids a loop over r at large shapes.
+    if (r >= 32)
+    {
+        const double mean = gamma(double(r), 1) * std::exp(log_q - log_p);
+        if (std::isinf(mean)) return std::numeric_limits<std::int64_t>::max();
+        return poisson(mean);
+    }
 
     // A NegativeBinomial(r,p) variate is the sum of r independent Geometric(p) variates.
     // Accumulating in Int space allows saturation without entering a library rejection loop.
