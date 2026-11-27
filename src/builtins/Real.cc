@@ -2,8 +2,10 @@
 #include "computation/machine/args.hh"
 #include "computation/haskell/Integer.hh"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 
 using boost::dynamic_pointer_cast;
 using std::string;
@@ -292,13 +294,50 @@ extern "C" R::Exp simple_function_decodeDoubleRaw(vector<R::Exp>& args)
     return R::RPair(R::Integer(integer(sig)), exp);
 }
 
+// Encode m * 2^e for a positive magnitude larger than 2^53. Choose the final spacing
+// before rounding: subnormal Doubles all have the same spacing. Rounding to 53 bits first
+// can discard the bit that distinguishes a midpoint from a value just above it.
+static double encode_large_magnitude(const integer& m, haskell_int e)
+{
+    using limits = std::numeric_limits<double>;
+    using boost::multiprecision::int128_t;
+    constexpr int subnormal_exponent = limits::min_exponent - limits::digits;
+    const int128_t top_exponent = int128_t(boost::multiprecision::msb(m)) + e;
+    if (top_exponent >= limits::max_exponent) return limits::infinity();
+    if (top_exponent < subnormal_exponent - 1) return 0.0;
+
+    const int spacing_exponent = std::max(static_cast<int>(top_exponent) - (limits::digits - 1), subnormal_exponent);
+    const auto discarded = static_cast<std::uint64_t>(int128_t(spacing_exponent) - e);
+    // At least one bit is discarded. A set rounding bit means at least halfway;
+    // at an exact tie (no lower set bit), increment only an odd retained significand.
+    auto retained = (m >> discarded).convert_to<std::uint64_t>();
+    const auto rounding_bit = static_cast<decltype(boost::multiprecision::msb(m))>(discarded - 1);
+    if (boost::multiprecision::bit_test(m, rounding_bit) and
+        ((retained & 1) or boost::multiprecision::lsb(m) < rounding_bit))
+        ++retained;
+
+    // Even a rounding carry to 2^53 converts exactly. Scaling places the rounded bits.
+    return std::ldexp(static_cast<double>(retained), spacing_exponent);
+}
+
 extern "C" R::Exp simple_function_encodeDouble(vector<R::Exp>& args)
 {
-    auto sig = (int64_t)get_arg(args).as_integer();
-    auto exp = get_arg(args).as_int();
+    auto significand = get_arg(args);
+    const integer& m = significand.as_integer();
+    const auto e = get_arg(args).as_int();
+    if (m == 0) return 0.0;
 
-    using limits = std::numeric_limits<int>;
-    return { std::ldexp(sig, static_cast<int>(std::clamp<haskell_int>(exp, limits::min(), limits::max()))) };
+    // Includes every significand returned by decodeFloat. Conversion is exact here,
+    // so ldexp supplies the only rounding, including when the result is subnormal.
+    constexpr auto exact_limit = std::int64_t{1} << std::numeric_limits<double>::digits;
+    if (m >= -exact_limit and m <= exact_limit)
+    {
+        using limits = std::numeric_limits<int>;
+        const auto exponent = std::clamp<haskell_int>(e, limits::min(), limits::max());
+        return std::ldexp(static_cast<double>(m.convert_to<std::int64_t>()), static_cast<int>(exponent));
+    }
+
+    return m < 0 ? -encode_large_magnitude(-m, e) : encode_large_magnitude(m, e);
 }
 
 // For x>1, the IOdds parameter is log(x-1) = log(x)+log1p(-1/x).

@@ -14,3 +14,10 @@ isNegativeZero x = False
 -2
 -4
 -44
+large significand = True
+even ties = True
+subnormal rounding = True
+normal boundary = True
+overflow midpoint = True
+extreme exponents = True
+finite round trips = True
