@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Main where
 
+import Compiler.Enum (maxBound)
 import Compiler.Floating (log)
 import Numeric.Pow (Pow(ln))
 import Compiler.Num (Num(abs, (*), (+), (-)))
@@ -42,10 +43,10 @@ main = do
         negativeBinomialActual = ln (pdf (negativeBinomial 2 p) 1)
         tailActual = ln (pdf (geometric 0.6) 2000)
         tailExpected = log 0.6+2000*log 0.4
-    print (zeroGeometricSample == 9223372036854775807
-              && saturatedGeometricSample == 9223372036854775807
-              && saturatedPoissonSample == 9223372036854775807
-              && rareNegativeSample < 100 && cappedNegativeSample == 9223372036854775807
+    print (zeroGeometricSample == maxBound
+              && saturatedGeometricSample == maxBound
+              && saturatedPoissonSample == maxBound
+              && rareNegativeSample < 100 && cappedNegativeSample == maxBound
               && tailActual < 0 && abs (tailActual-tailExpected) < 1.0e-10
               && abs (bernoulliActual-expectedRare) < 1.0e-10
               && abs (binomialActual-(log 2+expectedRare)) < 1.0e-10
@@ -62,7 +63,7 @@ main = do
         && close (ln (pdf (binomial n rare) 1)) (-1)
         && close (ln (pdf (binomial n (1-rare)) (n-1))) (-1)
         && close (ln (pdf (negativeBinomial n (1-rare)) 1)) (-1)
-        && close (ln (pdf (negativeBinomial 9223372036854775807 0.5) 9223372036854775807))
+        && close (ln (pdf (negativeBinomial maxBound 0.5) maxBound))
                  (-23.099648311122923))
     -- A common weight scale must disappear even when factorial cancellation would erase the
     -- whole mass. The rare category also matters when all observations fall in the other one.

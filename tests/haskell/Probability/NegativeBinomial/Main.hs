@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Main where
 
+import Compiler.Enum (maxBound)
 import Compiler.Classes
 import Compiler.Fractional
 import Compiler.Num
@@ -37,5 +38,5 @@ main = do
         && near (variance dist) 24.0
         && sample1 == 0
         && sample0 == 0
-        && sampleImpossible == 9223372036854775807
-        && saturatedSample == 9223372036854775807)
+        && sampleImpossible == maxBound
+        && saturatedSample == maxBound)

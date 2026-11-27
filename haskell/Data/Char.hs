@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Char where
 
+import Compiler.Enum (Bounded)
 import Compiler.Error
 import Compiler.Base
 import Compiler.Num
@@ -90,6 +91,7 @@ data GeneralCategory =
   | Surrogate
   | PrivateUse
   | NotAssigned
+  deriving Bounded
 
 foreign import ecall "Char:generalCategory" builtin_generalCategory :: Char -> Int
 

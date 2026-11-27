@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Word where
 
+import Compiler.Enum (Bounded(..))
 import Compiler.FFI.Runtime (RuntimeValue)
 import Compiler.Num
 import Data.Bool
@@ -19,6 +20,10 @@ instance RuntimeValue Word8
 foreign import ecall "Word:integerToWord8" integerToWord8 :: Integer -> Word8
 foreign import ecall "Word:intToWord8" intToWord8 :: Int -> Word8
 foreign import ecall "Word:word8ToInt" word8ToInt :: Word8 -> Int
+
+instance Bounded Word8 where
+    minBound = 0
+    maxBound = 255
 
 instance Eq Word8 where
     x == y = word8ToInt x == word8ToInt y

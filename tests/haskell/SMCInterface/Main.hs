@@ -2,6 +2,7 @@
 
 import Bio.Alignment.Matrix (alignment_from_sequences)
 import Bio.Alphabet (dna)
+import Compiler.Enum (maxBound)
 import Compiler.Num
 import Compiler.Fractional
 import Data.Bool ((&&))
@@ -23,7 +24,7 @@ main = do
     print (abs (density - 0.243969070600281) < 1e-14)
     -- Depth and both alleles must survive the native boundary, including when the
     -- reported pair exceeds maxBound in total. Small alignments cannot check either case.
-    let depth = 9223372036854775807
+    let depth = maxBound
         haplotypes = [toVector [1]]
         score n e c pair = ln (probability_of_reads01 [n] [1] haplotypes e c 0 [pair])
     [(ref,alt)] <- sample_reads01 [depth] [1] haplotypes 0.25 4 0
