@@ -165,7 +165,7 @@ optional<ProbDensity> alignment_branch_length_or_duration_slice_function::operat
 
     // The branch value has already changed, so the retained alignment may have
     // zero probability. Skip before/after checks that require positive probability.
-    auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C), b, false);
+    auto alignment_sum_ratio_1 = sample_alignment_with_ratio(static_cast<Parameters&>(C), b, false);
     if (not alignment_sum_ratio_1)
     {
         C = C0;
@@ -173,9 +173,8 @@ optional<ProbDensity> alignment_branch_length_or_duration_slice_function::operat
         return std::nullopt;
     }
 
-    assert(alignment_sum_ratio_0);
     set_context_density_ratio(C.heated_probability_ratio(C0) *
-                              (*alignment_sum_ratio_1 / *alignment_sum_ratio_0));
+                              (*alignment_sum_ratio_1 / alignment_sum_ratio_0));
     return operator()();
 }
 
@@ -189,13 +188,12 @@ double alignment_branch_length_or_duration_slice_function::current_value() const
     return static_cast<Parameters&>(C).t().branch_length_or_duration(b);
 }
 
-alignment_branch_length_or_duration_slice_function::alignment_branch_length_or_duration_slice_function(Parameters& P,
-                                                                                                       int b_)
-    :context_slice_function(P),b(b_)
-{ 
+// The initial A1 refresh is already in P. All trial ratios use this same alignment and length.
+alignment_branch_length_or_duration_slice_function::alignment_branch_length_or_duration_slice_function(
+    Parameters& P, int b_, ProbDensity initial_ratio)
+    :context_slice_function(P), alignment_sum_ratio_0(initial_ratio), b(b_)
+{
     set_lower_bound(0);
-    alignment_sum_ratio_0 = sample_alignment(P, b);
-    C0 = P;
 }
 
 // Convert a log coordinate ratio back to two stored lengths or durations while preserving their sum.

@@ -15,10 +15,10 @@ sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b
                       std::optional<int> bandwidth);
 std::pair<std::shared_ptr<DPmatrixSimple>,Availability<log_double_t>>
 sample_alignment_base(mutable_data_partition P, int b, std::optional<int> bandwidth);
-// Successful partitions remain resampled even if another partition is unavailable;
-// absence means that no complete joint proposal correction can be returned.
-// check_initial enables before/after sampling checks that require the initial
-// alignment to have positive probability under the parameter values on entry.
-Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool check_initial=true);
+void sample_alignment(Parameters&, int b);
+// The caller owns the working context and discards it on a table refusal. A completed
+// calculation with no joint correction can still have resampled individual partitions.
+// Trial lengths can give the incoming alignment zero probability. Skip before/after checks there.
+Availability<ProbDensity> sample_alignment_with_ratio(Parameters&, int b, bool check_initial=true);
 
 #endif

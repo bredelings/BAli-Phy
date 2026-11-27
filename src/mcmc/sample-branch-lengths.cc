@@ -24,6 +24,7 @@
 #include "util/rng.hh"
 #include "util/settings.hh"              // for get_setting_or( )
 #include "sample.hh"
+#include "sample-alignment.hh"
 #include "util/permute.hh"
 #include "dp/5way.hh"
 #include "substitution/likelihood.hh"
@@ -195,21 +196,35 @@ void alignment_slice_sample_branch_length_or_duration(owned_ptr<context>& P,Move
 
     if (log_verbose >= 3) std::cerr<<"\n\n  [alignment_slice_sample_branch_length_or_duration]\n";
 
-    PP.select_root(b);
-
     const double x = PP.t().branch_length_or_duration(b);
     const double mu = PP.branch_mean();
-
-
     MCMC::Result result(3);
 
-    // Alignment sampling observes the effective length recomputed after the underlying value changes;
-    // the context density and proposal correction remain expressed for that underlying variable.
-    double sigma = get_setting_or("slice_branch_sigma",1.5);
     // mu is the reciprocal branch count, so the reverse slice starts with the same width.
-    const double w = sigma * mu;
-    alignment_branch_length_or_duration_slice_function logp(PP,b);
-    double x2 = slice_sample(x,logp,w,50);
+    const double w = get_setting_or("slice_branch_sigma",1.5) * mu;
+    double x2 = x;
+    {
+        // The initial alignment refresh and all length trials form one update. Even a failure
+        // during the reverse-bracket check must retain the alignment from before the refresh.
+        Parameters candidate = PP;
+        std::optional<alignment_branch_length_or_duration_slice_function> logp;
+        try
+        {
+            if (auto ratio = sample_alignment_with_ratio(candidate, b))
+            {
+                // The effective length is recomputed at each trial of the stored coordinate.
+                logp.emplace(candidate, b, *ratio);
+                x2 = slice_sample(x, *logp, w, 50);
+            }
+            PP = candidate;
+        }
+        catch (const dp_table_allocation_failure& e)
+        {
+            std::cerr << "Skipping joint alignment and branch length update: " << e.what() << '\n';
+        }
+        result.totals[2] = logp ? logp->count : 0;
+    }
+    PP.evaluate_program();
 
     //---------- Record Statistics - -------------//
     // A declined slice can return its original nonfinite coordinate, so identify
@@ -217,7 +232,6 @@ void alignment_slice_sample_branch_length_or_duration(owned_ptr<context>& P,Move
     bool unchanged = not std::isfinite(x) or x2 == x;
     result.totals[0] = unchanged ? 0 : abs(x2 - x);
     result.totals[1] = unchanged ? 0 : abs(log(x2/x));
-    result.totals[2] = logp.count;
 
     Stats.inc("alignment-branch-length (slice) *",result);
     if (x < mu/2.0)

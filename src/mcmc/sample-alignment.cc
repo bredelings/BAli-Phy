@@ -117,10 +117,13 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
         Matrices = std::make_shared<DPmatrixSimple>(MatrixShape(size, std::move(boundaries)), model,
                                                     std::move(dists1), std::move(dists2), *F);
     }
-    catch (const std::bad_alloc& e)
+    catch (const dp_table_allocation_failure&)
     {
-        std::cerr<<"Allocation failed in sample_alignment: "<<e.what()<<"!  Proceeding."<<std::endl;
-        return {};
+        throw;
+    }
+    catch (const std::bad_alloc&)
+    {
+        throw dp_table_allocation_failure{};
     }
 
     Matrices->forward_band();
@@ -133,8 +136,6 @@ pair<shared_ptr<DPmatrixSimple>,Availability<log_double_t>>
 sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b, optional<int> bandwidth)
 {
     auto Matrices = sample_alignment_forward(P, P.t(), hmm, b, bandwidth);
-
-    if (not Matrices) return {nullptr, unavailable};
 
     auto path = Matrices->sample_path();
     if (not path)
@@ -164,7 +165,10 @@ sample_alignment_base(mutable_data_partition P, int b, optional<int> bandwidth)
     return sample_alignment_base(P, P.get_branch_HMM(b), b, bandwidth);
 }
 
-Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool check_initial)
+// Resample the partitions in a working context. A joint length update needs every table
+// to evaluate its marginal density. An alignment-only update can leave an oversized one alone.
+static Availability<ProbDensity> sample_alignment_partitions(Parameters& P, int b, [[maybe_unused]] bool check_initial,
+                                                             bool require_all_tables)
 {
     if (log_verbose >= 3)
         std::cerr<<"[sample_alignment]: start: Pr = "<<P.probability()<<"\n";
@@ -183,42 +187,33 @@ Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool check_init
     if (setting_exists("simple_bandwidth"))
         bandwidth  = get_setting("simple_bandwidth").as_int64();
 
-#if !defined(NDEBUG_DP) || !defined(NDEBUG)
+#ifndef NDEBUG_DP
     const Parameters P0 = P;
+    vector<vector<shared_ptr<DPmatrixSimple>>> Matrices(1, vector<shared_ptr<DPmatrixSimple>>(P.n_data_partitions()));
+    vector<vector<bool>> sampled(1, vector<bool>(P.n_data_partitions(), false));
 #endif
-    vector<Parameters> p;
-    p.push_back(P);
-
-    vector< vector< shared_ptr<DPmatrixSimple> > > Matrices(1);
-    vector<vector<bool>> sampled(1);
     auto total_sampling_pr = available(log_double_t(1.0));
-    for(int i=0;i<p.size();i++) 
+    for (int j = 0; j < P.n_data_partitions(); ++j)
     {
-	for(int j=0;j<p[i].n_data_partitions();j++) 
-	    if (p[i][j].variable_alignment()) 
-	    {
-                auto [M, sampling_pr] = sample_alignment_base(p[i][j], b, bandwidth);
-		if (not M)
-                {
-                    // Both endpoint lengths, the state count and the band are fixed by this update,
-                    // so a size limit refuses the same table in reverse. Discard all partitions.
-                    p.clear();
-                    Matrices.clear();
-                    P.evaluate_program();
-                    return unavailable;
-                }
-                total_sampling_pr *= sampling_pr;
-		Matrices[i].push_back(M);
-		sampled[i].push_back(sampling_pr.has_value());
-		// If sampling is unavailable, the alignment for this partition is unchanged.
-#ifndef NDEBUG
-		p[i][j].likelihood();  // check the likelihood calculation
+        if (not P[j].variable_alignment()) continue;
+        try
+        {
+            auto [M, sampling_pr] = sample_alignment_base(P[j], b, bandwidth);
+            total_sampling_pr *= sampling_pr;
+#ifndef NDEBUG_DP
+            Matrices[0][j] = std::move(M);
+            sampled[0][j] = sampling_pr.has_value();
 #endif
-	    }
-	    else {
-		Matrices[i].push_back(shared_ptr<DPmatrixSimple>());
-		sampled[i].push_back(false);
-	    }
+        }
+        catch (const dp_matrix_too_large& e)
+        {
+            if (require_all_tables) throw;
+            // Both endpoint sequences and the band are fixed. This partition also skips in reverse.
+            std::cerr << "Skipping A1 alignment for partition " << j+1 << ": " << e.what() << '\n';
+        }
+#ifndef NDEBUG
+        P[j].likelihood();  // check the likelihood calculation
+#endif
     }
 
     Availability<ProbDensity> total_ratio;
@@ -236,7 +231,7 @@ Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool check_init
     nodes.push_back(node2);
 
     // Diagnostics compare the sampled state in p[0] with the state on entry in p[1].
-    p.push_back(P0);
+    vector<Parameters> p{P, P0};
     Matrices.push_back(Matrices[0]);
     sampled.push_back(sampled[0]);
 
@@ -331,8 +326,6 @@ Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool check_init
     }
 #endif
 
-    P = p[0];
-
     // ensure that the program is executed.
     P.evaluate_program();
 
@@ -340,4 +333,26 @@ Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool check_init
         std::cerr<<"[sample_alignment]: end: Pr = "<<P.probability()<<"\n";
 
     return total_ratio;
+}
+
+// The slice evaluator supplies a disposable context and needs the joint sampling correction.
+Availability<ProbDensity> sample_alignment_with_ratio(Parameters& P, int b, bool check_initial)
+{
+    return sample_alignment_partitions(P, b, check_initial, true);
+}
+
+// Install the completed alignment-only update. A transient table failure discards all its draws.
+void sample_alignment(Parameters& P, int b)
+{
+    try
+    {
+        Parameters candidate = P;
+        sample_alignment_partitions(candidate, b, true, false);
+        P = candidate;
+    }
+    catch (const dp_table_allocation_failure& e)
+    {
+        std::cerr << "Skipping A1 alignment update: " << e.what() << '\n';
+        P.evaluate_program();
+    }
 }
