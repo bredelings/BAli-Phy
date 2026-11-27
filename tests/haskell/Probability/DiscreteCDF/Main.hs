@@ -50,3 +50,6 @@ main = do
     -- both endpoints to the same Double when forming the beta-function parameters.
     print (near (cdf (binomial 9007199254740993 (1 - toProb (1 / 9007199254740992))) 9007199254740992)
                 (1 - exp (-1)))
+    -- Near a large Poisson mean, check the inclusive step where a direct gamma series
+    -- can exhaust its iterations. The value is from R's independent ppois calculation.
+    print (near (cdf (poisson 1.0e18) 1.0e18) 0.5000000002659615)

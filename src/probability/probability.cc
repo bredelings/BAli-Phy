@@ -744,7 +744,22 @@ double poisson_cdf(double mu, double x)
         return std::numeric_limits<double>::quiet_NaN();
     if (x < 0) return 0;
     if (x == INFINITY or mu == 0) return 1;
-    return boost::math::gamma_q(std::floor(x) + 1, mu);
+    const double k = std::floor(x);
+    if (mu < 0x1p32) return boost::math::gamma_q(k + 1, mu);
+
+    // For large means the incomplete-gamma series can exhaust its iterations near the mode.
+    // Beyond 40 standard deviations the Poisson Chernoff bounds round the CDF to 0 or 1.
+    const double offset = mu - k;
+    if (std::abs(offset) > 40*std::sqrt(mu)) return offset > 0 ? 0 : 1;
+
+    // Temme's expansion of Q(a,mu), DLMF 8.12.4, with a=k+1 and d=(mu-a)/a.
+    // Subtract k first to preserve the one-count shift. In this window |d| < 0.00062,
+    // so evaluate c0 = 1/d - 1/eta by its Taylor expansion, including at d=0.
+    const double a = k + 1;
+    const double d = (offset - 1)/a;
+    const double z = std::copysign(std::sqrt(-a*boost::math::log1pmx(d)), d);
+    const double c0 = -1.0/3 + d*(1.0/12 - d*23.0/540);
+    return 0.5*std::erfc(z) + c0*std::exp(-z*z)/(std::sqrt(2*std::numbers::pi)*std::sqrt(a));
 }
 
 // For k=floor(x), F(x)=I_q(n-k,k+1)=1-I_p(k+1,n-k). Choose the smaller
