@@ -32,10 +32,10 @@ namespace
 closure component_state_result(ComponentStateVectors values)
 {
     assert(values.components.size() == values.states.size());
-    object_ptr<Box<DenseVector<int>>> components(
-        new Box<DenseVector<int>>(std::move(values.components)));
-    object_ptr<Box<DenseVector<int>>> states(
-        new Box<DenseVector<int>>(std::move(values.states)));
+    object_ptr<Box<DenseVector<haskell_int>>> components(
+        new Box<DenseVector<haskell_int>>(std::move(values.components)));
+    object_ptr<Box<DenseVector<haskell_int>>> states(
+        new Box<DenseVector<haskell_int>>(std::move(values.states)));
     return R::RPair(components, states);
 }
 
@@ -45,7 +45,7 @@ extern "C" closure builtin_function_bitmaskFromSequence(OperationArgs& Args)
 {
     using boost::dynamic_bitset;
 
-    auto sequence_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto sequence_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 0, "Likelihood.bitmaskFromSequence");
     auto sequence = sequence_input.view();
     int L = static_cast<int>(sequence.size());
@@ -55,7 +55,7 @@ extern "C" closure builtin_function_bitmaskFromSequence(OperationArgs& Args)
 
     for(int i=0;i<L;i++)
     {
-        int c = sequence[i];
+        auto c = sequence[i];
 	if (c != alphabet::gap and c != alphabet::unknown)
 	    mask.flip(i);
     }
@@ -66,19 +66,19 @@ extern "C" closure builtin_function_bitmaskFromSequence(OperationArgs& Args)
 
 extern "C" closure builtin_function_stripGaps(OperationArgs& Args)
 {
-    auto sequence_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto sequence_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 0, "Likelihood.stripGaps");
     auto sequence = sequence_input.view();
     int count = 0;
-    for(int character : sequence)
+    for(auto character : sequence)
     {
         if (character != alphabet::gap and character != alphabet::unknown)
             count++;
     }
 
-    object_ptr<Box<DenseVector<int>>> result(new Box<DenseVector<int>>(count));
+    object_ptr<Box<DenseVector<haskell_int>>> result(new Box<DenseVector<haskell_int>>(count));
     int index = 0;
-    for(int character : sequence)
+    for(auto character : sequence)
     {
         if (character != alphabet::gap and character != alphabet::unknown)
             (*result)[index++] = character;
@@ -91,7 +91,7 @@ extern "C" closure builtin_function_observedColumns(OperationArgs& Args)
 {
     auto arg = Args.evaluate_slot_to_value(0);
     const auto& mask = arg.as_<Box<dynamic_bitset<>>>();
-    object_ptr<Box<DenseVector<int>>> result(new Box<DenseVector<int>>(mask.count()));
+    object_ptr<Box<DenseVector<haskell_int>>> result(new Box<DenseVector<haskell_int>>(mask.count()));
     int i = 0;
     for(auto c = mask.find_first(); c != dynamic_bitset<>::npos; c = mask.find_next(c))
         (*result)[i++] = c;
@@ -101,11 +101,11 @@ extern "C" closure builtin_function_observedColumns(OperationArgs& Args)
 // Project both sampled arrays onto the same observed columns without boxed per-site work.
 extern "C" closure builtin_function_selectComponentStates(OperationArgs& Args)
 {
-    auto columns_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto columns_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 0, "Likelihood.selectComponentStates columns");
-    auto components_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto components_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 3, "Likelihood.selectComponentStates components");
-    auto states_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto states_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 6, "Likelihood.selectComponentStates states");
     auto columns = columns_input.view();
     auto components = components_input.view();
@@ -114,7 +114,7 @@ extern "C" closure builtin_function_selectComponentStates(OperationArgs& Args)
     ComponentStateVectors result(columns.size());
     for(int i = 0; i < columns.size(); i++)
     {
-        int c = columns[i];
+        auto c = columns[i];
         assert(c >= 0 and c < states.size());
         result.components[i] = components[c];
         result.states[i] = states[c];
@@ -127,17 +127,17 @@ extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Arg
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto smap_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto smap_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 2, "Likelihood.simpleSequenceLikelihoods smap");
     auto arg5 = Args.evaluate_slot_to_value(5);
-    auto sequence_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto sequence_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 6, "Likelihood.simpleSequenceLikelihoods sequence");
 
     return substitution::simple_sequence_likelihoods2(sequence_input.view(), // sequence
                                                       *arg0.as_<Alphabet>(), // alphabet
                                                       arg1.as_<Ambiguities>(), // ambiguities
                                                       smap_input.view(),     // smap
-                                                      arg5.as_int());        // n_models
+                                                      arg5.as_cpp_int());        // n_models
 }
 
 
@@ -268,9 +268,9 @@ extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
 extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
 {
     auto component_input =
-        read_native_vector_input<int, ForeignDemand::use>(
+        read_native_vector_input<haskell_int, ForeignDemand::use>(
             Args, 0, "Likelihood.sampleBranchSequence components");
-    auto state_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto state_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 3, "Likelihood.sampleBranchSequence states");
     auto arg6 = Args.evaluate_slot_to_value(6);
     auto arg7 = Args.evaluate_slot_to_value(7);
@@ -300,9 +300,9 @@ extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
 // Sample process-parent states conditional on a child sequence while walking toward the process root.
 extern "C" closure builtin_function_sampleBranchSequenceTowardRoot(OperationArgs& Args)
 {
-    auto component_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto component_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 0, "Likelihood.sampleBranchSequenceTowardRoot components");
-    auto state_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto state_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 3, "Likelihood.sampleBranchSequenceTowardRoot states");
     auto arg6 = Args.evaluate_slot_to_value(6);
     auto arg7 = Args.evaluate_slot_to_value(7);
@@ -333,16 +333,16 @@ extern "C" closure builtin_function_maskSequence(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& mask = arg0.as_<Box<dynamic_bitset<>>>();
-    auto sequence_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto sequence_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 1, "Likelihood.maskSequence");
     auto sequence = sequence_input.view();
-    object_ptr<Box<DenseVector<int>>> result(new Box<DenseVector<int>>(sequence.size()));
+    object_ptr<Box<DenseVector<haskell_int>>> result(new Box<DenseVector<haskell_int>>(sequence.size()));
 
     assert(mask.size() == sequence.size());
     for(int i=0;i<sequence.size();i++)
     {
-        int c = sequence[i];
-        assert(alphabet::is_character(c) or c == alphabet::gap or c == alphabet::unknown);
+        auto c = sequence[i];
+        assert(alphabet::is_character(checked_cpp_int(c)) or c == alphabet::gap or c == alphabet::unknown);
         if (mask.test(i))
         {
             if (c == alphabet::gap or c == alphabet::unknown)
@@ -358,7 +358,7 @@ extern "C" closure builtin_function_maskSequence(OperationArgs& Args)
 
 extern "C" closure builtin_function_simulateRootSequence(OperationArgs& Args)
 {
-    int L = Args.evaluate_slot_to_value(0).as_int();
+    int L = Args.evaluate_slot_to_value(0).as_cpp_int();
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto& F = arg1.as_<Box<DenseMatrix<double>>>();
 
@@ -375,9 +375,9 @@ extern "C" closure builtin_function_simulateRootSequence(OperationArgs& Args)
 extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
 {
     auto component_input =
-        read_native_vector_input<int, ForeignDemand::use>(
+        read_native_vector_input<haskell_int, ForeignDemand::use>(
             Args, 0, "Likelihood.simulateSequenceFrom components");
-    auto state_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto state_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 3, "Likelihood.simulateSequenceFrom states");
     auto alignment_value = Args.evaluate_slot_to_value(6);
     auto transition_value = Args.evaluate_slot_to_value(7);
@@ -429,9 +429,9 @@ extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
 extern "C" closure builtin_function_simulateFixedSequenceFrom(OperationArgs& Args)
 {
     auto component_input =
-        read_native_vector_input<int, ForeignDemand::use>(
+        read_native_vector_input<haskell_int, ForeignDemand::use>(
             Args, 0, "Likelihood.simulateFixedSequenceFrom components");
-    auto state_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto state_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 3, "Likelihood.simulateFixedSequenceFrom states");
     auto transition_value = Args.evaluate_slot_to_value(6);
     auto frequency_value = Args.evaluate_slot_to_value(7);

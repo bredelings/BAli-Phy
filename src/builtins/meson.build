@@ -21,8 +21,12 @@ elif host_machine.system() == 'linux'
 endif
 
 foreach mod : builtins
+  # Eigen evaluates Haskell Int vector and matrix arithmetic in the signed element type.
+  # Int overflow wraps, including in Eigen's reductions and matrix products.
+  module_args = mod == 'Matrix' ? ['-fwrapv'] : []
   shared_module(mod,
 		mod + '.cc',
+                cpp_args: module_args,
 		include_directories: [source_inc, root_inc, libmcon_inc, libutil_inc],
 		dependencies: [allocator_dep, boost, eigen, immer, cereal],
 		link_with: implibs,

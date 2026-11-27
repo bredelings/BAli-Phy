@@ -1,3 +1,4 @@
+#include "computation/haskell/Int.hh"
 #include "likelihood.hh"
 #include "likelihoodSEV.hh"
 #include "ops.hh"
@@ -40,7 +41,7 @@ namespace substitution
 					     const Likelihood_Cache_Branch& LCB2,
 					     const Likelihood_Cache_Branch& LCB3,
 					     const DenseMatrix<double>& F,
-					     std::span<const int> counts)
+					     std::span<const std::int64_t> counts)
     {
         total_calc_root_prob++;
 
@@ -144,8 +145,8 @@ namespace substitution
             if (non_gap2) i2++;
             if (non_gap3) i3++;
 
-            total.mult_with_count(p_col, counts[c]);
-            total_scale += static_cast<std::int64_t>(counts[c]) * column_scale;
+            total.mult_with_count(p_col, checked_cpp_int(counts[c]));
+            total_scale += counts[c] * column_scale;
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
@@ -157,7 +158,7 @@ namespace substitution
     ProbDensity calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
 					      const Likelihood_Cache_Branch& LCB2,
 					      const DenseMatrix<double>& F,
-					      std::span<const int> counts)
+					      std::span<const std::int64_t> counts)
     {
         total_calc_root_prob++;
 
@@ -246,8 +247,8 @@ namespace substitution
             if (non_gap1) i1++;
             if (non_gap2) i2++;
 
-            total.mult_with_count(p_col,counts[c]);
-            total_scale += static_cast<std::int64_t>(counts[c]) * column_scale;
+            total.mult_with_count(p_col,checked_cpp_int(counts[c]));
+            total_scale += counts[c] * column_scale;
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
@@ -260,7 +261,7 @@ namespace substitution
     ProbDensity calc_prob_at_root_SEV(const R::RVector& LCN,
 				       const R::RVector& LCB,
 				       const DenseMatrix<double>& F,
-				       Eigen::Ref<const DenseVector<int>> counts)
+				       Eigen::Ref<const DenseVector<std::int64_t>> counts)
     {
 	total_calc_root_prob++;
 
@@ -379,8 +380,8 @@ namespace substitution
             // SOME model must be possible
             assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 
-            total.mult_with_count(p_col, counts[c]);
-            total_scale += static_cast<std::int64_t>(counts[c]) * column_scale;
+            total.mult_with_count(p_col, checked_cpp_int(counts[c]));
+            total_scale += counts[c] * column_scale;
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
@@ -395,7 +396,7 @@ namespace substitution
     ProbDensity calc_prob_at_root_variable_SEV(const R::RVector& LCN,
 						const R::RVector& LCB,
 						const DenseMatrix<double>& F,
-						std::span<const int> counts)
+						std::span<const std::int64_t> counts)
     {
 	total_calc_root_prob++;
 
@@ -528,7 +529,7 @@ namespace substitution
 		sum += Prs[c*n+i];
 	    double Pr = 1.0 - sum;
             assert(std::isnan(Pr) or (Pr >= 0 and Pr <= 1));
-            total.mult_with_count(Pr, counts[c]);
+            total.mult_with_count(Pr, checked_cpp_int(counts[c]));
 	}
 
         ProbDensity Pr = total;
@@ -541,7 +542,7 @@ namespace substitution
     ProbDensity calc_prob_variable_SEV(const R::RVector& LCN,
 				       const R::RVector& LCB,
 				       const DenseMatrix<double>& FF,
-				       std::span<const int> counts)
+				       std::span<const std::int64_t> counts)
     {
 	const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
 	for(auto& lcb: LCB)
@@ -689,7 +690,7 @@ namespace substitution
 		sum += Prs[c*n+i];
 	    double Pr = 1.0 - sum;
             assert(std::isnan(Pr) or (Pr >= 0 and Pr <= 1));
-            total.mult_with_count(Pr, counts[c]);
+            total.mult_with_count(Pr, checked_cpp_int(counts[c]));
 	}
 
         ProbDensity Pr = total;
@@ -701,7 +702,7 @@ namespace substitution
     ProbDensity calc_prob_SEV(const R::RVector& LCN,
 			       const R::RVector& LCB,
 			       const DenseMatrix<double>& FF,
-			       std::span<const int> counts)
+			       std::span<const std::int64_t> counts)
     {
 	const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
 	for(auto& lcb: LCB)
@@ -715,7 +716,7 @@ namespace substitution
 
 	if (at_root)
 	{
-	    Eigen::Map<const DenseVector<int>> count_map(
+	    Eigen::Map<const DenseVector<std::int64_t>> count_map(
 		counts.data(), static_cast<Eigen::Index>(counts.size()));
 	    return calc_prob_at_root_SEV(LCN, LCB, FF, count_map);
 	}
@@ -842,8 +843,8 @@ namespace substitution
             // SOME model must be possible
             assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 
-            total.mult_with_count(p_col, counts[c]);
-            total_scale += static_cast<std::int64_t>(counts[c]) * column_scale;
+            total.mult_with_count(p_col, checked_cpp_int(counts[c]));
+            total_scale += counts[c] * column_scale;
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
@@ -1281,7 +1282,7 @@ namespace substitution
     simple_sequence_likelihoods_SEV(const R::Exp& sequence_mask,
 				    const alphabet&,
 				    const ambiguity_database& ambiguities,
-				    std::span<const int> smap,
+				    std::span<const std::int64_t> smap,
 				    int n_models)
     {
 	auto& sequence = R::rpair_first(sequence_mask).as_<R::RVector>();
@@ -1299,7 +1300,7 @@ namespace substitution
 	{
 	    if (not mask.test(c)) continue;
 
-	    int letter = sequence[i].as_int();
+	    int letter = sequence[i].as_cpp_int();
 
 	    double* S = (*LCB)[i];
 
@@ -1329,7 +1330,7 @@ namespace substitution
 		const auto& ok = ambiguities.mask(letter);
 		for(int m=0;m<n_models;m++)
 		    for(int s1=0;s1<n_states;s1++)
-			if (not ok[smap[s1]])
+			if (not ok[checked_cpp_int(smap[s1])])
 			    S[m*n_states + s1] = 0;
 	    }
 
@@ -1343,7 +1344,7 @@ namespace substitution
     simple_sequence_likelihoods2_SEV(const R::Exp& sequence_mask,
 				     const alphabet&,
 				     const ambiguity_database& ambiguities,
-				     std::span<const int> smap,
+				     std::span<const std::int64_t> smap,
 				     int n_models)
     {
 	auto& sequence = R::rpair_first(sequence_mask).as_<R::RVector>();
@@ -1363,7 +1364,7 @@ namespace substitution
 	    // Add NNZ offset fo values/states for this column.
 	    LCB->column_offsets.push_back(LCB->num_non_zeros());
 
-	    int letter = sequence[i].as_int();
+	    int letter = sequence[i].as_cpp_int();
 
 	    if (letter >= 0)
 	    {
@@ -1375,7 +1376,7 @@ namespace substitution
 	    {
 		const auto& ok = ambiguities.mask(letter);
 		for(int s1=0;s1<n_states;s1++)
-		    if (ok[smap[s1]])
+		    if (ok[checked_cpp_int(smap[s1])])
 			LCB->states.push_back(s1);
 	    }
 	    else if (letter == alphabet::not_gap)
@@ -1414,7 +1415,7 @@ namespace substitution
     ComponentStateVectors sample_root_sequence_SEV(const R::RVector& LCN,
 						   const R::RVector& LCB,
                                                    const DenseMatrix<double>& F,
-                                                   std::span<const int> compressed_col_for_col)
+                                                   std::span<const std::int64_t> compressed_col_for_col)
     {
         const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
         for(auto& lcb: LCB)
@@ -1483,7 +1484,7 @@ namespace substitution
         // 3. Walk the alignment and sample (model,letter) for ancestral sequence
         for(int c = 0; c < L_full; c++)
         {
-            int c2 = compressed_col_for_col[c];
+            int c2 = checked_cpp_int(compressed_col_for_col[c]);
 
             if (not allbits.test(c2)) continue;
 
@@ -1511,13 +1512,13 @@ namespace substitution
     // The sampling traversal crosses this process edge backward: child state j is already fixed, so
     // parent state i has transition weight P(i,j). Incoming CLVs exclude the sampled child edge, and
     // the unique rootward CLV (or F at the process root) supplies the remaining process-root evidence.
-    ComponentStateVectors sample_sequence_toward_root_SEV(std::span<const int> child_components,
-                                                           std::span<const int> child_states,
+    ComponentStateVectors sample_sequence_toward_root_SEV(std::span<const std::int64_t> child_components,
+                                                           std::span<const std::int64_t> child_states,
                                                            const R::RVector& LCN,
                                                            const R::RVector& transition_Ps,
                                                            const R::RVector& LCB,
                                                            const DenseMatrix<double>& F,
-                                                           std::span<const int> compressed_col_for_col)
+                                                           std::span<const std::int64_t> compressed_col_for_col)
     {
         assert(child_components.size() == child_states.size());
         assert(child_components.size() == compressed_col_for_col.size());
@@ -1570,11 +1571,12 @@ namespace substitution
             if (child_components[c] < 0 or child_states[c] < 0)
                 continue;
 
-            const int c2 = compressed_col_for_col[c];
+            const int c2 = checked_cpp_int(compressed_col_for_col[c]);
 
             // Given child state j, the candidate parent state i has weight P(i,j), multiplied by all
             // evidence on the parent side. Only the sampled child's mixture component can be retained.
-            calc_transition_prob_to_child(S, {child_components[c], child_states[c]}, transition_Ps);
+            calc_transition_prob_to_child(S, {checked_cpp_int(child_components[c]),
+                                               checked_cpp_int(child_states[c])}, transition_Ps);
 
             if (away_from_root_branch and away_from_root_branch->bits.test(c2))
             {
@@ -1597,12 +1599,12 @@ namespace substitution
         return ancestral_characters;
     }
 
-    ComponentStateVectors sample_sequence_SEV(std::span<const int> parent_components,
-					       std::span<const int> parent_states,
+    ComponentStateVectors sample_sequence_SEV(std::span<const std::int64_t> parent_components,
+					       std::span<const std::int64_t> parent_states,
 					      const R::RVector& LCN,
 					      const R::RVector& transition_Ps,
 					      const R::RVector& LCB,
-					      std::span<const int> compressed_col_for_col)
+					      std::span<const std::int64_t> compressed_col_for_col)
     {
         // 1. Construct a scratch matrix and check that dimensions match inputs
         const int n_models  = transition_Ps.size();
@@ -1664,12 +1666,12 @@ namespace substitution
         // 3. Walk the alignment and sample (model,letter) for ancestral sequence
         for(int c = 0; c < L_full; c++)
         {
-            int c2 = compressed_col_for_col[c];
+            int c2 = checked_cpp_int(compressed_col_for_col[c]);
 
             if (not allbits.test(c2)) continue;
 
             calc_transition_prob_from_parent(
-                S, {parent_components[c], parent_states[c]}, transition_Ps);
+                S, {checked_cpp_int(parent_components[c]), checked_cpp_int(parent_states[c])}, transition_Ps);
 
 	    for(int b=0;b<n_clvs;b++)
 		if (auto i = cache_index_for_compressed_column[b][c2])

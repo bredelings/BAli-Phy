@@ -22,7 +22,7 @@ namespace
 template <typename T>
 T native_scalar(const R::Exp& value)
 {
-    if constexpr (std::is_same_v<T, int>)
+    if constexpr (std::is_same_v<T, haskell_int>)
         return value.as_int();
     else
         return value.as_double();
@@ -45,7 +45,7 @@ template <typename T>
 closure sized_vector_from_list(OperationArgs& Args)
 {
     auto size_arg = Args.evaluate_slot_to_value_with_contingency(0);
-    int expected_size = size_arg.value.as_int();
+    int expected_size = size_arg.value.as_cpp_int();
     if (expected_size < 0)
         throw myexception()<<"vector (|>): size must be nonnegative, but got "<<expected_size;
 
@@ -120,7 +120,7 @@ NativeVectorInput<T> read_unboxed_numeric_vector(OperationArgs& Args, int vector
         throw myexception()<<"Data.Vector.Unboxed.concat: "<<constructor_name
                            <<" owner has the wrong native representation";
 
-    return NativeVectorInput<T>(std::move(owner), offset_value.as_int(), length_value.as_int(),
+    return NativeVectorInput<T>(std::move(owner), offset_value.as_cpp_int(), length_value.as_cpp_int(),
                                 "Data.Vector.Unboxed.concat");
 }
 
@@ -132,7 +132,7 @@ closure concat_unboxed_numeric_vectors(OperationArgs& Args, std::string_view con
     auto count_arg = Args.evaluate_slot_to_value_with_contingency(0);
     if (not count_arg.value.is_int())
         throw myexception()<<"Data.Vector.Unboxed.concat: result length is not an Int";
-    int expected_count = count_arg.value.as_int();
+    int expected_count = count_arg.value.as_cpp_int();
     if (expected_count < 0)
         throw myexception()<<"Data.Vector.Unboxed.concat: negative result length "<<expected_count;
 
@@ -164,7 +164,7 @@ closure concat_unboxed_numeric_vectors(OperationArgs& Args, std::string_view con
 // Construct a fixed-length Int vector without evaluating an excess list tail.
 extern "C" closure builtin_function_sizedIntVectorFromList(OperationArgs& Args)
 {
-    return sized_vector_from_list<int>(Args);
+    return sized_vector_from_list<haskell_int>(Args);
 }
 
 // Construct a fixed-length Double vector without evaluating an excess list tail.
@@ -176,7 +176,7 @@ extern "C" closure builtin_function_sizedDoubleVectorFromList(OperationArgs& Arg
 // Concatenate sliced Int views without materializing either elements or descriptors in Haskell.
 extern "C" closure builtin_function_concatIntVectors(OperationArgs& Args)
 {
-    return concat_unboxed_numeric_vectors<int>(Args, "V_Int");
+    return concat_unboxed_numeric_vectors<haskell_int>(Args, "V_Int");
 }
 
 // Concatenate sliced Double views through the same native numeric implementation.
@@ -188,13 +188,13 @@ extern "C" closure builtin_function_concatDoubleVectors(OperationArgs& Args)
 // Copy one logical unboxed Int view directly into the legacy boxed runtime representation.
 extern "C" closure builtin_function_intVectorToEVector(OperationArgs& Args)
 {
-    auto input = read_native_vector_input<int, ForeignDemand::use>(
+    auto input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 0, "NativeVector.intVectorToEVector");
     auto values = input.view();
 
     object_ptr<R::RVector> result(new R::RVector);
     result->reserve(values.size());
-    for(int value: values)
+    for(auto value: values)
         result->push_back(value);
     return result;
 }
@@ -205,10 +205,10 @@ extern "C" closure builtin_function_eVectorIntToNativeVector(OperationArgs& Args
     auto value = Args.evaluate_slot_to_value(0);
     const auto& values = value.as_checked<R::RVector>();
     if (values.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-        throw myexception()<<"NativeVector.eVectorIntToNativeVector: vector length exceeds the Haskell Int range";
+        throw myexception()<<"NativeVector.eVectorIntToNativeVector: vector length exceeds the native indexing limit";
 
     int count = static_cast<int>(values.size());
-    object_ptr<Box<DenseVector<int>>> result(new Box<DenseVector<int>>(count));
+    object_ptr<Box<DenseVector<haskell_int>>> result(new Box<DenseVector<haskell_int>>(count));
     for(int index = 0; index < count; index++)
         (*result)(index) = values[index].as_int();
     return result;
@@ -218,7 +218,7 @@ extern "C" closure builtin_function_eVectorIntToNativeVector(OperationArgs& Args
 extern "C" closure builtin_function_vectorKonstNative(OperationArgs& Args)
 {
     auto value = Args.evaluate_slot_to_value(0);
-    int count = Args.evaluate_slot_to_value(1).as_int();
+    int count = Args.evaluate_slot_to_value(1).as_cpp_int();
     if (value.is_int())
         return constant_vector(value.as_int(), count);
     if (value.is_double())
@@ -230,10 +230,10 @@ extern "C" closure builtin_function_vectorKonstNative(OperationArgs& Args)
 extern "C" R::Exp simple_function_vectorAtIndex(vector<R::Exp>& args)
 {
     auto value = get_arg(args);
-    int index = get_arg(args).as_int();
-    if (value.is_a<Box<DenseVector<int>>>() )
+    int index = get_arg(args).as_cpp_int();
+    if (value.is_a<Box<DenseVector<haskell_int>>>() )
     {
-        const auto& native = value.as_<Box<DenseVector<int>>>();
+        const auto& native = value.as_<Box<DenseVector<haskell_int>>>();
         if (index < 0 or index >= native.size())
             throw myexception()<<"vector atIndex: index "<<index
                                <<" is outside vector length "<<native.size();
@@ -255,9 +255,9 @@ extern "C" R::Exp simple_function_vectorAtIndex(vector<R::Exp>& args)
 extern "C" R::Exp simple_function_intVectorSize(vector<R::Exp>& args)
 {
     auto value = get_arg(args);
-    auto count = value.as_<Box<DenseVector<int>>>().size();
+    auto count = value.as_<Box<DenseVector<haskell_int>>>().size();
     if (count > std::numeric_limits<int>::max())
-        throw myexception()<<"native Int vector length exceeds the Haskell Int range";
+        throw myexception()<<"native Int vector length exceeds the native indexing limit";
     return static_cast<int>(count);
 }
 
@@ -268,7 +268,7 @@ extern "C" R::Exp simple_function_doubleVectorSize(vector<R::Exp>& args)
     auto value = get_arg(args);
     auto count = value.as_<Box<DenseVector<double>>>().size();
     if (count > std::numeric_limits<int>::max())
-        throw myexception()<<"native Double vector length exceeds the Haskell Int range";
+        throw myexception()<<"native Double vector length exceeds the native indexing limit";
     return static_cast<int>(count);
 }
 
@@ -276,15 +276,15 @@ extern "C" R::Exp simple_function_doubleVectorSize(vector<R::Exp>& args)
 extern "C" R::Exp simple_function_unsafeIntIndex(vector<R::Exp>& args)
 {
     auto value = get_arg(args);
-    int index = get_arg(args).as_int();
-    return value.as_<Box<DenseVector<int>>>()(index);
+    int index = get_arg(args).as_cpp_int();
+    return value.as_<Box<DenseVector<haskell_int>>>()(index);
 }
 
 // Read a Double element after the Haskell view has established its bounds.
 extern "C" R::Exp simple_function_unsafeDoubleIndex(vector<R::Exp>& args)
 {
     auto value = get_arg(args);
-    int index = get_arg(args).as_int();
+    int index = get_arg(args).as_cpp_int();
     return value.as_<Box<DenseVector<double>>>()(index);
 }
 
@@ -292,10 +292,10 @@ extern "C" R::Exp simple_function_unsafeDoubleIndex(vector<R::Exp>& args)
 // Count first so the result owns exactly the retained elements, with no boxed intermediate.
 extern "C" closure builtin_function_removeMinusOnes(OperationArgs& Args)
 {
-    auto input = read_native_vector_input<int, ForeignDemand::use>(Args, 0, "NativeVector.removeMinusOnes");
+    auto input = read_native_vector_input<haskell_int, ForeignDemand::use>(Args, 0, "NativeVector.removeMinusOnes");
     auto values = input.view();
-    auto count = std::count_if(values.begin(), values.end(), [](int value) { return value != -1; });
-    object_ptr<Box<DenseVector<int>>> result(new Box<DenseVector<int>>(count));
-    std::copy_if(values.begin(), values.end(), result->data(), [](int value) { return value != -1; });
+    auto count = std::count_if(values.begin(), values.end(), [](haskell_int value) { return value != -1; });
+    object_ptr<Box<DenseVector<haskell_int>>> result(new Box<DenseVector<haskell_int>>(count));
+    std::copy_if(values.begin(), values.end(), result->data(), [](haskell_int value) { return value != -1; });
     return result;
 }

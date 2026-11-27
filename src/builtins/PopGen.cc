@@ -377,10 +377,10 @@ extern "C" closure builtin_function_allele_frequency_spectrum(OperationArgs& Arg
     assert(n_individuals > 0);
 
     // 1. Count the alleles of each type
-    std::unordered_map<int,int> allele_counts;
+    std::unordered_map<haskell_int,int> allele_counts;
     for(const auto& a: alleles)
     {
-	int aa = a.as_int();
+	auto aa = a.as_int();
 	allele_counts[aa]++;
     }
 
@@ -449,7 +449,7 @@ extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Ar
 
     vector<int> afs;
     for(const auto& count: afs_)
-	afs.push_back(count.as_int());
+	afs.push_back(count.as_cpp_int());
 
     log_double_t Pr = ewens_sampling_probability(theta,afs);
 
@@ -540,7 +540,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
     const R::RVector& alleles = arg2.as_<R::RVector>();
 
     // How many times has each allele been seen?
-    std::unordered_map<int,int> counts;
+    std::unordered_map<haskell_int,int> counts;
 
     // Determine number of individuals
     int n = alleles.size();
@@ -553,8 +553,8 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
     int incompatibility_zeros = 0;
     for(int i=0,total=0;i<n;i++)
     {
-	int a1 = alleles[2*i].as_int();
-	int a2 = alleles[2*i+1].as_int();
+	auto a1 = alleles[2*i].as_int();
+	auto a2 = alleles[2*i+1].as_int();
 
 	int s1 = (a1 != missing)?1:0;
 	int s2 = (a2 != missing)?1:0;
@@ -601,14 +601,14 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
 extern "C" closure builtin_function_selfing_coalescence_probability(OperationArgs& Args)
 {
     // The number of loci
-    int L = Args.evaluate_slot_to_value(0).as_int();
+    int L = Args.evaluate_slot_to_value(0).as_cpp_int();
 
     // The selfing rate
     const double s = Args.evaluate_slot_to_value(1).as_double();
 
     assert(s >= 0 and s <= 1);
 
-    auto indicator_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto indicator_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 2, "selfing_coalescence_probability indicators");
     auto I = indicator_input.view();
     if (I.size() < static_cast<std::size_t>(L))

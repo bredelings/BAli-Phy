@@ -1,5 +1,6 @@
 #ifndef LIKELIHOODSEV_H
 #define LIKELIHOODSEV_H
+#include <cstdint>
 #include <span>
 #include <vector>
 #include "substitution/component-state.hh"
@@ -17,33 +18,33 @@ namespace substitution {
                                              const Likelihood_Cache_Branch& LCB2,
                                              const Likelihood_Cache_Branch& LCB3,
                                              const DenseMatrix<double>& F,
-                                             std::span<const int> counts);
+                                             std::span<const std::int64_t> counts);
 
     ProbDensity calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
                                              const Likelihood_Cache_Branch& LCB2,
                                              const DenseMatrix<double>& F,
-                                             std::span<const int> counts);
+                                             std::span<const std::int64_t> counts);
     // NOTE: Keep Eigen::Ref in this hot path because std::span increased its
     // retired instructions; revisit when compiler code generation changes.
     ProbDensity calc_prob_at_root_SEV(const R::RVector& LCN,
 				       const R::RVector& LCB,
 				       const DenseMatrix<double>& F,
-				       Eigen::Ref<const DenseVector<int>> counts);
+				       Eigen::Ref<const DenseVector<std::int64_t>> counts);
 
     ProbDensity calc_prob_at_root_variable_SEV(const R::RVector& LCN,
 						const R::RVector& LCB,
 						const DenseMatrix<double>& F,
-						std::span<const int> counts);
+						std::span<const std::int64_t> counts);
 
     ProbDensity calc_prob_variable_SEV(const R::RVector& LCN,
 				       const R::RVector& LCB,
 				       const DenseMatrix<double>& FF,
-				       std::span<const int> counts);
+				       std::span<const std::int64_t> counts);
 
     ProbDensity calc_prob_SEV(const R::RVector& LCN,
 				     const R::RVector& LCB,
 				     const DenseMatrix<double>& FF,
-				     std::span<const int> counts);
+				     std::span<const std::int64_t> counts);
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_SEV(const Likelihood_Cache_Branch& nodeCLV, const R::RVector& transition_P);
@@ -73,7 +74,7 @@ namespace substitution {
     simple_sequence_likelihoods_SEV(const Runtime::Exp& sequence_mask,
                                     const alphabet& a,
                                     const ambiguity_database& ambiguities,
-				    std::span<const int> smap,
+				    std::span<const std::int64_t> smap,
 				    int n_models);
 
     // This one is sparse
@@ -81,27 +82,27 @@ namespace substitution {
     simple_sequence_likelihoods2_SEV(const Runtime::Exp& sequence_mask,
                                      const alphabet& a,
                                      const ambiguity_database& ambiguities,
-				     std::span<const int> smap,
+				     std::span<const std::int64_t> smap,
 				     int n_models);
 
     ComponentStateVectors sample_root_sequence_SEV(const R::RVector& LCN,
 							const R::RVector& LCB,
 							const DenseMatrix<double>& F,
-							std::span<const int> compressed_col_for_col);
+							std::span<const std::int64_t> compressed_col_for_col);
 
-    ComponentStateVectors sample_sequence_SEV(std::span<const int> parent_components,
-						   std::span<const int> parent_states,
+    ComponentStateVectors sample_sequence_SEV(std::span<const std::int64_t> parent_components,
+						   std::span<const std::int64_t> parent_states,
 						   const R::RVector& LCN,
 						   const R::RVector& transition_Ps,
 						   const R::RVector& LCB,
-						   std::span<const int> compressed_col_for_col);
+						   std::span<const std::int64_t> compressed_col_for_col);
 
-    ComponentStateVectors sample_sequence_toward_root_SEV(std::span<const int> child_components,
-                                                           std::span<const int> child_states,
+    ComponentStateVectors sample_sequence_toward_root_SEV(std::span<const std::int64_t> child_components,
+                                                           std::span<const std::int64_t> child_states,
                                                            const R::RVector& LCN,
                                                            const R::RVector& transition_Ps,
                                                            const R::RVector& LCB,
                                                            const DenseMatrix<double>& F,
-                                                           std::span<const int> compressed_col_for_col);
+                                                           std::span<const std::int64_t> compressed_col_for_col);
 }
 #endif

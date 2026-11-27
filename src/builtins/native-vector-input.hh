@@ -20,13 +20,13 @@ namespace native_vector_input_detail
 {
     template<typename T>
     inline constexpr bool supported_element =
-        std::is_same_v<T, int> or std::is_same_v<T, double>;
+        std::is_same_v<T, haskell_int> or std::is_same_v<T, double>;
 
     template<typename T>
     constexpr std::string_view element_name();
 
     template<>
-    constexpr std::string_view element_name<int>()
+    constexpr std::string_view element_name<haskell_int>()
     {
         return "Int";
     }
@@ -97,7 +97,7 @@ read_native_vector_input(OperationArgs& args, int first_slot,
         throw myexception()<<argument_name<<" (raw slots "<<first_slot<<".."
                            <<first_slot + 2<<"): expected Int offset at slot "
                            <<first_slot;
-    int offset = offset_value.as_int();
+    int offset = offset_value.as_cpp_int();
 
     auto length_value =
         native_vector_input_detail::evaluate_slot<Demand>(args, first_slot + 1);
@@ -105,7 +105,7 @@ read_native_vector_input(OperationArgs& args, int first_slot,
         throw myexception()<<argument_name<<" (raw slots "<<first_slot<<".."
                            <<first_slot + 2<<"): expected Int length at slot "
                            <<first_slot + 1;
-    int length = length_value.as_int();
+    int length = length_value.as_cpp_int();
 
     auto owner_value =
         native_vector_input_detail::evaluate_slot<Demand>(args, first_slot + 2);

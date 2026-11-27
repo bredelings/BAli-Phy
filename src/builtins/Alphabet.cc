@@ -128,7 +128,7 @@ extern "C" closure builtin_function_mkCodons(OperationArgs& Args)
 
 extern "C" closure builtin_function_geneticCodeByNumber(OperationArgs& Args)
 {
-    int number = Args.evaluate_slot_to_value(0).as_int();
+    int number = Args.evaluate_slot_to_value(0).as_cpp_int();
     return Box<Genetic_Code>(get_genetic_code(number));
 }
 
@@ -160,7 +160,7 @@ extern "C" closure builtin_function_aaWithStop(OperationArgs&)
 
 extern "C" closure builtin_function_mkNumeric(OperationArgs& Args)
 {
-    int n = Args.evaluate_slot_to_value(0).as_int();
+    int n = Args.evaluate_slot_to_value(0).as_cpp_int();
 
     return Alphabet(new Numeric(n));
 }
@@ -170,7 +170,7 @@ extern "C" R::Exp simple_function_translate(vector<R::Exp>& args)
     auto arg0 = get_arg(args);
     const alphabet& a = *arg0.as_<Alphabet>();
 
-    int codon = get_arg(args).as_int();
+    int codon = get_arg(args).as_cpp_int();
 
     if (auto c = dynamic_cast<const Codons*>(&a))
 	return c->translate(codon);
@@ -185,7 +185,7 @@ extern "C" R::Exp simple_function_translateObservation(vector<R::Exp>& args)
     const alphabet& a = *arg0.as_<Alphabet>();
     auto arg1 = get_arg(args);
     auto& ambiguities = arg1.as_<Ambiguities>();
-    int codon = get_arg(args).as_int();
+    int codon = get_arg(args).as_cpp_int();
 
     if (auto c = dynamic_cast<const Codons*>(&a))
         return c->translate_observation(codon, ambiguities);
@@ -200,16 +200,16 @@ extern "C" closure builtin_function_sequenceToTextRaw(OperationArgs& Args)
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto& ambiguities = arg1.as_<Ambiguities>();
 
-    auto letter_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto letter_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 2, "Alphabet.sequenceToTextRaw");
     auto letter_sequence = letter_input.view();
 
     std::string text;
 
     int widened = 0;
-    for(int letter: letter_sequence)
+    for(auto letter: letter_sequence)
     {
-        auto [spelling, exact] = ambiguities.decode(a, letter);
+        auto [spelling, exact] = ambiguities.decode(a, checked_cpp_int(letter));
         text += spelling;
         widened += not exact;
     }

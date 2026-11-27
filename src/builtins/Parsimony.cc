@@ -40,16 +40,16 @@ extern "C" closure builtin_function_unitCostMatrix(OperationArgs& Args)
     const alphabet& a = *arg0.as_<Alphabet>();
 
     int N = a.size();
-    auto U = new Box<DenseMatrix<int>>(N, N);
+    auto U = new Box<DenseMatrix<haskell_int>>(N, N);
 
     if (auto T = arg0.poly_cast<alphabet,Triplets>())
-	*U = nucleotide_cost_matrix(*T);
+	static_cast<DenseMatrix<haskell_int>&>(*U) = nucleotide_cost_matrix(*T).cast<haskell_int>();
     else if (auto D = arg0.poly_cast<alphabet,Doublets>())
-	*U = nucleotide_cost_matrix(*D);
+	static_cast<DenseMatrix<haskell_int>&>(*U) = nucleotide_cost_matrix(*D).cast<haskell_int>();
     else if (auto E = arg0.poly_cast<alphabet,RNAEdits>())
-	*U = pos1_cost_matrix(*E);
+	static_cast<DenseMatrix<haskell_int>&>(*U) = pos1_cost_matrix(*E).cast<haskell_int>();
     else
-        *U = unit_cost_matrix(a);
+        static_cast<DenseMatrix<haskell_int>&>(*U) = unit_cost_matrix(a).cast<haskell_int>();
 
     return U;
 }
@@ -60,10 +60,10 @@ extern "C" closure builtin_function_aminoAcidCostMatrix(OperationArgs& Args)
     const alphabet& a = *arg0.as_<Alphabet>();
 
     int N = a.size();
-    auto U = new Box<DenseMatrix<int>>(N, N);
+    auto U = new Box<DenseMatrix<haskell_int>>(N, N);
 
     if (auto C = arg0.poly_cast<alphabet,Codons>())
-	*U = amino_acid_cost_matrix(*C);
+	static_cast<DenseMatrix<haskell_int>&>(*U) = amino_acid_cost_matrix(*C).cast<haskell_int>();
     else
 	throw myexception()<<"Can't compute an amino-acid cost matrix for non-Codon alphabet '"<<a.name<<"'";
 
@@ -76,10 +76,10 @@ extern "C" closure builtin_function_pos1CostMatrix(OperationArgs& Args)
     const alphabet& a = *arg0.as_<Alphabet>();
 
     int N = a.size();
-    auto U = new Box<DenseMatrix<int>>(N, N);
+    auto U = new Box<DenseMatrix<haskell_int>>(N, N);
 
     if (auto E = arg0.poly_cast<alphabet,RNAEdits>())
-	*U = pos1_cost_matrix(*E);
+	static_cast<DenseMatrix<haskell_int>&>(*U) = pos1_cost_matrix(*E).cast<haskell_int>();
     else
 	throw myexception()<<"Can't compute a position-1 cost matrix for non-Doublets alphabet '"<<a.name<<"'";
 
@@ -92,10 +92,10 @@ extern "C" closure builtin_function_pos2CostMatrix(OperationArgs& Args)
     const alphabet& a = *arg0.as_<Alphabet>();
 
     int N = a.size();
-    auto U = new Box<DenseMatrix<int>>(N, N);
+    auto U = new Box<DenseMatrix<haskell_int>>(N, N);
 
     if (auto E = arg0.poly_cast<alphabet,RNAEdits>())
-	*U = pos2_cost_matrix(*E);
+	static_cast<DenseMatrix<haskell_int>&>(*U) = pos2_cost_matrix(*E).cast<haskell_int>();
     else
 	throw myexception()<<"Can't compute a position-2 cost matrix for non-Doublets alphabet '"<<a.name<<"'";
 
@@ -105,7 +105,7 @@ extern "C" closure builtin_function_pos2CostMatrix(OperationArgs& Args)
 
 object_ptr<ParsimonyCacheBranch>
 peel_muts(const R::RVector& sequences, const alphabet& a, const ambiguity_database& ambiguities,
-          const R::RVector& A, const R::RVector& n_muts, const DenseMatrix<int>& cost);
+          const R::RVector& A, const R::RVector& n_muts, const DenseMatrix<std::int64_t>& cost);
 
 extern "C" closure builtin_function_peelMuts(OperationArgs& Args)
 {
@@ -121,11 +121,11 @@ extern "C" closure builtin_function_peelMuts(OperationArgs& Args)
 		     arg2.as_<Ambiguities>(), // ambiguities
 		     arg3.as_<R::RVector>(),  // A
 		     arg4.as_<R::RVector>(),  // n_muts
-		     arg5.as_<Box<DenseMatrix<int>>>());
+		     arg5.as_<Box<DenseMatrix<haskell_int>>>());
 }
 
 int muts_root(const R::RVector& sequences, const alphabet& a, const ambiguity_database& ambiguities,
-              const R::RVector& A, const R::RVector& n_muts, const DenseMatrix<int>& cost);
+              const R::RVector& A, const R::RVector& n_muts, const DenseMatrix<std::int64_t>& cost);
 
 extern "C" closure builtin_function_mutsRoot(OperationArgs& Args)
 {
@@ -141,14 +141,14 @@ extern "C" closure builtin_function_mutsRoot(OperationArgs& Args)
 			 arg2.as_<Ambiguities>(),
 			 arg3.as_<R::RVector>(),
 			 arg4.as_<R::RVector>(),
-			 arg5.as_<Box<DenseMatrix<int>>>());
+			 arg5.as_<Box<DenseMatrix<haskell_int>>>());
 
     return {muts};
 }
 
 object_ptr<const ParsimonyCacheBranch>
 peel_muts_fixed_A(const R::RVector& sequences, const alphabet& a, const ambiguity_database& ambiguities,
-                  const R::RVector& n_muts_, const DenseMatrix<int>& cost);
+                  const R::RVector& n_muts_, const DenseMatrix<std::int64_t>& cost);
 
 extern "C" closure builtin_function_peelMutsFixedA(OperationArgs& Args)
 {
@@ -162,14 +162,14 @@ extern "C" closure builtin_function_peelMutsFixedA(OperationArgs& Args)
 			     *arg1.as_<Alphabet>(),          // a
 			     arg2.as_<Ambiguities>(),         // ambiguities
 			     arg3.as_<R::RVector>(),          // n_muts_
-			     arg4.as_<Box<DenseMatrix<int>>>()); // cost
+			     arg4.as_<Box<DenseMatrix<haskell_int>>>()); // cost
 }
 
 
 int muts_root_fixed_A(const R::RVector& sequences, const alphabet& a,
                       const ambiguity_database& ambiguities,
-                      const R::RVector& n_muts, const DenseMatrix<int>& costs,
-                      std::span<const int> counts);
+                      const R::RVector& n_muts, const DenseMatrix<std::int64_t>& costs,
+                      std::span<const std::int64_t> counts);
 
 extern "C" closure builtin_function_mutsRootFixedA(OperationArgs& Args)
 {
@@ -178,14 +178,14 @@ extern "C" closure builtin_function_mutsRootFixedA(OperationArgs& Args)
     auto arg2 = Args.evaluate_slot_to_value(2);
     auto arg3 = Args.evaluate_slot_to_value(3);
     auto arg4 = Args.evaluate_slot_to_value(4);
-    auto counts = read_native_vector_input<int, ForeignDemand::use>(
+    auto counts = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 5, "Parsimony.mutsRootFixedA");
 
     int muts = muts_root_fixed_A(arg0.as_<R::RVector>(),            // sequences
 				 *arg1.as_<Alphabet>(),          // a
 				 arg2.as_<Ambiguities>(),         // ambiguities
 				 arg3.as_<R::RVector>(),          // n_muts_
-				 arg4.as_<Box<DenseMatrix<int>>>(), // cost
+				 arg4.as_<Box<DenseMatrix<haskell_int>>>(), // cost
 				 counts.view());                     // counts
 
     return { muts };

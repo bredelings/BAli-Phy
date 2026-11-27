@@ -26,6 +26,7 @@
 #ifndef LIKELIHOOD_H
 #define LIKELIHOOD_H
 
+#include <cstdint>
 #include <span>
 #include <vector>
 #include "substitution/component-state.hh"
@@ -66,15 +67,15 @@ namespace substitution {
     simple_sequence_likelihoods(const R::RVector& sequence,
 				const alphabet& a,
 				const ambiguity_database& ambiguities,
-				std::span<const int> smap,
+				std::span<const std::int64_t> smap,
 				int n_models);
 
     // This one is sparse.
     object_ptr<const SparseLikelihoods>
-    simple_sequence_likelihoods2(std::span<const int> sequence,
+    simple_sequence_likelihoods2(std::span<const std::int64_t> sequence,
                                  const alphabet& a,
                                  const ambiguity_database& ambiguities,
-                                 std::span<const int> smap,
+                                 std::span<const std::int64_t> smap,
                                  int n_models);
 
     object_ptr<const Likelihood_Cache_Branch>
@@ -139,8 +140,8 @@ namespace substitution {
 					       const R::RVector& A_,
                                                const DenseMatrix<double>& F);
 
-    ComponentStateVectors sample_branch_sequence(std::span<const int> parent_components,
-						 std::span<const int> parent_states,
+    ComponentStateVectors sample_branch_sequence(std::span<const std::int64_t> parent_components,
+						 std::span<const std::int64_t> parent_states,
 						 const pairwise_alignment_t& parent_A,
 						 const R::RVector& LCN,
 						 const R::RVector& LCB,
@@ -148,8 +149,8 @@ namespace substitution {
 						 const R::RVector& transition_P,
 						 const DenseMatrix<double>& F);
 
-    ComponentStateVectors sample_branch_sequence_toward_root(std::span<const int> child_components,
-                                                              std::span<const int> child_states,
+    ComponentStateVectors sample_branch_sequence_toward_root(std::span<const std::int64_t> child_components,
+                                                              std::span<const std::int64_t> child_states,
                                                               const pairwise_alignment_t& child_A,
                                                               const R::RVector& LCN,
                                                               const R::RVector& LCB,

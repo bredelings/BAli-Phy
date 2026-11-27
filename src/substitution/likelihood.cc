@@ -17,6 +17,7 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
+#include "computation/haskell/Int.hh"
 #include "likelihood.hh"
 #include "ops.hh"
 #include "models/parameters.hh"
@@ -1979,7 +1980,7 @@ namespace substitution {
     simple_sequence_likelihoods(const R::RVector& sequence,
 				const alphabet&,
 				const ambiguity_database& ambiguities,
-				std::span<const int> smap,
+				std::span<const std::int64_t> smap,
 				int n_models)
     {
 	int n_states = smap.size();
@@ -1991,7 +1992,7 @@ namespace substitution {
 
         for(int i=0;i<L;i++)
 	{
-	    int letter = sequence[i].as_int();
+	    int letter = sequence[i].as_cpp_int();
 
 	    double* S = (*LCB)[i];
 
@@ -2021,7 +2022,7 @@ namespace substitution {
 		const auto& ok = ambiguities.mask(letter);
 		for(int m=0;m<n_models;m++)
 		    for(int s1=0;s1<n_states;s1++)
-			if (not ok[smap[s1]])
+			if (not ok[checked_cpp_int(smap[s1])])
 			    S[m*n_states + s1] = 0;
 	    }
 	}
@@ -2030,10 +2031,10 @@ namespace substitution {
     }
 
     object_ptr<const SparseLikelihoods>
-    simple_sequence_likelihoods2(std::span<const int> sequence,
+    simple_sequence_likelihoods2(std::span<const std::int64_t> sequence,
                                  const alphabet&,
                                  const ambiguity_database& ambiguities,
-                                 std::span<const int> smap,
+                                 std::span<const std::int64_t> smap,
                                  int n_models)
     {
 	int n_states = smap.size();
@@ -2048,7 +2049,7 @@ namespace substitution {
 	    // Add NNZ offset fo values/states for this column.
 	    LCB->column_offsets.push_back(LCB->num_non_zeros());
 
-	    int letter = sequence[i];
+	    int letter = checked_cpp_int(sequence[i]);
 
 	    if (letter >= 0)
 	    {
@@ -2060,7 +2061,7 @@ namespace substitution {
 	    {
 		const auto& ok = ambiguities.mask(letter);
 		for(int s1=0;s1<n_states;s1++)
-		    if (ok[smap[s1]])
+		    if (ok[checked_cpp_int(smap[s1])])
 			LCB->states.push_back(s1);
 	    }
 	    else if (letter == alphabet::not_gap)
@@ -2354,8 +2355,8 @@ namespace substitution {
     // Walk the child-to-parent alignment while crossing the process edge backward. Matches use P(i,j),
     // child-only characters are skipped, and parent-only characters have no transition-state factor.
     // Incoming CLVs exclude the sampled child and supply all remaining evidence, including the rootward side.
-    ComponentStateVectors sample_branch_sequence_toward_root(std::span<const int> child_components,
-                                                              std::span<const int> child_states,
+    ComponentStateVectors sample_branch_sequence_toward_root(std::span<const std::int64_t> child_components,
+                                                              std::span<const std::int64_t> child_states,
                                                               const pairwise_alignment_t& child_A,
                                                               const R::RVector& sparse_LCN,
                                                               const R::RVector& LCB,
@@ -2458,7 +2459,7 @@ namespace substitution {
             {
                 // For homologous characters, candidate parent state i has transition weight P(i,j).
                 calc_transition_prob_to_child(
-                    SMAT, {child_components[s_child], child_states[s_child]}, transition_P);
+                    SMAT, {checked_cpp_int(child_components[s_child]), checked_cpp_int(child_states[s_child])}, transition_P);
                 s_child++;
             }
             else
@@ -2496,8 +2497,8 @@ namespace substitution {
         return ancestral_characters;
     }
 
-    ComponentStateVectors sample_branch_sequence(std::span<const int> parent_components,
-						 std::span<const int> parent_states,
+    ComponentStateVectors sample_branch_sequence(std::span<const std::int64_t> parent_components,
+						 std::span<const std::int64_t> parent_states,
 						 const pairwise_alignment_t& parent_A,
 						 const R::RVector& sparse_LCN,
 						 const R::RVector& LCB,
@@ -2605,7 +2606,7 @@ namespace substitution {
 	    pair<int,int> state_model_parent(-1,-1);
 	    if (i_parent < parent_A.size() and parent_A.has_character1(i_parent))
 	    {
-		state_model_parent = {parent_components[s_parent], parent_states[s_parent]};
+		state_model_parent = {checked_cpp_int(parent_components[s_parent]), checked_cpp_int(parent_states[s_parent])};
 		s_parent++;
 	    }
 	    i_parent++;

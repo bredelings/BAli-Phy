@@ -1,3 +1,4 @@
+#include "computation/haskell/Int.hh"
 #include "substitution/parsimony.hh"
 
 #include <limits>
@@ -21,14 +22,14 @@ int max_element(const matrix<int>& M)
 }
 
 
-void peel_muts(const int* n_muts1, int* n_muts2, int n_letters, const DenseMatrix<int>& cost)
+void peel_muts(const int* n_muts1, int* n_muts2, int n_letters, const DenseMatrix<std::int64_t>& cost)
 {
     for(int l2=0;l2<n_letters;l2++)
     {
-	int c = cost(l2,0) + n_muts1[0];
+	auto c = std::int64_t(checked_cpp_int(cost(l2,0))) + n_muts1[0];
 	for(int l1=1;l1<n_letters;l1++)
-	    c = std::min(c, cost(l2,l1) + n_muts1[l1]);
-	n_muts2[l2] += c;
+	    c = std::min(c, std::int64_t(checked_cpp_int(cost(l2,l1))) + n_muts1[l1]);
+	n_muts2[l2] = checked_cpp_int(c + n_muts2[l2]);
     }
 }
 
@@ -38,7 +39,7 @@ peel_muts(const R::RVector& sequences,
 	  const ambiguity_database& ambiguities,
 	  const R::RVector& A_,
 	  const R::RVector& n_muts_,
-	  const DenseMatrix<int>& cost)
+	  const DenseMatrix<std::int64_t>& cost)
 {
     int n_branches_in = n_muts_.size();
     assert(n_muts_.size() == n_branches_in);
@@ -123,7 +124,7 @@ peel_muts(const R::RVector& sequences,
 	for(auto& esequence: sequences)
 	{
 	    auto& sequence = esequence.as_<R::RVector>();
-	    int letter = sequence[s_node].as_int();
+	    int letter = sequence[s_node].as_cpp_int();
 	    if (letter >= 0)
 	    {
 		for(int l=0;l<n_letters;l++)
@@ -149,7 +150,7 @@ int muts_root(const R::RVector& sequences,
 	      const ambiguity_database& ambiguities,
 	      const R::RVector& A_,
 	      const R::RVector& n_muts_,
-              const DenseMatrix<int>& cost)
+              const DenseMatrix<std::int64_t>& cost)
 {
     int n_branches_in = n_muts_.size();
     assert(n_muts_.size() == n_branches_in);
@@ -234,7 +235,7 @@ int muts_root(const R::RVector& sequences,
 	for(auto& esequence: sequences)
 	{
 	    auto& sequence = esequence.as_<R::RVector>();
-	    int letter = sequence[s_node].as_int();
+	    int letter = sequence[s_node].as_cpp_int();
 	    if (letter >= 0)
 	    {
 		for(int l=0;l<n_letters;l++)
@@ -261,7 +262,7 @@ peel_muts_fixed_A(const R::RVector& sequences,
 		  const alphabet&,
 		  const ambiguity_database& ambiguities,
 		  const R::RVector& n_muts_,
-		  const DenseMatrix<int>& cost)
+		  const DenseMatrix<std::int64_t>& cost)
 {
     int n_letters = cost.rows();
 
@@ -324,7 +325,7 @@ peel_muts_fixed_A(const R::RVector& sequences,
 	{
 	    if (not mask(j).test(c)) continue;
 
-	    int letter = sequence(j)[i[j]].as_int();
+	    int letter = sequence(j)[i[j]].as_cpp_int();
 	    i[j]++;
 
 	    if (letter >= 0)
@@ -352,8 +353,8 @@ int muts_root_fixed_A(const R::RVector& sequences,
 		      const alphabet&,
 		      const ambiguity_database& ambiguities,
 		      const R::RVector& n_muts_,
-		      const DenseMatrix<int>& costs,
-		      std::span<const int> counts)
+		      const DenseMatrix<std::int64_t>& costs,
+		      std::span<const std::int64_t> counts)
 {
     int n_letters = costs.rows();
 
@@ -417,7 +418,7 @@ int muts_root_fixed_A(const R::RVector& sequences,
 	{
 	    if (not mask(j).test(c)) continue;
 
-	    int letter = sequence(j)[i[j]].as_int();
+	    int letter = sequence(j)[i[j]].as_cpp_int();
 	    i[j]++;
 
 	    if (letter >= 0)
@@ -435,7 +436,9 @@ int muts_root_fixed_A(const R::RVector& sequences,
 	    }
 	}
 
-        total += min(S) * counts[s_node];
+        // The parsimony cache stores C++ int scores. Form the weighted sum
+        // in a wider type before checking that the next score still fits.
+        total = checked_cpp_int(total + std::int64_t(min(S)) * checked_cpp_int(counts[s_node]));
 
 	s_node++;
     }

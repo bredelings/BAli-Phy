@@ -52,7 +52,7 @@ namespace
 
 json::value c_json(const R::Exp& E)
 {
-    int type = json_pair_first(E).as_int();
+    int type = json_pair_first(E).as_cpp_int();
 
     auto J = json_pair_second(E);
     
@@ -172,7 +172,7 @@ extern "C" closure builtin_function_cjson_to_bytestring(OperationArgs& Args)
 // Assemble the fixed physical MCON record used by scalar TSV loggers.
 extern "C" closure builtin_function_makeScalarLogRecord(OperationArgs& Args)
 {
-    int iteration = Args.evaluate_slot_to_value(0).as_int();
+    auto iteration = Args.evaluate_slot_to_value(0).as_int();
     auto statistics_arg = Args.evaluate_slot_to_value(1);
     auto parameters_arg = Args.evaluate_slot_to_value(2);
 
@@ -228,7 +228,7 @@ extern "C" closure builtin_function_getTsvLine(OperationArgs& Args)
 // Encode the complete logical integer view without allocating boxed elements or filtering values.
 extern "C" closure builtin_function_encodeIntVector(OperationArgs& Args)
 {
-    auto input = read_native_vector_input<int, ForeignDemand::use>(Args, 0, "Foreign.encodeIntVector");
+    auto input = read_native_vector_input<haskell_int, ForeignDemand::use>(Args, 0, "Foreign.encodeIntVector");
     auto values = input.view();
     std::ostringstream out;
     out << "[";

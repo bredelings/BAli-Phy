@@ -46,8 +46,8 @@ decltype(auto) visit_matrix(const R::Exp& value, F&& operation)
 {
     if (value.is_a<Box<DenseMatrix<double>>>() )
         return operation(value.as_<Box<DenseMatrix<double>>>());
-    if (value.is_a<Box<DenseMatrix<int>>>() )
-        return operation(value.as_<Box<DenseMatrix<int>>>());
+    if (value.is_a<Box<DenseMatrix<haskell_int>>>() )
+        return operation(value.as_<Box<DenseMatrix<haskell_int>>>());
 
     throw myexception()<<"Unsupported native matrix representation "<<value.print();
 }
@@ -59,8 +59,8 @@ decltype(auto) visit_numeric_vector(const R::Exp& value, F&& operation)
 {
     if (value.is_a<Box<DenseVector<double>>>() )
         return operation(value.as_<Box<DenseVector<double>>>());
-    if (value.is_a<Box<DenseVector<int>>>() )
-        return operation(value.as_<Box<DenseVector<int>>>());
+    if (value.is_a<Box<DenseVector<haskell_int>>>() )
+        return operation(value.as_<Box<DenseVector<haskell_int>>>());
 
     throw myexception()<<"Unsupported native vector representation "<<value.print();
 }
@@ -102,11 +102,11 @@ decltype(auto) visit_same_numeric_vector_pair(const R::Exp& value1, const R::Exp
             throw myexception()<<"Vectors have different native element representations";
         return operation(value1.as_<Box<DenseVector<double>>>(), value2.as_<Box<DenseVector<double>>>());
     }
-    if (value1.is_a<Box<DenseVector<int>>>() )
+    if (value1.is_a<Box<DenseVector<haskell_int>>>() )
     {
-        if (not value2.is_a<Box<DenseVector<int>>>() )
+        if (not value2.is_a<Box<DenseVector<haskell_int>>>() )
             throw myexception()<<"Vectors have different native element representations";
-        return operation(value1.as_<Box<DenseVector<int>>>(), value2.as_<Box<DenseVector<int>>>());
+        return operation(value1.as_<Box<DenseVector<haskell_int>>>(), value2.as_<Box<DenseVector<haskell_int>>>());
     }
 
     throw myexception()<<"Unsupported native vector representation "<<value1.print();
@@ -123,11 +123,11 @@ decltype(auto) visit_same_matrix_pair(const R::Exp& value1, const R::Exp& value2
             throw myexception()<<"Matrices have different native element representations";
         return operation(value1.as_<Box<DenseMatrix<double>>>(), value2.as_<Box<DenseMatrix<double>>>());
     }
-    if (value1.is_a<Box<DenseMatrix<int>>>() )
+    if (value1.is_a<Box<DenseMatrix<haskell_int>>>() )
     {
-        if (not value2.is_a<Box<DenseMatrix<int>>>() )
+        if (not value2.is_a<Box<DenseMatrix<haskell_int>>>() )
             throw myexception()<<"Matrices have different native element representations";
-        return operation(value1.as_<Box<DenseMatrix<int>>>(), value2.as_<Box<DenseMatrix<int>>>());
+        return operation(value1.as_<Box<DenseMatrix<haskell_int>>>(), value2.as_<Box<DenseMatrix<haskell_int>>>());
     }
 
     throw myexception()<<"Unsupported native matrix representation "<<value1.print();
@@ -147,12 +147,12 @@ decltype(auto) visit_same_matrix_vector_pair(const R::Exp& matrix_value,
         return operation(matrix_value.as_<Box<DenseMatrix<double>>>(),
                          vector_value.as_<Box<DenseVector<double>>>());
     }
-    if (matrix_value.is_a<Box<DenseMatrix<int>>>() )
+    if (matrix_value.is_a<Box<DenseMatrix<haskell_int>>>() )
     {
-        if (not vector_value.is_a<Box<DenseVector<int>>>() )
+        if (not vector_value.is_a<Box<DenseVector<haskell_int>>>() )
             throw myexception()<<"Matrix and vector have different native element representations";
-        return operation(matrix_value.as_<Box<DenseMatrix<int>>>(),
-                         vector_value.as_<Box<DenseVector<int>>>());
+        return operation(matrix_value.as_<Box<DenseMatrix<haskell_int>>>(),
+                         vector_value.as_<Box<DenseVector<haskell_int>>>());
     }
 
     throw myexception()<<"Unsupported native matrix representation "<<matrix_value.print();
@@ -162,7 +162,7 @@ decltype(auto) visit_same_matrix_vector_pair(const R::Exp& matrix_value,
 template <typename T>
 T matrix_scalar(const R::Exp& value)
 {
-    if constexpr (std::is_same_v<T, int>)
+    if constexpr (std::is_same_v<T, haskell_int>)
         return value.as_int();
     else
         return value.as_double();
@@ -214,20 +214,20 @@ closure sort_index(const Box<NativeVector>& values)
     std::stable_sort(indices.begin(), indices.end(), [&](int left, int right) {
         return values(left) < values(right);
     });
-    auto result = new Box<DenseVector<int>>(indices.size());
+    auto result = new Box<DenseVector<haskell_int>>(indices.size());
     std::copy(indices.begin(), indices.end(), result->data());
     return result;
 }
 
 // Apply positive-modulus wrapping to a native integer index vector.
-closure modulo_vector(const Box<DenseVector<int>>& values, int divisor)
+closure modulo_vector(const Box<DenseVector<haskell_int>>& values, haskell_int divisor)
 {
     if (divisor <= 0)
         throw myexception()<<"vector modulo: divisor must be positive";
-    auto result = new Box<DenseVector<int>>(values.size());
+    auto result = new Box<DenseVector<haskell_int>>(values.size());
     for(int i=0; i<values.size(); i++)
     {
-        int remainder = values(i) % divisor;
+        auto remainder = values(i) % divisor;
         (*result)(i) = remainder < 0 ? remainder + divisor : remainder;
     }
     return result;
@@ -432,8 +432,8 @@ closure matrix_from_vectors(OperationArgs& Args, int count, int extent,
 closure matrix_from_vectors(OperationArgs& Args, bool by_rows)
 {
     auto count_arg = Args.evaluate_slot_to_value_with_contingency(0);
-    int count = count_arg.value.as_int();
-    int extent = Args.evaluate_slot_to_value(1).as_int();
+    int count = count_arg.value.as_cpp_int();
+    int extent = Args.evaluate_slot_to_value(1).as_cpp_int();
     if (count <= 0 or extent <= 0)
         throw myexception()<<"matrix from vectors: positive dimensions are required";
 
@@ -456,9 +456,9 @@ closure matrix_from_vectors(OperationArgs& Args, bool by_rows)
     if (expression.is_a<Box<DenseVector<double>>>() )
         return matrix_from_vectors<double>(Args, count, extent, tail,
             expression.as_<Box<DenseVector<double>>>(), by_rows);
-    if (expression.is_a<Box<DenseVector<int>>>() )
-        return matrix_from_vectors<int>(Args, count, extent, tail,
-            expression.as_<Box<DenseVector<int>>>(), by_rows);
+    if (expression.is_a<Box<DenseVector<haskell_int>>>() )
+        return matrix_from_vectors<haskell_int>(Args, count, extent, tail,
+            expression.as_<Box<DenseVector<haskell_int>>>(), by_rows);
     throw myexception()<<"matrix from vectors: unsupported native vector representation";
 }
 
@@ -510,8 +510,8 @@ closure slice_matrix(const Box<NativeMatrix>& matrix, int first_row, int first_c
 // matrices for either dimension.
 template <typename NativeMatrix>
 closure gather_matrix(const Box<NativeMatrix>& matrix,
-                      const Box<DenseVector<int>>& row_indices,
-                      const Box<DenseVector<int>>& column_indices)
+                      const Box<DenseVector<haskell_int>>& row_indices,
+                      const Box<DenseVector<haskell_int>>& column_indices)
 {
     for(auto index: row_indices)
         if (index < 0 or index >= matrix.rows())
@@ -571,7 +571,7 @@ closure join_vectors(OperationArgs& Args, int total, UseWithContingency xs,
 // Dispatch a nonempty vector-list join from its first native representation.
 closure join_vectors(OperationArgs& Args)
 {
-    int total = Args.evaluate_slot_to_value(0).as_int();
+    int total = Args.evaluate_slot_to_value(0).as_cpp_int();
     auto xs = Args.evaluate_slot_use_with_contingency(1);
     const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
     auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
@@ -589,9 +589,9 @@ closure join_vectors(OperationArgs& Args)
     if (expression.is_a<Box<DenseVector<double>>>() )
         return join_vectors<double>(Args, total, tail,
             expression.as_<Box<DenseVector<double>>>());
-    if (expression.is_a<Box<DenseVector<int>>>() )
-        return join_vectors<int>(Args, total, tail,
-            expression.as_<Box<DenseVector<int>>>());
+    if (expression.is_a<Box<DenseVector<haskell_int>>>() )
+        return join_vectors<haskell_int>(Args, total, tail,
+            expression.as_<Box<DenseVector<haskell_int>>>());
     throw myexception()<<"vjoin: unsupported native vector representation";
 }
 
@@ -743,9 +743,9 @@ template <typename T>
 closure matrix_from_list(OperationArgs& Args)
 {
     auto rows_arg = Args.evaluate_slot_to_value_with_contingency(0);
-    int rows = rows_arg.value.as_int();
+    int rows = rows_arg.value.as_cpp_int();
     auto columns_arg = Args.evaluate_slot_to_value_with_contingency(1);
-    int columns = columns_arg.value.as_int();
+    int columns = columns_arg.value.as_cpp_int();
 
     if (rows < 0 or columns < 0)
         throw myexception()<<"matrix (><): dimensions must be nonnegative, but got ("
@@ -796,7 +796,7 @@ extern "C" R::Exp simple_function_matrixRowsNative(vector<R::Exp>& args)
     auto value = get_arg(args);
     auto count = visit_matrix(value, [](const auto& matrix) { return matrix.rows(); });
     if (count > std::numeric_limits<int>::max())
-        throw myexception()<<"native matrix row count exceeds the Haskell Int range";
+        throw myexception()<<"native matrix row count exceeds the native indexing limit";
     return static_cast<int>(count);
 }
 
@@ -806,14 +806,14 @@ extern "C" R::Exp simple_function_matrixColsNative(vector<R::Exp>& args)
     auto value = get_arg(args);
     auto count = visit_matrix(value, [](const auto& matrix) { return matrix.cols(); });
     if (count > std::numeric_limits<int>::max())
-        throw myexception()<<"native matrix column count exceeds the Haskell Int range";
+        throw myexception()<<"native matrix column count exceeds the native indexing limit";
     return static_cast<int>(count);
 }
 
 // Construct a matrix using the native Int representation.
 extern "C" closure builtin_function_intMatrixFromList(OperationArgs& Args)
 {
-    return matrix_from_list<int>(Args);
+    return matrix_from_list<haskell_int>(Args);
 }
 
 // Construct a matrix using the native Double representation.
@@ -826,8 +826,8 @@ extern "C" closure builtin_function_doubleMatrixFromList(OperationArgs& Args)
 extern "C" closure builtin_function_matrixKonstNative(OperationArgs& Args)
 {
     auto value = Args.evaluate_slot_to_value(0);
-    int rows = Args.evaluate_slot_to_value(1).as_int();
-    int columns = Args.evaluate_slot_to_value(2).as_int();
+    int rows = Args.evaluate_slot_to_value(1).as_cpp_int();
+    int columns = Args.evaluate_slot_to_value(2).as_cpp_int();
     if (value.is_int())
         return constant_matrix(value.as_int(), rows, columns);
     if (value.is_double())
@@ -840,8 +840,8 @@ extern "C" closure builtin_function_diagRectNative(OperationArgs& Args)
 {
     auto fill = Args.evaluate_slot_to_value(0);
     auto diagonal = Args.evaluate_slot_to_value(1);
-    int rows = Args.evaluate_slot_to_value(2).as_int();
-    int columns = Args.evaluate_slot_to_value(3).as_int();
+    int rows = Args.evaluate_slot_to_value(2).as_cpp_int();
+    int columns = Args.evaluate_slot_to_value(3).as_cpp_int();
     return visit_numeric_vector(diagonal, [&](const auto& native) {
         using T = typename std::decay_t<decltype(native)>::Scalar;
         return diagonal_matrix(native, matrix_scalar<T>(fill), rows, columns);
@@ -871,15 +871,15 @@ extern "C" R::Exp simple_function_vectorEqual(vector<R::Exp>& args)
         return vector1.size() == vector2.size() and
                (vector1.array() == vector2.array()).all();
     }
-    if (value1.is_a<Box<DenseVector<int>>>() and
-        value2.is_a<Box<DenseVector<int>>>())
+    if (value1.is_a<Box<DenseVector<haskell_int>>>() and
+        value2.is_a<Box<DenseVector<haskell_int>>>())
     {
-        const auto& vector1 = value1.as_<Box<DenseVector<int>>>();
-        const auto& vector2 = value2.as_<Box<DenseVector<int>>>();
+        const auto& vector1 = value1.as_<Box<DenseVector<haskell_int>>>();
+        const auto& vector2 = value2.as_<Box<DenseVector<haskell_int>>>();
         return vector1.size() == vector2.size() and
                (vector1.array() == vector2.array()).all();
     }
-    if (value1.is_a<Box<DenseVector<double>>>() or value1.is_a<Box<DenseVector<int>>>())
+    if (value1.is_a<Box<DenseVector<double>>>() or value1.is_a<Box<DenseVector<haskell_int>>>())
         throw myexception()<<"Native vectors have different element representations";
 
     throw myexception()<<"Unsupported native vector representation "<<value1.print();
@@ -958,7 +958,7 @@ extern "C" R::Exp simple_function_dotNative(vector<R::Exp>& args)
 // Reshape either supported native vector into a row-major matrix.
 extern "C" closure builtin_function_reshapeVector(OperationArgs& Args)
 {
-    int columns = Args.evaluate_slot_to_value(0).as_int();
+    int columns = Args.evaluate_slot_to_value(0).as_cpp_int();
     auto value = Args.evaluate_slot_to_value(1);
     return visit_numeric_vector(value, [columns](const auto& vector_value) {
         return reshape_vector(vector_value, columns);
@@ -998,7 +998,7 @@ extern "C" closure builtin_function_matrixFromColumnsNative(OperationArgs& Args)
 // Extract one matrix row as an independent native vector.
 extern "C" closure builtin_function_matrixRowNative(OperationArgs& Args)
 {
-    int index = Args.evaluate_slot_to_value(0).as_int();
+    int index = Args.evaluate_slot_to_value(0).as_cpp_int();
     auto matrix = Args.evaluate_slot_to_value(1);
     return visit_matrix(matrix, [index](const auto& native) {
         return matrix_vector_at(native, index, true);
@@ -1008,7 +1008,7 @@ extern "C" closure builtin_function_matrixRowNative(OperationArgs& Args)
 // Extract one matrix column as an independent native vector.
 extern "C" closure builtin_function_matrixColumnNative(OperationArgs& Args)
 {
-    int index = Args.evaluate_slot_to_value(0).as_int();
+    int index = Args.evaluate_slot_to_value(0).as_cpp_int();
     auto matrix = Args.evaluate_slot_to_value(1);
     return visit_matrix(matrix, [index](const auto& native) {
         return matrix_vector_at(native, index, false);
@@ -1018,8 +1018,8 @@ extern "C" closure builtin_function_matrixColumnNative(OperationArgs& Args)
 // Extract a contiguous segment from either native vector representation.
 extern "C" closure builtin_function_subVectorNative(OperationArgs& Args)
 {
-    int start = Args.evaluate_slot_to_value(0).as_int();
-    int count = Args.evaluate_slot_to_value(1).as_int();
+    int start = Args.evaluate_slot_to_value(0).as_cpp_int();
+    int count = Args.evaluate_slot_to_value(1).as_cpp_int();
     auto value = Args.evaluate_slot_to_value(2);
     return visit_numeric_vector(value, [start, count](const auto& vector) {
         return slice_vector(vector, start, count);
@@ -1035,10 +1035,10 @@ extern "C" closure builtin_function_joinVectorsNative(OperationArgs& Args)
 // Extract a rectangular Eigen block from either matrix representation.
 extern "C" closure builtin_function_subMatrixNative(OperationArgs& Args)
 {
-    int first_row = Args.evaluate_slot_to_value(0).as_int();
-    int first_column = Args.evaluate_slot_to_value(1).as_int();
-    int row_count = Args.evaluate_slot_to_value(2).as_int();
-    int column_count = Args.evaluate_slot_to_value(3).as_int();
+    int first_row = Args.evaluate_slot_to_value(0).as_cpp_int();
+    int first_column = Args.evaluate_slot_to_value(1).as_cpp_int();
+    int row_count = Args.evaluate_slot_to_value(2).as_cpp_int();
+    int column_count = Args.evaluate_slot_to_value(3).as_cpp_int();
     auto value = Args.evaluate_slot_to_value(4);
     return visit_matrix(value, [=](const auto& matrix) {
         return slice_matrix(matrix, first_row, first_column, row_count, column_count);
@@ -1049,9 +1049,9 @@ extern "C" closure builtin_function_subMatrixNative(OperationArgs& Args)
 extern "C" closure builtin_function_gatherMatrixNative(OperationArgs& Args)
 {
     auto row_value = Args.evaluate_slot_to_value(0);
-    const auto& row_indices = row_value.as_<Box<DenseVector<int>>>();
+    const auto& row_indices = row_value.as_<Box<DenseVector<haskell_int>>>();
     auto column_value = Args.evaluate_slot_to_value(1);
-    const auto& column_indices = column_value.as_<Box<DenseVector<int>>>();
+    const auto& column_indices = column_value.as_<Box<DenseVector<haskell_int>>>();
     auto matrix_value = Args.evaluate_slot_to_value(2);
     return visit_matrix(matrix_value, [&](const auto& matrix) {
         return gather_matrix(matrix, row_indices, column_indices);
@@ -1074,8 +1074,8 @@ extern "C" closure builtin_function_joinMatricesNative(OperationArgs& Args)
 extern "C" closure builtin_function_repmatNative(OperationArgs& Args)
 {
     auto matrix_value = Args.evaluate_slot_to_value(0);
-    int row_repeats = Args.evaluate_slot_to_value(1).as_int();
-    int column_repeats = Args.evaluate_slot_to_value(2).as_int();
+    int row_repeats = Args.evaluate_slot_to_value(1).as_cpp_int();
+    int column_repeats = Args.evaluate_slot_to_value(2).as_cpp_int();
     return visit_matrix(matrix_value, [=](const auto& matrix) {
         return repeat_matrix(matrix, row_repeats, column_repeats);
     });
@@ -1084,7 +1084,7 @@ extern "C" closure builtin_function_repmatNative(OperationArgs& Args)
 // Map a private unary Floating opcode over a native Double vector.
 extern "C" closure builtin_function_vectorFloatingUnary(OperationArgs& Args)
 {
-    int operation = Args.evaluate_slot_to_value(0).as_int();
+    int operation = Args.evaluate_slot_to_value(0).as_cpp_int();
     auto value = Args.evaluate_slot_to_value(1);
     const auto& vector = value.as_<Box<DenseVector<double>>>();
     return map_vector(vector, [operation](double element) {
@@ -1095,7 +1095,7 @@ extern "C" closure builtin_function_vectorFloatingUnary(OperationArgs& Args)
 // Apply a private binary Floating opcode with singleton vector broadcasting.
 extern "C" closure builtin_function_vectorFloatingBinary(OperationArgs& Args)
 {
-    int operation = Args.evaluate_slot_to_value(0).as_int();
+    int operation = Args.evaluate_slot_to_value(0).as_cpp_int();
     auto left_value = Args.evaluate_slot_to_value(1);
     const auto& left = left_value.as_<Box<DenseVector<double>>>();
     auto right_value = Args.evaluate_slot_to_value(2);
@@ -1107,7 +1107,7 @@ extern "C" closure builtin_function_vectorFloatingBinary(OperationArgs& Args)
 // Map a private unary Floating opcode over a native Double matrix.
 extern "C" closure builtin_function_matrixFloatingUnary(OperationArgs& Args)
 {
-    int operation = Args.evaluate_slot_to_value(0).as_int();
+    int operation = Args.evaluate_slot_to_value(0).as_cpp_int();
     auto value = Args.evaluate_slot_to_value(1);
     const auto& matrix = value.as_<Box<DenseMatrix<double>>>();
     return map_matrix(matrix, [operation](double element) {
@@ -1118,7 +1118,7 @@ extern "C" closure builtin_function_matrixFloatingUnary(OperationArgs& Args)
 // Apply a private binary Floating opcode with independent matrix broadcasting.
 extern "C" closure builtin_function_matrixFloatingBinary(OperationArgs& Args)
 {
-    int operation = Args.evaluate_slot_to_value(0).as_int();
+    int operation = Args.evaluate_slot_to_value(0).as_cpp_int();
     auto left_value = Args.evaluate_slot_to_value(1);
     const auto& left = left_value.as_<Box<DenseMatrix<double>>>();
     auto right_value = Args.evaluate_slot_to_value(2);
@@ -1247,13 +1247,23 @@ extern "C" closure builtin_function_vector_negate(OperationArgs& Args)
     });
 }
 
+// Both unboxed Int containers use GHC's abs minBound == minBound. Calling std::abs
+// on this value is undefined even though the matrix module wraps ordinary arithmetic.
+template<typename T>
+T scalar_abs(T x)
+{
+    if constexpr (std::is_same_v<T, haskell_int>)
+        if (x == std::numeric_limits<haskell_int>::min()) return x;
+    return std::abs(x);
+}
+
 // Take the absolute value of every vector element.
 extern "C" closure builtin_function_vector_abs(OperationArgs& Args)
 {
     auto vector_value = Args.evaluate_slot_to_value(0);
     // Map the unary operation after dispatching the native representation.
     return visit_numeric_vector(vector_value, [](const auto& native_vector) {
-        return map_vector(native_vector, [](auto element) { return std::abs(element); });
+        return map_vector(native_vector, [](auto element) { return scalar_abs(element); });
     });
 }
 
@@ -1291,8 +1301,8 @@ extern "C" closure builtin_function_sortIndexNative(OperationArgs& Args)
 extern "C" closure builtin_function_vectorModuloNative(OperationArgs& Args)
 {
     auto value = Args.evaluate_slot_to_value(0);
-    int divisor = Args.evaluate_slot_to_value(1).as_int();
-    return modulo_vector(value.as_<Box<DenseVector<int>>>(), divisor);
+    haskell_int divisor = Args.evaluate_slot_to_value(1).as_int();
+    return modulo_vector(value.as_<Box<DenseVector<haskell_int>>>(), divisor);
 }
 
 // Multiply a matrix by a vector after dispatching their shared representation.
@@ -1383,7 +1393,7 @@ extern "C" closure builtin_function_mat_abs(OperationArgs& Args)
 {
     auto matrix_value = Args.evaluate_slot_to_value(0);
     return visit_matrix(matrix_value, [](const auto& native_matrix) {
-        return map_matrix(native_matrix, [](auto element) { return std::abs(element); });
+        return map_matrix(native_matrix, [](auto element) { return scalar_abs(element); });
     });
 }
 
@@ -1728,8 +1738,8 @@ extern "C" closure builtin_function_matrixToVector(OperationArgs& Args)
 // Read one element without converting its native scalar representation.
 extern "C" R::Exp simple_function_matrixAtIndex(vector<R::Exp>& args)
 {
-    int i = get_arg(args).as_int();
-    int j = get_arg(args).as_int();
+    int i = get_arg(args).as_cpp_int();
+    int j = get_arg(args).as_cpp_int();
     auto arg2 = get_arg(args);
     return visit_matrix(arg2, [i,j](const auto& native_matrix) {
         return R::Exp(native_matrix(i,j));

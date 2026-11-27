@@ -1055,7 +1055,7 @@ struct Chunk
  */
 
 // Question: do we want to actually distinguish between N and -?
-log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment& A, std::span<const int> d, int k, const vector<Chunk>& rho, double theta)
+log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment& A, std::span<const std::int64_t> d, int k, const vector<Chunk>& rho, double theta)
 {
     // 1. Determine mutation probabilities when copying from a given parent.
     assert(k>=1);
@@ -1094,13 +1094,13 @@ log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment&
     };
 
     // 3. Perform the forward algorithm
-    int prev_column = 0;
+    std::int64_t prev_column = 0;
     for(int column1=0; column1<L; column1++)
     {
         double maximum = 0;
 
         int column2 = column1 + 1;
-        double rho_mass = rho_integral(prev_column+0.5, d[column1]+0.5);
+        double rho_mass = rho_integral(double(prev_column) + 0.5, double(d[column1]) + 0.5);
         double transition_diff_parent = (1.0-exp(-rho_mass/k))/k;
         double transition_same_parent = 1.0 - (k-1)*transition_diff_parent;
         int emitted_letter = A(column1,k);
@@ -1149,7 +1149,7 @@ log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment&
     return { Pr };
 }
 
-log_double_t li_stephens_2003_composite_likelihood(const alignment& A, std::span<const int> d, const vector<Chunk>& rho)
+log_double_t li_stephens_2003_composite_likelihood(const alignment& A, std::span<const std::int64_t> d, const vector<Chunk>& rho)
 {
     assert(A.length() == d.size());
 
@@ -1166,7 +1166,7 @@ log_double_t li_stephens_2003_composite_likelihood(const alignment& A, std::span
 
 extern "C" closure builtin_function_li_stephens_2003_composite_likelihood_raw(OperationArgs& Args)
 {
-    auto location_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto location_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 0, "li_stephens_2003 locations");
     auto locs = location_input.view();
 
@@ -1348,7 +1348,7 @@ extern "C" closure builtin_function_wilson_mcvean_2006_composite_likelihood_raw(
 
 int get_allele(const R::RVector& haplotype, int site)
 {
-    return haplotype[site].as_int();
+    return haplotype[site].as_cpp_int();
 }
 
 int get_allele(const R::Exp& haplotype, int site)
@@ -1388,7 +1388,7 @@ log_double_t deploid_01_plaf_only_CSD(std::span<const double> alt_allele_frequen
     log_prod total;
     for(int site=0; site < haplotype.size(); site++)
     {
-        int h = haplotype[site].as_int();
+        int h = haplotype[site].as_cpp_int();
         double f = alt_allele_frequency[site];
         double p = h?f:1.0-f;
         total *= p;
@@ -1405,11 +1405,11 @@ vector<double> get_switching_probs(double switching_rate, const R::RVector& site
     int prev_column = 0;
     for(int i=0;i<sites.size();i++)
     {
-        double dist = sites[i].as_int() - prev_column;
+        double dist = sites[i].as_cpp_int() - prev_column;
 
         pr_switch[i] = (1.0-exp(-switching_rate*dist));
 
-        prev_column = sites[i].as_int();
+        prev_column = sites[i].as_cpp_int();
     }
 
     return pr_switch;
@@ -1715,8 +1715,8 @@ log_double_t site_likelihood_for_reads01(int counts, int ref, int alt, double ws
 
 log_double_t site_likelihood_for_reads01(int counts, const R::Exp& reads, double wsaf, double error_rate, double c, double outlier_frac)
 {
-    int ref = reads.as_<R::RPair>().first.as_int();
-    int alt = reads.as_<R::RPair>().second.as_int();
+    int ref = reads.as_<R::RPair>().first.as_cpp_int();
+    int alt = reads.as_<R::RPair>().second.as_cpp_int();
 
     return site_likelihood_for_reads01(counts, ref, alt, wsaf, error_rate, c, outlier_frac);
 }
@@ -1772,7 +1772,7 @@ extern "C" closure builtin_function_probability_of_reads01(OperationArgs& Args)
     {
         double wsaf = wsaf_at_site(site, weights, haplotypes);
 
-        auto pr = site_likelihood_for_reads01(counts[site].as_int(), reads[site], wsaf, error_rate, c, outlier_frac);
+        auto pr = site_likelihood_for_reads01(counts[site].as_cpp_int(), reads[site], wsaf, error_rate, c, outlier_frac);
 
         if (pr == 0.0)
         {
@@ -1831,7 +1831,7 @@ extern "C" closure builtin_function_sample_reads01(OperationArgs& Args)
     {
         double wsaf = wsaf_at_site(site, weights, haplotypes);
 
-        reads[site] = sample_site_reads01(counts[site].as_int(), wsaf, error_rate, c, outlier_frac);
+        reads[site] = sample_site_reads01(counts[site].as_cpp_int(), wsaf, error_rate, c, outlier_frac);
     }
 
     return reads;
@@ -1879,8 +1879,8 @@ matrix<log_double_t> emission_pr(const vector<int>& K, const R::RVector& reads, 
             // Avoid out-of-bounds terms caused by rounding error.
             wsaf = std::max(0.0,std::min(1.0,wsaf));
 
-            int ref = reads[site].as_<R::RPair>().first.as_int();
-            int alt = reads[site].as_<R::RPair>().second.as_int();
+            int ref = reads[site].as_<R::RPair>().first.as_cpp_int();
+            int alt = reads[site].as_<R::RPair>().second.as_cpp_int();
             E(site, state) = site_likelihood_for_reads01(ref+alt, reads[site], wsaf, error_rate, concentration, outlier_frac);
         }
     }
@@ -1900,7 +1900,7 @@ extern "C" closure builtin_function_emission_pr_for_reads01(OperationArgs& Args)
     reg_heap& M = Args.memory();
 
     // 0. context index = int
-    int context_index = Args.evaluate_slot_to_value(0).as_int();
+    int context_index = Args.evaluate_slot_to_value(0).as_cpp_int();
     context_ref C0(M,context_index);
 
     // 1. Get haplotype indices
@@ -2025,7 +2025,7 @@ extern "C" closure builtin_function_propose_haplotypes_from_plaf(OperationArgs& 
     reg_heap& M = Args.memory();
 
     // 0. context index = int
-    int context_index = Args.evaluate_slot_to_value(0).as_int();
+    int context_index = Args.evaluate_slot_to_value(0).as_cpp_int();
     context_ref C(M,context_index);
 
     // 1. Get haplotype indices
@@ -2128,7 +2128,7 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
     reg_heap& M = Args.memory();
 
     // 0. context index = int
-    int context_index = Args.evaluate_slot_to_value(0).as_int();
+    int context_index = Args.evaluate_slot_to_value(0).as_cpp_int();
     context_ref C0(M,context_index);
 
     // 1. Get haplotype indices
@@ -2590,7 +2590,7 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
     reg_heap& M = Args.memory();
 
     // 0. context index = int
-    int context_index = Args.evaluate_slot_to_value(0).as_int();
+    int context_index = Args.evaluate_slot_to_value(0).as_cpp_int();
     context_ref C(M,context_index);
 
     // 1. Get haplotype indices ([])
@@ -2660,7 +2660,7 @@ extern "C" closure builtin_function_resample_weights_and_haplotypes_from_panel(O
     reg_heap& M = Args.memory();
 
     // 0. context index = int
-    int context_index = Args.evaluate_slot_to_value(0).as_int();
+    int context_index = Args.evaluate_slot_to_value(0).as_cpp_int();
     context_ref C0(M,context_index);
 
     // 1. Get haplotype indices

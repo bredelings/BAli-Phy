@@ -50,16 +50,16 @@ extern "C" closure builtin_function_flip_alignment(OperationArgs& Args)
 
 extern "C" closure builtin_function_unaligned_pairwise_alignment(OperationArgs& Args)
 {
-    int l1 = Args.evaluate_slot_to_value(0).as_int();
-    int l2 = Args.evaluate_slot_to_value(1).as_int();
+    int l1 = Args.evaluate_slot_to_value(0).as_cpp_int();
+    int l2 = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     return Box<pairwise_alignment_t>(make_unaligned_pairwise_alignment(l1,l2));
 }
 
 extern "C" closure builtin_function_left_aligned_pairwise_alignment(OperationArgs& Args)
 {
-    int l1 = Args.evaluate_slot_to_value(0).as_int();
-    int l2 = Args.evaluate_slot_to_value(1).as_int();
+    int l1 = Args.evaluate_slot_to_value(0).as_cpp_int();
+    int l2 = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     return Box<pairwise_alignment_t>(make_left_aligned_pairwise_alignment(l1,l2));
 }
@@ -67,7 +67,7 @@ extern "C" closure builtin_function_left_aligned_pairwise_alignment(OperationArg
 extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    const DenseMatrix<int>& counts = arg0.as_<Box<DenseMatrix<int>>>();
+    const DenseMatrix<haskell_int>& counts = arg0.as_<Box<DenseMatrix<haskell_int>>>();
     auto arg1 = Args.evaluate_slot_to_value(1);
     const indel::PairHMM& Q = arg1.as_<indel::PairHMM>();
 
@@ -147,7 +147,7 @@ extern "C" closure builtin_function_transition_counts(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     const auto& A = arg0.as_<Box<pairwise_alignment_t>>().value();
 
-    Box<DenseMatrix<int>> counts(5,5);
+    Box<DenseMatrix<haskell_int>> counts(5,5);
     counts.setZero();
 
     using namespace A1;
@@ -169,7 +169,7 @@ extern "C" closure builtin_function_rs07_lengthp(OperationArgs& Args)
     if (e < 0.0)
 	throw myexception()<<"Error: mean indel length cannot be < 1, but was set to "<<1.0/(1.0-e)<<"!";
 
-    int l = Args.evaluate_slot_to_value(1).as_int();
+    int l = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     if (l < 0)
 	return {0.0};
@@ -405,7 +405,7 @@ extern "C" closure builtin_function_rs05_branch_HMM(OperationArgs& Args)
 extern "C" closure builtin_function_rs05_lengthp(OperationArgs& Args)
 {
     indel::PairHMM QE = Args.evaluate_slot_to_value(0).as_<indel::PairHMM>();
-    int l = Args.evaluate_slot_to_value(1).as_int();
+    int l = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     using namespace A1::states;
 
@@ -465,7 +465,7 @@ vector<int> site_pattern(const R::RVector& A, int c)
     vector<int> pattern(n);
     for(int j=0;j<n;j++)
     {
-        pattern[j] = A[j].as_<R::RPair>().second.as_<R::RVector>()[c].as_int();
+        pattern[j] = A[j].as_<R::RPair>().second.as_<R::RVector>()[c].as_cpp_int();
     }
     return pattern;
 }
@@ -476,7 +476,7 @@ vector<int> site_pattern_var_nonvar(const R::RVector& A, int c)
     vector<int> pattern(n);
     for(int j=0;j<n;j++)
     {
-        int x = A[j].as_<R::RPair>().second.as_<R::RVector>()[c].as_int();
+        int x = A[j].as_<R::RPair>().second.as_<R::RVector>()[c].as_cpp_int();
         if (alphabet::is_character(x))
             x = alphabet::not_gap;
         else
@@ -612,13 +612,13 @@ std::tuple<R::RVector, vector<int>> compress_alignment_var_nonvar(const R::RVect
 
 // Copy an already-computed integer result into the shared contiguous native
 // representation used by primitive unboxed vectors.
-object_ptr<Box<DenseVector<int>>> copy_to_native_int_vector(const vector<int>& values)
+object_ptr<Box<DenseVector<haskell_int>>> copy_to_native_int_vector(const vector<int>& values)
 {
     if (values.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-        throw myexception()<<"compressed vector length exceeds the Haskell Int range";
+        throw myexception()<<"compressed vector length exceeds the native indexing limit";
 
     int count = static_cast<int>(values.size());
-    object_ptr<Box<DenseVector<int>>> native(new Box<DenseVector<int>>(count));
+    object_ptr<Box<DenseVector<haskell_int>>> native(new Box<DenseVector<haskell_int>>(count));
     for(int index = 0; index < count; index++)
         (*native)(index) = values[index];
     return native;
@@ -654,7 +654,7 @@ extern "C" closure builtin_function_leaf_sequence_counts(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& A = arg0.as_checked<Box<alignment>>();
 
-    int n = Args.evaluate_slot_to_value(1).as_int();
+    int n = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     auto arg2 = Args.evaluate_slot_to_value(2);
     auto counts = (vector<int>)arg2.as_checked<R::RVector>();
@@ -694,7 +694,7 @@ extern "C" closure builtin_function_loadSequences(OperationArgs& Args)
 extern "C" closure builtin_function_getRange(OperationArgs& Args)
 {
     string range = Args.evaluate_slot_to_value(0).as_string();
-    int L = Args.evaluate_slot_to_value(1).as_int();
+    int L = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     // 2. Find columns
     vector<int> columns = parse_multi_range(range, L);
@@ -704,16 +704,16 @@ extern "C" closure builtin_function_getRange(OperationArgs& Args)
 
 extern "C" closure builtin_function_selectRangeRaw(OperationArgs& Args)
 {
-    auto column_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto column_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 0, "Alignment.selectRangeRaw");
     auto columns = column_input.view();
     auto sequence_value = Args.evaluate_slot_to_value(3);
     const auto& sequence = sequence_value.as_string();
 
     std::string sequence2;
-    for(int column : columns)
+    for(auto column : columns)
     {
-        if (column < sequence.size())
+        if (column >= 0 and std::cmp_less(column, sequence.size()))
             sequence2 += sequence[column];
     }
 
@@ -797,20 +797,22 @@ extern "C" closure builtin_function_sequenceDataRaw(OperationArgs& Args)
 // The smap occupies raw slots 0..2 and the state sequence occupies raw slots 3..5.
 extern "C" closure builtin_function_statesToLetters(OperationArgs& Args)
 {
-    auto smap_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto smap_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 0, "Alignment.statesToLetters smap");
-    auto state_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto state_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 3, "Alignment.statesToLetters states");
     auto smap = smap_input.view();
     auto states = state_input.view();
     int count = static_cast<int>(states.size());
 
-    auto result = object_ptr<Box<DenseVector<int>>>(new Box<DenseVector<int>>(count));
+    auto result = object_ptr<Box<DenseVector<haskell_int>>>(new Box<DenseVector<haskell_int>>(count));
     auto& letter_sequence = *result;
 
     for(int i=0; i<count; i++)
     {
-        int s = states[i];
+        auto s = states[i];
+        if (s >= 0 and std::uint64_t(s) >= smap.size())
+            throw myexception()<<"statesToLetters: state "<<s<<" is outside the state map";
         if (s >= 0)
             letter_sequence[i] = smap[s];
         else
@@ -871,7 +873,7 @@ extern "C" closure builtin_function_select_alignment_columns(OperationArgs& Args
 {
     auto alignment_value = Args.evaluate_slot_to_value(0);
     auto& A0 = alignment_value.as_<Box<alignment>>().value();
-    auto site_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto site_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 1, "select_alignment_columns sites");
     auto sites = site_input.view();
 
@@ -882,7 +884,7 @@ extern "C" closure builtin_function_select_alignment_columns(OperationArgs& Args
 
     for(int i=0;i<sites.size();i++)
     {
-        int site = sites[i];
+        int site = checked_cpp_int(sites[i]);
         for(int j=0;j<N;j++)
         {
             int letter = A0(site,j);
@@ -913,8 +915,8 @@ extern "C" closure builtin_function_select_alignment_pairs(OperationArgs& Args)
 
     for(int i=0;i<sites.size();i++)
     {
-        int site1 = sites[i].as_<R::RPair>().first.as_int();
-        int site2 = sites[i].as_<R::RPair>().second.as_int();
+        int site1 = sites[i].as_<R::RPair>().first.as_cpp_int();
+        int site2 = sites[i].as_<R::RPair>().second.as_cpp_int();
         for(int j=0;j<N;j++)
         {
             int nuc1 = A0(site1,j);
@@ -972,8 +974,8 @@ extern "C" closure builtin_function_select_alignment_pairs(OperationArgs& Args)
 
 extern "C" closure builtin_function_mkNodeAlignment(OperationArgs& Args)
 {
-    int source_node = Args.evaluate_slot_to_value(0).as_int();
-    int root_length = Args.evaluate_slot_to_value(1).as_int();
+    int source_node = Args.evaluate_slot_to_value(0).as_cpp_int();
+    int root_length = Args.evaluate_slot_to_value(1).as_cpp_int();
     auto branch_alignments = runtime_vector_from_value(Args.evaluate_slot_to_value(2));
 
     object_ptr<Box<pairwise_alignment_t>> pairwise_alignment(new Box<pairwise_alignment_t>(vector<int>(root_length,A1::states::G1)));
@@ -985,7 +987,7 @@ extern "C" closure builtin_function_mkNodeAlignment(OperationArgs& Args)
 
 extern "C" closure builtin_function_mkBranchAlignment(OperationArgs& Args)
 {
-    int target_node = Args.evaluate_slot_to_value(0).as_int();
+    int target_node = Args.evaluate_slot_to_value(0).as_cpp_int();
     auto pairwise_alignment = Args.evaluate_slot_to_value(1);
     auto branch_alignments = runtime_vector_from_value(Args.evaluate_slot_to_value(2));
 
@@ -1003,18 +1005,18 @@ extern "C" closure builtin_function_constructPositionSequencesRaw(OperationArgs&
 
 extern "C" closure builtin_function_substituteLetters(OperationArgs& Args)
 {
-    auto letter_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto letter_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 0, "Alignment.substituteLetters");
     auto letters = letter_input.view();
     auto position_value = Args.evaluate_slot_to_value(3);
     const auto& positions = position_value.as_<R::RVector>();
-    object_ptr<Box<DenseVector<int>>> result(new Box<DenseVector<int>>(positions.size()));
+    object_ptr<Box<DenseVector<haskell_int>>> result(new Box<DenseVector<haskell_int>>(positions.size()));
     auto& row = *result;
 
     int j=0;
     for(int i=0;i<row.size();i++)
     {
-        int pos = positions[i].as_int();
+        int pos = positions[i].as_cpp_int();
         row[i] = pos;
         if (pos >=0 or pos == alphabet::not_gap)
         {
@@ -1193,7 +1195,7 @@ extern "C" closure builtin_function_simulateLongIndelsGeometric(OperationArgs& A
     double ins_rate = Args.evaluate_slot_to_value(1).as_double();
     double mean_length = Args.evaluate_slot_to_value(2).as_double();
     double total_time = Args.evaluate_slot_to_value(3).as_double();
-    int L0 = Args.evaluate_slot_to_value(4).as_int();
+    int L0 = Args.evaluate_slot_to_value(4).as_cpp_int();
 
     if (mean_length < 1)
         throw myexception()<<"simulateLongIndelsGeometric: mean_length = "<<mean_length<<", but should be at least 1";
@@ -1292,7 +1294,7 @@ extern "C" closure builtin_function_getTaxonAgesRaw(OperationArgs& Args)
 
     // 0 = forward
     // 1 = backward
-    int direction = Args.evaluate_slot_to_value(2).as_int();
+    int direction = Args.evaluate_slot_to_value(2).as_cpp_int();
 
     object_ptr<Box<DenseVector<double>>> result(new Box<DenseVector<double>>(n));
     auto& times = *result;

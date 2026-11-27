@@ -49,7 +49,7 @@ template<> std::string Box<DenseMatrix<double>>::print() const
 }
 
 // Format the runtime's native Int matrix representation.
-template<> std::string Box<DenseMatrix<int>>::print() const
+template<> std::string Box<DenseMatrix<haskell_int>>::print() const
 {
     return print_dense_matrix(*this);
 }
@@ -61,7 +61,7 @@ template<> std::string Box<DenseVector<double>>::print() const
 }
 
 // Format the runtime's native Int vector representation.
-template<> std::string Box<DenseVector<int>>::print() const
+template<> std::string Box<DenseVector<haskell_int>>::print() const
 {
     return print_numeric_vector(*this);
 }

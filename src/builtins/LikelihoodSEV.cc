@@ -31,10 +31,10 @@ namespace
 closure component_state_result(ComponentStateVectors values)
 {
     assert(values.components.size() == values.states.size());
-    object_ptr<Box<DenseVector<int>>> components(
-        new Box<DenseVector<int>>(std::move(values.components)));
-    object_ptr<Box<DenseVector<int>>> states(
-        new Box<DenseVector<int>>(std::move(values.states)));
+    object_ptr<Box<DenseVector<haskell_int>>> components(
+        new Box<DenseVector<haskell_int>>(std::move(values.components)));
+    object_ptr<Box<DenseVector<haskell_int>>> states(
+        new Box<DenseVector<haskell_int>>(std::move(values.states)));
     return R::RPair(components, states);
 }
 
@@ -45,7 +45,7 @@ extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Arg
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto smap_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto smap_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 2, "LikelihoodSEV.simpleSequenceLikelihoods smap");
     auto arg5 = Args.evaluate_slot_to_value(5);
     auto arg6 = Args.evaluate_slot_to_value(6);
@@ -54,7 +54,7 @@ extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Arg
 							  *arg0.as_<Alphabet>(), // alphabet
 							  arg1.as_<Ambiguities>(), // ambiguities
 							  smap_input.view(),     // smap
-							  arg5.as_int());        // n_models
+							  arg5.as_cpp_int());        // n_models
 }
 
 extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)
@@ -84,14 +84,14 @@ extern "C" closure builtin_function_peelBranchAwayFromRoot(OperationArgs& Args)
 extern "C" closure builtin_function_sampleSequence(OperationArgs& Args)
 {
     auto component_input =
-        read_native_vector_input<int, ForeignDemand::use>(
+        read_native_vector_input<haskell_int, ForeignDemand::use>(
             Args, 0, "LikelihoodSEV.sampleSequence components");
-    auto state_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto state_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 3, "LikelihoodSEV.sampleSequence states");
     auto arg6 = Args.evaluate_slot_to_value(6);
     auto arg7 = Args.evaluate_slot_to_value(7);
     auto arg8 = Args.evaluate_slot_to_value(8);
-    auto column_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto column_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 9, "LikelihoodSEV.sampleSequence columns");
     auto parent_components = component_input.view();
     auto parent_states = state_input.view();
@@ -113,15 +113,15 @@ extern "C" closure builtin_function_sampleSequence(OperationArgs& Args)
 // Sample the process-parent states conditional on an already sampled process-child sequence.
 extern "C" closure builtin_function_sampleSequenceTowardRoot(OperationArgs& Args)
 {
-    auto component_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto component_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 0, "LikelihoodSEV.sampleSequenceTowardRoot components");
-    auto state_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto state_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 3, "LikelihoodSEV.sampleSequenceTowardRoot states");
     auto arg6 = Args.evaluate_slot_to_value(6);
     auto arg7 = Args.evaluate_slot_to_value(7);
     auto arg8 = Args.evaluate_slot_to_value(8);
     auto arg9 = Args.evaluate_slot_to_value(9);
-    auto column_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto column_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 10, "LikelihoodSEV.sampleSequenceTowardRoot columns");
     auto child_components = component_input.view();
     auto child_states = state_input.view();
@@ -146,7 +146,7 @@ extern "C" closure builtin_function_calcProb(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto counts = read_native_vector_input<int, ForeignDemand::use>(
+    auto counts = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 3, "LikelihoodSEV.calcProb");
 
     ProbDensity Pr = substitution::calc_prob_SEV(arg0.as_<R::RVector>(),       // sequences
@@ -161,10 +161,10 @@ extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto count_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto count_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 3, "LikelihoodSEV.calcProbAtRoot");
     auto count_view = count_input.view();
-    Eigen::Map<const DenseVector<int>> counts(
+    Eigen::Map<const DenseVector<haskell_int>> counts(
         count_view.data(), static_cast<Eigen::Index>(count_view.size()));
 
     ProbDensity Pr = substitution::calc_prob_at_root_SEV(arg0.as_<R::RVector>(),       // sequences
@@ -179,7 +179,7 @@ extern "C" closure builtin_function_calcProbAtRootVariable(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto counts = read_native_vector_input<int, ForeignDemand::use>(
+    auto counts = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 3, "LikelihoodSEV.calcProbAtRootVariable");
 
     ProbDensity Pr = substitution::calc_prob_at_root_variable_SEV(arg0.as_<R::RVector>(),       // sequences
@@ -195,7 +195,7 @@ extern "C" closure builtin_function_calcProbVariable(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto counts = read_native_vector_input<int, ForeignDemand::use>(
+    auto counts = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 3, "LikelihoodSEV.calcProbVariable");
 
     ProbDensity Pr = substitution::calc_prob_variable_SEV(arg0.as_<R::RVector>(),       // sequences
@@ -210,7 +210,7 @@ extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto columns = read_native_vector_input<int, ForeignDemand::use>(
+    auto columns = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 3, "LikelihoodSEV.sampleRootSequence columns");
 
     auto result = substitution::sample_root_sequence_SEV(

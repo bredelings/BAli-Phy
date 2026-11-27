@@ -40,7 +40,7 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
     vector<int> node_ids;
     node_ids.reserve(node_time_regs.size());
     for(const auto& [node, _]: node_time_regs)
-        node_ids.push_back(node);
+        node_ids.push_back(checked_cpp_int(node));
 
     map<int, double> node_times;
     for(int node: node_ids)
@@ -71,7 +71,7 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
     // 2. Add tree nodes
     for(const auto& node_entry: topology)
     {
-        int node = R::rpair_first(node_entry).as_int();
+        int node = R::rpair_first(node_entry).as_cpp_int();
         auto node_time = node_times.find(node);
         if (node_time == node_times.end())
             throw myexception()<<"Coalescent topology node "<<node
@@ -81,7 +81,7 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
         // Check that parent is not younger than children.
         for(const auto& child_value: child_nodes)
         {
-            int child = child_value.as_int();
+            int child = child_value.as_cpp_int();
             auto child_time = node_times.find(child);
             if (child_time == node_times.end())
                 throw myexception()<<"Coalescent child node "<<child
@@ -174,11 +174,11 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
 // are numbered in merger order, so their times can later be assigned in increasing order.
 extern "C" closure builtin_function_sampleOrderedTree(OperationArgs& Args)
 {
-    int n = Args.evaluate_slot_to_value_(0).as_int();
+    int n = Args.evaluate_slot_to_value_(0).as_cpp_int();
     if (n < 1) throw myexception()<<"Ordered tree requires at least one tip";
     vector<int> active(n);
     std::iota(active.begin(), active.end(), 0);
-    object_ptr<Box<DenseVector<int>>> relatives(new Box<DenseVector<int>>(3*(2*n-1)));
+    object_ptr<Box<DenseVector<haskell_int>>> relatives(new Box<DenseVector<haskell_int>>(3*(2*n-1)));
     for (int i=0; i<3*(2*n-1); ++i) (*relatives)[i] = -1;
     // Remove a uniformly selected active lineage without shifting the other entries.
     auto pop = [&]() {

@@ -1,6 +1,7 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
+#include "computation/haskell/Int.hh"
 #include <string>
 #include <memory>
 #include <iostream>
@@ -105,9 +106,9 @@ template<> std::string Box<std::string>::print() const;
 #include "util/dense-matrix.hh"
 
 template<> std::string Box<DenseMatrix<double>>::print() const;
-template<> std::string Box<DenseMatrix<int>>::print() const;
+template<> std::string Box<DenseMatrix<haskell_int>>::print() const;
 template<> std::string Box<DenseVector<double>>::print() const;
-template<> std::string Box<DenseVector<int>>::print() const;
+template<> std::string Box<DenseVector<haskell_int>>::print() const;
 
 template <typename T>
 using Vector = Box<std::vector<T>>;

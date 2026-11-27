@@ -160,7 +160,7 @@ extern "C" closure builtin_function_getEquilibriumRate(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     const alphabet& a = *arg0.as_<Alphabet>();
 
-    auto smap_input = read_native_vector_input<int, ForeignDemand::use>(
+    auto smap_input = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 1, "SModel.getEquilibriumRate smap");
     auto smap = smap_input.view();
 
@@ -184,8 +184,8 @@ extern "C" closure builtin_function_getEquilibriumRate(OperationArgs& Args)
 	    double temp = 0;
 	    for(int s2=0;s2<N;s2++)
 	    {
-		int state1 = smap[s1];
-		int state2 = smap[s2];
+		int state1 = checked_cpp_int(smap[s1]);
+		int state2 = checked_cpp_int(smap[s2]);
 		temp += triplet_hamming_distance(*triplets, state1, state2) * Q(s1,s2);
 	    }
 	    scale += temp*pi[s1];
@@ -524,8 +524,8 @@ vector<int> make_edit_map(const R::RVector& edit_pairs, int n)
     vector<int> edit(n, -1);
     for(auto& edit_pair: edit_pairs)
     {
-        int i = edit_pair.as_<R::RPair>().first.as_int();
-        int j = edit_pair.as_<R::RPair>().second.as_int();
+        int i = edit_pair.as_<R::RPair>().first.as_cpp_int();
+        int j = edit_pair.as_<R::RPair>().second.as_cpp_int();
 
         if (i < 0 or i >= n)
             throw myexception()<<"rna_editting_rates: nucleotide "<<i<<" not in range [0,"<<n<<")!";
@@ -664,7 +664,7 @@ object_ptr<const Object> EQU_Exchange_Function(int n)
 
 extern "C" closure builtin_function_equ(OperationArgs& Args)
 {
-    int n = Args.evaluate_slot_to_value(0).as_int();
+    int n = Args.evaluate_slot_to_value(0).as_cpp_int();
     
     return EQU_Exchange_Function(n);
 }
@@ -905,7 +905,7 @@ extern "C" closure builtin_function_empirical(OperationArgs& Args)
 extern "C" closure builtin_function_symmetricMatrixFromLowerTriangle(OperationArgs& Args)
 {
     // 1. Get the arguments
-    auto n = Args.evaluate_slot_to_value(0).as_int();
+    auto n = Args.evaluate_slot_to_value(0).as_cpp_int();
     assert(n >= 0);
 
     auto arg1 = Args.evaluate_slot_to_value(1);
@@ -1164,7 +1164,7 @@ extern "C" closure builtin_function_gtr_sym(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& S = arg0.as_<Box<DenseVector<double>>>();
-    int n = Args.evaluate_slot_to_value(1).as_int();
+    int n = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     auto R = new Box<DenseMatrix<double>>(n,n);
     if (S.size() != n*(n-1)/2)
@@ -1186,7 +1186,7 @@ extern "C" closure builtin_function_gtr_sym(OperationArgs& Args)
 
 extern "C" closure builtin_function_non_rev_from_vec(OperationArgs& Args)
 {
-    int n = Args.evaluate_slot_to_value(0).as_int();
+    int n = Args.evaluate_slot_to_value(0).as_cpp_int();
 
     auto arg0 = Args.evaluate_slot_to_value(1);
     auto& S = arg0.as_<Box<DenseVector<double>>>();
