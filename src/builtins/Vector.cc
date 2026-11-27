@@ -47,7 +47,7 @@ namespace
     closure make_boxed_vector(closure::Env_t registers)
     {
         if (registers.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-            throw myexception()<<"Boxed Vector length exceeds the Int range";
+            throw myexception()<<"Boxed Vector length exceeds the native indexing limit";
         int length = static_cast<int>(registers.size());
         std::vector<Runtime::Exp> elements(length);
         for(int i = 0; i < length; i++)
@@ -82,7 +82,7 @@ namespace
 // function for every index from zero to the requested length minus one.
 extern "C" closure builtin_function_boxedGenerate(OperationArgs& Args)
 {
-    int length = Args.evaluate_slot_to_value(0).as_int();
+    int length = Args.evaluate_slot_to_value(0).as_cpp_int();
     if (length < 0)
         throw myexception()<<"Data.Vector.generate: negative length "<<length;
 
@@ -104,7 +104,7 @@ extern "C" closure builtin_function_boxedGenerate(OperationArgs& Args)
 // applications while retaining sharing between every result position.
 extern "C" closure builtin_function_boxedReplicate(OperationArgs& Args)
 {
-    int length = Args.evaluate_slot_to_value(0).as_int();
+    int length = Args.evaluate_slot_to_value(0).as_cpp_int();
     if (length < 0)
         throw myexception()<<"Data.Vector.replicate: negative length "<<length;
     if (length == 0)
@@ -127,7 +127,7 @@ extern "C" closure builtin_function_boxedFromList(OperationArgs& Args)
         [&](int head_reg, EdgeContingency)
         {
             if (elements.size() == static_cast<std::size_t>(std::numeric_limits<int>::max()))
-                throw myexception()<<"Data.Vector.fromList: length exceeds the Int range";
+                throw myexception()<<"Data.Vector.fromList: length exceeds the native indexing limit";
             roots.add(head_reg);
             elements.push_back(head_reg);
         });
@@ -140,7 +140,7 @@ extern "C" closure builtin_function_boxedFromList(OperationArgs& Args)
 extern "C" closure builtin_function_boxedFromListNDefault(OperationArgs& Args)
 {
     auto length_arg = Args.evaluate_slot_to_value_with_contingency(0);
-    int length = length_arg.value.as_int();
+    int length = length_arg.value.as_cpp_int();
     if (length < 0)
         throw myexception()<<"Data.Vector.Internal.fromListNDefault: negative length "
                            <<length;
@@ -197,7 +197,7 @@ extern "C" closure builtin_function_boxedFromListNDefault(OperationArgs& Args)
 // value registers and letting each later duplicate overwrite the earlier one.
 extern "C" closure builtin_function_boxedFromIndexedList(OperationArgs& Args)
 {
-    int length = Args.evaluate_slot_to_value(0).as_int();
+    int length = Args.evaluate_slot_to_value(0).as_cpp_int();
     if (length < 0)
         throw myexception()<<"Data.Vector.Internal.fromIndexedList: negative length "
                            <<length;
@@ -258,7 +258,7 @@ extern "C" closure builtin_function_boxedFromIndexedList(OperationArgs& Args)
         if (not index_value.is_int())
             throw myexception()<<"Data.Vector.Internal.fromIndexedList: association index "
                                <<"is not an Int";
-        int index = index_value.as_int();
+        int index = index_value.as_cpp_int();
         if (index < 0 or index >= length)
             throw myexception()<<"Data.Vector.Internal.fromIndexedList: index "<<index
                                <<" is outside vector length "<<length;
@@ -338,7 +338,7 @@ extern "C" closure builtin_function_boxedReplaceIndexed(OperationArgs& Args)
         if (not index_value.is_int())
             throw myexception()<<"Data.Vector.Internal.replaceIndexed: association index "
                                <<"is not an Int";
-        int index = index_value.as_int();
+        int index = index_value.as_cpp_int();
         if (index < 0 or index >= length)
             throw myexception()<<"Data.Vector.Internal.replaceIndexed: index "<<index
                                <<" is outside vector length "<<length;
@@ -419,7 +419,7 @@ extern "C" closure builtin_function_boxedAccumIndexed(OperationArgs& Args)
         if (not index_value.is_int())
             throw myexception()<<"Data.Vector.Internal.accumIndexed: association index "
                                <<"is not an Int";
-        int index = index_value.as_int();
+        int index = index_value.as_cpp_int();
         if (index < 0 or index >= length)
             throw myexception()<<"Data.Vector.Internal.accumIndexed: index "<<index
                                <<" is outside vector length "<<length;
@@ -455,7 +455,7 @@ extern "C" closure builtin_function_boxedIndex(OperationArgs& Args)
     extern long total_index_op;
     total_index_op++;
 
-    int index = Args.evaluate_slot_to_value(1).as_int();
+    int index = Args.evaluate_slot_to_value(1).as_cpp_int();
     const closure& value = Args.evaluate_reg_to_closure(Args.reg_for_slot(0));
     const auto& elements = boxed_vector_element_regs(value);
     int length = static_cast<int>(elements.size());
@@ -468,8 +468,8 @@ extern "C" closure builtin_function_boxedIndex(OperationArgs& Args)
 // Copy a contiguous range of lazy element registers into a new boxed Vector.
 extern "C" closure builtin_function_boxedSlice(OperationArgs& Args)
 {
-    int start = Args.evaluate_slot_to_value(0).as_int();
-    int count = Args.evaluate_slot_to_value(1).as_int();
+    int start = Args.evaluate_slot_to_value(0).as_cpp_int();
+    int count = Args.evaluate_slot_to_value(1).as_cpp_int();
     int value_reg = Args.evaluate_slot_use(2);
     const closure& value = Args.memory().closure_at(value_reg);
     const auto& value_elements = boxed_vector_element_regs(value);
@@ -498,7 +498,7 @@ extern "C" closure builtin_function_boxedAppend(OperationArgs& Args)
         Args.memory().closure_at(right_reg)).size();
 
     if (right_size > static_cast<std::size_t>(std::numeric_limits<int>::max()) - left_size)
-        throw myexception()<<"Data.Vector.++: result length exceeds the Int range";
+        throw myexception()<<"Data.Vector.++: result length exceeds the native indexing limit";
     if (left_size == 0)
         return closure(Runtime::IndexVar(0), {right_reg});
     if (right_size == 0)
@@ -530,14 +530,14 @@ R::Exp vector_value_at(const R::Exp& value, int index)
 
 extern "C" R::Exp simple_function_sizeOfString(vector<R::Exp>& args)
 {
-    return (int)get_arg(args).as_string().size();
+    return static_cast<haskell_int>(get_arg(args).as_string().size());
 }
 
 extern "C" R::Exp simple_function_getStringElement(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     const std::string& s = arg0.as_string();
-    int i = get_arg(args).as_int();
+    int i = get_arg(args).as_cpp_int();
 
     // Compatibility/raw-byte helper.  Text callers should use
     // decodeUtf8CharAt rather than interpreting this byte as a Char.
@@ -550,7 +550,7 @@ extern "C" R::Exp simple_function_decodeUtf8CharAt(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     const std::string& s = arg0.as_string();
-    int offset = get_arg(args).as_int();
+    int offset = get_arg(args).as_cpp_int();
 
     if (offset < 0)
         throw myexception()<<"decodeUtf8CharAt: negative byte offset "<<offset;
@@ -560,7 +560,7 @@ extern "C" R::Exp simple_function_decodeUtf8CharAt(vector<R::Exp>& args)
         throw myexception()<<"decodeUtf8CharAt: invalid UTF-8 at byte offset "<<offset;
 
     if (decoded->next_byte > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-        throw myexception()<<"decodeUtf8CharAt: next byte offset exceeds Int range.";
+        throw myexception()<<"decodeUtf8CharAt: next byte offset exceeds the native indexing limit.";
 
     return R::RPair(decoded->code_point, static_cast<int>(decoded->next_byte));
 }
@@ -569,8 +569,8 @@ extern "C" R::Exp simple_function_decodeUtf8CharAt(vector<R::Exp>& args)
 // full-string slices and rejecting invalid Haskell Int offsets explicitly.
 extern "C" closure builtin_function_cppSubString(OperationArgs& Args)
 {
-    int offset = Args.evaluate_slot_to_value(1).as_int();
-    int length = Args.evaluate_slot_to_value(2).as_int();
+    int offset = Args.evaluate_slot_to_value(1).as_cpp_int();
+    int length = Args.evaluate_slot_to_value(2).as_cpp_int();
     std::string s = Args.evaluate_slot_to_value(0).as_string();
 
     if (offset < 0)
@@ -603,7 +603,7 @@ extern "C" R::Exp simple_function_vector_size(vector<R::Exp>& args)
 extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    int i = Args.evaluate_slot_to_value(1).as_int();
+    int i = Args.evaluate_slot_to_value(1).as_cpp_int();
     auto x = Args.evaluate_slot_to_value(2);
 
     auto& v = const_cast<R::RVector&>(arg0.as_<R::RVector>());
@@ -615,7 +615,7 @@ extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
 extern "C" R::Exp simple_function_get_vector_index(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
-    int i = get_arg(args).as_int();
+    int i = get_arg(args).as_cpp_int();
     return vector_value_at(arg0, i);
 }
 

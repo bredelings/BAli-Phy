@@ -65,7 +65,7 @@ static utf8_read_result read_utf8_char(std::iostream& handle)
 extern "C" closure builtin_function_openFileRaw(OperationArgs& Args)
 {
     fs::path filename = Args.evaluate_slot_to_value(0).as_string();
-    int io_mode = Args.evaluate_slot_to_value(1).as_int();
+    int io_mode = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     std::ios_base::openmode mode;
     if (io_mode == 0)
@@ -91,7 +91,7 @@ extern "C" closure builtin_function_openFileRaw(OperationArgs& Args)
 extern "C" closure builtin_function_openBinaryFileRaw(OperationArgs& Args)
 {
     fs::path filename = Args.evaluate_slot_to_value(0).as_string();
-    int io_mode = Args.evaluate_slot_to_value(1).as_int();
+    int io_mode = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     std::ios_base::openmode mode;
     if (io_mode == 0)
@@ -245,7 +245,7 @@ extern "C" closure builtin_function_hFlush(OperationArgs& Args)
 extern "C" closure builtin_function_hSeekRaw(OperationArgs& Args)
 {
     auto handle = Args.evaluate_slot_to_value(0).as_<Handle>();
-    int seekmode = Args.evaluate_slot_to_value(1).as_int();
+    int seekmode = Args.evaluate_slot_to_value(1).as_cpp_int();
     long int pos = (long int)Args.evaluate_slot_to_value(2).as_integer();
 
     if (seekmode == 0)

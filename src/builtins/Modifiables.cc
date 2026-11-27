@@ -102,7 +102,7 @@ extern "C" closure builtin_function_registerDist(OperationArgs& Args)
 {
     std::string name = Args.evaluate_slot_to_value(0).as_string();
 
-    int observation = Args.evaluate_slot_to_value(1).as_int();
+    int observation = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     // The effect to register the sampling event is self-referential,
     // so we need to allocate the location BEFORE we construct the object.

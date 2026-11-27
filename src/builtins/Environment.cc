@@ -65,7 +65,7 @@ extern "C" closure builtin_function_exitWithRaw(OperationArgs& Args)
     if (constructor->head.name() == "System.Exit.ExitFailure" and constructor->head.n_args() == 1)
     {
         int status_reg = exit_code.reg_for_constructor_slot(0);
-        int status = Args.evaluate_reg_to_closure(status_reg).get_code().as_int();
+        int status = Args.evaluate_reg_to_closure(status_reg).get_code().as_cpp_int();
         if (status == 0)
             throw error_exception("exitWith: invalid argument (ExitFailure 0)");
         throw requested_exit{status};

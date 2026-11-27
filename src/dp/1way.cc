@@ -473,7 +473,7 @@ const R::RVector& childAlignments(const R::Exp& a)
 
 void getNodes(const R::Exp& a, set<int>& nodes)
 {
-    nodes.insert(constructor_args(a)[0].as_int());
+    nodes.insert(constructor_args(a)[0].as_cpp_int());
 
     for(auto& childAlignment: childAlignments(a))
         getNodes(childAlignment, nodes);
@@ -498,7 +498,7 @@ int getLength(const R::Exp& a)
 
 void getBranches(int source, const R::Exp& a, set<std::tuple<int,int>>& branches)
 {
-    int node = constructor_args(a)[0].as_int();
+    int node = constructor_args(a)[0].as_cpp_int();
     branches.insert({source, node});
 
     for(auto& childAlignment: childAlignments(a))
@@ -509,7 +509,7 @@ set<std::tuple<int,int>> getBranches(const R::Exp& a)
 {
     set<std::tuple<int,int>> branches;
 
-    int node = constructor_args(a)[0].as_int();
+    int node = constructor_args(a)[0].as_cpp_int();
     for(auto& childAlignment: childAlignments(a))
         getBranches(node, childAlignment, branches);
 
@@ -530,7 +530,7 @@ struct BranchAlignment
     R::RVector& A;
     BranchAlignment(R::Exp a, AEVectors& AA)
         :source(std::move(a)),
-         node(constructor_args(source)[0].as_int()),
+         node(constructor_args(source)[0].as_cpp_int()),
          pairwise_alignment(constructor_args(source)[1].as_<Box<pairwise_alignment_t>>()),
          A(*AA.at(node))
     {

@@ -1023,7 +1023,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     auto register_dist_handler = [&](int r, int)
     {
         int r_dist = closure_at(r).reg_for_constructor_slot(0);
-        int observation = closure_at(r).constructor_slot_ref(1).as_int();
+        int observation = closure_at(r).constructor_slot_ref(1).as_cpp_int();
         if (not observation)
         {
             if (not random_vars_removed.erase(r_dist))
@@ -1035,7 +1035,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     auto unregister_dist_handler = [&](int r, int)
     {
         int r_dist = closure_at(r).reg_for_constructor_slot(0);
-        int observation = closure_at(r).constructor_slot_ref(1).as_int();
+        int observation = closure_at(r).constructor_slot_ref(1).as_cpp_int();
         if (not observation)
         {
             if (not random_vars_added.erase(r_dist))
@@ -1270,7 +1270,7 @@ void reg_heap::register_in_edge(int r, int /* s */)
 {
     // NOTE: the source node is lazy -- it could be a register reference.
     // int r_from_node = closure_at(r).reg_for_constructor_slot(0);
-    int r_to_dist   = closure_at(r).constructor_slot_ref(1).as_int();
+    int r_to_dist   = closure_at(r).constructor_slot_ref(1).as_cpp_int();
     string arg_name = closure_at(r).constructor_slot_ref(2).as_string();
 
     // 1. Check that this edge is not a duplicate:
@@ -1291,7 +1291,7 @@ void reg_heap::unregister_in_edge(int r, int /* s */)
 {
     // NOTE: the source node is lazy -- it could be a register reference.
     // int r_from_node = closure_at(r).reg_for_constructor_slot(0);
-    int r_to_dist   = closure_at(r).constructor_slot_ref(1).as_int();
+    int r_to_dist   = closure_at(r).constructor_slot_ref(1).as_cpp_int();
     string arg_name = closure_at(r).constructor_slot_ref(2).as_string();
 
     // Check that this edge is registered.
@@ -1388,7 +1388,7 @@ void reg_heap::unregister_dist(int r, int s)
 
 void reg_heap::register_dist_property(int r, int /* s */)
 {
-    int r_from_dist = closure_at(r).constructor_slot_ref(0).as_int();
+    int r_from_dist = closure_at(r).constructor_slot_ref(0).as_cpp_int();
     string property =  closure_at(r).constructor_slot_ref(1).as_string();
     // NOTE: the target (property) reg is lazy -- it could be a register reference.
     // int r_to_prop   = closure_at(r).reg_for_constructor_slot(2);
@@ -1402,7 +1402,7 @@ void reg_heap::register_dist_property(int r, int /* s */)
 
 void reg_heap::unregister_dist_property(int r, int /* s */)
 {
-    int r_from_dist = closure_at(r).constructor_slot_ref(0).as_int();
+    int r_from_dist = closure_at(r).constructor_slot_ref(0).as_cpp_int();
     string property =  closure_at(r).constructor_slot_ref(1).as_string();
 
     // Check that there is in fact a distribution at P.r_from_dist.

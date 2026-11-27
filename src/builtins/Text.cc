@@ -136,12 +136,12 @@ extern "C" R::Exp simple_function_empty(vector<R::Exp>&)
 extern "C" R::Exp simple_function_append(vector<R::Exp>& args)
 {
     auto s1 = get_arg(args);
-    int offset1 = get_arg(args).as_int();
-    int length1 = get_arg(args).as_int();
+    int offset1 = get_arg(args).as_cpp_int();
+    int length1 = get_arg(args).as_cpp_int();
 
     auto s2 = get_arg(args);
-    int offset2 = get_arg(args).as_int();
-    int length2 = get_arg(args).as_int();
+    int offset2 = get_arg(args).as_cpp_int();
+    int length2 = get_arg(args).as_cpp_int();
 
     std::string s3;
 
@@ -159,8 +159,8 @@ extern "C" R::Exp simple_function_append(vector<R::Exp>& args)
 extern "C" R::Exp simple_function_head(vector<R::Exp>& args)
 {
     auto s = get_arg(args);
-    int offset = get_arg(args).as_int();
-    int length = get_arg(args).as_int();
+    int offset = get_arg(args).as_cpp_int();
+    int length = get_arg(args).as_cpp_int();
 
     auto slice = checked_text_slice(s, offset, length, "Text.head");
     return decode_first_text_char(slice, "Text.head").code_point;
@@ -169,8 +169,8 @@ extern "C" R::Exp simple_function_head(vector<R::Exp>& args)
 extern "C" R::Exp simple_function_last(vector<R::Exp>& args)
 {
     auto s = get_arg(args);
-    int offset = get_arg(args).as_int();
-    int length = get_arg(args).as_int();
+    int offset = get_arg(args).as_cpp_int();
+    int length = get_arg(args).as_cpp_int();
 
     auto slice = checked_text_slice(s, offset, length, "Text.last");
     return decode_last_text_char(slice, "Text.last").code_point;
@@ -181,8 +181,8 @@ extern "C" R::Exp simple_function_last(vector<R::Exp>& args)
 extern "C" R::Exp simple_function_codePointLength(vector<R::Exp>& args)
 {
     auto s = get_arg(args);
-    int offset = get_arg(args).as_int();
-    int length = get_arg(args).as_int();
+    int offset = get_arg(args).as_cpp_int();
+    int length = get_arg(args).as_cpp_int();
 
     auto slice = checked_text_slice(s, offset, length, "Text.codePointLength");
     int n = 0;
@@ -202,8 +202,8 @@ extern "C" R::Exp simple_function_codePointLength(vector<R::Exp>& args)
 extern "C" R::Exp simple_function_unpack(vector<R::Exp>& args)
 {
     auto s = get_arg(args);
-    int offset = get_arg(args).as_int();
-    int length = get_arg(args).as_int();
+    int offset = get_arg(args).as_cpp_int();
+    int length = get_arg(args).as_cpp_int();
 
     auto slice = checked_text_slice(s, offset, length, "Text.unpack");
     R::RVector chars;
@@ -224,8 +224,8 @@ extern "C" R::Exp simple_function_unpack(vector<R::Exp>& args)
 extern "C" R::Exp simple_function_tailOffset(vector<R::Exp>& args)
 {
     auto s = get_arg(args);
-    int offset = get_arg(args).as_int();
-    int length = get_arg(args).as_int();
+    int offset = get_arg(args).as_cpp_int();
+    int length = get_arg(args).as_cpp_int();
 
     auto slice = checked_text_slice(s, offset, length, "Text.tailOffset");
     auto first = decode_first_text_char(slice, "Text.tailOffset");
@@ -237,8 +237,8 @@ extern "C" R::Exp simple_function_tailOffset(vector<R::Exp>& args)
 extern "C" R::Exp simple_function_initLength(vector<R::Exp>& args)
 {
     auto s = get_arg(args);
-    int offset = get_arg(args).as_int();
-    int length = get_arg(args).as_int();
+    int offset = get_arg(args).as_cpp_int();
+    int length = get_arg(args).as_cpp_int();
 
     auto slice = checked_text_slice(s, offset, length, "Text.initLength");
     auto last = decode_last_text_char(slice, "Text.initLength");
@@ -248,12 +248,12 @@ extern "C" R::Exp simple_function_initLength(vector<R::Exp>& args)
 extern "C" R::Exp simple_function_equals(vector<R::Exp>& args)
 {
     auto s1 = get_arg(args);
-    int offset1 = get_arg(args).as_int();
-    int length1 = get_arg(args).as_int();
+    int offset1 = get_arg(args).as_cpp_int();
+    int length1 = get_arg(args).as_cpp_int();
 
     auto s2 = get_arg(args);
-    int offset2 = get_arg(args).as_int();
-    int length2 = get_arg(args).as_int();
+    int offset2 = get_arg(args).as_cpp_int();
+    int length2 = get_arg(args).as_cpp_int();
 
     auto slice1 = checked_text_slice(s1, offset1, length1, "Text.equals");
     auto slice2 = checked_text_slice(s2, offset2, length2, "Text.equals");
@@ -265,12 +265,12 @@ extern "C" R::Exp simple_function_equals(vector<R::Exp>& args)
 extern "C" R::Exp simple_function_less_than(vector<R::Exp>& args)
 {
     auto s1 = get_arg(args);
-    int offset1 = get_arg(args).as_int();
-    int length1 = get_arg(args).as_int();
+    int offset1 = get_arg(args).as_cpp_int();
+    int length1 = get_arg(args).as_cpp_int();
 
     auto s2 = get_arg(args);
-    int offset2 = get_arg(args).as_int();
-    int length2 = get_arg(args).as_int();
+    int offset2 = get_arg(args).as_cpp_int();
+    int length2 = get_arg(args).as_cpp_int();
 
     auto slice1 = checked_text_slice(s1, offset1, length1, "Text.less_than");
     auto slice2 = checked_text_slice(s2, offset2, length2, "Text.less_than");

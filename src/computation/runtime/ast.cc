@@ -72,7 +72,7 @@ namespace Runtime
         vector<int> values;
         values.reserve(size());
         for(const auto& value: *this)
-            values.push_back(value.as_int());
+            values.push_back(value.as_cpp_int());
         return values;
     }
 
