@@ -105,22 +105,16 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
     state_emit[2] |= (1<<0);
     state_emit[3] |= 0;
 
-    // This includes the 2 columns of padding that we asked for above.
-    MatrixSize matrix_size{dists1.n_columns(), dists2.n_columns()};
-
-    //-------------- Compute ymin and ymax for each x --------------//
-    auto yboundaries = yboundaries_everything(dists1.n_columns()-2, dists2.n_columns()-2);
-
-    if (bandwidth)
-        yboundaries = yboundaries_simple_band(dists1.n_columns()-2, dists2.n_columns()-2, *bandwidth);
-    MatrixShape matrix_shape(matrix_size, std::move(yboundaries));
-
     //------------------ Compute the DP matrix ---------------------//
     HMM model(state_emit, hmm.start_pi(), hmm, P.get_beta());
     shared_ptr<DPmatrixSimple> Matrices;
     try
     {
-        Matrices = std::make_shared<DPmatrixSimple>(std::move(matrix_shape), model,
+        // The matrix includes two columns of padding on each axis.
+        MatrixSize size{dists1.n_columns(), dists2.n_columns()};
+        auto boundaries = bandwidth ? yboundaries_simple_band(size.size1-2, size.size2-2, *bandwidth)
+                                    : yboundaries_everything(size.size1-2, size.size2-2);
+        Matrices = std::make_shared<DPmatrixSimple>(MatrixShape(size, std::move(boundaries)), model,
                                                     std::move(dists1), std::move(dists2), *F);
     }
     catch (const std::bad_alloc& e)
