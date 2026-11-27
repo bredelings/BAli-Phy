@@ -27,6 +27,8 @@
 #include <boost/random/random_device.hpp>
 
 #include "util/rng.hh"
+#include "util/myexception.hh"
+#include "util/poisson.hh"
 
 using std::valarray;
 using std::int64_t;
@@ -143,16 +145,18 @@ double gamma(double a, double b)
     return std::gamma_distribution<>(a,b)(standard_rng);
 }
 
+// At large means, invert the CDF on integer counts so adjacent outcomes stay distinguishable.
 std::int64_t poisson(double mu)
 {
-    assert(mu >= 0);
-    if (mu == 0)
-	return 0;
-    else
-    {
-	assert(mu > 0.0);
-	return std::poisson_distribution<std::int64_t>(mu)(standard_rng);
-    }
+    if (not std::isfinite(mu) or mu < 0)
+        throw myexception()<<"poisson: expected a finite nonnegative mean, got "<<mu;
+    if (mu == 0) return 0;
+    if (mu < large_poisson_mean)
+        return std::poisson_distribution<std::int64_t>(mu)(standard_rng);
+
+    double u;
+    do { u = uniform(); } while (u <= 0 or u >= 1);
+    return capped_large_poisson_quantile(mu, u);
 }
 
 unsigned geometric(double p) {

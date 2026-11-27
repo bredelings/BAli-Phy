@@ -3,6 +3,7 @@
 #include "math/logprod.hh"
 #include "test-util.hh"
 #include "util/rng.hh"
+#include "util/poisson.hh"
 
 #include <cmath>
 #include <limits>
@@ -14,6 +15,20 @@
 // This suite becomes redundant if ProbDensity itself acquires these choice semantics.
 namespace
 {
+    // Ordinary draws rarely expose an individual CDF step or the Int cap. Keep these
+    // fixed quantiles while large-mean sampling uses a separate integer inversion.
+    void check_large_poisson_quantiles()
+    {
+        constexpr std::int64_t mean = 1'000'000'000'000'000'000;
+        BALI_PHY_TEST_CHECK(capped_large_poisson_quantile(mean, 0.5 - 5e-10) == mean - 1);
+        BALI_PHY_TEST_CHECK(capped_large_poisson_quantile(mean, 0.5) == mean);
+        BALI_PHY_TEST_CHECK(capped_large_poisson_quantile(mean, 0.5 + 5e-10) == mean + 1);
+
+        constexpr auto cap = std::numeric_limits<std::int64_t>::max();
+        BALI_PHY_TEST_CHECK(capped_large_poisson_quantile(0x1p63, 0.5 - 2e-10) == cap - 1);
+        BALI_PHY_TEST_CHECK(capped_large_poisson_quantile(0x1p63, 0.75) == cap);
+    }
+
     // Protect zero and nonfinite comparisons that ordinary MCMC tests rarely exercise.
     // These cases remain necessary while diagnostics compare LogNum values in log space.
     void check_close_in_log_space()
@@ -386,6 +401,7 @@ namespace
 // Exercise the enduring algebraic invariants independently of an MCMC model.
 int main()
 {
+    check_large_poisson_quantiles();
     check_close_in_log_space();
     check_prob_density_zero();
     check_multinomial_zero_factors();

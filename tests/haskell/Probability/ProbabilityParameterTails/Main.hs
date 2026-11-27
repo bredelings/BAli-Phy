@@ -26,6 +26,8 @@ main :: IO ()
 main = do
     zeroGeometricSample <- sampleIO $ geometric 0.0
     saturatedGeometricSample <- sampleIO $ geometric 1.0e-300
+    -- A mean above the Int cap used to retry indefinitely in the library sampler.
+    saturatedPoissonSample <- sampleIO $ poisson 1.0e20
     let p = 1 - toProb 1.0e-20
         expectedRare = log 1.0e-20
         bernoulliActual = ln (pdf (bernoulli p) 0)
@@ -38,6 +40,7 @@ main = do
         tailExpected = log 0.6+2000*log 0.4
     print (zeroGeometricSample == 9223372036854775807
               && saturatedGeometricSample == 9223372036854775807
+              && saturatedPoissonSample == 9223372036854775807
               && tailActual < 0 && abs (tailActual-tailExpected) < 1.0e-10
               && abs (bernoulliActual-expectedRare) < 1.0e-10
               && abs (binomialActual-(log 2+expectedRare)) < 1.0e-10

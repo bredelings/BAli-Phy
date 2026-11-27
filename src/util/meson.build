@@ -12,6 +12,7 @@ libutil_sources = [
   'mapping.cc',
   'cmdline.cc',
   'rng.cc',
+  'poisson.cc',
   'permute.cc',
   'file-paths.cc',
   'ptree.cc',
