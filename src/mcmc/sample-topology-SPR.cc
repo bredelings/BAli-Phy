@@ -42,6 +42,7 @@
 #include "tree/tree-util.hh"
 #include "util/permute.hh"
 #include "dp/alignment-sums.hh"
+#include "dp/dp-size.hh"
 #include "alignment/alignment-constraint.hh"
 #include "substitution/likelihood.hh"
 
@@ -1427,6 +1428,12 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
         P.cache_likelihood_branches();
 	PrB = SPR_search_attachment_points(P, subtree_edge, range, locations, nodes, sum_out_A);
     }
+    catch (const dp_table_allocation_failure& e)
+    {
+        // Omitting a site whose table failed would change the distribution over attachment sites.
+        std::cerr << "Skipping SPR attachment search: " << e.what() << '\n';
+        return false;
+    }
     catch (choose_exception<log_double_t>& c)
     {
 	// FIXME: what if only SOME of the attachment points have NaN/Inf/Inf?
@@ -1496,8 +1503,9 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 	    accepted = SPR_accept_or_reject_proposed_tree(P, p, Pr, proposal_weights, I, C,
 							     locations, nodes, sum_out_A);
     }
-    catch (std::bad_alloc& e) {
-	std::cerr<<"Allocation failed in sample_try_multi (in SPR_search_one): "<<e.what()<<"!  Proceeding."<<std::endl;
+    catch (const dp_table_allocation_failure& e)
+    {
+        std::cerr << "Skipping SPR acceptance step: " << e.what() << '\n';
 	return false;
     }
 

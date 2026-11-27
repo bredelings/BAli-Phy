@@ -133,8 +133,19 @@ cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
     for(int i=0;i<3;i++)
 	branches[i] = t.find_branch(nodes[0],nodes[i+1]);
 
-    shared_ptr<DPcubeSimple>
-	Matrices(new DPcubeSimple(m123, std::move(dists1), std::move(dists2), std::move(dists3), *F));
+    shared_ptr<DPcubeSimple> Matrices;
+    try
+    {
+        Matrices = std::make_shared<DPcubeSimple>(m123, std::move(dists1), std::move(dists2), std::move(dists3), *F);
+    }
+    catch (const dp_table_allocation_failure&)
+    {
+        throw;
+    }
+    catch (const std::bad_alloc&)
+    {
+        throw dp_table_allocation_failure{};
+    }
     Matrices->forward_cube();
 
     if (Matrices->Pr_sum_all_paths() <= 0.0) 
@@ -208,7 +219,7 @@ optional<int> sample_cube_multi(vector<Parameters>& p,const vector< vector<int> 
 
 	return cube.choose();
     }
-    catch (std::bad_alloc& e) {
+    catch (const dp_table_allocation_failure& e) {
 	std::cerr<<"Allocation failed in sample_cube_multi: "<<e.what()<<"!  Proceeding."<<std::endl;
 	return {};
     }
