@@ -22,13 +22,25 @@ int max_element(const matrix<int>& M)
 }
 
 
-void peel_muts(const int* n_muts1, int* n_muts2, int n_letters, const DenseMatrix<std::int64_t>& cost)
+// Add the minimum cost of the incoming branch for each possible parent letter.
+static void peel_muts(const int* n_muts1, int* n_muts2, int n_letters,
+                      const DenseMatrix<std::int64_t>& cost, bool& costs_checked)
 {
+    // All contributing branches and sites share this matrix. Check its active square on the
+    // first peel. Leaves and entirely missing branches can finish without using any costs.
+    if (not costs_checked)
+    {
+        for(int l2=0;l2<n_letters;l2++)
+            for(int l1=0;l1<n_letters;l1++)
+                checked_cpp_int(cost(l2,l1));
+        costs_checked = true;
+    }
+
     for(int l2=0;l2<n_letters;l2++)
     {
-	auto c = std::int64_t(checked_cpp_int(cost(l2,0))) + n_muts1[0];
+	auto c = cost(l2,0) + n_muts1[0];
 	for(int l1=1;l1<n_letters;l1++)
-	    c = std::min(c, std::int64_t(checked_cpp_int(cost(l2,l1))) + n_muts1[l1]);
+	    c = std::min(c, cost(l2,l1) + n_muts1[l1]);
 	n_muts2[l2] = checked_cpp_int(c + n_muts2[l2]);
     }
 }
@@ -41,6 +53,7 @@ peel_muts(const R::RVector& sequences,
 	  const R::RVector& n_muts_,
 	  const DenseMatrix<std::int64_t>& cost)
 {
+    bool costs_checked = false;
     int n_branches_in = n_muts_.size();
     assert(n_muts_.size() == n_branches_in);
     assert(A_.size() == n_branches_in);
@@ -115,7 +128,7 @@ peel_muts(const R::RVector& sequences,
 	{
 	    if (A(j).has_character1(i[j]))
 	    {
-		peel_muts(&n_muts(j)(s[j],0), S, n_letters, cost);
+		peel_muts(&n_muts(j)(s[j],0), S, n_letters, cost, costs_checked);
 		s[j]++;
 	    }
 	    i[j]++;
@@ -152,6 +165,7 @@ int muts_root(const R::RVector& sequences,
 	      const R::RVector& n_muts_,
               const DenseMatrix<std::int64_t>& cost)
 {
+    bool costs_checked = false;
     int n_branches_in = n_muts_.size();
     assert(n_muts_.size() == n_branches_in);
     assert(A_.size() == n_branches_in);
@@ -226,7 +240,7 @@ int muts_root(const R::RVector& sequences,
 	{
 	    if (A(j).has_character1(i[j]))
 	    {
-		peel_muts(&n_muts(j)(s[j],0), &S[0], n_letters, cost);
+		peel_muts(&n_muts(j)(s[j],0), &S[0], n_letters, cost, costs_checked);
 		s[j]++;
 	    }
 	    i[j]++;
@@ -270,6 +284,7 @@ peel_muts_fixed_A(const R::RVector& sequences,
     auto mask = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().second.as_<Box<boost::dynamic_bitset<>>>(); };
     auto n_muts = [&](int i) -> auto& {return n_muts_[i].as_<ParsimonyCacheBranch>();};
 
+    bool costs_checked = false;
     int n_branches_in = n_muts_.size();
     assert(not sequences.empty() or not n_muts_.empty());
     int L = (sequences.empty()) ? n_muts(0).bits.size() : mask(0).size();
@@ -316,7 +331,7 @@ peel_muts_fixed_A(const R::RVector& sequences,
 	{
 	    if (n_muts(j).bits.test(c))
 	    {
-		peel_muts(&n_muts(j)(s[j],0), S, n_letters, cost);
+		peel_muts(&n_muts(j)(s[j],0), S, n_letters, cost, costs_checked);
 		s[j]++;
 	    }
 	}
@@ -362,6 +377,7 @@ int muts_root_fixed_A(const R::RVector& sequences,
     auto mask = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().second.as_<Box<boost::dynamic_bitset<>>>(); };
     auto n_muts = [&](int i) -> auto& {return n_muts_[i].as_<ParsimonyCacheBranch>();};
 
+    bool costs_checked = false;
     int n_branches_in = n_muts_.size();
     assert(not sequences.empty() or not n_muts_.empty());
     int L = (sequences.empty()) ? n_muts(0).bits.size() : mask(0).size();
@@ -409,7 +425,7 @@ int muts_root_fixed_A(const R::RVector& sequences,
 	{
 	    if (n_muts(j).bits.test(c))
 	    {
-		peel_muts(&n_muts(j)(s[j],0), &S[0], n_letters, costs);
+		peel_muts(&n_muts(j)(s[j],0), &S[0], n_letters, costs, costs_checked);
 		s[j]++;
 	    }
 	}
