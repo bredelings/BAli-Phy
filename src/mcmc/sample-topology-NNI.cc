@@ -20,6 +20,7 @@
 #include <valarray>
 #include <iostream>
 #include <cmath>
+#include <cstdlib>
 #include "util/assert.hh"
 #include "util/log-level.hh"
 #include "util/settings.hh"
@@ -425,6 +426,11 @@ Availability<log_double_t> optimize(Parameters& P, const vector<int>& nodes)
 
 void two_way_topology_5A_sample(owned_ptr<context>& P, MoveStats& /*Stats*/, int b)
 {
+    // Before registering this move, catch dp_table_allocation_failure around the whole proposal.
+    // A later A3 realignment can fail on either topology. Verify that both candidates are discarded.
+    std::cerr << "two_way_topology_5A_sample is disabled pending repair of table refusal.\n";
+    std::abort();
+
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().degree(PP.t().source(b)) != 3 or PP.t().degree(PP.t().target(b)) != 3) return;
 
