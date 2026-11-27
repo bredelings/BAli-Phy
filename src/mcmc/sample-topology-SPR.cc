@@ -372,11 +372,20 @@ public:
     spr_info(const TreeInterface& T, const tree_edge& b, const spr_range& r);
 };
 
-void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0);
+static void move_subtree_to_attachment(Parameters&, const tree_edge& initial_edge,
+                                       const vector<int>& old_nodes, const vector<int>& new_nodes);
+
+// One fair order per site serves both the alignment constraint and the branch-ID assignment.
+static vector<int> spr_node_order(const tree_edge& subtree, const tree_edge& site)
+{
+    vector<int> nodes{subtree.node2, subtree.node1, site.node1, site.node2};
+    if (uniform() < 0.5) std::swap(nodes[2], nodes[3]);
+    return nodes;
+}
 
 // Move the subtree behind b1 to a different attachment edge b2, creating the fused-edge alignment.
 // Return the reverse/forward density ratio for the uniform attachment split.
-double do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
+static double do_SPR(Parameters& P, int b1, int b2, const vector<int>& old_nodes, vector<int>& new_nodes)
 {
     auto B1 = P.t().edge(b1);
   
@@ -401,7 +410,8 @@ double do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
 #endif
 
     // 3. Attach to the target edge
-    spr_to_index(P, I, *index, nodes0);
+    new_nodes = spr_node_order(B1, I.attachment_branch_pairs[*index].edge);
+    move_subtree_to_attachment(P, I.initial_edge, old_nodes, new_nodes);
 
     // 4. Choose the split uniformly at random
     int b3 = P.t().find_branch(B1.node2, B2.node1);
@@ -453,11 +463,10 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2)
     vector<log_double_t> rho(p.size(), 1);
     nodes[0] = A3::get_nodes_branch_random(p[0].t(), n1, n2);
 
-    // 3. ----- Regraft and choose a node order only for a different attachment. ----- //
+    // 3. ----- Choose the target order before regrafting at a different attachment. ----- //
     if (attachment_changed)
     {
-        rho[1] = do_SPR(p[1], b1, b2, nodes[0]);
-        nodes[1] = A3::get_nodes_branch_random(p[1].t(), n1, n2);
+        rho[1] = do_SPR(p[1], b1, b2, nodes[0], nodes[1]);
     }
 
     // 4. ----- Check that nodes[i] are connected correctly in p[i].t()
@@ -780,7 +789,7 @@ vector<HMM::bitmask_t> get_3way_alignment(mutable_data_partition P, int a, int b
     return Aabxy;
 }
 
-// preserve_homology = not sum_out_A (in search_attachment_points) and false (in spr_to_index).
+// preserve_homology = not sum_out_A (in search_attachment_points) and false (in move_subtree_to_attachment).
 // not preserve_homology = sum_out_A
 // So, I think that unless we are doing sum_out_A, we preserve homologies with the original attachment point,
 //  even if there is a - on the path.  We do that by flipping the - to +.
@@ -789,14 +798,14 @@ vector<HMM::bitmask_t> get_3way_alignment(mutable_data_partition P, int a, int b
 // In theory, we could instead perform an NNI where we resample all 5 pairwise alignments, which would allow
 //  preserving homologies even when we integrate out the alignment.
 
-tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>
-prune_subtree_and_get_3way_alignments(Parameters& P,  const tree_edge& b_subtree, const tree_edge& b_target,
-				      const vector<int>& nodes0, bool preserve_homology=false)
+// Save the ordered projection and return the signed spare branch alongside the alignment.
+static auto prune_subtree_and_get_3way_alignments(Parameters& P, const tree_edge& b_target,
+                                                  const vector<int>& nodes0, bool preserve_homology=false)
 {
     int a = b_target.node1; // bit 0
     int b = b_target.node2; // bit 1
-    int x = b_subtree.node1; // bit 2
-    int y = b_subtree.node2; // bit 3
+    int x = nodes0[1]; // bit 2
+    int y = nodes0[0]; // bit 3
 
     vector<optional<pairwise_alignment_t>> A23(P.n_data_partitions());
     vector<optional<vector<HMM::bitmask_t>>> As(P.n_data_partitions());
@@ -819,7 +828,7 @@ prune_subtree_and_get_3way_alignments(Parameters& P,  const tree_edge& b_subtree
                 As[i] = get_3way_alignment(P.get_data_partition(i), a, b, x, y);
         }
 
-    P.prune_subtree(b_subtree);
+    int moved_branch = P.prune_subtree(y, {nodes0[2], nodes0[3]});
 
     // 2. For variable alignment partitions that we aren't preserving homologies for,
     //    set the correct pairwise alignment for the branch (nodes0[2],nodes0[3])
@@ -832,7 +841,7 @@ prune_subtree_and_get_3way_alignments(Parameters& P,  const tree_edge& b_subtree
                 // clear other pairwise alignments??
             }
 
-    return tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>{a, b, x, std::move(As)};
+    return std::pair{moved_branch, std::tuple{a, b, x, std::move(As)}};
 }
 
 void set_3way_alignment(mutable_data_partition P, int bxy, int bya, int byb, vector<HMM::bitmask_t> alignment)
@@ -858,37 +867,24 @@ void set_3way_alignment(mutable_data_partition P, int bxy, int bya, int byb, vec
     P.set_pairwise_alignment(byb, get_pairwise_alignment_from_bits(alignment, y_bit, b_bit));
 }
 
-void regraft_subtree_and_set_3way_alignments(Parameters& P, const tree_edge& b_subtree, const tree_edge& b_target, const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignments, bool preserve_homology=false)
+// After reconnecting, install transported bit columns on the branches named by those columns.
+static void regraft_subtree_and_set_3way_alignments(Parameters& P, int moved_branch, const vector<int>& nodes,
+    const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignments, bool preserve_homology)
 {
-    using std::get;
-
-    // 1. Reconnect the tree
-    P.regraft_subtree(b_subtree, b_target);
-
-    int a = b_target.node1; // bit 0
-    int b = b_target.node2; // bit 1
-    int x = b_subtree.node1; // bit 2
-    int y = b_subtree.node2; // bit 3
-
-    int bxy = P.t().find_branch(x,y);
-    int bya = P.t().find_branch(y,a);
-    int byb = P.t().find_branch(y,b);
-
-    // Orient the target branch to match the 3-way alignment
-    if (get<0>(alignments) == b and get<1>(alignments) == a) std::swap(a,b);
-
-    for(int i=0; i<P.n_data_partitions(); i++)
-    {
-        if (P[i].has_pairwise_alignments())
-            if (preserve_homology or not P[i].variable_alignment())
-            {
-                assert(get<2>(alignments) == x);
-                assert(get<0>(alignments) == a and get<1>(alignments) == b);
-                set_3way_alignment(P[i], bxy, bya, byb, *get<3>(alignments)[i]);
-            }
-    }
+    int v = nodes[0];
+    P.regraft_subtree(moved_branch, {nodes[2], nodes[3]});
+    const auto& [a,b,x,paths] = alignments;
+    for(int i=0;i<P.n_data_partitions();i++)
+        if (P[i].has_pairwise_alignments() and (preserve_homology or not P[i].variable_alignment()))
+        {
+            assert(x == nodes[1]);
+            assert((tree_edge{a,b} == tree_edge{nodes[2],nodes[3]}));
+            int bxy = P.t().find_branch(x,v);
+            int bya = P.t().find_branch(v,a);
+            int byb = P.t().find_branch(v,b);
+            set_3way_alignment(P[i], bxy, bya, byb, *paths[i]);
+        }
 }
-
 
 /// Given tree with edges (a,b),(b,c),(b,d) where (x,y) is considered to attach on edge (a,b):
 //    Given alignment bitpath for {abx} and
@@ -1002,7 +998,11 @@ Availability<log_double_t> pr_sum_out_A_tri(Parameters& P,
                                             const vector<optional<vector<HMM::bitmask_t>>>& a23,
                                             const vector<int>& nodes);
 
-void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_attachment_points& locations, const tree_edge& subtree_edge, const tree_edge& target_edge, Parameters p2, const map<tree_edge,vector<int>>& nodes, const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignment3way, bool sum_out_A)
+void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_attachment_points& locations,
+                                int moved_branch, const tree_edge& subtree_edge, const tree_edge& target_edge,
+                                Parameters p2, const map<tree_edge,vector<int>>& nodes,
+                                const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignment3way,
+                                bool sum_out_A)
 {
     // ---------------- Compute the attachment probability -----------------------
     auto& nodes_ = nodes.at(target_edge);
@@ -1013,7 +1013,7 @@ void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_atta
         a23_constraint = A23_constraints(p2, nodes_, false);
 
     // 1. Regraft subtree and set pairwise alignments on three branches
-    regraft_subtree_and_set_3way_alignments(p2, subtree_edge, target_edge, alignment3way, not sum_out_A);
+    regraft_subtree_and_set_3way_alignments(p2, moved_branch, nodes_, alignment3way, not sum_out_A);
 
     // 2. Set branch lengths
     set_lengths_at_location(p2, subtree_edge, target_edge, locations);
@@ -1112,7 +1112,8 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     std::map<tree_dir_edge, Parameters> directed_attached_Ps;
 
     // 1. Prune subtree and store homology bitpath
-    auto alignments3way_initial = prune_subtree_and_get_3way_alignments(P, subtree_edge, I.initial_edge, nodes.at(I.initial_edge), not sum_out_A);
+    auto [moved_branch, alignments3way_initial] =
+        prune_subtree_and_get_3way_alignments(P, I.initial_edge, nodes.at(I.initial_edge), not sum_out_A);
 
     alignments3way.insert({I.initial_edge, alignments3way_initial});
 
@@ -1138,7 +1139,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
         {
             // Attach the pruned subtree at attach_node
             auto attach_node_P = pruned_Ps.at(*prev_target_edge);
-            attach_node_P.reconnect_branch(root_node, root_node, attach_node);
+            attach_node_P.reconnect_branch(moved_branch, attach_node);
 
             // Cache probabilities from behind subtree.
             for(int j=0;j<attach_node_P.n_data_partitions();j++)
@@ -1152,7 +1153,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
         }
 
         auto prev_p = directed_attached_Ps.at(prev_target_dir_edge);
-        prev_p.reconnect_branch(root_node, attach_node, root_node);
+        prev_p.reconnect_branch(moved_branch, root_node);
 
         pruned_Ps.insert({target_edge, prev_p});
 
@@ -1160,7 +1161,8 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 
 	auto alignment_3way = move_pruned_subtree(p0, alignments3way.at(*prev_target_edge), subtree_edge, *prev_target_edge, target_edge, sibling_edge, not sum_out_A);
 
-        set_attachment_probability(Pr, locations, subtree_edge, target_edge, pruned_Ps.at(target_edge), nodes, alignment_3way, sum_out_A);
+        set_attachment_probability(Pr, locations, moved_branch, subtree_edge, target_edge, p0,
+                                   nodes, alignment_3way, sum_out_A);
 
         alignments3way.insert({target_edge, alignment_3way});
     }
@@ -1310,43 +1312,12 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 //
 //       - BDR 05/18/2025
 //
-void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
+// Reconstruct the selected tree from the same site orders used to score it.
+static void move_subtree_to_attachment(Parameters& P, const tree_edge& initial_edge,
+                                       const vector<int>& old_nodes, const vector<int>& new_nodes)
 {
-    auto target_edge = I.attachment_branch_pairs[C].edge;
-    auto& subtree_edge = I.b_parent;
-
-    // 1. Record a map from each edge to its prev_edge.
-    std::map<tree_edge, tree_edge> prev_edges;
-    std::map<tree_edge, optional<tree_edge>> sibling_edges;
-    for(auto& [prev, edge, sibling]: I.attachment_branch_pairs)
-        if (prev)
-        {
-            prev_edges.insert({edge,*prev});
-            sibling_edges.insert({edge,sibling});
-        }
-
-    // 2. Record list of edges from target edge to initial edge
-    vector<tree_edge> edges;
-    edges.push_back(target_edge);
-
-    while(prev_edges.count(edges.back()))
-        edges.push_back(prev_edges.at(edges.back()));
-
-    // 3. Reverse the list of edges, so that it goes from initial edge to target_edge.
-    std::reverse(edges.begin(), edges.end());
-
-    // 4. Prune subtree and store homology bitpath
-    vector<tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>> alignments3way;
-    alignments3way.reserve(I.attachment_branch_pairs.size());
-    alignments3way.push_back(prune_subtree_and_get_3way_alignments(P, subtree_edge, I.initial_edge, nodes0, false));
-
-//  NOTE: This was for preliminary work to get an alignment bandwidth at the new attachment site...
-//    // 5. Move the pruned subtree iteratively from edge (j-1) -> edge (j) until we get to target_edge.
-//    for(int j=1;j<edges.size();j++)
-//	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, edges[j-1], edges[j], sibling_edges.at(edges[j]), false) );
-
-    // 6. Finally, regraft the subtree to the target edge and set its stored branch coordinates.
-    regraft_subtree_and_set_3way_alignments(P, subtree_edge, target_edge, alignments3way.back(), false);
+    auto [moved_branch, alignments] = prune_subtree_and_get_3way_alignments(P, initial_edge, old_nodes);
+    regraft_subtree_and_set_3way_alignments(P, moved_branch, new_nodes, alignments, false);
 }
 
 /*
@@ -1421,14 +1392,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 
     // 4. Compute the nodes for each edge.
     map<tree_edge,vector<int>> nodes;
-    for(auto& E: I.attachment_branch_pairs)
-    {
-	vector<int> edge_nodes { subtree_edge.node2, subtree_edge.node1, E.edge.node1, E.edge.node2 };
-	if (uniform() < 0.5)
-	    std::swap(edge_nodes[2], edge_nodes[3]);
-	nodes[E.edge] = edge_nodes;
-    }
-    const auto& nodes0 = nodes[I.initial_edge];
+    for(const auto& site: I.attachment_branch_pairs)
+        nodes[site.edge] = spr_node_order(subtree_edge, site.edge);
 
     // 5. Compute the relative probability of proposing the shared set from each candidate state.
     vector<double> relative_proposal_probs = I.relative_proposal_probs();
@@ -1486,7 +1451,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     if (C != 0)
     {
 	auto target_edge = I.attachment_branch_pairs[C].edge;
-	spr_to_index(p[1], I, C, nodes0);
+	move_subtree_to_attachment(p[1], I.initial_edge, nodes.at(I.initial_edge), nodes.at(target_edge));
 	set_lengths_at_location(p[1], subtree_edge, target_edge, locations);
     }
 

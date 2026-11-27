@@ -182,9 +182,9 @@ public:
 
     ParametersTreeInterface t() const;
 
-    void reconnect_branch(int s1, int t1, int t2);
-    void prune_subtree(const tree_edge& b_subtree);
-    void regraft_subtree(const tree_edge& b_subtree, const tree_edge& b_target);
+    void reconnect_branch(int branch, int new_target);
+    int prune_subtree(int attachment_node, const tree_dir_edge& attachment);
+    void regraft_subtree(int moved_branch, const tree_dir_edge& attachment);
 
 private:
     void exchange_subtrees(int b1, int b2);

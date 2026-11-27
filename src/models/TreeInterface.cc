@@ -1001,7 +1001,13 @@ std::string write(const TreeInterface& T)
 
 bool TreeInterface::reconnect_branch(int s1, int t1, int t2)
 {
-    int b1 = find_branch(s1,t1);
+    return reconnect_branch(find_branch(s1,t1), t2);
+}
+
+// Move the specified directed branch even when its two endpoints coincide.
+bool TreeInterface::reconnect_branch(int b1, int t2)
+{
+    int t1 = target(b1);
     int b2 = reverse(b1);
 
     auto out_t1 = get_tree_constants().parameters_for_tree_node.at(t1);

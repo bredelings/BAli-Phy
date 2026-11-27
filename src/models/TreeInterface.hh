@@ -152,6 +152,7 @@ public:
     bool can_set_node_time(int n) const;
     void set_node_time(int n, double t);
 
+    bool reconnect_branch(int branch, int new_target);
     bool reconnect_branch(int s1, int t1, int t2);
 
     virtual ~TreeInterface() = default;

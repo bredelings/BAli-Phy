@@ -375,59 +375,54 @@ string write_newick(const Parameters& P, bool print_lengths)
     return write(P.t(), P.t().labels(), print_lengths);
 }
 
-void Parameters::prune_subtree(const tree_edge& b_subtree)
+// The first endpoint keeps the edge ID on fusion and split. A pendant ID stays at its tip.
+static tree_dir_edge spr_edge_order(const TreeInterface& tree, const tree_dir_edge& attachment)
 {
-    // FIXME -- this seems redundant.
-    vector<int> connected = t().branches_after(t().find_branch(b_subtree));
-
-    std::optional<double> L;
-    if (not t().has_node_times())
+    if (tree.is_leaf_node(attachment.node2))
     {
-        // Pruning joins the additive stored coordinates.  On a rate-scaled tree these are
-        // durations; the effective lengths are allowed to change with the retained rates.
-        L = t().branch_length_or_duration(connected[0]) + t().branch_length_or_duration(connected[1]);
+        assert(not tree.is_leaf_node(attachment.node1));
+        return attachment.reverse();
     }
-
-    if (connected.empty()) throw myexception()<<"We can't prune subtrees that point to leaves!";
-
-    //  int x = b_subtree.node1;
-    int y = b_subtree.node2;
-    int a = t().target(connected[0]);
-    int b = t().target(connected[1]);
-    // Avoid changing the orientation of leaf branches.
-    if (t().is_leaf_node(b)) std::swap(a,b);
-    assert(not t().is_leaf_node(b));
-
-    reconnect_branch(a,y,b);
-    reconnect_branch(y,b,y);
-
-    // If we have node times, we can just leave the node time for the pruned node unchanged.
-    if (not t().has_node_times())
-    {
-        t().set_branch_length_or_duration(t().find_branch(a,b), *L);
-        t().set_branch_length_or_duration(t().find_branch(y,y), 0.0);
-    }
+    return attachment;
 }
 
-void Parameters::regraft_subtree(const tree_edge& b_subtree, const tree_edge& b_target)
+// Fuse a-v-b into a-b. Save the directed ID v->b before its endpoints coincide at v.
+int Parameters::prune_subtree(int v, const tree_dir_edge& attachment)
 {
-    //  int x = b_subtree.node1;
-    int y = b_subtree.node2;
+    auto [a,b] = spr_edge_order(t(), attachment);
+    int retained = t().find_branch(a,v);
+    int moved = t().find_branch(v,b);
 
-    int a = b_target.node1;
-    int b = b_target.node2;
-    // Avoid changing the orientation of leaf  branches.
-    if (t().is_leaf_node(b)) std::swap(a,b);
-    assert(not t().is_leaf_node(b));
+    // Join the additive coordinates (durations on a rate-scaled tree).
+    std::optional<double> length;
+    if (not t().has_node_times())
+        length = t().branch_length_or_duration(retained) + t().branch_length_or_duration(moved);
 
-    reconnect_branch(y,y,b);
-    reconnect_branch(a,b,y);
+    reconnect_branch(retained, b);
+    reconnect_branch(moved, v);
+    if (length)
+    {
+        t().set_branch_length_or_duration(retained, *length);
+        t().set_branch_length_or_duration(moved, 0.0);
+    }
+    return moved;
 }
 
-void Parameters::reconnect_branch(int s1, int t1, int t2)
+// Split a-b at v, keeping the target ID beside a and restoring the moved ID as v->b.
+void Parameters::regraft_subtree(int moved_branch, const tree_dir_edge& attachment)
 {
-    if (not t().reconnect_branch(s1, t1, t2))
-	throw myexception()<<"reconnect_branch failed!  Trying to alter a fixed topology?";
+    auto [a,b] = spr_edge_order(t(), attachment);
+    int v = t().source(moved_branch);
+    assert(t().target(moved_branch) == v);
+    int retained = t().find_branch(a,b);
+    reconnect_branch(moved_branch, b);
+    reconnect_branch(retained, v);
+}
+
+void Parameters::reconnect_branch(int branch, int new_target)
+{
+    if (not t().reconnect_branch(branch, new_target))
+        throw myexception()<<"reconnect_branch failed!  Trying to alter a fixed topology?";
 }
 
 // This could create loops it we don't check that the subtrees are disjoint.
