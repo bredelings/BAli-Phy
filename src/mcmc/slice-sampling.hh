@@ -26,6 +26,7 @@
 #ifndef SLICE_SAMPLING_H
 #define SLICE_SAMPLING_H
 
+#include <functional>
 #include <vector>                  // for vector
 #include "computation/context.hh"   // for context
 #include "probability/availability.hh" // for Availability
@@ -118,19 +119,15 @@ struct random_variable_slice_function: public context_slice_function
 };
 
 
-/// A slice_function for slice-sampling a single parameter
-struct integer_random_variable_slice_function:public context_slice_function
-{
-    /// The random_variable index.
-    int r_mod;
+enum class integer_slice_method { stepping_out, doubling };
 
-    void set_value(double x);
+/// Draw a new integer on a fixed slice. The membership function is called only within support.
+std::int64_t sample_integer_on_slice(std::int64_t x, const bounds<std::int64_t>& support,
+                                     integer_slice_method, std::int64_t width,
+                                     const std::function<bool(std::int64_t)>& on_slice);
 
-    double current_value() const;
-
-    integer_random_variable_slice_function(context_ref&, const bounds<haskell_int>&, int);
-};
-
+void slice_sample_integer(context_ref&, int reg, const bounds<haskell_int>&,
+                          integer_slice_method, haskell_int width);
 
 /// A slice function for sampling a stored branch length or duration.
 struct branch_length_or_duration_slice_function: public context_slice_function

@@ -22,3 +22,8 @@ incDecMH x bnds = TransitionKernel $ incDecMHRaw x (c_range bnds)
 
 foreign import bpcall "MCMC:" sliceSampleIntegerRaw :: Modifiable Int -> BuiltinBounds -> ContextIndex -> IO ()
 sliceSampleInteger x bnds = TransitionKernel $ sliceSampleIntegerRaw x (c_range bnds)
+
+-- Use a positive width fixed along the integer conditional and at most 50 blocks.
+foreign import bpcall "MCMC:" sliceSampleIntegerSteppingOutRaw :: Modifiable Int -> BuiltinBounds -> Int -> ContextIndex -> IO ()
+sliceSampleIntegerSteppingOut x bnds width =
+    TransitionKernel $ sliceSampleIntegerSteppingOutRaw x (c_range bnds) width

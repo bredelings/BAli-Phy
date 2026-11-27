@@ -116,6 +116,45 @@ namespace
         BALI_PHY_TEST_CHECK(endpoint.resets == 1 and endpoint.evaluations == 0);
     }
 
+    // Translation must preserve individual draws even at either Int limit. These small slices
+    // expose rounding of adjacent integers and clipping of the grid before reverse bisection.
+    void check_integer_slice()
+    {
+        using I = std::int64_t;
+        constexpr I low = std::numeric_limits<I>::min(), high = std::numeric_limits<I>::max();
+        for (auto method: {integer_slice_method::doubling, integer_slice_method::stepping_out})
+        {
+            for (I width: {I(1), I(3), high})
+            {
+                auto draw = [&](I base, int seed) {
+                    myrand_init(seed);
+                    return sample_integer_on_slice(base+1, {base, base+3}, method, width, [&](I k) {
+                        BALI_PHY_TEST_CHECK(base <= k and k <= base+3);
+                        return k != base+2;
+                    }) - base;
+                };
+                bool moved = false;
+                for (int seed=0; seed<64; ++seed)
+                {
+                    auto y = draw(0, seed);
+                    BALI_PHY_TEST_CHECK(y == 0 or y == 1 or y == 3);
+                    BALI_PHY_TEST_CHECK(draw(low, seed) == y and draw(high-3, seed) == y);
+                    moved |= y != 1;
+                }
+                BALI_PHY_TEST_CHECK(moved);
+            }
+            BALI_PHY_TEST_CHECK(sample_integer_on_slice(high, {high, high}, method, 1,
+                                                        [](I){return true;}) == high);
+        }
+
+        // From 0 only the grid with boundary 0 can expand towards 6. On this grid the
+        // reverse block [4,8) cannot expand, even when the forward bracket reached 6.
+        myrand_init(274);
+        for (int i=0; i<256; ++i)
+            BALI_PHY_TEST_CHECK(sample_integer_on_slice(0, {0, 6}, integer_slice_method::doubling,
+                                                        4, [](I k){return k == 0 or k == 6;}) == 0);
+    }
+
     // Ordinary branch lengths check both conserved sums. Unbalanced pairs expose loss of a
     // small residual when a rounded sum is used to reconstruct a neighboring length.
     void check_three_branch_slice_coordinates()
@@ -155,6 +194,7 @@ int main()
 {
     check_declines_invalid_boundaries();
     check_full_interval();
+    check_integer_slice();
     check_three_branch_slice_coordinates();
     check_samples_within_existing_exceptional_rank();
 }

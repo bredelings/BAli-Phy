@@ -639,51 +639,32 @@ extern "C" closure builtin_function_sliceSampleRaw(OperationArgs& Args)
     return closure(R::ConstructorApp("()", 0, {}));
 }
 
-// slice_sample_integer_random_variable x context state
-extern "C" closure builtin_function_sliceSampleIntegerRaw(OperationArgs& Args)
+static closure slice_sample_integer_move(OperationArgs& Args, integer_slice_method method)
 {
     assert(not Args.evaluate_changeables());
-    auto& M = Args.memory();
+    bool stepping = method == integer_slice_method::stepping_out;
+    context_ref C(Args.memory(), Args.evaluate_slot_to_value(stepping ? 3 : 2).as_cpp_int());
+    auto reg = C.find_modifiable_reg(Args.reg_for_slot(0));
+    if (not reg) throw myexception()<<"sliceSampleInteger: variable is not modifiable";
 
-    // 2. context index = int
-    int context_index = Args.evaluate_slot_to_value(2).as_cpp_int();
-    context_ref C(M,context_index);
-
-    auto evaluate_slot = [&](int slot) -> const Runtime::Exp& {return C.evaluate_reg(Args.reg_for_slot(slot));};
-
-    // 0. x = reg to sample
-    int x_reg = Args.reg_for_slot(0);
-    if (auto x_mod_reg = C.find_modifiable_reg(x_reg))
-        x_reg = *x_mod_reg;
-    else
-        throw myexception()<<"slice_sample_integer_random_variable: reg "<<x_reg<<" is not a modifiable!";
-
-    if (log_verbose >= 3) std::cerr<<"\n\n[slice_sample_integer_random_variable] <"<<x_reg<<">\n";
-
-    // 1. bounds
-    auto bnds = evaluate_slot(1);
-
-    //------------- 3. Get initial value x1 for variable -------------//
+    auto bnds = C.evaluate_reg(Args.reg_for_slot(1));
     if (not bnds.is_a<Bounds<haskell_int>>())
-        throw myexception()<<"random variable doesn't have a range that is bounds<haskell_int>";
-
-    integer_random_variable_slice_function logp(C, bnds.as_<Bounds<haskell_int>>(), x_reg);
-
-    // OK, this is a bit problematic.
-    double w = 1.0;
-
-    const double x = logp.current_value();
-    if (logp.in_range(x))
-    {
-        // Even within the supported range, rounding x + U can hit the next cell.
-        double v1 = std::min(x + uniform(), std::nextafter(x + 1, x));
-        slice_sample(v1, logp, w, 50);
-    }
-
+        throw myexception()<<"sliceSampleInteger: expected integer bounds";
+    haskell_int width = stepping ? C.evaluate_reg(Args.reg_for_slot(2)).as_int() : 1;
+    if (log_verbose >= 3) std::cerr<<"\n[sliceSampleInteger] <"<<*reg<<">\n";
+    slice_sample_integer(C, *reg, bnds.as_<Bounds<haskell_int>>(), method, width);
     if (log_verbose >= 3) std::cerr<<C.get_logged_parameters()<<"\n";
-    if (log_verbose >= 3) std::cerr<<"   - Posterior evaluated "<<logp.count<<" times.\n";
-
     return closure(R::ConstructorApp("()", 0, {}));
+}
+
+extern "C" closure builtin_function_sliceSampleIntegerRaw(OperationArgs& Args)
+{
+    return slice_sample_integer_move(Args, integer_slice_method::doubling);
+}
+
+extern "C" closure builtin_function_sliceSampleIntegerSteppingOutRaw(OperationArgs& Args)
+{
+    return slice_sample_integer_move(Args, integer_slice_method::stepping_out);
 }
 
 // slice_sample_real_random_variable x context state

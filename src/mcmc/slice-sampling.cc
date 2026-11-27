@@ -23,6 +23,7 @@
 /// \brief This file implements classes and functions for uniform slice sampling.
 ///
 
+#include <boost/multiprecision/cpp_int.hpp>
 #include <cmath>
 #include <numeric>
 #include <tuple>
@@ -60,24 +61,25 @@ void context_slice_function::set_context_density_ratio(ProbDensity ratio)
     context_density_ratio = std::move(ratio);
 }
 
+// Every scalar trial is evaluated against the same initial context, even when the preceding
+// boundary probe installed a different value. A change of dimension ends the scalar update.
+template <typename SetValue>
+static ProbDensity evaluate_slice_trial(context_ref& C, context& C0, int& count, SetValue set_value)
+{
+    if (++count == 1) C0.evaluate_program();
+    C = C0;
+    set_value();
+    auto ratio = C.heated_probability_ratios(C0);
+    if (ratio.variables_changed)
+        throw variables_changed_exception("Variable changed during slice sampling!");
+    return ratio.total_ratio();
+}
+
 optional<ProbDensity> context_slice_function::operator()(double x)
 {
     if (not std::isfinite(x) or not in_range(x)) return {};
 
-    count++;
-
-    // We are intentionally only calling context::operator==( ) here.
-    // Maybe we should actually call merely context::operator==( ) though?
-    if (count == 1) C0.evaluate_program();
-    C = C0;
-    set_value(x);
-
-    auto ratio = C.heated_probability_ratios(C0);
-    if (ratio.variables_changed)
-        throw variables_changed_exception("Variable changed during slice sampling!");
-    else
-        set_context_density_ratio(ratio.total_ratio());
-
+    set_context_density_ratio(evaluate_slice_trial(C, C0, count, [&]{set_value(x);}));
     return operator()();
 }
 
@@ -105,40 +107,6 @@ double random_variable_slice_function::current_value() const
 
 random_variable_slice_function::random_variable_slice_function(context_ref& c, const bounds<double>& bounds, int rv)
     :context_slice_function(c, bounds)
-{
-    if (auto m = C.find_modifiable_reg(rv))
-	r_mod = *m;
-    else
-	throw myexception()<<"No modifiable reg for slice function!";
-}
-
-// ******************************* integer random_variable slice function *************************************** //
-// The continuous coordinate needs fractional resolution within each integer cell. Keep the
-// previous 32-bit domain and intersect it with the model support. States outside this fixed
-// subset stay put, and proposals from within cannot leave it. Other kernels can cross it.
-static bounds<double> integer_slice_bounds(const bounds<haskell_int>& model)
-{
-    using limits = std::numeric_limits<std::int32_t>;
-    auto lower = std::max<haskell_int>(limits::min(), model.lower_bound.value_or(limits::min()));
-    auto upper = std::min<haskell_int>(limits::max(), model.upper_bound.value_or(limits::max()));
-    if (lower > upper) return {1.0, 0.0};
-
-    // Slice bounds are inclusive. The upper endpoint itself belongs to the next integer.
-    return {double(lower), std::nextafter(double(upper) + 1, double(upper))};
-}
-
-void integer_random_variable_slice_function::set_value(double x)
-{
-    C.set_modifiable_value(r_mod, static_cast<haskell_int>(std::floor(x)));
-}
-
-double integer_random_variable_slice_function::current_value() const
-{
-    return C.get_modifiable_value(r_mod).as_int();
-}
-
-integer_random_variable_slice_function::integer_random_variable_slice_function(context_ref& c, const bounds<haskell_int>& bounds, int rv)
-    :context_slice_function(c, integer_slice_bounds(bounds))
 {
     if (auto m = C.find_modifiable_reg(rv))
 	r_mod = *m;
@@ -475,6 +443,123 @@ ProbDensity draw_slice_level(ProbDensity starting_density)
     candidate *= exp_to_log_space(-offset);
     return candidate.log().isvalid() ? candidate : starting_density;
 }
+}
+
+// At fixed height the target is uniform on the integers passing on_slice. The grid offset
+// has the same law from every starting point. Preserve the half-open grid bracket [L,R)
+// for the reverse check, even beyond the Int limits. A 63-bit width doubled at most 50
+// times fits in a signed 128-bit endpoint. Only model coordinates are narrowed to int64_t.
+std::int64_t sample_integer_on_slice(std::int64_t x, const bounds<std::int64_t>& support,
+                                     integer_slice_method method, std::int64_t width,
+                                     const std::function<bool(std::int64_t)>& on_slice)
+{
+    using endpoint = boost::multiprecision::int128_t;
+    using limits = std::numeric_limits<std::int64_t>;
+    if (width < 1) throw myexception()<<"Integer slice width must be positive";
+    if (not support.in_range(x)) return x;
+
+    const endpoint lower = support.lower_bound.value_or(limits::min());
+    const endpoint upper = support.upper_bound.value_or(limits::max());
+    auto boundary_on_slice = [&](const endpoint& b) {
+        return lower <= b and b <= upper and (b == x or on_slice(static_cast<std::int64_t>(b)));
+    };
+
+    endpoint L = endpoint(x) - uniform_int(0, width-1);
+    endpoint R = L + width;
+    if (method == integer_slice_method::stepping_out)
+    {
+        // Place the starting block uniformly in a 50-block window. Both directions test the
+        // same boundary integer, so any block in the connected run discovers the same bracket.
+        int left = static_cast<int>(uniform_int(0, 49));
+        int right = 49-left;
+        while (left-- > 0 and boundary_on_slice(L)) L -= width;
+        while (right-- > 0 and boundary_on_slice(R)) R += width;
+    }
+    else
+    {
+        // Each expansion changes one boundary. Reuse the membership of the other
+        // boundary, and probe only when deciding whether another expansion is possible.
+        optional<bool> left_inside, right_inside;
+        for (int j=0; j<50; ++j)
+        {
+            if (not left_inside) left_inside = boundary_on_slice(L);
+            if (not *left_inside)
+            {
+                if (not right_inside) right_inside = boundary_on_slice(R);
+                if (not *right_inside) break;
+            }
+            endpoint span = R-L;
+            if (uniform_int(0, 1))
+            {
+                L -= span;
+                left_inside.reset();
+            }
+            else
+            {
+                R += span;
+                right_inside.reset();
+            }
+        }
+    }
+
+    // Accepted paths have the same successive draw ranges in reverse. A rejected integer
+    // can itself be discarded. Since x stays in the range, neither increment can overflow.
+    auto lo = static_cast<std::int64_t>(std::max(L, lower));
+    auto hi = static_cast<std::int64_t>(std::min(endpoint(R-1), upper));
+    for (int i=0; i<100; ++i)
+    {
+        auto y = uniform_int(lo, hi);
+        if (y == x) return x;
+        if (not on_slice(y))
+        {
+            if (y < x) lo = y+1;
+            else hi = y-1;
+            continue;
+        }
+        if (method == integer_slice_method::stepping_out) return y;
+
+        // Each half containing y is a required bracket on its unique reverse expansion.
+        // Once it excludes x, the forward history no longer guarantees it could expand.
+        while (R-L > width)
+        {
+            endpoint mid = L + (R-L)/2;
+            if (y < mid) R = mid;
+            else L = mid;
+            if ((x < L or x >= R) and not boundary_on_slice(L) and not boundary_on_slice(R))
+                return x;
+        }
+        return y;
+    }
+    return x;
+}
+
+void slice_sample_integer(context_ref& C, int reg, const bounds<haskell_int>& support,
+                          integer_slice_method method, haskell_int width)
+{
+    const auto x = C.get_modifiable_value(reg).as_int();
+    const auto height = draw_slice_level(1);
+    context initial(C);
+    int count = 0;
+    haskell_int installed = x;
+    auto evaluate = [&](haskell_int k) {
+        auto ratio = evaluate_slice_trial(C, initial, count, [&]{C.set_modifiable_value(reg, k);});
+        installed = k;
+        return ratio;
+    };
+    try
+    {
+        auto y = sample_integer_on_slice(x, support, method, width,
+                                         [&](haskell_int k){return inside_slice(evaluate(k), height);});
+        // A reverse boundary probe may have replaced the accepted trial in the live context.
+        if (y == x) C = initial;
+        else if (installed != y) evaluate(y);
+    }
+    catch (const variables_changed_exception& e)
+    {
+        if (log_verbose >= 3) std::cerr<<e.what()<<"\n";
+        C = initial;
+    }
+    if (log_verbose >= 3) std::cerr<<"   - Posterior evaluated "<<count<<" times.\n";
 }
 
 std::pair<double,double> 
