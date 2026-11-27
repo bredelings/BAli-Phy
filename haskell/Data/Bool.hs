@@ -1,7 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Bool where
 
-data Bool = True | False
+data Bool = False | True
 
 infixr 3 &&
 False && _  = False
