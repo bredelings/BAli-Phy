@@ -68,7 +68,7 @@ log_double_t get_multiplier(context_ref& C1, const vector<int>& I_regs)
 
     for(int r : I_regs)
     {
-        int i = C1.get_reg_value(r).as_int();
+        int i = C1.get_reg_value(r).as_cpp_int();
 
         context C2 = C1;
         C2.set_reg_value(r, 1-i);
@@ -89,7 +89,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
     if (log_verbose >= 3) std::cerr<<"\n\n[sum_out_coals]\n";
 
-    int c1 = Args.evaluate_slot_to_value(2).as_int();
+    int c1 = Args.evaluate_slot_to_value(2).as_cpp_int();
 
     reg_heap& M = Args.memory();
     context_ref C1(M, c1);
@@ -114,7 +114,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     }
 
     //------------- 2. For t1, sample Is and sum over the Is ------------//
-    int t1 = C1.evaluate_reg(t_reg).as_int();
+    int t1 = C1.evaluate_reg(t_reg).as_cpp_int();
 
     // The sum is this multiplier times the probability of the current Is.
     auto multiplier1 = get_multiplier(C1, I_regs);
@@ -175,7 +175,7 @@ categorical_candidates make_categorical_candidates(context_ref& C, int selector_
         std::adjacent_find(values.begin(), values.end()) != values.end())
         throw myexception()<<"categorical candidate values are not strictly increasing";
 
-    int current = C.get_reg_value(selector_reg).as_int();
+    int current = C.get_reg_value(selector_reg).as_cpp_int();
     if (current < 0 or current >= count)
         throw myexception()<<"categorical selector value "<<current<<" is not in range [0, "<<count<<")";
     auto current_iter = std::lower_bound(values.begin(), values.end(), current);
@@ -269,7 +269,7 @@ extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Arg
     int n_values_reg = Args.evaluate_slot_unchangeable(1);
 
     //------------- 1c. Get context index --------------
-    int c1 = Args.evaluate_slot_to_value(2).as_int();
+    int c1 = Args.evaluate_slot_to_value(2).as_cpp_int();
 
     //------------- 2. Find the location of the variable -------------//
     auto& M = Args.memory();
@@ -283,9 +283,9 @@ extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Arg
     //      (ii) ensures that all computations will be shared forwards.
     C1.evaluate_program();
 
-    int x1 = C1.get_reg_value(*x_mod_reg).as_int();
+    int x1 = C1.get_reg_value(*x_mod_reg).as_cpp_int();
 
-    int n_values = C1.get_reg_value(n_values_reg).as_int();
+    int n_values = C1.get_reg_value(n_values_reg).as_cpp_int();
     if (n_values <= 0)
         throw myexception()<<"categorical selector has non-positive value count "<<n_values;
     if (log_verbose >= 3) std::cerr<<"   gibbs_sample_categorical: <"<<x_reg<<">   [0, "<<n_values-1<<"]\n";
@@ -313,7 +313,7 @@ extern "C" closure builtin_function_gibbsSampleCategoricalSubsetRaw(OperationArg
     int selector_reg = Args.evaluate_slot_unchangeable(0);
     int count_reg = Args.evaluate_slot_unchangeable(1);
     int max_candidates_reg = Args.evaluate_slot_unchangeable(2);
-    int context_index = Args.evaluate_slot_to_value(3).as_int();
+    int context_index = Args.evaluate_slot_to_value(3).as_cpp_int();
 
     auto& M = Args.memory();
     auto modifiable_reg = M.find_modifiable_reg(selector_reg);
@@ -324,9 +324,9 @@ extern "C" closure builtin_function_gibbsSampleCategoricalSubsetRaw(OperationArg
     // Drop obsolete contexts and share every computation retained by the selected candidate.
     C.evaluate_program();
 
-    int current = C.get_reg_value(*modifiable_reg).as_int();
-    int count = C.get_reg_value(count_reg).as_int();
-    int max_candidates = C.get_reg_value(max_candidates_reg).as_int();
+    int current = C.get_reg_value(*modifiable_reg).as_cpp_int();
+    int count = C.get_reg_value(count_reg).as_cpp_int();
+    int max_candidates = C.get_reg_value(max_candidates_reg).as_cpp_int();
     auto candidate_values = make_categorical_subset(current, count, max_candidates);
 
     // For a subset S containing x and y, q(S|x) = q(S|y). Multiplying the symmetric
@@ -347,8 +347,8 @@ extern "C" closure builtin_function_condLogOddsRaw(OperationArgs& Args)
     assert(not Args.evaluate_changeables());
 
     int selector_reg = Args.evaluate_slot_unchangeable(0);
-    int count = Args.evaluate_slot_to_value(1).as_int();
-    int context_index = Args.evaluate_slot_to_value(2).as_int();
+    int count = Args.evaluate_slot_to_value(1).as_cpp_int();
+    int context_index = Args.evaluate_slot_to_value(2).as_cpp_int();
 
     if (count <= 0)
         throw myexception()<<"condLogOddsRaw: value count "<<count<<" is not positive";
@@ -365,7 +365,7 @@ extern "C" closure builtin_function_condLogOddsRaw(OperationArgs& Args)
             throw myexception()<<"condLogOddsRaw: selector reg "<<selector_reg
                                <<" is neither constant nor modifiable";
 
-        int value = C.get_reg_value(selector_reg).as_int();
+        int value = C.get_reg_value(selector_reg).as_cpp_int();
         if (value < 0 or value >= count)
             throw myexception()<<"condLogOddsRaw: selector value "<<value
                                <<" is not in range [0, "<<count<<")";
@@ -408,27 +408,27 @@ Proposal uniform_avoid_mh_proposal(int a_reg, int b_reg, int x_reg)
                    throw myexception()<<"discreteUniformAvoidMH: reg "<<x_reg<<" not modifiable!";
 
                // 2. Get the current bounds and value
-               int a = C.evaluate_reg(a_reg).as_int();
-               int b = C.evaluate_reg(b_reg).as_int();
-               int x1 = C.get_reg_value(*x_mod_reg).as_int();
+               auto a = C.evaluate_reg(a_reg).as_int();
+               auto b = C.evaluate_reg(b_reg).as_int();
+               auto x1 = C.get_reg_value(*x_mod_reg).as_int();
 
                // Empty ranges have no proposal.  Other variables may still repair their bounds.
                if (a > b)
                    return 1.0;
 
                // 3. Propose a new value
-               int x2;
+               haskell_int x2;
                if (x1 < a or x1 > b)
                {
                    // This asymmetric step is used only from a zero- or NaN-density state.  Once
                    // inside the target support, the ordinary reversible proposal below applies.
-                   x2 = int(uniform_int(a, b));
+                   x2 = uniform_int(a, b);
                }
                else
                {
                    if (a == b)
                        return 1.0;
-                   x2 = int(uniform_int(a,b-1));
+                   x2 = uniform_int(a,b-1);
                    if (x2 >= x1) x2++;
                }
 
@@ -464,7 +464,7 @@ extern "C" closure builtin_function_uniformIndependenceProposalRaw(OperationArgs
     int x_reg = Args.evaluate_slot_unchangeable(0);
     int lower_reg = Args.evaluate_slot_unchangeable(1);
     int upper_reg = Args.evaluate_slot_unchangeable(2);
-    int context_index = Args.evaluate_slot_to_value(3).as_int();
+    int context_index = Args.evaluate_slot_to_value(3).as_cpp_int();
 
     auto& M = Args.memory();
     context_ref C1(M, context_index);
@@ -502,7 +502,7 @@ extern "C" closure builtin_function_discreteUniformAvoidMHRaw(OperationArgs& Arg
     if (log_verbose >= 3) std::cerr<<"\n\n[discrete_uniform_avoid_mh] <"<<x_reg<<">\n";
 
     //------------- 1d. Get context index --------------
-    int c1 = Args.evaluate_slot_to_value(3).as_int();
+    int c1 = Args.evaluate_slot_to_value(3).as_cpp_int();
 
     //------------- 2. Perform the proposal ------------
     auto& M = Args.memory();
@@ -528,24 +528,27 @@ Proposal inc_dec_mh_proposal(int x_reg, int n, int range_reg)
                    throw myexception()<<"incDecMH: reg "<<x_reg<<" not modifiable!";
 
                auto range_arg = C.evaluate_reg(range_reg);
-               if (not range_arg.is_a<Bounds<int>>())
+               if (not range_arg.is_a<Bounds<haskell_int>>())
                    throw myexception()<<"incDecMH: random variable range is not integer bounds";
-               const auto& range = range_arg.as_<Bounds<int>>();
+               const auto& range = range_arg.as_<Bounds<haskell_int>>();
 
                // 2. Get the current value.  The global uniform move repairs values outside a
                // newly valid interval; a local step cannot do so reversibly.
-               int x1 = C.get_reg_value(*x_mod_reg).as_int();
+               auto x1 = C.get_reg_value(*x_mod_reg).as_int();
                if ((range.lower_bound and range.upper_bound and
                     *range.lower_bound > *range.upper_bound) or not range.in_range(x1))
                    return 1.0;
 
                // 3. Propose a new value
-               int x2 = x1;
-	       int delta = uniform_int(1,n);
-               if (uniform() > 0.5)
-                   x2 += delta;
-               else
-                   x2 -= delta;
+               auto delta = uniform_int(1,n);
+               if (uniform() <= 0.5)
+                   delta = -delta;
+               // A proposal outside the representable support stays at x1, like any other
+               // out-of-bounds proposal. Test before adding to avoid signed overflow.
+               using limits = std::numeric_limits<haskell_int>;
+               if ((delta > 0 and x1 > limits::max() - delta) or (delta < 0 and x1 < limits::min() - delta))
+                   return 1.0;
+               auto x2 = x1 + delta;
 
                // 4. Cancel move if its outside of the bounds
                if (not range.in_range(x2))
@@ -576,7 +579,7 @@ extern "C" closure builtin_function_incDecMHRaw(OperationArgs& Args)
     int range_reg = Args.evaluate_slot_unchangeable(1);
 
     //------------- 1c. Get context index --------------
-    int c1 = Args.evaluate_slot_to_value(2).as_int();
+    int c1 = Args.evaluate_slot_to_value(2).as_cpp_int();
     context_ref C1(M, c1);
 
     //------------- 2. Perform the proposal ------------
@@ -599,7 +602,7 @@ extern "C" closure builtin_function_sliceSampleRaw(OperationArgs& Args)
     auto& M = Args.memory();
 
     // 2. context index = int
-    int context_index = Args.evaluate_slot_to_value(2).as_int();
+    int context_index = Args.evaluate_slot_to_value(2).as_cpp_int();
     context_ref C(M,context_index);
 
     auto evaluate_slot = [&](int slot) -> const Runtime::Exp& {return C.evaluate_reg(Args.reg_for_slot(slot));};
@@ -643,7 +646,7 @@ extern "C" closure builtin_function_sliceSampleIntegerRaw(OperationArgs& Args)
     auto& M = Args.memory();
 
     // 2. context index = int
-    int context_index = Args.evaluate_slot_to_value(2).as_int();
+    int context_index = Args.evaluate_slot_to_value(2).as_cpp_int();
     context_ref C(M,context_index);
 
     auto evaluate_slot = [&](int slot) -> const Runtime::Exp& {return C.evaluate_reg(Args.reg_for_slot(slot));};
@@ -661,16 +664,21 @@ extern "C" closure builtin_function_sliceSampleIntegerRaw(OperationArgs& Args)
     auto bnds = evaluate_slot(1);
 
     //------------- 3. Get initial value x1 for variable -------------//
-    if (not bnds.is_a<Bounds<int>>())
-        throw myexception()<<"random variable doesn't have a range that is bounds<int>";
+    if (not bnds.is_a<Bounds<haskell_int>>())
+        throw myexception()<<"random variable doesn't have a range that is bounds<haskell_int>";
 
-    integer_random_variable_slice_function logp(C, bnds.as_<Bounds<int>>(), x_reg);
+    integer_random_variable_slice_function logp(C, bnds.as_<Bounds<haskell_int>>(), x_reg);
 
     // OK, this is a bit problematic.
     double w = 1.0;
 
-    double v1 = logp.current_value() + uniform();
-    slice_sample(v1, logp, w, 50);
+    const double x = logp.current_value();
+    if (logp.in_range(x))
+    {
+        // Even within the supported range, rounding x + U can hit the next cell.
+        double v1 = std::min(x + uniform(), std::nextafter(x + 1, x));
+        slice_sample(v1, logp, w, 50);
+    }
 
     if (log_verbose >= 3) std::cerr<<C.get_logged_parameters()<<"\n";
     if (log_verbose >= 3) std::cerr<<"   - Posterior evaluated "<<logp.count<<" times.\n";
@@ -688,7 +696,7 @@ extern "C" closure builtin_function_scaleGroupsSliceRaw(OperationArgs& Args)
     auto& M = Args.memory();
 
     // 2. context index = int
-    int context_index = Args.evaluate_slot_to_value(2).as_int();
+    int context_index = Args.evaluate_slot_to_value(2).as_cpp_int();
     context_ref C(M,context_index);
 
     // 0. scales
@@ -741,7 +749,7 @@ extern "C" closure builtin_function_scaleGroupsProposalRaw(OperationArgs& Args)
     auto& M = Args.memory();
 
     // 2. context index = int
-    int context_index = Args.evaluate_slot_to_value(2).as_int();
+    int context_index = Args.evaluate_slot_to_value(2).as_cpp_int();
     context_ref C(M,context_index);
 
     // 0. scales
@@ -1053,7 +1061,7 @@ extern "C" closure builtin_function_walkTreePathRaw(OperationArgs& Args)
     //------------- 1a. Get argument X -----------------//
     int tree_reg = Args.evaluate_slot_unchangeable(0);
 
-    int c1 = Args.evaluate_slot_to_value(1).as_int();
+    int c1 = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
@@ -1068,10 +1076,10 @@ extern "C" closure builtin_function_walkTreePathRaw(OperationArgs& Args)
     auto branches = walk_tree_path(T, subst_root);
 
     if (branches.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-        throw myexception()<<"walkTreePathRaw: branch count exceeds supported Int range";
+        throw myexception()<<"walkTreePathRaw: branch count exceeds the native indexing limit";
 
     int count = static_cast<int>(branches.size());
-    object_ptr<Box<DenseVector<int>>> path(new Box<DenseVector<int>>(count));
+    object_ptr<Box<DenseVector<haskell_int>>> path(new Box<DenseVector<haskell_int>>(count));
     std::copy(branches.begin(), branches.end(), path->data());
     return path;
 }
@@ -1084,9 +1092,9 @@ extern "C" closure builtin_function_fnprUnsafeProposalRaw(OperationArgs& Args)
     //------------- 1a. Get argument X -----------------//
     int tree_reg = Args.evaluate_slot_unchangeable(0);
 
-    int n = Args.evaluate_slot_to_value(1).as_int();
+    int n = Args.evaluate_slot_to_value(1).as_cpp_int();
 
-    int context_index = Args.evaluate_slot_to_value(2).as_int();
+    int context_index = Args.evaluate_slot_to_value(2).as_cpp_int();
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C(M, context_index);
@@ -1106,7 +1114,7 @@ extern "C" closure builtin_function_walkTreeSampleAlignmentsRaw(OperationArgs& A
 
     int as_reg  = Args.reg_for_slot(1);
 
-    int c1 = Args.evaluate_slot_to_value(2).as_int();
+    int c1 = Args.evaluate_slot_to_value(2).as_cpp_int();
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
@@ -1129,7 +1137,7 @@ extern "C" closure builtin_function_realignFromTipsRaw(OperationArgs& Args)
 
     int as_reg  = Args.reg_for_slot(1);
 
-    int c1 = Args.evaluate_slot_to_value(2).as_int();
+    int c1 = Args.evaluate_slot_to_value(2).as_cpp_int();
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
@@ -1154,7 +1162,7 @@ extern "C" closure builtin_function_sampleSPRFlatRaw(OperationArgs& Args)
     //------------- 1a. Get argument X -----------------//
     int tree_reg = Args.reg_for_slot(0);
 
-    int c1 = Args.evaluate_slot_to_value(1).as_int();
+    int c1 = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
@@ -1176,7 +1184,7 @@ extern "C" closure builtin_function_sampleSPRNodesRaw(OperationArgs& Args)
     //------------- 1a. Get argument X -----------------//
     int tree_reg = Args.reg_for_slot(0);
 
-    int c1 = Args.evaluate_slot_to_value(1).as_int();
+    int c1 = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
@@ -1199,7 +1207,7 @@ extern "C" closure builtin_function_sampleSPRAllRaw(OperationArgs& Args)
     //------------- 1a. Get argument X -----------------//
     int tree_reg = Args.reg_for_slot(0);
 
-    int c1 = Args.evaluate_slot_to_value(1).as_int();
+    int c1 = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
@@ -1221,7 +1229,7 @@ extern "C" closure builtin_function_walkTreeSampleBranchLengthsRaw(OperationArgs
     //------------- 1a. Get argument X -----------------//
     int tree_reg = Args.reg_for_slot(0);
 
-    int c1 = Args.evaluate_slot_to_value(1).as_int();
+    int c1 = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
@@ -1243,7 +1251,7 @@ extern "C" closure builtin_function_walkTreeSampleNNIandBranchLengthsRaw(Operati
     //------------- 1a. Get argument X -----------------//
     int tree_reg = Args.reg_for_slot(0);
 
-    int c1 = Args.evaluate_slot_to_value(1).as_int();
+    int c1 = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
@@ -1264,7 +1272,7 @@ extern "C" closure builtin_function_walkTimeTreeSampleNNIandNodeTimesRaw(Operati
     //------------- 1a. Get argument X -----------------//
     int tree_reg = Args.reg_for_slot(0);
 
-    int c1 = Args.evaluate_slot_to_value(1).as_int();
+    int c1 = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
@@ -1285,7 +1293,7 @@ extern "C" closure builtin_function_walkTreeSampleNNIRaw(OperationArgs& Args)
     //------------- 1a. Get argument X -----------------//
     int tree_reg = Args.reg_for_slot(0);
 
-    int c1 = Args.evaluate_slot_to_value(1).as_int();
+    int c1 = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
@@ -1306,7 +1314,7 @@ extern "C" closure builtin_function_walkTreeSampleNNIandARaw(OperationArgs& Args
     //------------- 1a. Get argument X -----------------//
     int tree_reg = Args.reg_for_slot(0);
 
-    int c1 = Args.evaluate_slot_to_value(1).as_int();
+    int c1 = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     //------------ 2. Make a TreeInterface -------------//
     context_ref C1(M, c1);
@@ -1334,7 +1342,7 @@ extern "C" closure builtin_function_getAtomicModifiableValueInContext(OperationA
 
     int x_reg = Args.evaluate_slot_unchangeable(0);
 
-    int context_index = Args.evaluate_slot_to_value(1).as_int();
+    int context_index = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     context_ref C(M, context_index);
 
@@ -1359,7 +1367,7 @@ extern "C" closure builtin_function_setAtomicModifiableValueInContext(OperationA
 
     auto value = Args.evaluate_slot_to_value(1);
 
-    int context_index = Args.evaluate_slot_to_value(2).as_int();
+    int context_index = Args.evaluate_slot_to_value(2).as_cpp_int();
 
     context_ref C(M, context_index);
 
@@ -1381,7 +1389,7 @@ extern "C" closure builtin_function_copyContext(OperationArgs& Args)
 
     reg_heap& M = Args.memory();
 
-    int c1 = Args.evaluate_slot_to_value(0).as_int();
+    int c1 = Args.evaluate_slot_to_value(0).as_cpp_int();
 
     int c2 = M.copy_context(c1);
 
@@ -1395,7 +1403,7 @@ extern "C" closure builtin_function_releaseContext(OperationArgs& Args)
 
     reg_heap& M = Args.memory();
 
-    int c = Args.evaluate_slot_to_value(0).as_int();
+    int c = Args.evaluate_slot_to_value(0).as_cpp_int();
 
     M.release_context(c);
 
@@ -1408,9 +1416,9 @@ extern "C" closure builtin_function_switchToContext(OperationArgs& Args)
 
     reg_heap& M = Args.memory();
 
-    int c1 = Args.evaluate_slot_to_value(0).as_int();
+    int c1 = Args.evaluate_slot_to_value(0).as_cpp_int();
 
-    int c2 = Args.evaluate_slot_to_value(1).as_int();
+    int c2 = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     M.switch_to_context(c1,c2);
 
@@ -1423,9 +1431,9 @@ extern "C" closure builtin_function_acceptMH(OperationArgs& Args)
 
     reg_heap& M = Args.memory();
 
-    int c1 = Args.evaluate_slot_to_value(0).as_int();
+    int c1 = Args.evaluate_slot_to_value(0).as_cpp_int();
 
-    int c2 = Args.evaluate_slot_to_value(1).as_int();
+    int c2 = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     log_double_t ratio = Args.evaluate_slot_to_value(2).as_log_double();
 
@@ -1451,7 +1459,7 @@ extern "C" closure builtin_function_getInterchangeableId(OperationArgs& Args)
 extern "C" closure builtin_function_registerInterchangeable(OperationArgs& Args)
 {
     // 1. Get the interchangeable id.
-    int id = Args.evaluate_slot_to_value(0).as_int();
+    int id = Args.evaluate_slot_to_value(0).as_cpp_int();
 
     // 2. Force the interchangeable and get its address
     Args.evaluate_slot_to_value_(1);
@@ -1511,12 +1519,12 @@ extern "C" closure builtin_function_interchangeEntriesRaw(OperationArgs& Args)
     auto& M = Args.memory();
 
     //------------- 1. Get list arguments --------------//
-    int c1 = Args.evaluate_slot_to_value(1).as_int();
+    int c1 = Args.evaluate_slot_to_value(1).as_cpp_int();
 
     context_ref C1(M, c1);
 
     // int id = Args.evaluate_slot_to_value(0).as_int();
-    int id = C1.get_reg_value(Args.reg_for_slot(0)).as_int();
+    int id = C1.get_reg_value(Args.reg_for_slot(0)).as_cpp_int();
 
     //------------ 2. Find interchangeable regs ----------//
     auto group = M.interchangeables.find(id);
@@ -1572,9 +1580,9 @@ extern "C" closure builtin_function_runMCMC(OperationArgs& Args)
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
 
-    int max_iterations = Args.evaluate_slot_to_value(0).as_int();
+    int max_iterations = Args.evaluate_slot_to_value(0).as_cpp_int();
 
-    int c = Args.evaluate_slot_to_value(1).as_int();
+    int c = Args.evaluate_slot_to_value(1).as_cpp_int();
     context_ref C(M, c);
 
     //---------------- Run the MCMC chain -------------------//
@@ -1597,7 +1605,7 @@ extern "C" closure builtin_function_writeTraceGraph(OperationArgs& Args)
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
 
-    int c = Args.evaluate_slot_to_value(0).as_int();
+    int c = Args.evaluate_slot_to_value(0).as_cpp_int();
     context_ref C(M, c);
 
     C.evaluate_program();
@@ -1616,10 +1624,10 @@ extern "C" closure builtin_function_logJSONRaw(OperationArgs& Args)
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
 
-    int c = Args.evaluate_slot_to_value(0).as_int();
+    int c = Args.evaluate_slot_to_value(0).as_cpp_int();
     context_ref C(M, c);
 
-    int t = Args.evaluate_slot_to_value(1).as_int();
+    auto t = Args.evaluate_slot_to_value(1).as_int();
 
     json::object j;
 
@@ -1657,7 +1665,7 @@ extern "C" closure builtin_function_prior(OperationArgs& Args)
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
 
-    int c = Args.evaluate_slot_to_value(0).as_int();
+    int c = Args.evaluate_slot_to_value(0).as_cpp_int();
     context_ref C(M, c);
 
     return {(log_double_t)C.prior()};
@@ -1668,7 +1676,7 @@ extern "C" closure builtin_function_likelihood(OperationArgs& Args)
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
 
-    int c = Args.evaluate_slot_to_value(0).as_int();
+    int c = Args.evaluate_slot_to_value(0).as_cpp_int();
     context_ref C(M, c);
 
     return {(log_double_t)C.likelihood()};
@@ -1679,7 +1687,7 @@ extern "C" closure builtin_function_posterior(OperationArgs& Args)
     assert(not Args.evaluate_changeables());
     auto& M = Args.memory();
 
-    int c = Args.evaluate_slot_to_value(0).as_int();
+    int c = Args.evaluate_slot_to_value(0).as_cpp_int();
     context_ref C(M, c);
 
     return {(log_double_t)C.probability()};

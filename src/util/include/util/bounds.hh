@@ -69,11 +69,11 @@ struct bounds
 	}
 
     /// check if a value is below the lower bound on the range
-    bool below_lower_bound(double x) const { return lower_bound and x<*lower_bound; }
+    bool below_lower_bound(T x) const { return lower_bound and x<*lower_bound; }
     /// check if a value is above the upper bound on the range
-    bool above_upper_bound(double x) const { return upper_bound and x>*upper_bound; }
+    bool above_upper_bound(T x) const { return upper_bound and x>*upper_bound; }
     /// check if a value is in the range or not
-    bool in_range(double x) const  { return not below_lower_bound(x) and not above_upper_bound(x);}
+    bool in_range(T x) const  { return not below_lower_bound(x) and not above_upper_bound(x);}
 
     /// set the lower bound on the range
     void set_lower_bound(T);

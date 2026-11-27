@@ -113,19 +113,23 @@ random_variable_slice_function::random_variable_slice_function(context_ref& c, c
 }
 
 // ******************************* integer random_variable slice function *************************************** //
-bounds<double> convert_bounds(const bounds<int>& int_bounds)
+// The continuous coordinate needs fractional resolution within each integer cell. Keep the
+// previous 32-bit domain and intersect it with the model support. States outside this fixed
+// subset stay put, and proposals from within cannot leave it. Other kernels can cross it.
+static bounds<double> integer_slice_bounds(const bounds<haskell_int>& model)
 {
-    bounds<double> double_bounds = int_bounds;
-    if (double_bounds.upper_bound)
-        double_bounds.upper_bound = *double_bounds.upper_bound + 1;
+    using limits = std::numeric_limits<std::int32_t>;
+    auto lower = std::max<haskell_int>(limits::min(), model.lower_bound.value_or(limits::min()));
+    auto upper = std::min<haskell_int>(limits::max(), model.upper_bound.value_or(limits::max()));
+    if (lower > upper) return {1.0, 0.0};
 
-    return double_bounds;
+    // Slice bounds are inclusive. The upper endpoint itself belongs to the next integer.
+    return {double(lower), std::nextafter(double(upper) + 1, double(upper))};
 }
 
 void integer_random_variable_slice_function::set_value(double x)
 {
-    int x_integer = (int)floor(x);
-    C.set_modifiable_value(r_mod, x_integer);
+    C.set_modifiable_value(r_mod, static_cast<haskell_int>(std::floor(x)));
 }
 
 double integer_random_variable_slice_function::current_value() const
@@ -133,8 +137,8 @@ double integer_random_variable_slice_function::current_value() const
     return C.get_modifiable_value(r_mod).as_int();
 }
 
-integer_random_variable_slice_function::integer_random_variable_slice_function(context_ref& c, const bounds<int>& bounds, int rv)
-    :context_slice_function(c, convert_bounds(bounds))
+integer_random_variable_slice_function::integer_random_variable_slice_function(context_ref& c, const bounds<haskell_int>& bounds, int rv)
+    :context_slice_function(c, integer_slice_bounds(bounds))
 {
     if (auto m = C.find_modifiable_reg(rv))
 	r_mod = *m;

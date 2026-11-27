@@ -128,7 +128,7 @@ struct integer_random_variable_slice_function:public context_slice_function
 
     double current_value() const;
 
-    integer_random_variable_slice_function(context_ref&, const bounds<int>&, int);
+    integer_random_variable_slice_function(context_ref&, const bounds<haskell_int>&, int);
 };
 
 

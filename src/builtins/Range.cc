@@ -26,7 +26,7 @@ extern "C" closure builtin_function_get_integer_bounds(OperationArgs& Args)
     auto arg1 = Args.evaluate_slot_to_value(1);
     const auto& U = arg1.as_<R::RMaybe>();
 
-    Box<bounds<int>> b;
+    Box<bounds<haskell_int>> b;
 
     if (L)
         b.lower_bound = L->as_int();
