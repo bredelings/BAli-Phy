@@ -396,7 +396,7 @@ optional<CM::TypedExpr> typecheck_model_constant(const TypecheckingState& TC, co
             if (abs(literal->value) >= double_overflow_midpoint())
                 throw myexception()<<"Integer literal is outside the finite Double range.";
         }
-        else if (literal->value < std::numeric_limits<int>::min() or literal->value > std::numeric_limits<int>::max())
+        else if (literal->value < std::numeric_limits<haskell_int>::min() or literal->value > std::numeric_limits<haskell_int>::max())
             throw myexception()<<"Integer literal "<<literal->value<<" is out of range for Int.";
         node = *literal;
     }
@@ -800,7 +800,7 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
         and (rule.result_type == "Int" or is_type_variable(rule.result_type)))
     {
         auto x = supplied_args.at("x")->value->to<CM::IntLiteral>();
-        if (x and x->value == -integer(std::numeric_limits<int>::min()))
+        if (x and x->value == -integer(std::numeric_limits<haskell_int>::min()))
             return typecheck_model_constant(TC, required_type, {CM::NoAnn{}, CM::IntLiteral{-x->value}});
     }
 

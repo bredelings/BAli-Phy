@@ -757,7 +757,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
         }
         else if (auto i = L->is_BoxedInteger())
         {
-            return Core::Constant{i->convert_to<int>()};
+            return Core::Constant{integer_to_int(*i)};
         }
         else
             std::abort();

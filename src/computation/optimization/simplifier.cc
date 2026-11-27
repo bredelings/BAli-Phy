@@ -61,7 +61,7 @@ R::Exp runtime_exp_from_core_constant(const Core::Constant& C)
 {
     if (auto c = to<char32_t>(C.value))
 	return *c;
-    else if (auto i = to<int>(C.value))
+    else if (auto i = to<haskell_int>(C.value))
 	return *i;
     else if (auto i = to<integer_container>(C.value))
 	return R::Integer(i->i);

@@ -59,10 +59,10 @@ namespace Runtime
 
     struct Int
     {
-        int value;
+        haskell_int value;
 
         Int() = default;
-        Int(int x):value(x) {}
+        Int(haskell_int x):value(x) {}
 
         bool operator==(const Int&) const = default;
 
@@ -195,7 +195,8 @@ namespace Runtime
         value_type value;
 
         Exp() = default;
-        Exp(int x):Exp(Int(x)) {}
+        template<typename T> requires (std::same_as<T,int> or std::same_as<T,haskell_int>)
+        Exp(T x):Exp(Int(x)) {}
         Exp(double x):Exp(Double(x)) {}
         Exp(log_double_t x):Exp(Double(x.log())) {}
         Exp(bool);
@@ -278,7 +279,8 @@ namespace Runtime
         bool is_value() const;
         bool is_whnf() const;
         bool is_gcable_object_value() const;
-        int as_int() const;
+        haskell_int as_int() const;
+        int as_cpp_int() const { return checked_cpp_int(as_int()); }
         double as_double() const;
         log_double_t as_log_double() const;
         char32_t as_char() const;
@@ -874,7 +876,7 @@ namespace Runtime
             value.emplace<T>(std::forward<Args>(args)...);
     }
 
-    inline int Exp::as_int() const
+    inline haskell_int Exp::as_int() const
     {
         return as<Int>().value;
     }

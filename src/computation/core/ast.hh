@@ -782,7 +782,7 @@ namespace Core
 
     struct Constant
     {
-	std::variant<char32_t,int,integer_container,double,std::string> value;
+	std::variant<char32_t,haskell_int,integer_container,double,std::string> value;
 
 	std::string print() const;
 
@@ -1030,7 +1030,7 @@ namespace Core
 
 	    return "'" + payload + "'";
         }
-	else if (auto i = to<int>(value))
+	else if (auto i = to<haskell_int>(value))
 	    return std::to_string(*i) + "#";
 	else if (auto ic = to<integer_container>(value))
 	    return ic->i.str();

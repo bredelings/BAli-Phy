@@ -139,7 +139,7 @@ public:
 
     // Builtin-type arguments
     template <typename T>
-    requires std::same_as<std::remove_cvref_t<T>, int>
+    requires (std::same_as<T,int> or std::same_as<T,haskell_int>)
     closure(T x):closure(Runtime::Int(x)) {}
 
     closure(char32_t x):closure(Runtime::Char(x)) {}

@@ -34,7 +34,7 @@ Runtime::Exp atom_from_constant(const Core::Constant& C)
 {
     if (auto c = to<char32_t>(C.value))
         return Runtime::Char(*c);
-    else if (auto i = to<int>(C.value))
+    else if (auto i = to<haskell_int>(C.value))
         return Runtime::Int(*i);
     else if (auto i = to<integer_container>(C.value))
         return Runtime::Integer(i->i);
