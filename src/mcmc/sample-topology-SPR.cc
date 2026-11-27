@@ -42,7 +42,7 @@
 #include "tree/tree-util.hh"
 #include "util/permute.hh"
 #include "dp/alignment-sums.hh"
-#include "dp/dp-size.hh"
+#include "dp/dp-matrix.hh"
 #include "alignment/alignment-constraint.hh"
 #include "substitution/likelihood.hh"
 
@@ -1021,8 +1021,21 @@ void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_atta
     // 3a. Compute substitution likelihood AND alignment probability.
     if (sum_out_A)
     {
-        //Resample the alignment and compute the sampling probability.
-        auto A_sampling_pr = pr_sum_out_A_tri(p2, a23_constraint, nodes_);
+        Availability<log_double_t> A_sampling_pr;
+        try
+        {
+            A_sampling_pr = pr_sum_out_A_tri(p2, a23_constraint, nodes_);
+        }
+        catch (const dp_matrix_too_large& e)
+        {
+            if (get_setting_or("cube_fraction", 0.0) > 0 or setting_exists("simple_bandwidth")) throw;
+
+            // Full-width tri sampling recovers the same reduced alignment and table sizes in reverse.
+            // Keep the site in the shared set with zero selection probability and traverse past it.
+            std::cerr << "Skipping oversized SPR attachment site: " << e.what() << '\n';
+            Pr[target_edge] = unavailable;
+            return;
+        }
         if (A_sampling_pr)
             Pr[target_edge] = (log_double_t(1.0) / *A_sampling_pr) *
                               available(ChoiceWeight(p2.heated_probability()));
@@ -1036,7 +1049,7 @@ void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_atta
     }
 
 #ifdef DEBUG_SPR_ALL
-    Pr.LLL[target_edge] = p2.heated_likelihood();
+    if (not p2.variable_alignment() and Pr.at(target_edge)) Pr.LLL[target_edge] = p2.heated_likelihood();
 #endif
 
 }
@@ -1090,7 +1103,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
     }
 
 #ifdef DEBUG_SPR_ALL
-    Pr.LLL[I.initial_edge] = P.heated_likelihood();
+    if (not P.variable_alignment()) Pr.LLL[I.initial_edge] = P.heated_likelihood();
 #endif
 
     std::map<tree_edge, tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>> alignments3way;
@@ -1430,7 +1443,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     }
     catch (const dp_table_allocation_failure& e)
     {
-        // Omitting a site whose table failed would change the distribution over attachment sites.
+        // This includes refusal at the current site and transient failures anywhere in the search.
         std::cerr << "Skipping SPR attachment search: " << e.what() << '\n';
         return false;
     }
@@ -1445,9 +1458,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
 
 
     vector<Availability<ChoiceWeight>> Pr = I.convert_to_vector(PrB);
-#ifdef DEBUG_SPR_ALL
-    vector<log_double_t> LLL = I.convert_to_vector(PrB.LLL);
-#endif
 
     // 7. Include the factor left by not drawing a new location for the current attachment.
     vector<Availability<ChoiceWeight>> proposal_weights = Pr;
@@ -1479,19 +1489,13 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     }
 
 #ifdef DEBUG_SPR_ALL
-    // The likelihood for attaching at a particular place should not depend on the initial attachment point.
-    log_double_t L_1 = p[1].heated_likelihood();
-    auto diff = L_1.log() - LLL[C].log();
-    std::cerr<<"re-attachment diff = "<<diff<<std::endl;
-
-    // FIXME - If we have an IModel, then re-attaching means that we unalign characters instead of extending their alignment
-    //         to keep them aligned.
-    bool has_imodel = true;
-    for(int i=0;i<P.n_data_partitions();i++)
-	if (not P[i].alignment_is_random())
-	    has_imodel = false;
-    if (not has_imodel)
-	assert(close_in_log_space(L_1, LLL[C], 1.0e-9));
+    // The regrafted candidate has no new variable alignments until the final DP. Its
+    // likelihood can be compared directly with the site score only for fixed alignments.
+    if (not P.variable_alignment())
+    {
+        auto L_site = PrB.LLL.at(I.attachment_branch_pairs[C].edge);
+        assert(close_in_log_space(p[1].heated_likelihood(), L_site, 1.0e-9));
+    }
 #endif
 
     // 10. Accept or reject the proposed tree by integrating out the alignment.
