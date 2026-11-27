@@ -169,7 +169,7 @@ int get_reps(double x)
 
     int x_int = (int)x;
     double x_frac = x - x_int;
-    return x_int + poisson(x_frac);
+    return checked_cpp_int(x_int + poisson(x_frac));
 }
 
 double first_occurrence_time(double start, double end, int n)

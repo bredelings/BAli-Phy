@@ -65,9 +65,9 @@ double log_gamma(double x) {
   return lgamma(x);
 }
 
-double log_factorial(int n)
+double log_factorial(std::int64_t n)
 {
-  return log_gamma(n+1);
+  return log_gamma(double(n)+1);
 }
 
 double log_beta(double a, double b)
@@ -75,9 +75,10 @@ double log_beta(double a, double b)
   return lgamma(a) + lgamma(b) - lgamma(a+b);
 }
 
-double log_choose(int n, int k)
+double log_choose(std::uint64_t n, std::uint64_t k)
 {
-  return -log_beta(n - k + 1, k + 1) - log(n + 1);
+  if (k == 0 or k == n) return 0;
+  return -log_beta(double(n - k) + 1, double(k) + 1) - log(double(n) + 1);
 }
 
 log_double_t dirichlet_pdf(const valarray<double>& p,const valarray<double>& n) 
@@ -175,7 +176,14 @@ double uniform_quantile(double p, double a, double b)
     return std::lerp(a, b, p);
 }
 
-log_double_t uniform_int_pdf(int x, int a, int b)
+// For ordered signed endpoints the unsigned difference is exact, including across zero.
+static double inclusive_count(std::int64_t a, std::int64_t b)
+{
+    const auto distance = std::uint64_t(b) - std::uint64_t(a);
+    return distance == std::numeric_limits<std::uint64_t>::max() ? 0x1p64 : static_cast<double>(distance + 1);
+}
+
+log_double_t uniform_int_pdf(std::int64_t x, std::int64_t a, std::int64_t b)
 {
   // Reversed bounds do not define a normalized distribution.  Keep that distinct from an
   // ordinary out-of-support value so exceptional-density MCMC can repair the bounds first.
@@ -184,20 +192,21 @@ log_double_t uniform_int_pdf(int x, int a, int b)
 
   if (x < a or x > b) return 0;
 
-  auto width = std::int64_t(b) - std::int64_t(a) + 1;
-  return 1.0/log_double_t(double(width));
+  return 1.0/log_double_t(inclusive_count(a, b));
 }
 
 // Count integers <= x using wide arithmetic. Bound checks keep flooring and conversion
 // inside the Int support, even when the observation is infinite.
-double uniform_int_cdf(double x, int a, int b)
+double uniform_int_cdf(double x, std::int64_t a, std::int64_t b)
 {
     if (b < a or std::isnan(x)) return std::numeric_limits<double>::quiet_NaN();
-    if (x < a) return 0;
-    if (x >= b) return 1;
-    auto count = std::int64_t(std::floor(x)) - std::int64_t(a) + 1;
-    auto width = std::int64_t(b) - std::int64_t(a) + 1;
-    return double(count)/double(width);
+    // Compare integer endpoints in integer space so adjacent values beyond 2^53 stay distinct.
+    if (x < -0x1p63) return 0;
+    if (x >= 0x1p63) return 1;
+    auto k = static_cast<std::int64_t>(std::floor(x));
+    if (k < a) return 0;
+    if (k >= b) return 1;
+    return inclusive_count(a,k) / inclusive_count(a,b);
 }
 
 /// log density for y if y=ln (x+delta), and x ~ Exp(mu)
@@ -555,14 +564,14 @@ log_double_t negative_binomial_pdf(int r, double p, int k)
     if (r == 0 or p == 1.0) return (k == 0) ? 1 : 0;
 
     log_double_t Pr;
-    Pr.log() = log_choose(k + r - 1, k) + r*log(p) + k*log1p(-p);
+    Pr.log() = log_choose(std::uint64_t(k) + r - 1, k) + r*log(p) + k*log1p(-p);
 
     return Pr;
 }
 
 // Evaluate the negative-binomial density without reconstructing either
 // complementary probability from the other.
-log_double_t negative_binomial_pdf_from_logs(int r, double log_p, double log_q, int k)
+log_double_t negative_binomial_pdf_from_logs(std::int64_t r, double log_p, double log_q, std::int64_t k)
 {
     assert(r >= 0);
     assert(std::isnan(log_p) or log_p <= 0);
@@ -574,7 +583,7 @@ log_double_t negative_binomial_pdf_from_logs(int r, double log_p, double log_q, 
 
     // P(K=k) = choose(k+r-1,k) p^r (1-p)^k.
     log_double_t Pr;
-    Pr.log() = log_choose(k + r - 1, k) + r*log_p + k*log_q;
+    Pr.log() = log_choose(std::uint64_t(k) + r - 1, k) + r*log_p + k*log_q;
     return Pr;
 }
 
@@ -601,7 +610,7 @@ log_double_t binomial_pdf(int n, double p, int k)
 
 // Evaluate the binomial density without reconstructing either complementary
 // probability from the other.
-log_double_t binomial_pdf_from_logs(int n, double log_p, double log_q, int k)
+log_double_t binomial_pdf_from_logs(std::int64_t n, double log_p, double log_q, std::int64_t k)
 {
     assert(n >= 0);
     assert(std::isnan(log_p) or log_p <= 0);
@@ -623,9 +632,9 @@ log_double_t L_gamma(double x)
     return exp_to_log_space(std::lgamma(x));
 }
 
-log_double_t L_factorial(int k)
+log_double_t L_factorial(std::int64_t k)
 {
-    return L_gamma(k+1);
+    return L_gamma(double(k)+1);
 }
 
 log_double_t L_beta(double x, double y)
@@ -633,14 +642,14 @@ log_double_t L_beta(double x, double y)
     return L_gamma(x) * L_gamma(y) / L_gamma(x+y);
 }
 
-ProbDensity multinomial_pdf(int n, std::span<const log_double_t> ps,
-                            std::span<const int> ks)
+ProbDensity multinomial_pdf(std::int64_t n, std::span<const log_double_t> ps,
+                            std::span<const std::int64_t> ks)
 {
     // First check that the ks are in bounds
-    int sum = 0;
-    for(int k : ks)
+    std::int64_t sum = 0;
+    for(auto k : ks)
     {
-        if (k < 0) return 0;
+        if (k < 0 or k > n - sum) return 0;
         sum += k;
     }
     if (n != sum) return 0;
@@ -692,17 +701,17 @@ log_double_t bernoulli_pdf(double p, int k)
     return 0.0;
 }
 
-log_double_t geometric_pdf(double p, int n)
+log_double_t geometric_pdf(double p, std::int64_t n)
 {
   return geometric_pdf(1.0-p, p, n);
 }
 
-log_double_t geometric_pdf(log_double_t p, int n)
+log_double_t geometric_pdf(log_double_t p, std::int64_t n)
 {
   return geometric_pdf(1.0-p, p, n);
 }
 
-log_double_t geometric_pdf(log_double_t p_fail, log_double_t p_success, int n)
+log_double_t geometric_pdf(log_double_t p_fail, log_double_t p_success, std::int64_t n)
 {
   if (n < 0)
     return 0.0;
@@ -741,15 +750,18 @@ double poisson_cdf(double mu, double x)
 
 // For k=floor(x), F(x)=I_q(n-k,k+1)=1-I_p(k+1,n-k). Choose the smaller
 // probability argument so rounding its complement to one does not erase a tail.
-double binomial_cdf_from_logs(int n, double log_p, double log_q, double x)
+double binomial_cdf_from_logs(std::int64_t n, double log_p, double log_q, double x)
 {
     if (n < 0 or std::isnan(x) or not (log_p <= 0) or not (log_q <= 0)
         or (log_p == -INFINITY and log_q == -INFINITY))
         return std::numeric_limits<double>::quiet_NaN();
     if (x < 0) return 0;
-    if (x >= n or log_p == -INFINITY) return 1;
+    if (x >= 0x1p63 or log_p == -INFINITY) return 1;
+    // For nonnegative x, truncation gives floor(x). Subtract before conversion to Double
+    // so that a threshold one trial below n stays one trial below it above 2⁵³.
+    auto k = static_cast<std::int64_t>(x);
+    if (k >= n) return 1;
     if (log_q == -INFINITY) return 0;
-    double k = std::floor(x);
     if (log_p < log_q)
         return boost::math::ibetac(k + 1, n - k, std::exp(log_p));
     return boost::math::ibeta(n - k, k + 1, std::exp(log_q));
@@ -757,7 +769,7 @@ double binomial_cdf_from_logs(int n, double log_p, double log_q, double x)
 
 // Counting failures before r successes gives F(x)=I_p(r,floor(x)+1).
 // The complementary beta identity lets us use the smaller of p and q directly.
-double negative_binomial_cdf_from_logs(int r, double log_p, double log_q, double x)
+double negative_binomial_cdf_from_logs(std::int64_t r, double log_p, double log_q, double x)
 {
     if (r < 0 or std::isnan(x) or not (log_p <= 0) or not (log_q <= 0)
         or (log_p == -INFINITY and log_q == -INFINITY))
@@ -771,7 +783,7 @@ double negative_binomial_cdf_from_logs(int r, double log_p, double log_q, double
     return boost::math::ibetac(k + 1, double(r), std::exp(log_q));
 }
 
-log_double_t poisson_pdf(double mu, int k)
+log_double_t poisson_pdf(double mu, std::int64_t k)
 {
     assert(mu >= 0);
 

@@ -143,7 +143,7 @@ double gamma(double a, double b)
     return std::gamma_distribution<>(a,b)(standard_rng);
 }
 
-unsigned poisson(double mu)
+std::int64_t poisson(double mu)
 {
     assert(mu >= 0);
     if (mu == 0)
@@ -151,7 +151,7 @@ unsigned poisson(double mu)
     else
     {
 	assert(mu > 0.0);
-	return std::poisson_distribution<>(mu)(standard_rng);
+	return std::poisson_distribution<std::int64_t>(mu)(standard_rng);
     }
 }
 
@@ -162,19 +162,19 @@ unsigned geometric(double p) {
 
 // Sample from both log tails so a small failure probability is not lost when
 // the success probability rounds to one.
-int geometric_from_logs(double log_p, double log_q)
+std::int64_t geometric_from_logs(double log_p, double log_q)
 {
     // NaN is represented by a finite placeholder whose associated density remains NaN.
     if (std::isnan(log_p) or std::isnan(log_q)) return 0;
     if (log_q == -INFINITY) return 0;
-    if (log_p == -INFINITY) return std::numeric_limits<int>::max();
+    if (log_p == -INFINITY) return std::numeric_limits<std::int64_t>::max();
 
     // For K failures before success, P(K >= k)=q^k. Sampling from log(U)/log(q) preserves a
     // tiny failure tail without reconstructing q, and saturates before converting to Int.
     double n = std::floor(log_unif() / log_q);
-    if (not std::isfinite(n) or n >= std::numeric_limits<int>::max())
-        return std::numeric_limits<int>::max();
-    return int(n);
+    if (not std::isfinite(n) or n >= 0x1p63)
+        return std::numeric_limits<std::int64_t>::max();
+    return static_cast<std::int64_t>(n);
 }
 
 int negative_binomial(int r, double p)
@@ -187,27 +187,24 @@ int negative_binomial(int r, double p)
     return std::negative_binomial_distribution<>(r,p)(standard_rng);
 }
 
-// Let theta=q/p, Lambda~Gamma(shape=r,scale=theta), and K|Lambda~Poisson(Lambda).
-// Integrating Lambda gives Gamma(k+r)/(k!*Gamma(r))*theta^k/(1+theta)^(k+r).
-// Since theta/(1+theta)=q and 1/(1+theta)=p, this is
-// choose(k+r-1,k)*p^r*q^k, the required negative-binomial distribution.
-int negative_binomial_from_logs(int r, double log_p, double log_q)
+// Count the failures before each of r successive successes, saturating their sum at maxBound.
+std::int64_t negative_binomial_from_logs(std::int64_t r, double log_p, double log_q)
 {
     assert(r >= 0);
 
     // NaN uses a finite placeholder whose density remains NaN; p=0 has all its mass beyond Int.
     if (std::isnan(log_p) or std::isnan(log_q)) return 0;
     if (r == 0 or log_q == -INFINITY) return 0;
-    if (log_p == -INFINITY) return std::numeric_limits<int>::max();
+    if (log_p == -INFINITY) return std::numeric_limits<std::int64_t>::max();
 
     // A NegativeBinomial(r,p) variate is the sum of r independent Geometric(p) variates.
     // Accumulating in Int space allows saturation without entering a library rejection loop.
-    int total = 0;
-    for (int i = 0; i < r; i++)
+    std::int64_t total = 0;
+    for (std::int64_t i = 0; i < r; i++)
     {
-        int n = geometric_from_logs(log_p, log_q);
-        if (n >= std::numeric_limits<int>::max() - total)
-            return std::numeric_limits<int>::max();
+        auto n = geometric_from_logs(log_p, log_q);
+        if (n >= std::numeric_limits<std::int64_t>::max() - total)
+            return std::numeric_limits<std::int64_t>::max();
         total += n;
     }
     return total;
@@ -226,12 +223,14 @@ int binomial(int n, double p) {
 
 // Sample the less likely outcome and reflect failures back to successes when
 // p>1/2, avoiding construction of a probability near one.
-int binomial_from_logs(int n, double log_p, double log_q)
+std::int64_t binomial_from_logs(std::int64_t n, double log_p, double log_q)
 {
-    if (log_p <= log_q)
-        return binomial(n, exp(log_p));
-    else
-        return n - binomial(n, exp(log_q));
+    if (n == 0 or log_p == -INFINITY) return 0;
+    if (log_q == -INFINITY) return n;
+    const bool successes = log_p <= log_q;
+    const double p = exp(successes ? log_p : log_q);
+    const auto count = p == 0 ? 0 : std::binomial_distribution<std::int64_t>(n, p)(standard_rng);
+    return successes ? count : n - count;
 }
 
 int beta_binomial(int n, double a, double b)

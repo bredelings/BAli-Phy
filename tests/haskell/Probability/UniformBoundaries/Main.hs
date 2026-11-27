@@ -29,6 +29,9 @@ main = do
   print
     ( invalidSample == 5
       && singletonSample == 4
+      -- Adjacent Ints above the exact Double range must retain distinct support membership.
+      && pdf (uniform_int 9007199254740993 9007199254740993) 9007199254740992 == 0
+      && cdf (uniform_int 9007199254740992 9007199254740993) 9007199254740992 == 0.5
       && isNaN (ln $ pdf invalid 5)
       && isNaN (cdf invalid 4)
       && lower_bound invalid == Nothing

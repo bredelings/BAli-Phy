@@ -379,7 +379,7 @@ extern "C" closure builtin_function_gamma_quantile(OperationArgs& Args)
 extern "C" closure builtin_function_gammaMeanNative(OperationArgs& Args)
 {
     double alpha = Args.evaluate_slot_to_value(0).as_double();
-    int count = Args.evaluate_slot_to_value(1).as_int();
+    int count = Args.evaluate_slot_to_value(1).as_cpp_int();
     if (count <= 0)
         throw myexception()<<"gammaMean: the number of categories must be positive, but is "<<count;
     if (alpha < 0)
@@ -478,7 +478,7 @@ extern "C" closure builtin_function_gammaMeanNative(OperationArgs& Args)
 extern "C" closure builtin_function_gammaQuadratureNative(OperationArgs& Args)
 {
     double alpha = Args.evaluate_slot_to_value(0).as_double();
-    int count = Args.evaluate_slot_to_value(1).as_int();
+    int count = Args.evaluate_slot_to_value(1).as_cpp_int();
     if (count <= 0)
         throw myexception()<<"gammaQuadrature: the number of nodes must be positive";
     if (alpha < 0)
@@ -553,7 +553,7 @@ extern "C" closure builtin_function_betaQuadratureNative(OperationArgs& Args)
 {
     double a = Args.evaluate_slot_to_value(0).as_double();
     double b = Args.evaluate_slot_to_value(1).as_double();
-    int count = Args.evaluate_slot_to_value(2).as_int();
+    int count = Args.evaluate_slot_to_value(2).as_cpp_int();
     if (count <= 0)
         throw myexception()<<"betaQuadrature: the number of nodes must be positive";
     if (a < 0 || b < 0)
@@ -696,7 +696,7 @@ extern "C" closure builtin_function_logNormalQuadratureNative(OperationArgs& Arg
 {
     double log_mean = Args.evaluate_slot_to_value(0).as_double();
     double log_sigma = Args.evaluate_slot_to_value(1).as_double();
-    int count = Args.evaluate_slot_to_value(2).as_int();
+    int count = Args.evaluate_slot_to_value(2).as_cpp_int();
     if (count <= 0)
         throw myexception()<<"logNormalQuadrature: the number of nodes must be positive";
     if (log_sigma < 0)
@@ -886,9 +886,9 @@ extern "C" closure builtin_function_sample_uniform(OperationArgs& Args)
 
 extern "C" closure builtin_function_uniform_int_density(OperationArgs& Args)
 {
-    int a1 = Args.evaluate_slot_to_value(0).as_int();
-    int a2 = Args.evaluate_slot_to_value(1).as_int();
-    double x  = Args.evaluate_slot_to_value(2).as_int();
+    auto a1 = Args.evaluate_slot_to_value(0).as_int();
+    auto a2 = Args.evaluate_slot_to_value(1).as_int();
+    auto x  = Args.evaluate_slot_to_value(2).as_int();
 
     return { ::uniform_int_pdf(x,a1,a2) };
 }
@@ -896,38 +896,38 @@ extern "C" closure builtin_function_uniform_int_density(OperationArgs& Args)
 // Evaluate the inclusive integer CDF without narrowing the observation to Int.
 extern "C" closure builtin_function_uniform_int_cdf(OperationArgs& Args)
 {
-    int a = Args.evaluate_slot_to_value(0).as_int();
-    int b = Args.evaluate_slot_to_value(1).as_int();
+    auto a = Args.evaluate_slot_to_value(0).as_int();
+    auto b = Args.evaluate_slot_to_value(1).as_int();
     double x = Args.evaluate_slot_to_value(2).as_double();
     return { ::uniform_int_cdf(x, a, b) };
 }
 
 extern "C" closure builtin_function_sample_uniform_int(OperationArgs& Args)
 {
-    int a1 = Args.evaluate_slot_to_value_(0).as_int();
-    int a2 = Args.evaluate_slot_to_value_(1).as_int();
+    auto a1 = Args.evaluate_slot_to_value_(0).as_int();
+    auto a2 = Args.evaluate_slot_to_value_(1).as_int();
 
     // An empty conditional distribution still needs a representable initial value.  Its NaN
     // density makes this placeholder worse than every zero- or positive-density alternative.
     if (a1 > a2)
         return {a1};
 
-    return {int(::uniform_int(a1, a2))};
+    return {::uniform_int(a1, a2)};
 }
 
 extern "C" closure builtin_function_negative_binomial_density_from_logs(OperationArgs& Args)
 {
-    int r = Args.evaluate_slot_to_value(0).as_int();
+    auto r = Args.evaluate_slot_to_value(0).as_int();
     double log_p = Args.evaluate_slot_to_value(1).as_double();
     double log_q = Args.evaluate_slot_to_value(2).as_double();
-    int k = Args.evaluate_slot_to_value(3).as_int();
+    auto k = Args.evaluate_slot_to_value(3).as_int();
 
     return { ::negative_binomial_pdf_from_logs(r, log_p, log_q, k) };
 }
 
 extern "C" closure builtin_function_sample_negative_binomial_from_logs(OperationArgs& Args)
 {
-    int r = Args.evaluate_slot_to_value_(0).as_int();
+    auto r = Args.evaluate_slot_to_value_(0).as_int();
     double log_p = Args.evaluate_slot_to_value_(1).as_double();
     double log_q = Args.evaluate_slot_to_value_(2).as_double();
 
@@ -940,19 +940,19 @@ extern "C" closure builtin_function_sample_negative_binomial_from_logs(Operation
 
 extern "C" closure builtin_function_binomial_density_from_logs(OperationArgs& Args)
 {
-    int n = Args.evaluate_slot_to_value(0).as_int();
+    auto n = Args.evaluate_slot_to_value(0).as_int();
     double log_p = Args.evaluate_slot_to_value(1).as_double();
     double log_q = Args.evaluate_slot_to_value(2).as_double();
-    int k = Args.evaluate_slot_to_value(3).as_int();
+    auto k = Args.evaluate_slot_to_value(3).as_int();
   
     return { ::binomial_pdf_from_logs(n, log_p, log_q, k) };
 }
 
 extern "C" closure builtin_function_multinomial_density(OperationArgs& Args)
 {
-    int n = Args.evaluate_slot_to_value(0).as_int();
+    auto n = Args.evaluate_slot_to_value(0).as_int();
     auto probabilities = read_boxed_log_probabilities(Args, 1);
-    auto counts = read_native_vector_input<int, ForeignDemand::use>(
+    auto counts = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 2, "multinomial counts");
 
     if (probabilities.size() != counts.view().size())
@@ -963,9 +963,9 @@ extern "C" closure builtin_function_multinomial_density(OperationArgs& Args)
 // Return the uncollapsed multinomial density for MCMC prior and likelihood registration.
 extern "C" closure builtin_function_multinomial_prob_density(OperationArgs& Args)
 {
-    int n = Args.evaluate_slot_to_value(0).as_int();
+    auto n = Args.evaluate_slot_to_value(0).as_int();
     auto probabilities = read_boxed_log_probabilities(Args, 1);
-    auto counts = read_native_vector_input<int, ForeignDemand::use>(
+    auto counts = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 2, "multinomial counts");
 
     if (probabilities.size() != counts.view().size())
@@ -975,7 +975,7 @@ extern "C" closure builtin_function_multinomial_prob_density(OperationArgs& Args
 
 extern "C" closure builtin_function_sample_binomial_from_logs(OperationArgs& Args)
 {
-    int n = Args.evaluate_slot_to_value_(0).as_int();
+    auto n = Args.evaluate_slot_to_value_(0).as_int();
     double log_p = Args.evaluate_slot_to_value_(1).as_double();
     double log_q = Args.evaluate_slot_to_value_(2).as_double();
 
@@ -1018,7 +1018,7 @@ extern "C" closure builtin_function_poisson_cdf(OperationArgs& Args)
 // Evaluate the inclusive binomial CDF at a real-valued threshold.
 extern "C" closure builtin_function_binomial_cdf_from_logs(OperationArgs& Args)
 {
-    int n = Args.evaluate_slot_to_value(0).as_int();
+    auto n = Args.evaluate_slot_to_value(0).as_int();
     double log_p = Args.evaluate_slot_to_value(1).as_double();
     double log_q = Args.evaluate_slot_to_value(2).as_double();
     double x = Args.evaluate_slot_to_value(3).as_double();
@@ -1028,7 +1028,7 @@ extern "C" closure builtin_function_binomial_cdf_from_logs(OperationArgs& Args)
 // Evaluate the inclusive negative-binomial CDF at a real-valued threshold.
 extern "C" closure builtin_function_negative_binomial_cdf_from_logs(OperationArgs& Args)
 {
-    int r = Args.evaluate_slot_to_value(0).as_int();
+    auto r = Args.evaluate_slot_to_value(0).as_int();
     double log_p = Args.evaluate_slot_to_value(1).as_double();
     double log_q = Args.evaluate_slot_to_value(2).as_double();
     double x = Args.evaluate_slot_to_value(3).as_double();
@@ -1039,7 +1039,7 @@ extern "C" closure builtin_function_geometric_density(OperationArgs& Args)
 {
     double p_fail = Args.evaluate_slot_to_value(0).as_double();
     double p_success = Args.evaluate_slot_to_value(1).as_double();
-    int n = Args.evaluate_slot_to_value(2).as_int();
+    auto n = Args.evaluate_slot_to_value(2).as_int();
   
     return { ::geometric_pdf(p_fail, p_success, n) };
 }
@@ -1057,7 +1057,7 @@ extern "C" closure builtin_function_sample_geometric_from_logs(OperationArgs& Ar
 extern "C" closure builtin_function_poisson_density(OperationArgs& Args)
 {
     double mu = Args.evaluate_slot_to_value(0).as_double();
-    int n = Args.evaluate_slot_to_value(1).as_int();
+    auto n = Args.evaluate_slot_to_value(1).as_int();
   
     return { poisson_pdf(mu,n) };
 }
@@ -1066,11 +1066,11 @@ extern "C" closure builtin_function_sample_poisson(OperationArgs& Args)
 {
     double mu = Args.evaluate_slot_to_value_(0).as_double();
 
-    return { (int)poisson(mu) };
+    return { poisson(mu) };
 }
 
 
-log_double_t CRP_pdf(const double alpha, int N, int D, std::span<const int> z)
+log_double_t CRP_pdf(const double alpha, int N, int D, std::span<const haskell_int> z)
 {
     if (z.size() != N) return 0.0;
 
@@ -1111,11 +1111,11 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
 
     //------------- 1. Get arguments alpha, N, D -----------------
     double alpha = Args.evaluate_slot_to_value(0).as_double();
-    int N = Args.evaluate_slot_to_value(1).as_int();
-    int D = Args.evaluate_slot_to_value(2).as_int();
+    int N = Args.evaluate_slot_to_value(1).as_cpp_int();
+    int D = Args.evaluate_slot_to_value(2).as_cpp_int();
 
     //------------- 2. Get argument Z -----------------
-    auto z = read_native_vector_input<int, ForeignDemand::use>(
+    auto z = read_native_vector_input<haskell_int, ForeignDemand::use>(
         Args, 3, "Distribution.CRP_density");
 
     return { ::CRP_pdf(alpha,N,D,z.view()) };
@@ -1129,8 +1129,8 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
 
     //------------- 1. Get arguments alpha, N, D -----------------
     double alpha = Args.evaluate_slot_to_value_(0).as_double();
-    int N = Args.evaluate_slot_to_value_(1).as_int();
-    int D = Args.evaluate_slot_to_value_(2).as_int();
+    int N = Args.evaluate_slot_to_value_(1).as_cpp_int();
+    int D = Args.evaluate_slot_to_value_(2).as_cpp_int();
 
     // The entries in [0,n_seen) are the categories we've seen
     vector<int> categories = iota(N+D);
@@ -1142,7 +1142,7 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
     int n_seen=0;
 
     // The series of sampled categories
-    object_ptr<Box<DenseVector<int>>> S(new Box<DenseVector<int>>(N));
+    object_ptr<Box<DenseVector<haskell_int>>> S(new Box<DenseVector<haskell_int>>(N));
 
     for(int i=0;i<N;i++)
     {

@@ -20,6 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef PROBABILITY_H
 #define PROBABILITY_H
 
+#include <cstdint>
 #include <span>
 #include <vector>
 #include <valarray>
@@ -45,9 +46,9 @@ double uniform_cdf(double x, double a, double b);
 
 double uniform_quantile(double p, double a, double b);
 
-log_double_t uniform_int_pdf(int x, int a, int b);
+log_double_t uniform_int_pdf(std::int64_t x, std::int64_t a, std::int64_t b);
 
-double uniform_int_cdf(double x, int a, int b);
+double uniform_int_cdf(double x, std::int64_t a, std::int64_t b);
 
 log_double_t exponential_pdf(double x, double mu);
 
@@ -83,31 +84,31 @@ double cauchy_quantile(double p, double m, double s);
 
 log_double_t negative_binomial_pdf(int r, double p, int k);
 
-log_double_t negative_binomial_pdf_from_logs(int r, double log_p, double log_q, int k);
+log_double_t negative_binomial_pdf_from_logs(std::int64_t r, double log_p, double log_q, std::int64_t k);
 
 log_double_t beta_binomial_pdf(int n, double a, double b, int k);
 
 log_double_t binomial_pdf(int n, double p, int k);
 
-log_double_t binomial_pdf_from_logs(int n, double log_p, double log_q, int k);
+log_double_t binomial_pdf_from_logs(std::int64_t n, double log_p, double log_q, std::int64_t k);
 
-ProbDensity multinomial_pdf(int n, std::span<const log_double_t> ps,
-                            std::span<const int> ks);
+ProbDensity multinomial_pdf(std::int64_t n, std::span<const log_double_t> ps,
+                            std::span<const std::int64_t> ks);
 
-log_double_t geometric_pdf(double p, int n);
+log_double_t geometric_pdf(double p, std::int64_t n);
 
-log_double_t geometric_pdf(log_double_t p, int n);
+log_double_t geometric_pdf(log_double_t p, std::int64_t n);
 
-log_double_t geometric_pdf(log_double_t q, log_double_t p, int n);
+log_double_t geometric_pdf(log_double_t q, log_double_t p, std::int64_t n);
 
 log_double_t bernoulli_pdf(double p, int k);
 
-log_double_t poisson_pdf(double mu, int k);
+log_double_t poisson_pdf(double mu, std::int64_t k);
 
 double geometric_cdf_from_logs(double log_p, double log_q, double x);
 double poisson_cdf(double mu, double x);
-double binomial_cdf_from_logs(int n, double log_p, double log_q, double x);
-double negative_binomial_cdf_from_logs(int r, double log_p, double log_q, double x);
+double binomial_cdf_from_logs(std::int64_t n, double log_p, double log_q, double x);
+double negative_binomial_cdf_from_logs(std::int64_t r, double log_p, double log_q, double x);
 
 // -------- Topology counting functions ------ //
 log_double_t num_branches(int n);

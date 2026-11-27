@@ -52,22 +52,22 @@ double beta(double a, double b);
 double gamma(double a, double b);
 
 // return a poisson random variate
-unsigned poisson(double mu);
+std::int64_t poisson(double mu);
 
 // return a geometric random variate
 unsigned geometric(double p);
 
-int geometric_from_logs(double log_p, double log_q);
+std::int64_t geometric_from_logs(double log_p, double log_q);
 
 // return a binomial random variate
 int negative_binomial(int r, double p);
 
-int negative_binomial_from_logs(int r, double log_p, double log_q);
+std::int64_t negative_binomial_from_logs(std::int64_t r, double log_p, double log_q);
 
 // return a binomial random variate
 int binomial(int n, double p);
 
-int binomial_from_logs(int n, double log_p, double log_q);
+std::int64_t binomial_from_logs(std::int64_t n, double log_p, double log_q);
 
 // return a binomial random variate
 int beta_binomial(int n, double a, double b);

@@ -37,5 +37,5 @@ main = do
         && near (variance dist) 24.0
         && sample1 == 0
         && sample0 == 0
-        && sampleImpossible == 2147483647
-        && saturatedSample == 2147483647)
+        && sampleImpossible == 9223372036854775807
+        && saturatedSample == 9223372036854775807)

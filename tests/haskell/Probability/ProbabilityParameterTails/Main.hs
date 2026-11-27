@@ -35,8 +35,8 @@ main = do
         negativeBinomialActual = ln (pdf (negativeBinomial 2 p) 1)
         tailActual = ln (pdf (geometric 0.6) 2000)
         tailExpected = log 0.6+2000*log 0.4
-    print (zeroGeometricSample == 2147483647
-              && saturatedGeometricSample == 2147483647
+    print (zeroGeometricSample == 9223372036854775807
+              && saturatedGeometricSample == 9223372036854775807
               && tailActual < 0 && abs (tailActual-tailExpected) < 1.0e-10
               && abs (bernoulliActual-expectedRare) < 1.0e-10
               && abs (binomialActual-(log 2+expectedRare)) < 1.0e-10

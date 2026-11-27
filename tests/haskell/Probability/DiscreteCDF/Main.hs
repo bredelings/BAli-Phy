@@ -46,3 +46,7 @@ main = do
            && near (cdf (geometric 0.99) 0) (cdf (negativeBinomial 1 0.99) 0)
            && cdf (binomial 4 0.25) 1.0e100 == 1
            && isNaN (cdf (poisson (-1)) 0))
+    -- At n-1 the only excluded outcome is all successes. Small n cannot expose rounding
+    -- both endpoints to the same Double when forming the beta-function parameters.
+    print (near (cdf (binomial 9007199254740993 (1 - toProb (1 / 9007199254740992))) 9007199254740992)
+                (1 - exp (-1)))

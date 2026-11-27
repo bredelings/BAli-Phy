@@ -64,8 +64,7 @@ int random_int_from_double(double x)
 {
     int n = (int)x;
     x -= n;
-    n += poisson(x);
-    return n;
+    return checked_cpp_int(n + poisson(x));
 }
 
 int n_SPR_moves(const Parameters& P)
