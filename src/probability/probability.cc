@@ -91,17 +91,6 @@ double count_deviance(double x, double mean, double log_mean)
 }
 }
 
-double log_beta(double a, double b)
-{
-  return lgamma(a) + lgamma(b) - lgamma(a+b);
-}
-
-double log_choose(std::uint64_t n, std::uint64_t k)
-{
-  if (k == 0 or k == n) return 0;
-  return -log_beta(double(n - k) + 1, double(k) + 1) - log(double(n) + 1);
-}
-
 log_double_t dirichlet_pdf(const valarray<double>& p,const valarray<double>& n) 
 {
   assert(p.size() == n.size());
@@ -573,25 +562,29 @@ double gamma_quantile(double p, double a, double b)
 }
 
 
-// Hmm... If we make a Probability type, we could store it as x=log(p/(1-p))
-// p -> 1-p is just x -> (-x).  But p -> p^n seems quite messy.  Maybe we'd need to
-// make a special taylor series just for it.
-log_double_t negative_binomial_pdf(int r, double p, int k)
+// Loader's binomial formula groups the factorials and probability powers into two
+// Poisson deviances and three Stirling remainders. Both observed counts are exact before
+// conversion, and both log probabilities are available even when exp(log_p) underflows.
+static double log_binomial_mass(std::uint64_t n, std::uint64_t k, double log_p, double log_q)
 {
-    assert(r >= 0);
-    assert(p > 0.0 and p <= 1.0);
+    const auto failures = n - k;
+    if (k == 0) return n == 0 ? 0 : n*log_q;
+    if (failures == 0) return n*log_p;
 
-    if (k < 0) return 0;
-    if (r == 0 or p == 1.0) return (k == 0) ? 1 : 0;
+    // For small n the log factorials are modest, so direct evaluation also works in the tails.
+    if (n < 32)
+        return std::lgamma(double(n) + 1) - std::lgamma(double(k) + 1) - std::lgamma(double(failures) + 1)
+            + k*log_p + failures*log_q;
 
-    log_double_t Pr;
-    Pr.log() = log_choose(std::uint64_t(k) + r - 1, k) + r*log(p) + k*log1p(-p);
-
-    return Pr;
+    const double log_n = std::log(double(n));
+    return stirling_remainder(n) - stirling_remainder(k) - stirling_remainder(failures)
+        - count_deviance(k, n*std::exp(log_p), log_n + log_p)
+        - count_deviance(failures, n*std::exp(log_q), log_n + log_q)
+        - 0.5*(log_two_pi + std::log(double(k)) + std::log(double(failures)) - log_n);
 }
 
-// Evaluate the negative-binomial density without reconstructing either
-// complementary probability from the other.
+// For r successes and k preceding failures, the last trial is a success. Conditional
+// on r successes in r+k trials this has probability r/(r+k), by exchangeability.
 log_double_t negative_binomial_pdf_from_logs(std::int64_t r, double log_p, double log_q, std::int64_t k)
 {
     assert(r >= 0);
@@ -602,35 +595,17 @@ log_double_t negative_binomial_pdf_from_logs(std::int64_t r, double log_p, doubl
     if (r == 0 or log_q == -INFINITY) return (k == 0) ? 1 : 0;
     if (log_p == -INFINITY) return 0;
 
-    // P(K=k) = choose(k+r-1,k) p^r (1-p)^k.
-    log_double_t Pr;
-    Pr.log() = log_choose(std::uint64_t(k) + r - 1, k) + r*log_p + k*log_q;
-    return Pr;
+    const auto n = std::uint64_t(r) + k;
+    return exp_to_log_space(log_binomial_mass(n, r, log_p, log_q) - std::log1p(double(k)/r));
 }
 
-log_double_t binomial_pdf(int n, double p, int k)
+log_double_t negative_binomial_pdf(int r, double p, int k)
 {
-    assert(n >= 0);
-    assert(p >= 0.0 and p <= 1.0);
-
-    if (k < 0) return 0;
-
-    if (k > n) return 0;
-
-    if (p == 0)
-        return (k == 0) ? 1 : 0;
-
-    if (p == 1)
-        return (k == n) ? 1 : 0;
-
-    log_double_t Pr;
-    Pr.log() = log_choose (n, k) + k*log (p) + (n - k)*log1p (-p);
-
-    return Pr;
+    assert(p > 0.0 and p <= 1.0);
+    return negative_binomial_pdf_from_logs(r, std::log(p), std::log1p(-p), k);
 }
 
-// Evaluate the binomial density without reconstructing either complementary
-// probability from the other.
+// Evaluate the binomial density using the logarithms of both complementary probabilities.
 log_double_t binomial_pdf_from_logs(std::int64_t n, double log_p, double log_q, std::int64_t k)
 {
     assert(n >= 0);
@@ -640,13 +615,16 @@ log_double_t binomial_pdf_from_logs(std::int64_t n, double log_p, double log_q, 
     if (k < 0 or k > n) return 0;
     if (log_p == -INFINITY) return (k == 0) ? 1 : 0;
     if (log_q == -INFINITY) return (k == n) ? 1 : 0;
-
-    // P(K=k) = choose(n,k) p^k (1-p)^(n-k).
-    log_double_t Pr;
-    Pr.log() = log_choose(n, k) + k*log_p + (n-k)*log_q;
-    return Pr;
+    if (std::isnan(log_p) or std::isnan(log_q))
+        return exp_to_log_space(std::numeric_limits<double>::quiet_NaN());
+    return exp_to_log_space(log_binomial_mass(n, k, log_p, log_q));
 }
 
+log_double_t binomial_pdf(int n, double p, int k)
+{
+    assert(p >= 0.0 and p <= 1.0);
+    return binomial_pdf_from_logs(n, std::log(p), std::log1p(-p), k);
+}
 
 log_double_t L_gamma(double x)
 {

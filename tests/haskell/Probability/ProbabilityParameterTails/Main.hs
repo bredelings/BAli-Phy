@@ -16,6 +16,7 @@ import Probability.Distribution.Categorical (categorical)
 import Probability.Distribution.Geometric (geometric)
 import Probability.Distribution.Multinomial (multinomial)
 import Probability.Distribution.NegativeBinomial (negativeBinomial)
+import Probability.Distribution.Poisson (poisson)
 import System.IO (IO, print)
 
 -- Protect paired-tail densities and ensure zero or tiny success probabilities saturate beyond Int
@@ -44,3 +45,14 @@ main = do
               && abs (geometricActual-expectedRare) < 1.0e-10
               && abs (multinomialActual-(log 2+expectedRare)) < 1.0e-10
               && abs (negativeBinomialActual-(log 2+expectedRare)) < 1.0e-10)
+    -- At large counts the factorial terms can erase the whole log probability. Compare
+    -- central and rare-event masses with independent values while counts fit in Int64.
+    let n = 1000000000000000000
+        rare = toProb 1.0e-18
+        close x y = abs (x-y) < 1.0e-10
+    print (close (ln (pdf (poisson 1.0e18) n)) (-21.642204370151084)
+        && close (ln (pdf (binomial n rare) 1)) (-1)
+        && close (ln (pdf (binomial n (1-rare)) (n-1))) (-1)
+        && close (ln (pdf (negativeBinomial n (1-rare)) 1)) (-1)
+        && close (ln (pdf (negativeBinomial 9223372036854775807 0.5) 9223372036854775807))
+                 (-23.099648311122923))
