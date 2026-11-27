@@ -443,9 +443,9 @@ DParrayConstrained::DParrayConstrained(std::size_t l, const HMM& H)
     allowed_states.resize(size());
 }
 
-// Set up a 1D table for a fixed projection onto the visible nodes. A null pointer
-// means a required table could not be allocated, before any path was sampled.
-std::shared_ptr<DParrayConstrained> try_make_constrained_array(const HMM& hmm, const vector<HMM::bitmask_t>& columns)
+// Construct the table and allowed states for the fixed projection. A move that requires
+// several tables can discard its candidate contexts if any one of them cannot be built.
+std::shared_ptr<DParrayConstrained> make_constrained_array(const HMM& hmm, const vector<HMM::bitmask_t>& columns)
 try
 {
     auto table = std::make_shared<DParrayConstrained>(columns.size(), hmm);
@@ -475,5 +475,5 @@ catch (const std::bad_alloc& e)
 {
     std::cerr << "Allocation failed for 1D alignment table with " << columns.size()
               << " projected columns: " << e.what() << '\n';
-    return {};
+    throw dp_table_allocation_failure{};
 }

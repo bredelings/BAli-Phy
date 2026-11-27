@@ -65,8 +65,7 @@ sample_A5_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a123456, 
 
     /*-------------- Create DP matrices ---------------*/
 
-    auto Matrices = try_make_constrained_array(m12345, a1234);
-    if (not Matrices) return {nullptr, unavailable};
+    auto Matrices = make_constrained_array(m12345, a1234);
 
     Matrices->forward();
 
@@ -137,7 +136,7 @@ struct IntegrationPrs
 };
 
 ///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
-static optional<vector<optional<IntegrationPrs>>>
+static vector<optional<IntegrationPrs>>
 sample_A5_multi2(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
                             const vector<log_double_t>& rho_)
 {
@@ -181,8 +180,6 @@ sample_A5_multi2(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
             if (p[i][j].variable_alignment())
             {
                 auto [M, sampling_pr] = sample_A5_base(p[i][j], *a123456[j], order[i], order[0]);
-                // Refusing one required table discards the entire local proposal, including earlier partitions.
-                if (not M) return {};
 
 #ifndef NDEBUG_DP
                 Matrices[i][j] = M;
@@ -250,9 +247,7 @@ Availability<log_double_t> sample_A5_ratio(vector<Parameters>& p, const vector<A
     if (p.size() != 2)
 	throw myexception()<<"sample_A5_ratio only takes two Parameters objects!";
 
-    auto result = sample_A5_multi2(p, order, rho);
-    if (not result) return unavailable;
-    const auto& Prs = *result;
+    const auto Prs = sample_A5_multi2(p, order, rho);
 
     if (Prs[0] and Prs[1] and Prs[2])
     {
@@ -272,6 +267,7 @@ Availability<log_double_t> sample_A5_ratio(vector<Parameters>& p, const vector<A
 ///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
 optional<int> sample_A5_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
 			      const vector<log_double_t>& rho_)
+try
 {
     for(int i=1;i<p.size();i++)
 	for(int j=0;j<p[0].n_data_partitions();j++)
@@ -323,8 +319,6 @@ optional<int> sample_A5_multi(vector<Parameters>& p,const vector<A5::hmm_order>&
 	    if (p[i][j].variable_alignment())
 	    {
                 auto [M, sampling_pr] = sample_A5_base(p[i][j], *a123456[j], order[i], order[0]);
-                // Refusing one required table discards the entire local proposal, including earlier partitions.
-                if (not M) return {};
 
 #ifndef NDEBUG_DP
                 Matrices[i][j] = M;
@@ -459,6 +453,12 @@ optional<int> sample_A5_multi(vector<Parameters>& p,const vector<A5::hmm_order>&
 
     return C;
 }
+catch (const dp_table_allocation_failure&)
+{
+    // The builder reported the failed table. The caller discards all candidate contexts.
+    return {};
+}
+
 
 
 void sample_A5(Parameters& P,int b) 

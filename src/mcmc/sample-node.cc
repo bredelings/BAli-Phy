@@ -81,8 +81,7 @@ sample_node_base(mutable_data_partition P,const vector<int>& nodes)
     vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
     vector<HMM::bitmask_t> a123_emit = remove_silent(a123, m123.all_bits() & ~m123.hidden_bits);
 
-    auto Matrices = try_make_constrained_array(m123, a123_emit);
-    if (not Matrices) return {nullptr, unavailable};
+    auto Matrices = make_constrained_array(m123, a123_emit);
   
     //------------------ Compute the DP matrix ----------------------//
     Matrices->forward();
@@ -117,6 +116,7 @@ sample_node_base(mutable_data_partition P,const vector<int>& nodes)
 
 optional<int> sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 		                const vector<log_double_t>& rho_)
+try
 {
     vector<vector<int> > nodes = nodes_;
     vector<log_double_t> rho = rho_; 
@@ -158,8 +158,6 @@ optional<int> sample_node_multi(vector<Parameters>& p,const vector< vector<int> 
 	    if (p[i][j].variable_alignment())
             {
                 auto [M, sampling_pr] = sample_node_base(p[i][j],nodes[i]);
-                // A refused table discards all candidates, including partitions already sampled.
-                if (not M) return {};
                 sampled[i][j] = sampling_pr.has_value();
                 joint_sampling_pr *= sampling_pr;
                 if (not sampling_pr)
@@ -278,6 +276,12 @@ optional<int> sample_node_multi(vector<Parameters>& p,const vector< vector<int> 
 
     return C;
 }
+catch (const dp_table_allocation_failure&)
+{
+    // The builder reported the failed table. The caller discards all candidate contexts.
+    return {};
+}
+
 
 
 
